@@ -281,26 +281,8 @@
         {% if not result_component.historical %}
           {% if destination_context_component %}
             {% include "components/culture/destination_context.html" with component=destination_context_component %}
-          {% elif destination.country_code %}
-            <section class="qa-destination-context"
-                     aria-labelledby="destination-context-title">
-              <p class="qa-foundation-kicker">Explore</p>
-              <h3 id="destination-context-title">Destination context is still being curated.</h3>
-              <p class="qa-context-empty">
-                The conversion remains valid. Sourced everyday-value and payment guidance are not
-                available for {{ destination.country_name }} yet.
-              </p>
-            </section>
           {% else %}
-            <section class="qa-destination-context"
-                     aria-labelledby="destination-context-title">
-              <p class="qa-foundation-kicker">Explore</p>
-              <h3 id="destination-context-title">Add a destination country for local context.</h3>
-              <p class="qa-context-empty">
-                Currency-only conversion is complete. Choose a destination country to see local
-                prices and money customs.
-              </p>
-            </section>
+            {% include "components/culture/destination_context_empty.html" %}
           {% endif %}
         {% endif %}
         {% if result_component.ai_explanation %}
