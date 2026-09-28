@@ -213,7 +213,6 @@ def test_preview_proxy_mode_is_explicit_without_forcing_hsts() -> None:
     assert config.is_deployed is True
 
 
-
 def test_demo_accepts_secure_ephemeral_configuration() -> None:
     config = load_runtime_config(
         {
