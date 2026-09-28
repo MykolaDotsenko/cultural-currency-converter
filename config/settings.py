@@ -127,7 +127,11 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": (
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            if RUNTIME_CONFIG.is_deployed
+            else "django.contrib.staticfiles.storage.StaticFilesStorage"
+        ),
     },
 }
 
