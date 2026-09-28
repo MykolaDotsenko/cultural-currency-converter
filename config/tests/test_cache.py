@@ -25,7 +25,6 @@ def test_test_environment_defaults_to_process_local_cache() -> None:
     assert config.as_django_settings()["KEY_PREFIX"] == "cultural-currency:test"
 
 
-
 def test_demo_defaults_to_process_local_cache() -> None:
     config = load_cache_config(environ={}, environment=RuntimeEnvironment.DEMO)
 
