@@ -60,7 +60,7 @@ def test_unknown_environment_fails_fast() -> None:
         load_runtime_config({"APP_ENV": "prod"})
 
 
-@pytest.mark.parametrize("environment", ["preview", "production"])
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
 def test_deployed_environments_require_allowed_hosts(environment: str) -> None:
     with pytest.raises(ConfigurationError, match="DJANGO_ALLOWED_HOSTS is required"):
         load_runtime_config(
@@ -71,7 +71,7 @@ def test_deployed_environments_require_allowed_hosts(environment: str) -> None:
         )
 
 
-@pytest.mark.parametrize("environment", ["preview", "production"])
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
 def test_deployed_environments_require_secret(environment: str) -> None:
     with pytest.raises(ConfigurationError, match="DJANGO_SECRET_KEY is required"):
         load_runtime_config(
@@ -82,7 +82,7 @@ def test_deployed_environments_require_secret(environment: str) -> None:
         )
 
 
-@pytest.mark.parametrize("environment", ["preview", "production"])
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
 def test_deployed_environments_reject_short_secret(environment: str) -> None:
     with pytest.raises(ConfigurationError, match="at least 50 characters"):
         load_runtime_config(
@@ -94,7 +94,7 @@ def test_deployed_environments_reject_short_secret(environment: str) -> None:
         )
 
 
-@pytest.mark.parametrize("environment", ["preview", "production"])
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
 def test_deployed_environments_reject_debug(environment: str) -> None:
     with pytest.raises(ConfigurationError, match="DJANGO_DEBUG must be false"):
         load_runtime_config(
@@ -107,7 +107,7 @@ def test_deployed_environments_reject_debug(environment: str) -> None:
         )
 
 
-@pytest.mark.parametrize("environment", ["preview", "production"])
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
 def test_deployed_environments_reject_wildcard_hosts(environment: str) -> None:
     with pytest.raises(ConfigurationError, match="Wildcard"):
         load_runtime_config(
@@ -129,7 +129,7 @@ def test_allowed_hosts_reject_urls_and_paths() -> None:
         )
 
 
-@pytest.mark.parametrize("environment", ["preview", "production"])
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
 def test_deployed_environments_require_explicit_https_mode(environment: str) -> None:
     with pytest.raises(ConfigurationError, match="DJANGO_HTTPS_MODE is required"):
         load_runtime_config(
@@ -210,6 +210,27 @@ def test_preview_proxy_mode_is_explicit_without_forcing_hsts() -> None:
 
     assert config.https_mode is HttpsMode.PROXY
     assert config.hsts_seconds == 0
+    assert config.is_deployed is True
+
+
+
+def test_demo_accepts_secure_ephemeral_configuration() -> None:
+    config = load_runtime_config(
+        {
+            "APP_ENV": "demo",
+            "DJANGO_DEBUG": "false",
+            "DJANGO_SECRET_KEY": "d" * 64,
+            "DJANGO_ALLOWED_HOSTS": "demo.example.com",
+            "DJANGO_HTTPS_MODE": "proxy",
+        }
+    )
+
+    assert config.environment is RuntimeEnvironment.DEMO
+    assert config.debug is False
+    assert config.allowed_hosts == ("demo.example.com",)
+    assert config.https_mode is HttpsMode.PROXY
+    assert config.hsts_seconds == 0
+    assert config.is_production is False
     assert config.is_deployed is True
 
 
