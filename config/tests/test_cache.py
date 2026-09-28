@@ -25,6 +25,14 @@ def test_test_environment_defaults_to_process_local_cache() -> None:
     assert config.as_django_settings()["KEY_PREFIX"] == "cultural-currency:test"
 
 
+
+def test_demo_defaults_to_process_local_cache() -> None:
+    config = load_cache_config(environ={}, environment=RuntimeEnvironment.DEMO)
+
+    assert config.shared is False
+    assert config.as_django_settings()["KEY_PREFIX"] == "cultural-currency:demo"
+
+
 @pytest.mark.parametrize("environment", [RuntimeEnvironment.PREVIEW, RuntimeEnvironment.PRODUCTION])
 def test_deployed_environments_require_cache_url(environment: RuntimeEnvironment) -> None:
     with pytest.raises(ConfigurationError, match="CACHE_URL is required"):
