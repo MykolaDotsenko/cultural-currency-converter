@@ -4,6 +4,10 @@
 
 A Django travel-money application that combines currency conversion with practical destination context: what an amount can roughly buy, how people tend to pay, and where the underlying information came from.
 
+**Live demo:** https://cultural-currency-converter-mykola.onrender.com
+
+The hosted portfolio demo uses ephemeral local persistence; the strict production configuration remains PostgreSQL + Redis.
+
 <p align="center">
   <img src="docs/assets/cultural-currency-converter-overview.webp"
        alt="Cultural Currency Converter desktop interface showing a conversion result and local context"
