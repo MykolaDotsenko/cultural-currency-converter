@@ -14,6 +14,7 @@ class ConfigurationError(RuntimeError):
 class RuntimeEnvironment(StrEnum):
     LOCAL = "local"
     TEST = "test"
+    DEMO = "demo"
     PREVIEW = "preview"
     PRODUCTION = "production"
 
@@ -41,6 +42,7 @@ class RuntimeConfig:
     @property
     def is_deployed(self) -> bool:
         return self.environment in {
+            RuntimeEnvironment.DEMO,
             RuntimeEnvironment.PREVIEW,
             RuntimeEnvironment.PRODUCTION,
         }
@@ -103,7 +105,9 @@ def _parse_allowed_hosts(
             return _LOCAL_HOSTS
         if environment is RuntimeEnvironment.TEST:
             return _TEST_HOSTS
-        raise ConfigurationError("DJANGO_ALLOWED_HOSTS is required for preview and production.")
+        raise ConfigurationError(
+            "DJANGO_ALLOWED_HOSTS is required for demo, preview and production."
+        )
 
     hosts = tuple(host.strip() for host in raw.split(",") if host.strip())
     if not hosts:
@@ -118,6 +122,7 @@ def _parse_allowed_hosts(
     if (
         environment
         in {
+            RuntimeEnvironment.DEMO,
             RuntimeEnvironment.PREVIEW,
             RuntimeEnvironment.PRODUCTION,
         }
@@ -136,9 +141,13 @@ def _parse_https_mode(
 ) -> HttpsMode | None:
     raw = _optional(environ, "DJANGO_HTTPS_MODE")
     if raw is None:
-        if environment in {RuntimeEnvironment.PREVIEW, RuntimeEnvironment.PRODUCTION}:
+        if environment in {
+            RuntimeEnvironment.DEMO,
+            RuntimeEnvironment.PREVIEW,
+            RuntimeEnvironment.PRODUCTION,
+        }:
             raise ConfigurationError(
-                "DJANGO_HTTPS_MODE is required for preview and production (direct/proxy)."
+                "DJANGO_HTTPS_MODE is required for demo, preview and production (direct/proxy)."
             )
         return None
 
@@ -238,6 +247,7 @@ def load_runtime_config(
     if (
         environment
         in {
+            RuntimeEnvironment.DEMO,
             RuntimeEnvironment.PREVIEW,
             RuntimeEnvironment.PRODUCTION,
         }
