@@ -442,6 +442,16 @@ h3 {
   line-height: 1.02;
 }
 
+.qa-destination-context--empty {
+  max-width: 48rem;
+}
+
+.qa-destination-context--empty .qa-context-empty {
+  max-width: 62ch;
+  margin-block-start: var(--qa-space-4);
+  font-size: 0.84rem;
+}
+
 .qa-explore-nav {
   gap: var(--qa-space-5);
 }
