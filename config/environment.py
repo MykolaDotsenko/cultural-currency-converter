@@ -129,7 +129,7 @@ def _parse_allowed_hosts(
         and "*" in hosts
     ):
         raise ConfigurationError(
-            "Wildcard DJANGO_ALLOWED_HOSTS is not allowed in preview or production."
+            "Wildcard DJANGO_ALLOWED_HOSTS is not allowed in demo, preview or production."
         )
 
     return hosts
@@ -210,13 +210,14 @@ def _load_secret_key(
         if (
             environment
             in {
+                RuntimeEnvironment.DEMO,
                 RuntimeEnvironment.PREVIEW,
                 RuntimeEnvironment.PRODUCTION,
             }
             and len(configured) < 50
         ):
             raise ConfigurationError(
-                "DJANGO_SECRET_KEY must be at least 50 characters in preview or production."
+                "DJANGO_SECRET_KEY must be at least 50 characters in demo, preview or production."
             )
         return configured
 
@@ -228,7 +229,7 @@ def _load_secret_key(
         # explicitly when stable sessions across process restarts are useful.
         return secrets.token_urlsafe(48)
 
-    raise ConfigurationError("DJANGO_SECRET_KEY is required for preview and production.")
+    raise ConfigurationError("DJANGO_SECRET_KEY is required for demo, preview and production.")
 
 
 def load_runtime_config(
@@ -253,7 +254,7 @@ def load_runtime_config(
         }
         and debug
     ):
-        raise ConfigurationError("DJANGO_DEBUG must be false in preview and production.")
+        raise ConfigurationError("DJANGO_DEBUG must be false in demo, preview and production.")
 
     secret_key = _load_secret_key(values, environment)
     allowed_hosts = _parse_allowed_hosts(values, environment)
