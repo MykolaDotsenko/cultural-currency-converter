@@ -13,6 +13,7 @@ class ImageViewModel:
     label: str
     width: int
     height: int
+    focal_position: str = ""
     caption: str = ""
     attribution_text: str = ""
     source_url: str = ""

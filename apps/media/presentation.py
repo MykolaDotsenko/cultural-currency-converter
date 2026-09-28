@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
@@ -18,6 +19,22 @@ class DisplayMediaSelection:
     fallback_level: int = 0
 
 
+def _format_focal_percent(value: Decimal) -> str:
+    text = format(value * Decimal("100"), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return f"{text}%"
+
+
+def _focal_position(asset: MediaAsset) -> str:
+    if asset.focal_x is None and asset.focal_y is None:
+        return ""
+
+    focal_x = asset.focal_x if asset.focal_x is not None else Decimal("0.5")
+    focal_y = asset.focal_y if asset.focal_y is not None else Decimal("0.5")
+    return f"{_format_focal_percent(focal_x)} {_format_focal_percent(focal_y)}"
+
+
 def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
     if not asset.is_published or not asset.storage_file:
         raise ValueError("Only published managed media can be rendered.")
@@ -31,6 +48,7 @@ def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
         label=asset.title,
         width=asset.width or 1,
         height=asset.height or 1,
+        focal_position=_focal_position(asset),
         caption=asset.caption,
         attribution_text=asset.attribution_text,
         source_url=asset.source_url,

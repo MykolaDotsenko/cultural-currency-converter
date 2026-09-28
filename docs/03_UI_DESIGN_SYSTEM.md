@@ -50,7 +50,8 @@ Target a consistent editorial look:
 - sophisticated warm-neutral grading;
 - real streets, cafés, transit, markets, architecture and everyday payment moments;
 - people may appear naturally, but avoid posed advertising imagery;
-- composition should feel observed rather than staged.
+- composition should feel observed rather than staged;
+- when managed media is cropped, use reviewed focal-point metadata so the important subject survives responsive aspect ratios.
 
 A photo should communicate place or everyday value without becoming a tourism cliché.
 

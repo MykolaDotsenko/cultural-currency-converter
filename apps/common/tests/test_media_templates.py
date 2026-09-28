@@ -34,6 +34,7 @@ class ImageFrameTemplateTests(SimpleTestCase):
         self.assertIn('height="1200"', html)
         self.assertNotIn('aria-hidden="true"', html)
         self.assertNotIn("fetchpriority=", html)
+        self.assertNotIn("object-position:", html)
 
     def test_hero_can_be_eager_and_high_priority(self):
         html = render_to_string(
@@ -60,6 +61,22 @@ class ImageFrameTemplateTests(SimpleTestCase):
         )
 
         self.assertIn('style="aspect-ratio: 16 / 9"', html)
+        self.assertIn('width="1600"', html)
+        self.assertIn('height="1200"', html)
+
+    def test_managed_focal_position_controls_cover_crop(self):
+        html = render_to_string(
+            "components/media/image_frame.html",
+            {
+                "image": self._image(
+                    focal_position="25% 62.5%",
+                    width=1600,
+                    height=1200,
+                )
+            },
+        )
+
+        self.assertIn('style="object-position: 25% 62.5%"', html)
         self.assertIn('width="1600"', html)
         self.assertIn('height="1200"', html)
 
