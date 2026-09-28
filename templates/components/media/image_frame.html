@@ -8,6 +8,7 @@
          height="{{ image.height }}"
          loading="{{ loading|default:'lazy' }}"
          decoding="async"
+         {% if image.focal_position %}style="object-position: {{ image.focal_position }}"{% endif %}
          {% if fetchpriority %}fetchpriority="{{ fetchpriority }}"{% endif %}
          {% if image.decorative %}aria-hidden="true"{% endif %}>
   </div>
