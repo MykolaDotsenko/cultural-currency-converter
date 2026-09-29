@@ -32,11 +32,11 @@ Priority outcomes:
 - curate realistic contemporary country photography for additional destinations;
 - wire selected photography into the most valuable destination/context surfaces;
 - keep the converter clean when photography is unavailable;
-- establish consistent image crops, focal points and tonal treatment;
+- validate focal-point crops across responsive ratios and keep tonal treatment consistent across real country photography;
 - prefer authentic archival/heritage media in historical experiences;
 - remove remaining visual patterns that feel demo-like or decorative;
 - simplify UX where controls/content are duplicated;
-- improve empty/degraded states;
+- continue auditing empty/degraded states beyond the destination-context fallback already made trust-explicit;
 - profile product performance with real photographic media;
 - improve portfolio/demo clarity.
 
