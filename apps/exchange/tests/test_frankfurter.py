@@ -76,6 +76,23 @@ def test_malformed_or_wrong_pair_payload_is_rejected(payload):
         )
 
 
+def test_future_dated_latest_observation_is_rejected():
+    with pytest.raises(FxProviderInvalidPayload, match="after fetch date"):
+        parse_rate_payload(
+            {
+                "date": "2026-09-21",
+                "base": "EUR",
+                "quote": "JPY",
+                "rate": Decimal("174.5"),
+            },
+            expected_base="EUR",
+            expected_quote="JPY",
+            requested_date=None,
+            policy=DEFAULT_SOURCE_POLICY,
+            fetched_at=datetime(2026, 9, 20, 23, 59, tzinfo=UTC),
+        )
+
+
 def test_pinned_quote_retains_identity_when_attribution_expansion_is_disabled():
     policy = FxSourcePolicy(
         mode=ProviderPolicyMode.PINNED,
