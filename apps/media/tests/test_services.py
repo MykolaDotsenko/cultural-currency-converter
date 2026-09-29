@@ -580,7 +580,7 @@ def test_historical_selector_prefers_dated_ai_over_undated_neutral_sourced_media
     approve_media_asset(neutral)
     publish_media_asset(neutral)
 
-    ai = MediaAsset.objects.create(
+    MediaAsset.objects.create(
         kind=MediaKind.GENERATED_ILLUSTRATION,
         source_kind=MediaSourceKind.GENERATED,
         role=MediaRole.STORY_COVER,
