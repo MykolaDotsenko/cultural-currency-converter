@@ -82,6 +82,13 @@ Normal page requests should not search the web or call an image-generation servi
 
 For a small number of editorially selected production assets, the project can use a curated manifest plus an explicit operator command. The command may download from a narrow allowlisted source, but it remains outside normal request handling and never auto-approves or auto-publishes the result.
 
+Curated manifests carry explicit semantic scope rather than relying on filenames or implied geography:
+
+- current destination media can be country-scoped and currency-neutral;
+- historical comparison media is countryless, explicitly currency-scoped and temporally scoped;
+- `comparison_then` manifests must use sourced historical-evidence media, never generated imagery;
+- country/currency reference data is resolved before any download begins, so an unknown scope fails without network I/O.
+
 Finland is the first production vertical slice. Its selected hero source is a 24 May 2026 Helsinki tram photograph by JIP from Wikimedia Commons, available under CC BY-SA 4.0. The source is 4608×3456 and fits under the managed-media byte cap. Ingestion validates the host, media type, response size, redirect target and expected dimensions before the existing sanitizer stores a managed copy.
 
 Operator flow:
@@ -134,7 +141,7 @@ Before publishing a destination image, check:
 
 Historical surfaces use sourced archival photography, documents, currency objects and institutional/heritage imagery as evidence. Historical-evidence roles (`comparison_then` and `historical_timeline`) reject generated media at publication and selection time.
 
-Then & Now can render optional `comparison_then` media beside the selected historical observation. That asset must be explicitly scoped to the quote currency and its temporal range must include the selected observation date; the product does not infer a country from a shared currency such as EUR.
+Then & Now can render optional `comparison_then` media beside the selected historical observation. That asset must be explicitly scoped to the quote currency and its temporal range must include the selected observation date; the product does not infer a country from a shared currency such as EUR. Curated ingestion preserves that same contract by allowing a blank country scope plus an explicit currency code and temporal metadata.
 
 Temporal precision should be honest. A visually attractive but misleading historical image is worse than no image. Missing or malformed historical media is non-fatal and leaves the FX comparison intact.
 
