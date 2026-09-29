@@ -33,7 +33,6 @@ from apps.exchange.web.common import is_htmx
 from apps.media.models import MediaRole
 from apps.media.presentation import select_media_for_display
 
-
 logger = logging.getLogger("cultural_currency.exchange")
 
 
