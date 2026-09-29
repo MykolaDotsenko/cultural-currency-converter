@@ -190,10 +190,7 @@ def validate_curated_media_spec(spec: CuratedMediaSpec) -> CuratedMediaSpec:
             raise ValueError("Country hero/teaser curated media requires country_code.")
         if spec.currency_code:
             raise ValueError("Country hero/teaser curated media must remain currency-neutral.")
-        if (
-            spec.kind != MediaKind.CONTEMPORARY_PHOTO
-            or spec.source_kind == MediaSourceKind.GENERATED
-        ):
+        if spec.kind != MediaKind.CONTEMPORARY_PHOTO or spec.source_kind == MediaSourceKind.GENERATED:
             raise ValueError(
                 "Country hero/teaser curated media requires sourced contemporary photography."
             )
