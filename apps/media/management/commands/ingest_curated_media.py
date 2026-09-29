@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from apps.countries.models import Country
+from apps.countries.models import Country, Currency
 from apps.media.acquisition import MediaAcquisitionError, download_media_bytes
 from apps.media.curated import CURATED_MEDIA, get_curated_media_spec
 from apps.media.models import MediaAsset, MediaStatus
@@ -49,11 +49,21 @@ class Command(BaseCommand):
         except ValueError as exc:
             raise CommandError(str(exc)) from exc
 
-        country = Country.objects.filter(iso2=spec.country_code).first()
-        if country is None:
-            raise CommandError(
-                f"Curated media requires country {spec.country_code}; seed reference data first."
-            )
+        country = None
+        if spec.country_code:
+            country = Country.objects.filter(iso2=spec.country_code).first()
+            if country is None:
+                raise CommandError(
+                    f"Curated media requires country {spec.country_code}; seed reference data first."
+                )
+
+        currency = None
+        if spec.currency_code:
+            currency = Currency.objects.filter(code=spec.currency_code).first()
+            if currency is None:
+                raise CommandError(
+                    f"Curated media requires currency {spec.currency_code}; seed reference data first."
+                )
 
         existing = MediaAsset.objects.filter(
             source_kind=spec.source_kind,
@@ -91,6 +101,7 @@ class Command(BaseCommand):
                 role=spec.role,
                 kind=spec.kind,
                 country=country,
+                currency=currency,
                 dry_run=options["dry_run"],
             )
         except ValueError as exc:
@@ -112,7 +123,20 @@ class Command(BaseCommand):
         asset.city = spec.city
         asset.alt_text = spec.alt_text
         asset.caption = spec.caption
-        asset.save(update_fields=("city", "alt_text", "caption", "updated_at"))
+        asset.valid_from = spec.valid_from
+        asset.valid_to = spec.valid_to
+        asset.date_precision = spec.date_precision
+        asset.save(
+            update_fields=(
+                "city",
+                "alt_text",
+                "caption",
+                "valid_from",
+                "valid_to",
+                "date_precision",
+                "updated_at",
+            )
+        )
 
         if options["metadata_only"]:
             self.stdout.write(

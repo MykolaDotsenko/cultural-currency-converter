@@ -102,6 +102,26 @@ Create a 16:10 premium desktop design concept for Cultural Currency Converter fo
 
 Create a 9:16 premium mobile design concept for Cultural Currency Converter focused on Japan, using **100 EUR → JPY**. Translate the desktop hierarchy into a believable single-column mobile flow: compact source/destination selector, large conversion result, one editorial country image, then concise local-value/payment context. Use one dominant JPY result, a minimal country selector and a Tokyo crop with controlled evening light; avoid decorative Japanese characters unless they are accurate and necessary. Keep tap targets believable, spacing generous and visible copy minimal. No tiny dashboard cards, fake phone chrome, floating glass panels or crowded widgets.
 
+## Curated historical comparison source
+
+The runtime historical-media slice is separate from the generated country prompt pack.
+
+Reviewed source for JPY Then & Now:
+
+- slug: `jpy-series-d-1000-yen-1984-2007`
+- role: `comparison_then`
+- kind: `heritage_object`
+- currency scope: `JPY`
+- country scope: none; historical comparison selection is currency-scoped
+- temporal scope: 1 November 1984 through 2 April 2007
+- subject: front of a Series D 1,000-yen Bank of Japan note featuring Natsume Soseki
+- source: Wikimedia Commons, `Series D 1K Yen Bank of Japan note - front.jpg`
+- creator/uploader credit: Eclipse2009
+- rights: public domain in Japan; preserve the Commons source page in provenance
+- upstream raster: 900 × 456 JPEG
+
+This asset is historical evidence/supporting context for a JPY observation inside its documented temporal scope. It is not a contemporary Japan hero and does not satisfy P01–P04.
+
 ## Generation log
 
 | Prompt | Version | Date | Generator/model | Repository path | Status | Review note |
