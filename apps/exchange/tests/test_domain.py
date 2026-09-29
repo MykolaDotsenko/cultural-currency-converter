@@ -5,6 +5,7 @@ import pytest
 
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
+    ConversionRepresentationError,
     FxDomainError,
     FxSourcePolicy,
     ProviderPolicyMode,
@@ -29,6 +30,11 @@ def quote(rate="174.505"):
 
 def test_decimal_conversion_rounds_once_at_display_boundary():
     assert convert_amount(Decimal("100.125"), quote(), minor_units=0) == Decimal("17472")
+
+
+def test_unrepresentable_conversion_uses_specific_domain_error():
+    with pytest.raises(ConversionRepresentationError, match="cannot be represented"):
+        convert_amount(Decimal("100"), quote("1E+50"), minor_units=0)
 
 
 def test_invalid_rate_cannot_enter_domain():

@@ -8,7 +8,7 @@ from apps.countries.models import Country, CountryCurrency, Currency
 from apps.culture.services import DestinationContext
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
-from apps.exchange.providers.base import FxProviderUnavailable
+from apps.exchange.providers.base import FxProviderInvalidPayload, FxProviderUnavailable
 
 
 class FakeLatestGateway:
@@ -22,6 +22,24 @@ class FakeLatestGateway:
                 base_currency=base,
                 quote_currency=quote,
                 rate=Decimal("174.50"),
+                requested_date=None,
+                effective_date=date(2026, 9, 18),
+                fetched_at=datetime(2026, 9, 20, 8, tzinfo=UTC),
+                provider_policy=DEFAULT_SOURCE_POLICY,
+                provider_keys=("ecb",),
+                historical=False,
+            ),
+            False,
+        )
+
+
+class UnrepresentableLatestGateway:
+    def get(self, base, quote, policy, *, now):
+        return (
+            RateQuote(
+                base_currency=base,
+                quote_currency=quote,
+                rate=Decimal("1E+50"),
                 requested_date=None,
                 effective_date=date(2026, 9, 18),
                 fetched_at=datetime(2026, 9, 20, 8, tzinfo=UTC),
@@ -137,6 +155,29 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
         quote_currency="JPY",
         as_of=date(2026, 9, 22),
     )
+
+
+@pytest.mark.django_db
+def test_unrepresentable_provider_result_is_returned_as_invalid_payload(reference_data):
+    command = ConverterSubmissionCommand(
+        amount=Decimal("100"),
+        source_country="FI",
+        source_currency="EUR",
+        destination_country="JP",
+        destination_currency="JPY",
+    )
+
+    outcome = run_converter_submission(
+        command,
+        latest_gateway_factory=UnrepresentableLatestGateway,
+        historical_gateway_factory=Mock(),
+        context_as_of=date(2026, 9, 22),
+    )
+
+    assert outcome.conversion is None
+    assert isinstance(outcome.error, FxProviderInvalidPayload)
+    assert "cannot be represented" in str(outcome.error)
+    assert outcome.destination_context is None
 
 
 @pytest.mark.django_db
