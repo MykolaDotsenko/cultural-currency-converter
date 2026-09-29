@@ -22,9 +22,7 @@ def test_local_defaults_to_filesystem_storage() -> None:
     assert config.public_origin is None
     assert config.media_root == BASE_DIR / "media"
     assert config.media_url == "/media/"
-    assert config.as_django_storage() == {
-        "BACKEND": "django.core.files.storage.FileSystemStorage"
-    }
+    assert config.as_django_storage() == {"BACKEND": "django.core.files.storage.FileSystemStorage"}
 
 
 @pytest.mark.parametrize(
