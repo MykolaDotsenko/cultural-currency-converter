@@ -87,8 +87,8 @@ Then:
 
 1. review source metadata, composition, rights and managed bytes in admin;
 2. approve the high-resolution managed source;
-3. create a delivery derivative, for example `python manage.py build_media_derivative --asset-id <source-id> --width 1600`;
-4. review the derivative and publish the derivative, not the high-resolution source;
+3. create reviewed-width candidates explicitly, for example `python manage.py build_media_derivative --asset-id <source-id> --width 640 --width 1200 --width 1600`;
+4. review each derivative and publish the appropriate responsive widths, not the high-resolution source;
 5. verify the Finland destination context in browser QA.
 
 The runtime selector remains local/database-backed. If no reviewed published derivative exists, the product intentionally renders no destination hero.
