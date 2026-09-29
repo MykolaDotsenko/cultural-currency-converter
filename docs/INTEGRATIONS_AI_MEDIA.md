@@ -132,9 +132,11 @@ Before publishing a destination image, check:
 
 ## Historical media
 
-Historical surfaces prefer real archival photography, documents, currency objects and institutional/heritage imagery.
+Historical surfaces use sourced archival photography, documents, currency objects and institutional/heritage imagery as evidence. Historical-evidence roles (`comparison_then` and `historical_timeline`) reject generated media at publication and selection time.
 
-Temporal precision should be honest. A visually attractive but misleading historical image is worse than no image.
+Then & Now can render optional `comparison_then` media beside the selected historical observation. That asset must be explicitly scoped to the quote currency and its temporal range must include the selected observation date; the product does not infer a country from a shared currency such as EUR.
+
+Temporal precision should be honest. A visually attractive but misleading historical image is worse than no image. Missing or malformed historical media is non-fatal and leaves the FX comparison intact.
 
 ## AI role
 

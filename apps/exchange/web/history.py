@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 
+from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Currency
 from apps.exchange.domain import (
     ConversionResult,
@@ -27,18 +30,49 @@ from apps.exchange.series_presentation import (
     build_then_now_component,
 )
 from apps.exchange.web.common import is_htmx
+from apps.media.models import MediaRole
+from apps.media.presentation import select_media_for_display
+
+
+logger = logging.getLogger("cultural_currency.exchange")
+
+
+def _select_then_media(
+    *,
+    quote_currency: Currency | None,
+    selected_date,
+) -> ImageViewModel | None:
+    if quote_currency is None:
+        return None
+    try:
+        selection = select_media_for_display(
+            role=MediaRole.COMPARISON_THEN,
+            currency=quote_currency,
+            target_date=selected_date,
+            aspect_ratio="3 / 2",
+        )
+    except (DatabaseError, ValueError) as exc:
+        logger.warning(
+            "Historical comparison media lookup failed",
+            extra={
+                "exchange.currency": quote_currency.code,
+                "error_code": exc.__class__.__name__,
+            },
+        )
+        return None
+    return selection.image if selection is not None else None
 
 
 def _build_then_now_enrichment(
     cleaned,
     series_result,
     *,
+    base_currency: Currency | None,
+    quote_currency: Currency | None,
     latest_gateway_factory,
     quote_conversion_fn,
     compare_historical_to_latest_fn,
 ):
-    base_currency = Currency.objects.filter(code=cleaned["base"]).first()
-    quote_currency = Currency.objects.filter(code=cleaned["quote"]).first()
     if base_currency is None or quote_currency is None:
         return None, "Latest comparison is unavailable because currency metadata is incomplete."
 
@@ -182,12 +216,30 @@ def historical_series_view(
                 end_date=cleaned["end_date_resolved"],
                 gateway=series_gateway_factory,
             )
+            currencies = {
+                currency.code: currency
+                for currency in Currency.objects.filter(
+                    code__in=(cleaned["base"], cleaned["quote"])
+                )
+            }
+            base_currency = currencies.get(cleaned["base"])
+            quote_currency = currencies.get(cleaned["quote"])
             then_now, comparison_notice = _build_then_now_enrichment(
                 cleaned,
                 result,
+                base_currency=base_currency,
+                quote_currency=quote_currency,
                 latest_gateway_factory=latest_gateway_factory,
                 quote_conversion_fn=quote_conversion_fn,
                 compare_historical_to_latest_fn=compare_historical_to_latest_fn,
+            )
+            then_media = (
+                _select_then_media(
+                    quote_currency=quote_currency,
+                    selected_date=cleaned["selected_date"],
+                )
+                if then_now is not None
+                else None
             )
             component = build_rate_series_component(
                 result,
@@ -196,6 +248,7 @@ def historical_series_view(
                 period=cleaned["period"],
                 amount=cleaned.get("amount_decimal"),
                 then_now=then_now,
+                then_media=then_media,
                 comparison_notice=comparison_notice,
             )
         except (

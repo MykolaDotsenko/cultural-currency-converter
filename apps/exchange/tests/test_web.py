@@ -3,7 +3,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from django.db import connection
+from django.db import DatabaseError, connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
@@ -18,6 +18,14 @@ from apps.exchange.domain import (
     RateSeriesPoint,
 )
 from apps.exchange.providers.base import FxProviderUnavailable
+from apps.media.models import (
+    DatePrecision,
+    MediaAsset,
+    MediaKind,
+    MediaRole,
+    MediaSourceKind,
+    MediaStatus,
+)
 
 
 class FakeGateway:
@@ -897,6 +905,94 @@ def test_historical_series_amount_builds_then_now_from_series_observation(client
     assert b"Latest reference" in response.content
     assert len(latest_gateway.calls) == 1
     historical_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_historical_series_then_now_renders_scoped_archival_media(client, reference_data):
+    jpy = Currency.objects.get(code="JPY")
+    MediaAsset.objects.create(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.COMPARISON_THEN,
+        currency=jpy,
+        title="Tokyo street archive",
+        alt_text="A sourced archival street photograph from Tokyo in 1998.",
+        storage_file="sourced/jpy-1998.webp",
+        width=1500,
+        height=1000,
+        aspect_ratio="1500 / 1000",
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Example.jpg",
+        creator="Example photographer",
+        licence_id="CC BY-SA 4.0",
+        licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+        rights_statement="CC BY-SA 4.0",
+        attribution_text="Example photographer · CC BY-SA 4.0",
+        status=MediaStatus.PUBLISHED,
+    )
+
+    with (
+        patch(
+            "apps.exchange.views.build_historical_series_gateway",
+            return_value=FakeSeriesGateway(),
+        ),
+        patch(
+            "apps.exchange.views.build_latest_quote_gateway",
+            return_value=FakeGateway(),
+        ),
+    ):
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "1998-06-15",
+                "period": "1y",
+                "amount": "100.00",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b"Same amount, two reference observations" in response.content
+    assert b"A sourced archival street photograph from Tokyo in 1998." in response.content
+    assert b"Example photographer" in response.content
+    assert b"CC BY-SA 4.0" in response.content
+    assert b'loading="lazy"' in response.content
+
+
+@pytest.mark.django_db
+def test_historical_series_media_failure_does_not_break_then_now(client, reference_data):
+    def unavailable(*args, **kwargs):
+        raise DatabaseError("media lookup unavailable")
+
+    with (
+        patch(
+            "apps.exchange.views.build_historical_series_gateway",
+            return_value=FakeSeriesGateway(),
+        ),
+        patch(
+            "apps.exchange.views.build_latest_quote_gateway",
+            return_value=FakeGateway(),
+        ),
+        patch("apps.exchange.web.history.select_media_for_display", unavailable),
+    ):
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "2026-09-18",
+                "period": "1y",
+                "amount": "100.00",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b"Same amount, two reference observations" in response.content
+    assert b"Historical rate trend" in response.content
 
 
 @pytest.mark.django_db
