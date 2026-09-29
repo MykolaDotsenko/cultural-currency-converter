@@ -123,6 +123,7 @@ Examples of durable invariants:
 - temporal country/currency relationships are explicit and primary eras do not overlap;
 - financial arithmetic uses Decimal semantics;
 - historical requested date and effective observation date are not silently conflated;
+- provider observations cannot be dated after the time they were fetched;
 - current context is not silently backdated;
 - user-owned data is ownership scoped;
 - account recent history requires explicit opt-in;

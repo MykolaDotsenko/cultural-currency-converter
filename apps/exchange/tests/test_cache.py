@@ -32,13 +32,18 @@ from apps.exchange.providers.base import FxProviderInvalidPayload, FxProviderUna
 NOW = datetime(2026, 9, 20, 12, tzinfo=UTC)
 
 
-def make_quote(*, fetched_at=NOW, policy=DEFAULT_SOURCE_POLICY):
+def make_quote(
+    *,
+    fetched_at=NOW,
+    effective_date=date(2026, 9, 18),
+    policy=DEFAULT_SOURCE_POLICY,
+):
     return RateQuote(
         base_currency="EUR",
         quote_currency="JPY",
         rate=Decimal("174.5"),
         requested_date=None,
-        effective_date=date(2026, 9, 18),
+        effective_date=effective_date,
         fetched_at=fetched_at,
         provider_policy=policy,
         provider_keys=((policy.provider_key,) if policy.provider_key else ("ecb",)),
@@ -114,7 +119,10 @@ def test_provider_failure_uses_only_bounded_semantically_matching_stale_quote(ca
 
 
 def test_too_old_stale_quote_is_rejected():
-    cached = make_quote(fetched_at=NOW - timedelta(days=8))
+    cached = make_quote(
+        fetched_at=NOW - timedelta(days=8),
+        effective_date=date(2026, 9, 12),
+    )
     cache.set(latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY), serialize_quote(cached), 100)
     gateway = LatestQuoteGateway(FakeProvider(error=FxProviderUnavailable("down")))
 
