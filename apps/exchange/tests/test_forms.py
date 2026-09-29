@@ -151,7 +151,6 @@ def test_latest_mode_ignores_unsubmitted_historical_date(reference_data):
     assert form.cleaned_data["requested_date"] is None
 
 
-
 def test_historical_series_form_rejects_requested_date_before_selected_observation():
     selected_date = timezone.localdate() - timedelta(days=2)
     form = HistoricalSeriesForm(
