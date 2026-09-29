@@ -99,13 +99,9 @@ JAPAN_TOKYO_STREET_HERO_2019 = CuratedMediaSpec(
     alt_text="A nighttime street scene in Tokyo photographed in November 2019.",
     caption="Tokyo street at night, photographed 29 November 2019.",
     source_name="Wikimedia Commons",
-    source_url=(
-        "https://commons.wikimedia.org/wiki/"
-        "File:Tokyo_street_at_night,_2019_-_771.jpg"
-    ),
+    source_url=("https://commons.wikimedia.org/wiki/File:Tokyo_street_at_night,_2019_-_771.jpg"),
     source_media_url=(
-        "https://upload.wikimedia.org/wikipedia/commons/d/d6/"
-        "Tokyo_street_at_night,_2019_-_771.jpg"
+        "https://upload.wikimedia.org/wikipedia/commons/d/d6/Tokyo_street_at_night,_2019_-_771.jpg"
     ),
     creator="Another Believer",
     licence_id="CC BY-SA 4.0",
