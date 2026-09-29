@@ -300,9 +300,7 @@ JAPAN_AKIHABARA_1995_THEN = CuratedMediaSpec(
         "A sourced archival view of the street outside Akihabara Station in Tokyo, "
         "identified by the source as 1995."
     ),
-    caption=(
-        "Akihabara Station south street, Tokyo; the source identifies the scene as 1995."
-    ),
+    caption=("Akihabara Station south street, Tokyo; the source identifies the scene as 1995."),
     source_name="Wikimedia Commons",
     source_url=(
         "https://commons.wikimedia.org/wiki/"
