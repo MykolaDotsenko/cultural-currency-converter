@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
@@ -9,7 +10,6 @@ from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
-from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Currency
 from apps.exchange.domain import (
     ConversionResult,
@@ -32,6 +32,9 @@ from apps.exchange.series_presentation import (
 from apps.exchange.web.common import is_htmx
 from apps.media.models import MediaRole
 from apps.media.presentation import select_media_for_display
+
+if TYPE_CHECKING:
+    from apps.common.presentation.media_view_models import ImageViewModel
 
 logger = logging.getLogger("cultural_currency.exchange")
 
