@@ -10,7 +10,6 @@ from apps.media.models import (
     MediaSourceKind,
 )
 
-
 _HISTORICAL_EVIDENCE_KINDS = {
     MediaKind.ARCHIVAL_PHOTO,
     MediaKind.ARTWORK,
