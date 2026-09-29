@@ -31,6 +31,19 @@ class QuoteFreshness(StrEnum):
     TOO_OLD = "too_old"
 
 
+def _allowed_observation_gap(
+    granularity: ObservationGranularity,
+    *,
+    daily_gap: timedelta,
+) -> timedelta:
+    return {
+        ObservationGranularity.DAILY: daily_gap,
+        ObservationGranularity.MONTHLY: timedelta(days=31),
+        ObservationGranularity.QUARTERLY: timedelta(days=92),
+        ObservationGranularity.UNKNOWN: daily_gap,
+    }[granularity]
+
+
 def latest_cache_key(base: str, quote: str, policy: FxSourcePolicy) -> str:
     base_code = normalize_currency_code(base)
     quote_code = normalize_currency_code(quote)
@@ -235,13 +248,17 @@ class LatestQuoteGateway:
         *,
         fresh_for: timedelta = timedelta(hours=6),
         stale_for: timedelta = timedelta(days=7),
+        max_observation_gap: timedelta = timedelta(days=7),
         physical_ttl_seconds: int = 8 * 24 * 60 * 60,
     ):
         if fresh_for <= timedelta(0) or stale_for <= fresh_for:
             raise ValueError("FX freshness windows must be positive and ordered.")
+        if max_observation_gap < timedelta(0):
+            raise ValueError("Latest FX observation gap cannot be negative.")
         self.provider = provider
         self.fresh_for = fresh_for
         self.stale_for = stale_for
+        self.max_observation_gap = max_observation_gap
         self.physical_ttl_seconds = physical_ttl_seconds
 
     def get(
@@ -301,8 +318,8 @@ class LatestQuoteGateway:
         self._cache_set(key, fresh)
         return fresh, False
 
-    @staticmethod
     def _assert_quote_identity(
+        self,
         quote_value: RateQuote,
         *,
         base: str,
@@ -317,6 +334,17 @@ class LatestQuoteGateway:
             )
         if quote_value.historical or quote_value.requested_date is not None:
             raise FxProviderInvalidPayload("Latest quote gateway received historical semantics.")
+
+        observation_gap = quote_value.fetched_at.astimezone(UTC).date() - quote_value.effective_date
+        allowed_gap = _allowed_observation_gap(
+            quote_value.observation_granularity,
+            daily_gap=self.max_observation_gap,
+        )
+        if observation_gap > allowed_gap:
+            raise FxProviderInvalidPayload(
+                "Latest quote observation falls outside the allowed "
+                f"{quote_value.observation_granularity.value} observation window."
+            )
 
     def _cache_get(self, key: str) -> RateQuote | None:
         try:
@@ -621,12 +649,10 @@ class HistoricalQuoteGateway:
         if quote.requested_date is None:
             raise FxProviderInvalidPayload("Historical quote omitted its requested date.")
         gap = quote.requested_date - quote.effective_date
-        allowed_gap = {
-            ObservationGranularity.DAILY: self.max_previous_gap,
-            ObservationGranularity.MONTHLY: timedelta(days=31),
-            ObservationGranularity.QUARTERLY: timedelta(days=92),
-            ObservationGranularity.UNKNOWN: self.max_previous_gap,
-        }[quote.observation_granularity]
+        allowed_gap = _allowed_observation_gap(
+            quote.observation_granularity,
+            daily_gap=self.max_previous_gap,
+        )
         if gap > allowed_gap:
             raise HistoricalObservationUnavailable(
                 "No historical observation is available within the allowed "
