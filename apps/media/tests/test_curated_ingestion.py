@@ -148,6 +148,48 @@ def comparison_curated_spec(monkeypatch):
     return spec
 
 
+def test_jpy_akihabara_1995_manifest_matches_reviewed_source_contract() -> None:
+    spec = get_curated_media_spec("jpy-akihabara-1995")
+
+    assert spec.country_code == ""
+    assert spec.currency_code == "JPY"
+    assert spec.city == "Tokyo"
+    assert spec.role == MediaRole.COMPARISON_THEN
+    assert spec.kind == MediaKind.ARCHIVAL_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.valid_from == date(1995, 1, 1)
+    assert spec.valid_to == date(1995, 12, 31)
+    assert spec.date_precision == DatePrecision.YEAR
+    assert spec.expected_width == 930
+    assert spec.expected_height == 622
+    assert spec.creator == "Danny Choo"
+    assert spec.licence_id == "CC BY-SA 2.0"
+    assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
+
+
+@pytest.mark.django_db
+def test_jpy_akihabara_1995_manifest_creates_currency_scoped_review_candidate(yen) -> None:
+    call_command(
+        "ingest_curated_media",
+        slug="jpy-akihabara-1995",
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get(
+        external_id="commons:Akihabara_station_south_street_1995_Danny_Choo"
+    )
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert not asset.storage_file
+    assert asset.country is None
+    assert asset.currency == yen
+    assert asset.city == "Tokyo"
+    assert asset.role == MediaRole.COMPARISON_THEN
+    assert asset.kind == MediaKind.ARCHIVAL_PHOTO
+    assert asset.valid_from == date(1995, 1, 1)
+    assert asset.valid_to == date(1995, 12, 31)
+    assert asset.date_precision == DatePrecision.YEAR
+
+
 def test_france_hero_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("france-rue-lauriston-paris-2024")
 
