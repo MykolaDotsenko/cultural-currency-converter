@@ -92,18 +92,13 @@ JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
     source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
     external_id="commons:Series_D_1K_Yen_Bank_of_Japan_note_-_front.jpg",
     title="Series D 1,000-yen Bank of Japan note",
-    alt_text=(
-        "Front of a Series D 1,000-yen Bank of Japan note featuring "
-        "Natsume Soseki."
-    ),
+    alt_text=("Front of a Series D 1,000-yen Bank of Japan note featuring Natsume Soseki."),
     caption=(
-        "Series D 1,000-yen note, first issued 1 November 1984; "
-        "issue suspended 2 April 2007."
+        "Series D 1,000-yen note, first issued 1 November 1984; issue suspended 2 April 2007."
     ),
     source_name="Wikimedia Commons",
     source_url=(
-        "https://commons.wikimedia.org/wiki/"
-        "File:Series_D_1K_Yen_Bank_of_Japan_note_-_front.jpg"
+        "https://commons.wikimedia.org/wiki/File:Series_D_1K_Yen_Bank_of_Japan_note_-_front.jpg"
     ),
     source_media_url=(
         "https://upload.wikimedia.org/wikipedia/commons/5/5c/"
