@@ -148,7 +148,6 @@ def comparison_curated_spec(monkeypatch):
     return spec
 
 
-
 def test_france_hero_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("france-rue-lauriston-paris-2024")
 
@@ -191,7 +190,6 @@ def test_france_hero_manifest_creates_country_scoped_review_candidate() -> None:
     assert asset.valid_from == date(2024, 11, 16)
     assert asset.valid_to == date(2024, 11, 16)
     assert asset.date_precision == DatePrecision.EXACT_DAY
-
 
 
 def test_japan_hero_manifest_matches_reviewed_source_contract() -> None:
