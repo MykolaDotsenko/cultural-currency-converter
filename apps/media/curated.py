@@ -129,12 +129,12 @@ JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
     role=MediaRole.EVERYDAY_VALUE,
     kind=MediaKind.CONTEMPORARY_PHOTO,
     source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
-    external_id="commons:Shoyu_Ramen（Tokyo_Ramen）_-_01.jpg",
+    external_id="commons:shoyu-ramen-tokyo-ramen-01-2025",
     title="Shoyu ramen (Tokyo ramen style), May 2025",
     alt_text="A bowl of shoyu ramen presented in Tokyo ramen style.",
     caption="Shoyu ramen (Tokyo ramen style), photographed 11 May 2025.",
     source_name="Wikimedia Commons",
-    source_url="https://commons.wikimedia.org/wiki/File:Shoyu_Ramen（Tokyo_Ramen）_-_01.jpg",
+    source_url="https://commons.wikimedia.org/wiki/File:Shoyu_Ramen%EF%BC%88Tokyo_Ramen%EF%BC%89_-_01.jpg",
     source_media_url=(
         "https://upload.wikimedia.org/wikipedia/commons/c/c3/"
         "Shoyu_Ramen%EF%BC%88Tokyo_Ramen%EF%BC%89_-_01.jpg"
