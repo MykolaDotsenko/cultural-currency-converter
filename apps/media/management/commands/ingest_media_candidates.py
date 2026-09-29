@@ -62,9 +62,7 @@ class Command(BaseCommand):
             MediaRole.HISTORICAL_TIMELINE,
         }
         if options["role"] == MediaRole.COMPARISON_THEN and currency is None:
-            raise CommandError(
-                "comparison_then candidate ingestion requires --currency."
-            )
+            raise CommandError("comparison_then candidate ingestion requires --currency.")
         if options["role"] in historical_roles:
             if options["date_precision"] == DatePrecision.UNKNOWN:
                 raise CommandError(
