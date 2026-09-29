@@ -4,6 +4,7 @@ import io
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
+from fractions import Fraction
 from urllib.parse import urlsplit
 
 from django.core.files.base import ContentFile
@@ -469,6 +470,28 @@ def _temporal_quality(asset: MediaAsset, target_date: date | None) -> str:
     return "unknown"
 
 
+def _normalized_aspect_ratio(value: str) -> Fraction | None:
+    parts = value.split("/")
+    if len(parts) != 2:
+        return None
+    try:
+        width = int(parts[0].strip())
+        height = int(parts[1].strip())
+    except ValueError:
+        return None
+    if width <= 0 or height <= 0:
+        return None
+    return Fraction(width, height)
+
+
+def _aspect_ratio_matches(actual: str, requested: str | None) -> bool:
+    if not requested:
+        return False
+    actual_ratio = _normalized_aspect_ratio(actual)
+    requested_ratio = _normalized_aspect_ratio(requested)
+    return actual_ratio is not None and actual_ratio == requested_ratio
+
+
 def _media_score(
     asset: MediaAsset,
     *,
@@ -495,7 +518,7 @@ def _media_score(
     else:
         authenticity_rank = 1
 
-    aspect_match = int(bool(aspect_ratio and asset.aspect_ratio == aspect_ratio))
+    aspect_match = int(_aspect_ratio_matches(asset.aspect_ratio, aspect_ratio))
     return (
         semantic_specificity,
         authenticity_rank,
