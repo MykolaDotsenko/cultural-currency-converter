@@ -151,12 +151,12 @@ def test_unclear_rights_candidate_cannot_be_approved(media_root):
         (candidate,),
         role=MediaRole.HISTORICAL_TIMELINE,
         kind=MediaKind.ARCHIVAL_PHOTO,
+        valid_from=date(1950, 1, 1),
+        date_precision=DatePrecision.DECADE,
     )
     asset = MediaAsset.objects.get()
     asset.alt_text = "Historical archive image"
-    asset.valid_from = date(1950, 1, 1)
-    asset.date_precision = DatePrecision.DECADE
-    asset.save()
+    asset.save(update_fields=("alt_text", "updated_at"))
     attach_media_bytes(asset, _png_bytes((1, 2, 3)), filename="archive.png")
 
     with pytest.raises(MediaPublicationError, match="licence or rights"):

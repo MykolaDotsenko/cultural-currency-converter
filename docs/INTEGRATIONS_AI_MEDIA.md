@@ -138,6 +138,22 @@ Then & Now can render optional `comparison_then` media beside the selected histo
 
 Temporal precision should be honest. A visually attractive but misleading historical image is worse than no image. Missing or malformed historical media is non-fatal and leaves the FX comparison intact.
 
+Historical candidate ingestion records the scope before review instead of relying on later manual database edits. For a Then & Now candidate:
+
+```bash
+python manage.py ingest_media_candidates \
+  --source wikimedia \
+  --query "Tokyo 1998 street" \
+  --role comparison_then \
+  --kind archival_photo \
+  --currency JPY \
+  --valid-from 1998-01-01 \
+  --valid-to 1998-12-31 \
+  --date-precision year
+```
+
+For `comparison_then`, `--currency` is mandatory. Historical-evidence roles also require explicit temporal precision plus at least one temporal bound; inverted ranges are rejected before the source client is called. Candidate ingestion still does not download, approve or publish media. Operators review provenance/rights first, attach or ingest managed bytes, then use the normal derivative/review/publication gates.
+
 ## AI role
 
 AI is optional synthesis, not a source of FX rates, historical observations or published factual truth.

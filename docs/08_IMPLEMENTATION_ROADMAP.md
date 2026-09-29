@@ -33,7 +33,7 @@ Priority outcomes:
 - expand reviewed country-media coverage now that hero, everyday-value, payment-culture and local-detail roles are wired into destination context;
 - keep the converter clean when photography is unavailable;
 - validate focal-point crops across responsive ratios and keep tonal treatment consistent across real country photography;
-- expand authentic archival/heritage coverage now that Then & Now supports currency/date-scoped sourced historical media;
+- curate and publish authentic archival/heritage coverage now that Then & Now and the operator ingestion flow both support currency/date-scoped sourced historical media;
 - remove remaining visual patterns that feel demo-like or decorative;
 - simplify UX where controls/content are duplicated;
 - continue auditing empty/degraded states beyond the destination-context fallback already made trust-explicit;

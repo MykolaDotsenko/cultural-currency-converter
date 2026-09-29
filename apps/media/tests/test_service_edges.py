@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+from datetime import date
 import tempfile
 from pathlib import Path
 
@@ -109,6 +110,75 @@ def test_archival_media_requires_temporal_scope_and_precision(media_root):
     asset.save(update_fields=("date_precision",))
     with pytest.raises(MediaPublicationError, match="temporal scope"):
         approve_media_asset(asset)
+
+
+@pytest.mark.django_db
+def test_historical_candidate_ingestion_requires_scope_at_service_boundary():
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="historical",
+        title="Historical",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Historical.jpg",
+    )
+
+    with pytest.raises(ValueError, match="temporal precision"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.HISTORICAL_TIMELINE,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            valid_from=date(1950, 1, 1),
+        )
+
+    with pytest.raises(ValueError, match="temporal scope"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.HISTORICAL_TIMELINE,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            date_precision=DatePrecision.YEAR,
+        )
+
+
+@pytest.mark.django_db
+def test_comparison_candidate_ingestion_requires_currency_at_service_boundary():
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="comparison",
+        title="Comparison",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Comparison.jpg",
+    )
+
+    with pytest.raises(ValueError, match="currency scope"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.COMPARISON_THEN,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            valid_from=date(1998, 1, 1),
+            valid_to=date(1998, 12, 31),
+            date_precision=DatePrecision.YEAR,
+        )
+
+
+@pytest.mark.django_db
+def test_candidate_ingestion_rejects_inverted_temporal_scope():
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="bad-range",
+        title="Bad range",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Bad_range.jpg",
+    )
+
+    with pytest.raises(ValueError, match="start must not be after"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.HISTORICAL_TIMELINE,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            valid_from=date(2000, 1, 1),
+            valid_to=date(1999, 12, 31),
+            date_precision=DatePrecision.RANGE,
+        )
 
 
 @pytest.mark.django_db

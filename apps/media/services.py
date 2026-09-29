@@ -373,12 +373,26 @@ def upsert_media_candidates(
     kind: str,
     country: Country | None = None,
     currency: Currency | None = None,
+    valid_from: date | None = None,
+    valid_to: date | None = None,
+    date_precision: str = DatePrecision.UNKNOWN,
     dry_run: bool = False,
 ) -> CandidateIngestSummary:
     if role not in MediaRole.values:
         raise ValueError("Unknown media role.")
     if kind not in MediaKind.values or kind == MediaKind.GENERATED_ILLUSTRATION:
         raise ValueError("Candidate ingestion requires a non-generated media kind.")
+    if date_precision not in DatePrecision.values:
+        raise ValueError("Unknown media date precision.")
+    if valid_from is not None and valid_to is not None and valid_from > valid_to:
+        raise ValueError("Media temporal scope start must not be after its end.")
+    if role in _HISTORICAL_ROLES:
+        if date_precision == DatePrecision.UNKNOWN:
+            raise ValueError("Historical media ingestion requires explicit temporal precision.")
+        if valid_from is None and valid_to is None:
+            raise ValueError("Historical media ingestion requires a temporal scope.")
+    if role in _CURRENCY_SCOPED_ROLES and currency is None:
+        raise ValueError("Comparison historical media ingestion requires explicit currency scope.")
 
     created = updated = unchanged = skipped_protected = 0
     with transaction.atomic():
@@ -416,6 +430,9 @@ def upsert_media_candidates(
                 "role": role,
                 "country": country,
                 "currency": currency,
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "date_precision": date_precision,
                 "title": candidate.title[:240],
                 "source_name": candidate.source_name[:200],
                 "source_url": candidate.source_url,
