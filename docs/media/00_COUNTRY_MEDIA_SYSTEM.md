@@ -18,7 +18,7 @@ Generated visual work should make the product feel:
 
 - [Country index](01_COUNTRY_INDEX.md) — all 30 countries, codes, currencies and prompt-file links.
 - `countries/<iso2>-<country>.md` — canonical prompts and generation log for one country.
-- [Production image folder guide](../../static/images/country-media/README.md) — approved runtime asset locations.
+- [Country visual folder guide](../../static/images/country-media/README.md) — repository-tracked visual outputs; filesystem presence is not runtime publication.
 
 ## Canonical asset set per country
 
@@ -117,7 +117,9 @@ Recommended reference target: `1080×1920` WebP under docs assets.
 
 ## File locations
 
-### Approved production visual
+### Repository-tracked country visual
+
+These paths are the canonical repository locations for reviewed prompt outputs and visual trials. They do **not** by themselves make an image runtime-published. Runtime country hero/teaser selection uses reviewed, published managed `MediaAsset` records and currently excludes generated imagery for those photographic roles.
 
 ```text
 static/images/country-media/<iso2>/<role>/<iso2>-<role>-vNN.webp
@@ -254,9 +256,9 @@ This keeps context small and makes the result reproducible.
 
 ## Completion definition
 
-A country is **core-complete** when P01–P04 each have one approved asset and their generation log is current.
+A country media pack is **core-complete** when P01–P04 each have one approved prompt output and the generation log is current. This describes the media-production pack, not runtime publication status.
 
-A country is **showcase-complete** when P01–P06 are approved.
+A country media pack is **showcase-complete** when P01–P06 are approved. Runtime eligibility is still governed by managed-media review/publication rules and the role-specific authenticity policy.
 
 The initial showcase order is:
 
