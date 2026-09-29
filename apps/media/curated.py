@@ -200,8 +200,7 @@ JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021 = CuratedMediaSpec(
     caption="Passenger information display on a Tokyo Metro 13000-series train, photographed 20 April 2021.",
     source_name="Wikimedia Commons",
     source_url=(
-        "https://commons.wikimedia.org/wiki/"
-        "File:Tokyo-Metro-13000-Digital_signage-On_the_door.jpg"
+        "https://commons.wikimedia.org/wiki/File:Tokyo-Metro-13000-Digital_signage-On_the_door.jpg"
     ),
     source_media_url=(
         "https://upload.wikimedia.org/wikipedia/commons/7/76/"
