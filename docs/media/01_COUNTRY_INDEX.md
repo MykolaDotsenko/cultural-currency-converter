@@ -9,7 +9,7 @@ Read [Country Media Production System](00_COUNTRY_MEDIA_SYSTEM.md) before genera
 | 1 | Finland | `FI` | `EUR` | [prompt pack](countries/fi-finland.md) | in-progress · sourced P01 selected · P02 trial-approved |
 | 2 | Japan | `JP` | `JPY` | [prompt pack](countries/jp-japan.md) | in-progress · sourced P01–P04 selected |
 | 3 | United States | `US` | `USD` | [prompt pack](countries/us-united-states.md) | planned |
-| 4 | France | `FR` | `EUR` | [prompt pack](countries/fr-france.md) | in-progress · sourced P01 selected |
+| 4 | France | `FR` | `EUR` | [prompt pack](countries/fr-france.md) | in-progress · sourced P01/P02 selected |
 | 5 | United Kingdom | `GB` | `GBP` | [prompt pack](countries/gb-united-kingdom.md) | planned |
 | 6 | Germany | `DE` | `EUR` | [prompt pack](countries/de-germany.md) | planned |
 | 7 | Italy | `IT` | `EUR` | [prompt pack](countries/it-italy.md) | planned |

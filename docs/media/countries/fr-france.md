@@ -75,6 +75,27 @@ Photograph an elegant Paris street or corner café at soft morning or golden lat
 
 Composition: one coherent contemporary scene, not a collage. Keep the main visual interest away from at least one outer third so product UI can coexist with the crop. Preserve architectural lines and realistic scale. People, if present, should feel incidental and unposed.
 
+## Production everyday-value source
+
+The first sourced P02 candidate is a real Paris pastry photograph, not a price observation or staged product claim.
+
+- slug: `france-paris-croissant-everyday-value-2025`
+- role: `everyday_value`
+- kind: `contemporary_photo`
+- country scope: `FR`
+- city: Paris
+- captured: 19 October 2025
+- subject: croissant and pain au chocolat
+- source: Wikimedia Commons, `Croissant et Pain au chocolat in Paris.jpg`
+- creator: Wyslijp16
+- licence: CC BY 4.0
+- upstream raster: 6000 × 4000 JPEG
+- runtime policy: supporting atmosphere only; it may render beside separately reviewed everyday-price observations and is never evidence for a price
+
+The source is explicitly categorized and described as Paris imagery, so the city scope is documented rather than inferred from the pastry itself. The photograph supports the everyday-spending story without adding a fabricated menu price or implying that the pictured items represent a canonical price point.
+
+As with P01, manifest inclusion is not publication. Managed ingestion remains `needs_review` until editorial review, responsive derivative creation and explicit publication.
+
 ## P02 — Everyday Value
 
 **Target:** `static/images/country-media/fr/everyday-value/fr-everyday-value-v01.webp`
@@ -126,7 +147,7 @@ Create a 9:16 premium mobile design concept for Cultural Currency Converter focu
 | Prompt | Version | Date | Generator/model | Repository path | Status | Review note |
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | source selected | 2026-09-29 | Wikimedia Commons / Chabe01 | managed-media curated manifest | sourced candidate | Contemporary Rue Lauriston street source selected; ingestion/review/publication remain separate. |
-| P02 | — | — | — | — | planned | — |
+| P02 | source selected | 2026-09-29 | Wikimedia Commons / Wyslijp16 | managed-media curated manifest | sourced candidate | Paris croissant and pain-au-chocolat source selected; image remains atmosphere, not price evidence. |
 | P03 | — | — | — | — | planned | — |
 | P04 | — | — | — | — | planned | — |
 | P05 | — | — | — | — | planned | — |

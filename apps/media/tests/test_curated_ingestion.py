@@ -192,6 +192,47 @@ def test_france_hero_manifest_creates_country_scoped_review_candidate() -> None:
     assert asset.date_precision == DatePrecision.EXACT_DAY
 
 
+def test_france_everyday_value_manifest_matches_reviewed_source_contract() -> None:
+    spec = get_curated_media_spec("france-paris-croissant-everyday-value-2025")
+
+    assert spec.country_code == "FR"
+    assert spec.currency_code == ""
+    assert spec.city == "Paris"
+    assert spec.role == MediaRole.EVERYDAY_VALUE
+    assert spec.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.valid_from == date(2025, 10, 19)
+    assert spec.valid_to == date(2025, 10, 19)
+    assert spec.date_precision == DatePrecision.EXACT_DAY
+    assert spec.expected_width == 6000
+    assert spec.expected_height == 4000
+    assert spec.creator == "Wyslijp16"
+    assert spec.licence_id == "CC BY 4.0"
+    assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
+
+
+@pytest.mark.django_db
+def test_france_everyday_value_manifest_creates_country_scoped_review_candidate() -> None:
+    france = Country.objects.create(iso2="FR", iso3="FRA", name="France")
+
+    call_command(
+        "ingest_curated_media",
+        slug="france-paris-croissant-everyday-value-2025",
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get(external_id="commons:Croissant_et_Pain_au_chocolat_in_Paris.jpg")
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert not asset.storage_file
+    assert asset.country == france
+    assert asset.currency is None
+    assert asset.city == "Paris"
+    assert asset.role == MediaRole.EVERYDAY_VALUE
+    assert asset.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert asset.valid_from == date(2025, 10, 19)
+    assert asset.valid_to == date(2025, 10, 19)
+
+
 def test_japan_hero_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("japan-tokyo-street-night-2019")
 
