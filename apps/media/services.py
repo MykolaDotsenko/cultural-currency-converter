@@ -118,11 +118,16 @@ def _validate_publishable_metadata(asset: MediaAsset) -> None:
     if asset.role in _CURRENCY_SCOPED_ROLES and asset.currency_id is None:
         raise MediaPublicationError("Comparison historical media requires explicit currency scope.")
 
+    if asset.generated_by_ai and asset.role in _HISTORICAL_ROLES:
+        raise MediaPublicationError(
+            "Historical evidence roles require sourced media, not generated imagery."
+        )
+    if asset.role in _HISTORICAL_ROLES and asset.kind not in _HISTORICAL_EVIDENCE_KINDS:
+        raise MediaPublicationError(
+            "Historical evidence roles require archival, artwork, heritage-object or map media."
+        )
+
     if asset.generated_by_ai:
-        if asset.role in _HISTORICAL_ROLES:
-            raise MediaPublicationError(
-                "Historical evidence roles require sourced media, not generated imagery."
-            )
         required_ai = {
             "ai_label": asset.ai_label,
             "generation_provider": asset.generation_provider,
@@ -366,6 +371,44 @@ def create_responsive_derivative(
         raise
 
 
+def validate_candidate_media_scope(
+    *,
+    role: str,
+    kind: str,
+    country: Country | None = None,
+    currency: Currency | None = None,
+    valid_from: date | None = None,
+    valid_to: date | None = None,
+    date_precision: str = DatePrecision.UNKNOWN,
+) -> None:
+    if role not in MediaRole.values:
+        raise ValueError("Unknown media role.")
+    if kind not in MediaKind.values or kind == MediaKind.GENERATED_ILLUSTRATION:
+        raise ValueError("Candidate ingestion requires a non-generated media kind.")
+    if date_precision not in DatePrecision.values:
+        raise ValueError("Unknown media date precision.")
+    if valid_from is not None and valid_to is not None and valid_from > valid_to:
+        raise ValueError("Media temporal scope cannot end before it starts.")
+
+    if role in _HISTORICAL_ROLES:
+        if kind not in _HISTORICAL_EVIDENCE_KINDS:
+            raise ValueError(
+                "Historical evidence candidates require archival, artwork, heritage-object or map media."
+            )
+        if date_precision == DatePrecision.UNKNOWN:
+            raise ValueError("Historical evidence candidates require explicit date precision.")
+        if valid_from is None and valid_to is None:
+            raise ValueError("Historical evidence candidates require a temporal scope.")
+
+    if role in _CURRENCY_SCOPED_ROLES:
+        if country is not None:
+            raise ValueError(
+                "Comparison historical media must be countryless; runtime selection is currency-scoped."
+            )
+        if currency is None:
+            raise ValueError("Comparison historical media requires explicit currency scope.")
+
+
 def upsert_media_candidates(
     candidates: tuple[MediaCandidate, ...],
     *,
@@ -373,12 +416,20 @@ def upsert_media_candidates(
     kind: str,
     country: Country | None = None,
     currency: Currency | None = None,
+    valid_from: date | None = None,
+    valid_to: date | None = None,
+    date_precision: str = DatePrecision.UNKNOWN,
     dry_run: bool = False,
 ) -> CandidateIngestSummary:
-    if role not in MediaRole.values:
-        raise ValueError("Unknown media role.")
-    if kind not in MediaKind.values or kind == MediaKind.GENERATED_ILLUSTRATION:
-        raise ValueError("Candidate ingestion requires a non-generated media kind.")
+    validate_candidate_media_scope(
+        role=role,
+        kind=kind,
+        country=country,
+        currency=currency,
+        valid_from=valid_from,
+        valid_to=valid_to,
+        date_precision=date_precision,
+    )
 
     created = updated = unchanged = skipped_protected = 0
     with transaction.atomic():
@@ -416,6 +467,9 @@ def upsert_media_candidates(
                 "role": role,
                 "country": country,
                 "currency": currency,
+                "valid_from": valid_from,
+                "valid_to": valid_to,
+                "date_precision": date_precision,
                 "title": candidate.title[:240],
                 "source_name": candidate.source_name[:200],
                 "source_url": candidate.source_url,

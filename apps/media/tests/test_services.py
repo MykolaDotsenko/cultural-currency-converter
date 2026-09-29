@@ -91,6 +91,102 @@ def _publish_sourced(asset: MediaAsset, *, color=(10, 20, 30)) -> MediaAsset:
 
 
 @pytest.mark.django_db
+def test_candidate_service_rejects_incomplete_historical_scope_before_writes(euro):
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="historical-incomplete",
+        title="Historical candidate",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Historical.jpg",
+    )
+
+    with pytest.raises(ValueError, match="date precision"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.HISTORICAL_TIMELINE,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            valid_from=date(1998, 1, 1),
+        )
+
+    with pytest.raises(ValueError, match="currency scope"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.COMPARISON_THEN,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            valid_from=date(1998, 1, 1),
+            valid_to=date(1998, 12, 31),
+            date_precision=DatePrecision.YEAR,
+        )
+
+    with pytest.raises(ValueError, match="archival"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.COMPARISON_THEN,
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+            currency=euro,
+            valid_from=date(1998, 1, 1),
+            valid_to=date(1998, 12, 31),
+            date_precision=DatePrecision.YEAR,
+        )
+
+    assert not MediaAsset.objects.filter(external_id="historical-incomplete").exists()
+
+
+@pytest.mark.django_db
+def test_comparison_candidate_service_rejects_country_scope(finland, euro):
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="country-scoped-comparison",
+        title="Country scoped comparison",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Historical.jpg",
+    )
+
+    with pytest.raises(ValueError, match="countryless"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.COMPARISON_THEN,
+            kind=MediaKind.ARCHIVAL_PHOTO,
+            country=finland,
+            currency=euro,
+            valid_from=date(1998, 1, 1),
+            valid_to=date(1998, 12, 31),
+            date_precision=DatePrecision.YEAR,
+        )
+
+    assert not MediaAsset.objects.filter(external_id="country-scoped-comparison").exists()
+
+
+@pytest.mark.django_db
+def test_candidate_service_persists_historical_scope(euro):
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="historical-scoped",
+        title="Historical candidate",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Historical.jpg",
+    )
+
+    summary = upsert_media_candidates(
+        (candidate,),
+        role=MediaRole.COMPARISON_THEN,
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        currency=euro,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+    )
+
+    asset = MediaAsset.objects.get(external_id="historical-scoped")
+    assert summary.created == 1
+    assert asset.currency_id == euro.pk
+    assert asset.valid_from == date(1998, 1, 1)
+    assert asset.valid_to == date(1998, 12, 31)
+    assert asset.date_precision == DatePrecision.YEAR
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+
+
+@pytest.mark.django_db
 def test_candidate_ingestion_is_unpublished_idempotent_and_dry_runnable(finland):
     candidate = MediaCandidate(
         source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
@@ -151,12 +247,12 @@ def test_unclear_rights_candidate_cannot_be_approved(media_root):
         (candidate,),
         role=MediaRole.HISTORICAL_TIMELINE,
         kind=MediaKind.ARCHIVAL_PHOTO,
+        valid_from=date(1950, 1, 1),
+        date_precision=DatePrecision.DECADE,
     )
     asset = MediaAsset.objects.get()
     asset.alt_text = "Historical archive image"
-    asset.valid_from = date(1950, 1, 1)
-    asset.date_precision = DatePrecision.DECADE
-    asset.save()
+    asset.save(update_fields=("alt_text", "updated_at"))
     attach_media_bytes(asset, _png_bytes((1, 2, 3)), filename="archive.png")
 
     with pytest.raises(MediaPublicationError, match="licence or rights"):
