@@ -150,9 +150,7 @@ def test_build_media_derivative_command_creates_explicit_width_batch(media_root)
         stdout=output,
     )
 
-    derivatives = list(
-        MediaAsset.objects.filter(derivative_of=source).order_by("variant_width")
-    )
+    derivatives = list(MediaAsset.objects.filter(derivative_of=source).order_by("variant_width"))
     assert [asset.variant_width for asset in derivatives] == [16, 32]
     assert all(asset.status == MediaStatus.NEEDS_REVIEW for asset in derivatives)
     assert output.getvalue().count("CREATED:") == 2
