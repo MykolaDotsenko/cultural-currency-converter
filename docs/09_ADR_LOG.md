@@ -170,6 +170,18 @@ The project does not infer production RPO/RTO from CI and does not treat databas
 
 **Revisit when:** the production platform provides a stronger tested point-in-time recovery mechanism or managed database workflow with equivalent integrity, verification and rollback properties.
 
+## ADR-017 — Performance gates use deterministic growth budgets
+
+**Status:** active
+
+Production-build asset size, lazy-chunk boundaries, initial request count and selected ORM query counts are hard merge budgets derived from measured green-build baselines. Browser navigation timings remain evidence-only until the CI environment can produce sufficiently stable distributions.
+
+**Why:** deterministic byte/query growth is highly actionable and repeatable, while strict wall-clock thresholds on shared CI runners create false failures. A budget should catch meaningful regressions without pretending that one lab run represents real-user performance.
+
+The browser and non-browser frontend gates share one asset-budget definition so thresholds cannot drift between workflows.
+
+**Revisit when:** real-user monitoring or a controlled performance runner provides stable Core Web Vitals/latency distributions suitable for regression thresholds.
+
 ## Adding/changing a decision
 
 Create or update an ADR when a change affects a durable project-wide choice.

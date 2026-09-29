@@ -3,6 +3,8 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
@@ -163,6 +165,19 @@ def test_initial_page_does_not_request_rate(client, reference_data):
 
     assert response.status_code == 200
     assert b"Ready when you are" in response.content
+    factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_initial_converter_page_has_bounded_query_count(client, reference_data):
+    with (
+        patch("apps.exchange.views.build_latest_quote_gateway") as factory,
+        CaptureQueriesContext(connection) as captured,
+    ):
+        response = client.get(reverse("converter"))
+
+    assert response.status_code == 200
+    assert len(captured) <= 6
     factory.assert_not_called()
 
 
