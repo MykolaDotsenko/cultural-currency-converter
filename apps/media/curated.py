@@ -149,6 +149,40 @@ JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
 )
 
 
+JAPAN_SUICA_VENDING_PAYMENT_2020 = CuratedMediaSpec(
+    slug="japan-suica-vending-payment-2020",
+    country_code="JP",
+    currency_code="",
+    city="",
+    valid_from=date(2020, 11, 14),
+    valid_to=date(2020, 11, 14),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.PAYMENT_CULTURE,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Suica_payment_on_vending_machine_50607340823",
+    title="Suica payment on a vending machine, November 2020",
+    alt_text="A Suica contactless payment interaction at a vending machine in Japan.",
+    caption="Suica payment at a vending machine, photographed 14 November 2020.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Suica_payment_on_vending_machine_%2850607340823%29.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/b/b3/"
+        "Suica_payment_on_vending_machine_%2850607340823%29.jpg"
+    ),
+    creator="Real Estate Japan / Scott Kouchi",
+    licence_id="CC BY 2.0",
+    licence_url="https://creativecommons.org/licenses/by/2.0/",
+    rights_statement="Creative Commons Attribution 2.0 Generic",
+    attribution_text="Real Estate Japan / Scott Kouchi · CC BY 2.0",
+    expected_width=6240,
+    expected_height=4160,
+)
+
+
 JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
     slug="jpy-series-d-1000-yen-1984-2007",
     country_code="",
@@ -191,6 +225,7 @@ CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     FINLAND_HELSINKI_TRAM_HERO.slug: FINLAND_HELSINKI_TRAM_HERO,
     JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
     JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
+    JAPAN_SUICA_VENDING_PAYMENT_2020.slug: JAPAN_SUICA_VENDING_PAYMENT_2020,
     JAPAN_SERIES_D_1000_YEN_1984_2007.slug: JAPAN_SERIES_D_1000_YEN_1984_2007,
 }
 
