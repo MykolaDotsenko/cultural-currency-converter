@@ -116,9 +116,7 @@ def _validate_publishable_metadata(asset: MediaAsset) -> None:
     if asset.reviewed_at is None:
         raise MediaPublicationError("Published media requires explicit editorial review.")
     if asset.role in _CURRENCY_SCOPED_ROLES and asset.currency_id is None:
-        raise MediaPublicationError(
-            "Comparison historical media requires explicit currency scope."
-        )
+        raise MediaPublicationError("Comparison historical media requires explicit currency scope.")
 
     if asset.generated_by_ai:
         if asset.role in _HISTORICAL_ROLES:
@@ -595,9 +593,7 @@ def select_published_media_for_roles(
             role for role in unique_roles if role in _CURRENCY_SCOPED_ROLES
         )
         if strict_currency_roles:
-            queryset = queryset.filter(
-                ~Q(role__in=strict_currency_roles) | Q(currency=currency)
-            )
+            queryset = queryset.filter(~Q(role__in=strict_currency_roles) | Q(currency=currency))
         queryset = queryset.filter(Q(currency=currency) | Q(currency__isnull=True))
 
     strict_date_roles = tuple(role for role in unique_roles if role in _DATE_SCOPED_ROLES)
