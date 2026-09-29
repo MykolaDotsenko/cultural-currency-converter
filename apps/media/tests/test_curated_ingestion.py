@@ -272,6 +272,49 @@ def test_japan_payment_culture_manifest_creates_country_scoped_review_candidate(
     assert asset.valid_to == date(2020, 11, 14)
 
 
+def test_japan_local_detail_manifest_matches_reviewed_source_contract() -> None:
+    spec = get_curated_media_spec("japan-tokyo-metro-local-detail-2021")
+
+    assert spec.country_code == "JP"
+    assert spec.currency_code == ""
+    assert spec.city == ""
+    assert spec.role == MediaRole.LOCAL_DETAIL
+    assert spec.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.valid_from == date(2021, 4, 20)
+    assert spec.valid_to == date(2021, 4, 20)
+    assert spec.date_precision == DatePrecision.EXACT_DAY
+    assert spec.expected_width == 5004
+    assert spec.expected_height == 3336
+    assert spec.creator == "MaedaAkihiko"
+    assert spec.licence_id == "CC BY-SA 4.0"
+    assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
+
+
+@pytest.mark.django_db
+def test_japan_local_detail_manifest_creates_country_scoped_review_candidate() -> None:
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+
+    call_command(
+        "ingest_curated_media",
+        slug="japan-tokyo-metro-local-detail-2021",
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get(
+        external_id="commons:Tokyo-Metro-13000-Digital_signage-On_the_door.jpg"
+    )
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert not asset.storage_file
+    assert asset.country == japan
+    assert asset.currency is None
+    assert asset.city == ""
+    assert asset.role == MediaRole.LOCAL_DETAIL
+    assert asset.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert asset.valid_from == date(2021, 4, 20)
+    assert asset.valid_to == date(2021, 4, 20)
+
+
 def test_jpy_historical_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("jpy-series-d-1000-yen-1984-2007")
 

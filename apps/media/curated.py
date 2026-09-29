@@ -183,6 +183,39 @@ JAPAN_SUICA_VENDING_PAYMENT_2020 = CuratedMediaSpec(
 )
 
 
+JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021 = CuratedMediaSpec(
+    slug="japan-tokyo-metro-local-detail-2021",
+    country_code="JP",
+    currency_code="",
+    city="",
+    valid_from=date(2021, 4, 20),
+    valid_to=date(2021, 4, 20),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.LOCAL_DETAIL,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Tokyo-Metro-13000-Digital_signage-On_the_door.jpg",
+    title="Tokyo Metro 13000-series door signage, April 2021",
+    alt_text="Digital passenger information signage above a door on a Tokyo Metro 13000-series train.",
+    caption="Passenger information display on a Tokyo Metro 13000-series train, photographed 20 April 2021.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/File:Tokyo-Metro-13000-Digital_signage-On_the_door.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/7/76/"
+        "Tokyo-Metro-13000-Digital_signage-On_the_door.jpg"
+    ),
+    creator="MaedaAkihiko",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="MaedaAkihiko · CC BY-SA 4.0",
+    expected_width=5004,
+    expected_height=3336,
+)
+
+
 JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
     slug="jpy-series-d-1000-yen-1984-2007",
     country_code="",
@@ -226,6 +259,7 @@ CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
     JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
     JAPAN_SUICA_VENDING_PAYMENT_2020.slug: JAPAN_SUICA_VENDING_PAYMENT_2020,
+    JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021.slug: JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021,
     JAPAN_SERIES_D_1000_YEN_1984_2007.slug: JAPAN_SERIES_D_1000_YEN_1984_2007,
 }
 
