@@ -101,6 +101,8 @@ For photographic delivery:
 
 - retain a high-quality managed source;
 - generate appropriately sized derivatives;
+- preserve reviewed focal-point metadata when derivatives are created;
+- publish multiple reviewed widths when a surface should use responsive delivery; presentation builds `srcset` only from published assets in the same derivative family, while the template supplies the layout `sizes` hint;
 - prefer modern compressed delivery such as WebP where supported by the current pipeline;
 - preserve intrinsic dimensions and focal/composition information.
 

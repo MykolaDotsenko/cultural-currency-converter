@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
+from django.db.models import Q
+
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
-from apps.media.models import MediaAsset
+from apps.media.models import MediaAsset, MediaStatus
 from apps.media.services import select_published_media
 
 
@@ -35,9 +37,35 @@ def _focal_position(asset: MediaAsset) -> str:
     return f"{_format_focal_percent(focal_x)} {_format_focal_percent(focal_y)}"
 
 
+def _responsive_srcset(asset: MediaAsset) -> str:
+    if asset.pk is None:
+        return ""
+
+    source_id = asset.derivative_of_id or asset.pk
+    variants = (
+        MediaAsset.objects.filter(status=MediaStatus.PUBLISHED)
+        .filter(Q(pk=source_id) | Q(derivative_of_id=source_id))
+        .exclude(storage_file="")
+        .order_by("variant_width", "-published_at", "-pk")
+    )
+
+    sources: dict[int, str] = {}
+    for variant in variants:
+        width = variant.variant_width or variant.width
+        if width and width not in sources:
+            sources[width] = variant.storage_file.url
+
+    if len(sources) < 2:
+        return ""
+
+    return ", ".join(f"{url} {width}w" for width, url in sorted(sources.items()))
+
+
 def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
     if not asset.is_published or not asset.storage_file:
         raise ValueError("Only published managed media can be rendered.")
+
+    responsive_srcset = _responsive_srcset(asset)
 
     return ImageViewModel(
         src=asset.storage_file.url,
@@ -49,6 +77,8 @@ def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
         width=asset.width or 1,
         height=asset.height or 1,
         focal_position=_focal_position(asset),
+        srcset=responsive_srcset,
+        sizes="100vw" if responsive_srcset else "",
         caption=asset.caption,
         attribution_text=asset.attribution_text,
         source_url=asset.source_url,

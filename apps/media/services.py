@@ -317,6 +317,8 @@ def create_responsive_derivative(
         title=f"{source.title} · {width}px",
         alt_text=source.alt_text,
         caption=source.caption,
+        focal_x=source.focal_x,
+        focal_y=source.focal_y,
         derivative_of=source,
         variant_width=width,
         source_name=source.source_name,

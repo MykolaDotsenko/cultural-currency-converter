@@ -16,7 +16,7 @@
     </div>
     {% if destination_context.hero_image %}
       <div class="qa-destination-context__hero">
-        {% include "components/media/image_frame.html" with image=destination_context.hero_image display_ratio="16 / 9" %}
+        {% include "components/media/image_frame.html" with image=destination_context.hero_image display_ratio="16 / 9" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
       </div>
     {% endif %}
     {% if destination_context.historical_notice %}

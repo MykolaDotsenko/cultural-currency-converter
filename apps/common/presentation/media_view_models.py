@@ -14,6 +14,8 @@ class ImageViewModel:
     width: int
     height: int
     focal_position: str = ""
+    srcset: str = ""
+    sizes: str = ""
     caption: str = ""
     attribution_text: str = ""
     source_url: str = ""
