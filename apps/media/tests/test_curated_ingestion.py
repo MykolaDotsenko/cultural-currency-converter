@@ -167,7 +167,6 @@ def test_japan_hero_manifest_matches_reviewed_source_contract() -> None:
     assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
 
 
-
 @pytest.mark.django_db
 def test_japan_hero_manifest_creates_country_scoped_review_candidate() -> None:
     japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
