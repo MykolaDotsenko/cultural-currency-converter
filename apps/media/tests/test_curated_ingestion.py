@@ -315,7 +315,6 @@ def test_japan_local_detail_manifest_creates_country_scoped_review_candidate() -
     assert asset.valid_to == date(2021, 4, 20)
 
 
-
 def test_jpy_historical_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("jpy-series-d-1000-yen-1984-2007")
 
