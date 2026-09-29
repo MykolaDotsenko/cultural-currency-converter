@@ -37,6 +37,7 @@ def make_quote(
     fetched_at=NOW,
     effective_date=date(2026, 9, 18),
     policy=DEFAULT_SOURCE_POLICY,
+    granularity=ObservationGranularity.DAILY,
 ):
     return RateQuote(
         base_currency="EUR",
@@ -48,6 +49,7 @@ def make_quote(
         provider_policy=policy,
         provider_keys=((policy.provider_key,) if policy.provider_key else ("ecb",)),
         historical=False,
+        observation_granularity=granularity,
     )
 
 
@@ -128,6 +130,54 @@ def test_too_old_stale_quote_is_rejected():
 
     with pytest.raises(FxProviderUnavailable):
         gateway.get("EUR", "JPY", DEFAULT_SOURCE_POLICY, now=NOW)
+
+
+def test_fresh_cache_with_too_old_daily_observation_is_refetched():
+    cached = make_quote(
+        fetched_at=NOW - timedelta(hours=1),
+        effective_date=date(2026, 9, 10),
+    )
+    key = latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY)
+    cache.set(key, serialize_quote(cached), 100)
+    provider_quote = make_quote()
+    provider = FakeProvider(result=provider_quote)
+
+    result, stale = LatestQuoteGateway(provider).get(
+        "EUR",
+        "JPY",
+        DEFAULT_SOURCE_POLICY,
+        now=NOW,
+    )
+
+    assert result == provider_quote
+    assert stale is False
+    assert provider.calls == 1
+
+
+def test_provider_latest_quote_outside_daily_observation_window_is_rejected():
+    provider_quote = make_quote(effective_date=date(2026, 9, 10))
+    gateway = LatestQuoteGateway(FakeProvider(result=provider_quote))
+
+    with pytest.raises(FxProviderInvalidPayload, match="daily observation window"):
+        gateway.get("EUR", "JPY", DEFAULT_SOURCE_POLICY, now=NOW)
+
+    assert cache.get(latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY)) is None
+
+
+def test_monthly_latest_quote_uses_monthly_observation_window():
+    policy = FxSourcePolicy(mode=ProviderPolicyMode.PINNED, provider_key="hmrc")
+    provider_quote = make_quote(
+        effective_date=date(2026, 9, 1),
+        policy=policy,
+        granularity=ObservationGranularity.MONTHLY,
+    )
+    provider = FakeProvider(result=provider_quote)
+
+    result, stale = LatestQuoteGateway(provider).get("EUR", "JPY", policy, now=NOW)
+
+    assert result == provider_quote
+    assert stale is False
+    assert provider.calls == 1
 
 
 def test_provider_policy_changes_cache_identity():
