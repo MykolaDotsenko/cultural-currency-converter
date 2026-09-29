@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 from django.urls import reverse
 from django.utils.formats import date_format
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.exchange.domain import RateSeriesResult, ThenNowComparison
 
 
@@ -105,6 +106,7 @@ def build_rate_series_component(
     period: str,
     amount=None,
     then_now: dict[str, object] | None = None,
+    then_media: ImageViewModel | None = None,
     comparison_notice: str | None = None,
 ) -> dict[str, object]:
     series = result.series
@@ -197,6 +199,7 @@ def build_rate_series_component(
             ),
         },
         "then_now": then_now,
+        "then_media": then_media if then_now is not None else None,
         "comparison_notice": comparison_notice,
         "selected_point": (
             {

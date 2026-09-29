@@ -198,7 +198,7 @@ def test_sourced_media_requires_review_then_explicit_publish(media_root):
 
 
 @pytest.mark.django_db
-def test_ai_historical_illustration_requires_authenticity_metadata(media_root):
+def test_ai_generated_media_cannot_be_published_as_historical_evidence(media_root):
     asset = MediaAsset.objects.create(
         kind=MediaKind.GENERATED_ILLUSTRATION,
         source_kind=MediaSourceKind.GENERATED,
@@ -209,24 +209,19 @@ def test_ai_historical_illustration_requires_authenticity_metadata(media_root):
         valid_from=date(1950, 1, 1),
         valid_to=date(1959, 12, 31),
         date_precision=DatePrecision.DECADE,
+        ai_label="AI-generated editorial illustration · not an archival photograph",
+        generation_provider="example-provider",
+        generation_model="example-model",
+        prompt_version="media-prompt:v1",
+        prompt_hash="a" * 64,
+        generated_at=datetime(2026, 9, 21, tzinfo=UTC),
     )
     attach_media_bytes(asset, _png_bytes((40, 50, 60)), filename="generated.png")
 
-    with pytest.raises(MediaPublicationError, match="authenticity metadata"):
+    with pytest.raises(MediaPublicationError, match="require sourced media"):
         approve_media_asset(asset)
 
-    asset.ai_label = "AI-generated editorial illustration · not an archival photograph"
-    asset.generation_provider = "example-provider"
-    asset.generation_model = "example-model"
-    asset.prompt_version = "media-prompt:v1"
-    asset.prompt_hash = "a" * 64
-    asset.generated_at = datetime(2026, 9, 21, tzinfo=UTC)
-    asset.save()
-    approve_media_asset(asset)
-    publish_media_asset(asset)
-
-    assert asset.status == MediaStatus.PUBLISHED
-    assert asset.ai_label.startswith("AI-generated")
+    assert asset.status == MediaStatus.NEEDS_REVIEW
 
 
 @pytest.mark.django_db
@@ -243,27 +238,22 @@ def test_selector_prefers_relevant_real_media_over_ai_even_with_coarser_date(
         color=(50, 60, 70),
     )
 
-    ai = MediaAsset.objects.create(
+    MediaAsset.objects.create(
         kind=MediaKind.GENERATED_ILLUSTRATION,
         source_kind=MediaSourceKind.GENERATED,
         role=MediaRole.HISTORICAL_TIMELINE,
         country=finland,
         title="Exact AI reconstruction",
         alt_text="Generated editorial reconstruction",
+        storage_file="generated/historical.webp",
+        width=1200,
+        height=900,
         valid_from=date(1995, 6, 1),
         valid_to=date(1995, 6, 1),
         date_precision=DatePrecision.EXACT_DAY,
         generated_by_ai=True,
-        ai_label="AI-generated editorial illustration · not an archival photograph",
-        generation_provider="example-provider",
-        generation_model="example-model",
-        prompt_version="media-prompt:v1",
-        prompt_hash="b" * 64,
-        generated_at=datetime(2026, 9, 21, tzinfo=UTC),
+        status=MediaStatus.PUBLISHED,
     )
-    attach_media_bytes(ai, _png_bytes((60, 70, 80)), filename="ai.png")
-    approve_media_asset(ai)
-    publish_media_asset(ai)
 
     selected = select_published_media(
         role=MediaRole.HISTORICAL_TIMELINE,
@@ -339,6 +329,110 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
     assert len(derivative.content_hash) == 64
     assert derivative.status == MediaStatus.NEEDS_REVIEW
     assert derivative.published_at is None
+
+
+@pytest.mark.django_db
+def test_comparison_then_requires_explicit_currency_scope_before_approval(media_root):
+    asset = _sourced_asset(title="Unscoped comparison", role=MediaRole.COMPARISON_THEN)
+    attach_media_bytes(asset, _png_bytes((61, 62, 63)), filename="comparison.png")
+
+    with pytest.raises(MediaPublicationError, match="currency scope"):
+        approve_media_asset(asset)
+
+
+@pytest.mark.django_db
+def test_comparison_then_selector_requires_target_date(euro):
+    MediaAsset.objects.create(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_THEN,
+        currency=euro,
+        title="Scoped archive without requested date",
+        storage_file="sourced/eur-scoped.webp",
+        width=1500,
+        height=1000,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    assert (
+        select_published_media(
+            role=MediaRole.COMPARISON_THEN,
+            currency=euro,
+        )
+        is None
+    )
+
+
+@pytest.mark.django_db
+def test_historical_comparison_selector_is_sourced_currency_and_date_scoped(euro):
+    target = date(1998, 6, 15)
+    MediaAsset.objects.create(
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+        role=MediaRole.COMPARISON_THEN,
+        currency=euro,
+        title="Generated historical reconstruction",
+        storage_file="generated/comparison.webp",
+        width=1500,
+        height=1000,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        generated_by_ai=True,
+        status=MediaStatus.PUBLISHED,
+    )
+    MediaAsset.objects.create(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_THEN,
+        title="Unscoped archive",
+        storage_file="sourced/global-archive.webp",
+        width=1500,
+        height=1000,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    assert (
+        select_published_media(
+            role=MediaRole.COMPARISON_THEN,
+            currency=euro,
+            target_date=target,
+        )
+        is None
+    )
+
+    archival = MediaAsset.objects.create(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_THEN,
+        currency=euro,
+        title="Scoped archive",
+        storage_file="sourced/eur-1998.webp",
+        width=1500,
+        height=1000,
+        aspect_ratio="1500 / 1000",
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    selected = select_published_media(
+        role=MediaRole.COMPARISON_THEN,
+        currency=euro,
+        target_date=target,
+        aspect_ratio="3 / 2",
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == archival.pk
+    assert selected.authenticity_class == "sourced_media"
 
 
 @pytest.mark.django_db

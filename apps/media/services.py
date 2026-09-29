@@ -59,6 +59,18 @@ _HISTORICAL_ROLES = {
     MediaRole.COMPARISON_THEN,
     MediaRole.HISTORICAL_TIMELINE,
 }
+_HISTORICAL_EVIDENCE_KINDS = {
+    MediaKind.ARCHIVAL_PHOTO,
+    MediaKind.ARTWORK,
+    MediaKind.HERITAGE_OBJECT,
+    MediaKind.MAP,
+}
+_CURRENCY_SCOPED_ROLES = {
+    MediaRole.COMPARISON_THEN,
+}
+_DATE_SCOPED_ROLES = {
+    MediaRole.COMPARISON_THEN,
+}
 _PHOTOGRAPHIC_ROLES = {
     MediaRole.COUNTRY_HERO,
     MediaRole.COUNTRY_TEASER,
@@ -103,8 +115,14 @@ def _validate_publishable_metadata(asset: MediaAsset) -> None:
         raise MediaPublicationError("Non-decorative published media requires editorial alt text.")
     if asset.reviewed_at is None:
         raise MediaPublicationError("Published media requires explicit editorial review.")
+    if asset.role in _CURRENCY_SCOPED_ROLES and asset.currency_id is None:
+        raise MediaPublicationError("Comparison historical media requires explicit currency scope.")
 
     if asset.generated_by_ai:
+        if asset.role in _HISTORICAL_ROLES:
+            raise MediaPublicationError(
+                "Historical evidence roles require sourced media, not generated imagery."
+            )
         required_ai = {
             "ai_label": asset.ai_label,
             "generation_provider": asset.generation_provider,
@@ -128,10 +146,6 @@ def _validate_publishable_metadata(asset: MediaAsset) -> None:
             raise MediaPublicationError("AI media must use generated_illustration kind.")
         if asset.source_kind != MediaSourceKind.GENERATED:
             raise MediaPublicationError("AI media must use generated source kind.")
-        if asset.role in _HISTORICAL_ROLES and asset.date_precision == DatePrecision.UNKNOWN:
-            raise MediaPublicationError(
-                "Historical AI illustration requires explicit temporal precision."
-            )
     else:
         _validate_https_url(asset.source_url, field_name="source_url", required=True)
         _validate_https_url(asset.licence_url, field_name="licence_url")
@@ -558,6 +572,16 @@ def select_published_media_for_roles(
             )
         )
 
+    historical_roles = tuple(role for role in unique_roles if role in _HISTORICAL_ROLES)
+    if historical_roles:
+        queryset = queryset.filter(
+            ~Q(role__in=historical_roles)
+            | Q(
+                kind__in=_HISTORICAL_EVIDENCE_KINDS,
+                generated_by_ai=False,
+            )
+        )
+
     if country is None:
         queryset = queryset.filter(country__isnull=True)
     else:
@@ -565,9 +589,18 @@ def select_published_media_for_roles(
     if currency is None:
         queryset = queryset.filter(currency__isnull=True)
     else:
+        strict_currency_roles = tuple(
+            role for role in unique_roles if role in _CURRENCY_SCOPED_ROLES
+        )
+        if strict_currency_roles:
+            queryset = queryset.filter(~Q(role__in=strict_currency_roles) | Q(currency=currency))
         queryset = queryset.filter(Q(currency=currency) | Q(currency__isnull=True))
 
-    if target_date is not None:
+    strict_date_roles = tuple(role for role in unique_roles if role in _DATE_SCOPED_ROLES)
+    if target_date is None:
+        if strict_date_roles:
+            queryset = queryset.exclude(role__in=strict_date_roles)
+    else:
         queryset = queryset.filter(
             Q(valid_from__isnull=True) | Q(valid_from__lte=target_date),
             Q(valid_to__isnull=True) | Q(valid_to__gte=target_date),

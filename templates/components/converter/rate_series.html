@@ -207,6 +207,11 @@
             <article>
               <p class="qa-workspace__role">Then</p>
               <h4>{{ comparison.then.date_label }}</h4>
+              {% if series_component.then_media %}
+                <div class="qa-then-now__media">
+                  {% include "components/media/image_frame.html" with image=series_component.then_media display_ratio="3 / 2" sizes="(max-width: 42rem) calc(100vw - 4rem), 32rem" %}
+                </div>
+              {% endif %}
               <p class="qa-then-now__amount">
                 {{ comparison.input_amount }} {{ comparison.base_currency }}
                 ≈ {{ comparison.then.output_amount }} {{ comparison.quote_currency }}
