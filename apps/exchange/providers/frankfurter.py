@@ -76,11 +76,12 @@ def _provider_keys(payload: dict[str, Any], policy: FxSourcePolicy) -> tuple[str
         if isinstance(raw_provider, str):
             raw_key = raw_provider
         elif isinstance(raw_provider, dict):
-            raw_key = raw_provider.get("key")
-            if not isinstance(raw_key, str):
+            raw_key_value = raw_provider.get("key")
+            if not isinstance(raw_key_value, str):
                 raise FxProviderInvalidPayload(
                     "Frankfurter provider attribution object must contain a string key."
                 )
+            raw_key = raw_key_value
             raw_excluded = raw_provider.get("excluded", False)
             if not isinstance(raw_excluded, bool):
                 raise FxProviderInvalidPayload(
