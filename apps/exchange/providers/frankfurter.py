@@ -71,13 +71,30 @@ def _provider_keys(payload: dict[str, Any], policy: FxSourcePolicy) -> tuple[str
         raise FxProviderInvalidPayload("Frankfurter provider attribution must be an array.")
 
     normalized: list[str] = []
-    for raw_key in raw_providers:
-        if not isinstance(raw_key, str):
+    for raw_provider in raw_providers:
+        excluded = False
+        if isinstance(raw_provider, str):
+            raw_key = raw_provider
+        elif isinstance(raw_provider, dict):
+            raw_key_value = raw_provider.get("key")
+            if not isinstance(raw_key_value, str):
+                raise FxProviderInvalidPayload(
+                    "Frankfurter provider attribution object must contain a string key."
+                )
+            raw_key = raw_key_value
+            raw_excluded = raw_provider.get("excluded", False)
+            if not isinstance(raw_excluded, bool):
+                raise FxProviderInvalidPayload(
+                    "Frankfurter provider attribution excluded flag must be boolean."
+                )
+            excluded = raw_excluded
+        else:
             raise FxProviderInvalidPayload(
-                "Frankfurter provider attribution must contain string identifiers."
+                "Frankfurter provider attribution must contain identifiers or provider objects."
             )
+
         key = raw_key.lower().strip()
-        if key:
+        if key and not excluded:
             normalized.append(key)
 
     provider_keys = tuple(normalized)

@@ -38,7 +38,15 @@ def test_frankfurter_v2_rate_normalizes_decimal_and_attribution():
             "base": "EUR",
             "quote": "JPY",
             "rate": Decimal("174.50"),
-            "providers": ["ECB", "BOJ"],
+            "providers": [
+                {"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.50")},
+                {
+                    "key": "BOJ",
+                    "date": "2026-09-18",
+                    "rate": Decimal("174.60"),
+                    "excluded": True,
+                },
+            ],
         },
         expected_base="EUR",
         expected_quote="JPY",
@@ -48,7 +56,7 @@ def test_frankfurter_v2_rate_normalizes_decimal_and_attribution():
     )
 
     assert result.rate == Decimal("174.50")
-    assert result.provider_keys == ("boj", "ecb")
+    assert result.provider_keys == ("ecb",)
     assert result.effective_date == date(2026, 9, 18)
     assert result.observation_granularity is ObservationGranularity.DAILY
 
@@ -91,6 +99,30 @@ def test_future_dated_latest_observation_is_rejected():
             policy=DEFAULT_SOURCE_POLICY,
             fetched_at=datetime(2026, 9, 20, 23, 59, tzinfo=UTC),
         )
+
+
+def test_pinned_quote_accepts_object_attribution_for_requested_provider():
+    policy = FxSourcePolicy(
+        mode=ProviderPolicyMode.PINNED,
+        provider_key="ecb",
+        include_attribution=True,
+    )
+    result = parse_rate_payload(
+        {
+            "date": "2026-09-18",
+            "base": "EUR",
+            "quote": "JPY",
+            "rate": Decimal("174.5"),
+            "providers": [{"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}],
+        },
+        expected_base="EUR",
+        expected_quote="JPY",
+        requested_date=None,
+        policy=policy,
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+    )
+
+    assert result.provider_keys == ("ecb",)
 
 
 def test_pinned_quote_retains_identity_when_attribution_expansion_is_disabled():
@@ -510,6 +542,29 @@ def test_series_keeps_requested_grouping_separate_from_provider_cadence():
     assert result.points[0].provider_keys == ("hmrc",)
 
 
+def test_series_accepts_object_provider_attribution():
+    result = parse_series_payload(
+        [
+            {
+                "date": "2026-09-18",
+                "base": "EUR",
+                "quote": "JPY",
+                "rate": Decimal("174.5"),
+                "providers": [{"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}],
+            }
+        ],
+        expected_base="EUR",
+        expected_quote="JPY",
+        start_date=date(2026, 9, 18),
+        end_date=date(2026, 9, 18),
+        grouping=RateSeriesGrouping.DAILY,
+        policy=DEFAULT_SOURCE_POLICY,
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+    )
+
+    assert result.points[0].provider_keys == ("ecb",)
+
+
 def test_frankfurter_provider_requires_bounded_constructor_settings():
     with pytest.raises(ValueError, match="timeout must be positive"):
         FrankfurterProvider(timeout_seconds=0)
@@ -549,15 +604,23 @@ def test_pinned_quote_rejects_missing_or_mismatched_expanded_attribution(provide
         )
 
 
-def test_provider_attribution_rejects_non_string_identifiers():
-    with pytest.raises(FxProviderInvalidPayload, match="string identifiers"):
+@pytest.mark.parametrize(
+    ("providers", "message"),
+    [
+        (["ECB", 123], "identifiers or provider objects"),
+        ([{"date": "2026-09-18", "rate": Decimal("174.5")}], "string key"),
+        ([{"key": "ECB", "excluded": "yes"}], "excluded flag must be boolean"),
+    ],
+)
+def test_provider_attribution_rejects_malformed_entries(providers, message):
+    with pytest.raises(FxProviderInvalidPayload, match=message):
         parse_rate_payload(
             {
                 "date": "2026-09-18",
                 "base": "EUR",
                 "quote": "JPY",
                 "rate": Decimal("174.5"),
-                "providers": ["ECB", 123],
+                "providers": providers,
             },
             expected_base="EUR",
             expected_quote="JPY",
