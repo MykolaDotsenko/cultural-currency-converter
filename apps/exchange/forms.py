@@ -310,6 +310,16 @@ class HistoricalSeriesForm(forms.Form):
         if selected_date and selected_date > timezone.localdate():
             self.add_error("selected_date", "Selected observation date cannot be in the future.")
 
+        requested_date = cleaned.get("requested_date")
+        if requested_date:
+            if requested_date > timezone.localdate():
+                self.add_error("requested_date", "Requested date cannot be in the future.")
+            if selected_date and requested_date < selected_date:
+                self.add_error(
+                    "requested_date",
+                    "Requested date cannot be before the selected observation date.",
+                )
+
         period = cleaned.get("period")
         if selected_date and period in {"1y", "5y", "10y"}:
             years = {"1y": 1, "5y": 5, "10y": 10}[period]

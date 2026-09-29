@@ -720,6 +720,27 @@ def test_historical_series_page_uses_bounded_one_year_range(client, reference_da
 
 
 @pytest.mark.django_db
+def test_historical_series_rejects_inconsistent_requested_date_before_provider(
+    client, reference_data
+):
+    with patch("apps.exchange.views.build_historical_series_gateway") as factory:
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "2020-09-18",
+                "requested_date": "2020-09-17",
+                "period": "1y",
+            },
+        )
+
+    assert response.status_code == 422
+    assert b"valid historical trend range" in response.content
+    factory.assert_not_called()
+
+
+@pytest.mark.django_db
 def test_historical_series_observation_gap_is_a_validation_state(client, reference_data):
     with patch(
         "apps.exchange.views.get_rate_series",
