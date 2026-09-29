@@ -30,7 +30,7 @@ Priority outcomes:
 
 - use the Finland curated-photography vertical slice as the reference implementation for source review, managed ingestion, responsive derivatives, attribution and destination-context rendering;
 - curate realistic contemporary country photography for additional destinations;
-- wire selected photography into the most valuable destination/context surfaces;
+- expand reviewed country-media coverage now that hero, everyday-value, payment-culture and local-detail roles are wired into destination context;
 - keep the converter clean when photography is unavailable;
 - validate focal-point crops across responsive ratios and keep tonal treatment consistent across real country photography;
 - prefer authentic archival/heritage media in historical experiences;

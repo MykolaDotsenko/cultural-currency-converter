@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pytest
 from django.core.files.storage import default_storage
+from django.db import connection
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from PIL import Image
 
 from apps.countries.models import Country, Currency
@@ -29,6 +31,7 @@ from apps.media.services import (
     create_responsive_derivative,
     publish_media_asset,
     select_published_media,
+    select_published_media_for_roles,
     upsert_media_candidates,
 )
 from apps.media.sources.base import MediaCandidate
@@ -336,6 +339,68 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
     assert len(derivative.content_hash) == 64
     assert derivative.status == MediaStatus.NEEDS_REVIEW
     assert derivative.published_at is None
+
+
+@pytest.mark.django_db
+def test_batch_selector_uses_one_query_and_preserves_role_authenticity_policy(finland):
+    hero_generated = MediaAsset.objects.create(
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+        role=MediaRole.COUNTRY_HERO,
+        country=finland,
+        title="Generated hero",
+        storage_file="generated/hero.webp",
+        width=1600,
+        height=900,
+        generated_by_ai=True,
+        status=MediaStatus.PUBLISHED,
+    )
+    hero_sourced = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COUNTRY_HERO,
+        country=finland,
+        title="Sourced hero",
+        storage_file="sourced/hero.webp",
+        width=1600,
+        height=900,
+        status=MediaStatus.PUBLISHED,
+    )
+    everyday_generated = MediaAsset.objects.create(
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+        role=MediaRole.EVERYDAY_VALUE,
+        country=finland,
+        title="Generated cafe",
+        storage_file="generated/cafe.webp",
+        width=1200,
+        height=1500,
+        generated_by_ai=True,
+        status=MediaStatus.PUBLISHED,
+    )
+    everyday_sourced = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.EVERYDAY_VALUE,
+        country=finland,
+        title="Sourced cafe",
+        storage_file="sourced/cafe.webp",
+        width=1200,
+        height=1500,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    with CaptureQueriesContext(connection) as captured:
+        selected = select_published_media_for_roles(
+            roles=(MediaRole.COUNTRY_HERO, MediaRole.EVERYDAY_VALUE),
+            country=finland,
+        )
+
+    assert len(captured) == 1
+    assert selected[MediaRole.COUNTRY_HERO].asset.pk == hero_sourced.pk
+    assert selected[MediaRole.EVERYDAY_VALUE].asset.pk == everyday_sourced.pk
+    assert hero_generated.pk != hero_sourced.pk
+    assert everyday_generated.pk != everyday_sourced.pk
 
 
 @pytest.mark.django_db

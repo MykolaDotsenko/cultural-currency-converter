@@ -54,6 +54,14 @@ high-quality owned/licensed contemporary photo
 
 Country hero and country teaser selection is restricted to reviewed, non-generated `contemporary_photo` assets.
 
+Destination supporting roles are explicit managed-media roles:
+
+- `everyday_value` — atmosphere paired with reviewed price observations;
+- `payment_culture` — atmosphere paired with reviewed payment guidance;
+- `local_detail` — supporting editorial detail shown only when the destination has reviewed context.
+
+For these supporting roles, reviewed sourced media is preferred. Explicitly labelled generated editorial imagery may be used as atmosphere when it passes the normal review/publication gate, but it is never evidence for a price, payment claim or local custom. The sourced text/data provenance remains authoritative.
+
 ## Media pipeline
 
 Managed external media can come from sources such as Wikimedia Commons, Europeana, institutions or manually curated licensed/owned photography.

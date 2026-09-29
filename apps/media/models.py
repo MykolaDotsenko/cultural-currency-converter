@@ -29,6 +29,9 @@ class MediaSourceKind(models.TextChoices):
 class MediaRole(models.TextChoices):
     COUNTRY_HERO = "country_hero", "Country hero"
     COUNTRY_TEASER = "country_teaser", "Country teaser"
+    EVERYDAY_VALUE = "everyday_value", "Everyday value"
+    PAYMENT_CULTURE = "payment_culture", "Payment culture"
+    LOCAL_DETAIL = "local_detail", "Local detail"
     STORY_COVER = "story_cover", "Story cover"
     STORY_CHAPTER = "story_chapter", "Story chapter"
     COMPARISON_THEN = "comparison_then", "Comparison then"

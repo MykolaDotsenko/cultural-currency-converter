@@ -469,23 +469,72 @@ def _temporal_quality(asset: MediaAsset, target_date: date | None) -> str:
     return "unknown"
 
 
-def select_published_media(
+def _media_score(
+    asset: MediaAsset,
     *,
-    role: str,
+    country: Country | None,
+    currency: Currency | None,
+    target_date: date | None,
+    aspect_ratio: str | None,
+) -> tuple[int, int, int, int, datetime, int]:
+    semantic_specificity = 0
+    if country is not None and asset.country_id == country.id:
+        semantic_specificity += 2
+    if currency is not None and asset.currency_id == currency.id:
+        semantic_specificity += 1
+
+    temporal_score = _TEMPORAL_SCORE.get(asset.date_precision, 0)
+    if target_date is None:
+        authenticity_rank = 3 if not asset.generated_by_ai else 2
+    elif not asset.generated_by_ai and temporal_score > 0:
+        authenticity_rank = 4
+    elif asset.generated_by_ai and temporal_score > 0:
+        authenticity_rank = 3
+    elif not asset.generated_by_ai:
+        authenticity_rank = 2
+    else:
+        authenticity_rank = 1
+
+    aspect_match = int(bool(aspect_ratio and asset.aspect_ratio == aspect_ratio))
+    return (
+        semantic_specificity,
+        authenticity_rank,
+        temporal_score,
+        aspect_match,
+        asset.published_at or asset.updated_at,
+        asset.pk,
+    )
+
+
+def select_published_media_for_roles(
+    *,
+    roles: tuple[str, ...],
     country: Country | None = None,
     currency: Currency | None = None,
     target_date: date | None = None,
-    aspect_ratio: str | None = None,
-) -> SelectedMedia | None:
-    if role not in MediaRole.values:
-        raise ValueError("Unknown media role.")
+    aspect_ratios: dict[str, str] | None = None,
+) -> dict[str, SelectedMedia]:
+    unique_roles = tuple(dict.fromkeys(roles))
+    if not unique_roles:
+        return {}
+    invalid_roles = [role for role in unique_roles if role not in MediaRole.values]
+    if invalid_roles:
+        raise ValueError(f"Unknown media role: {invalid_roles[0]}")
 
-    queryset = MediaAsset.objects.filter(status=MediaStatus.PUBLISHED, role=role)
-    if role in _PHOTOGRAPHIC_ROLES:
+    queryset = MediaAsset.objects.filter(
+        status=MediaStatus.PUBLISHED,
+        role__in=unique_roles,
+    )
+    photographic_roles = tuple(role for role in unique_roles if role in _PHOTOGRAPHIC_ROLES)
+    if photographic_roles:
         queryset = queryset.filter(
-            kind=MediaKind.CONTEMPORARY_PHOTO,
-            generated_by_ai=False,
+            ~Q(role__in=photographic_roles)
+            | Q(
+                kind=MediaKind.CONTEMPORARY_PHOTO,
+                generated_by_ai=False,
+            )
         )
+
     if country is None:
         queryset = queryset.filter(country__isnull=True)
     else:
@@ -501,45 +550,49 @@ def select_published_media(
             Q(valid_to__isnull=True) | Q(valid_to__gte=target_date),
         )
 
-    candidates = list(queryset.select_related("country", "currency"))
-    if not candidates:
-        return None
+    grouped: dict[str, list[MediaAsset]] = {role: [] for role in unique_roles}
+    for asset in queryset.select_related("country", "currency"):
+        grouped[asset.role].append(asset)
 
-    def score(asset: MediaAsset) -> tuple[int, int, int, int, datetime, int]:
-        semantic_specificity = 0
-        if country is not None and asset.country_id == country.id:
-            semantic_specificity += 2
-        if currency is not None and asset.currency_id == currency.id:
-            semantic_specificity += 1
-
-        temporal_score = _TEMPORAL_SCORE.get(asset.date_precision, 0)
-        if target_date is None:
-            authenticity_rank = 3 if not asset.generated_by_ai else 2
-        elif not asset.generated_by_ai and temporal_score > 0:
-            authenticity_rank = 4
-        elif asset.generated_by_ai and temporal_score > 0:
-            authenticity_rank = 3
-        elif not asset.generated_by_ai:
-            authenticity_rank = 2
-        else:
-            authenticity_rank = 1
-
-        aspect_match = int(bool(aspect_ratio and asset.aspect_ratio == aspect_ratio))
-        return (
-            semantic_specificity,
-            authenticity_rank,
-            temporal_score,
-            aspect_match,
-            asset.published_at or asset.updated_at,
-            asset.pk,
+    selected: dict[str, SelectedMedia] = {}
+    ratios = aspect_ratios or {}
+    for role, candidates in grouped.items():
+        if not candidates:
+            continue
+        winner = max(
+            candidates,
+            key=lambda asset: _media_score(
+                asset,
+                country=country,
+                currency=currency,
+                target_date=target_date,
+                aspect_ratio=ratios.get(role),
+            ),
         )
+        selected[role] = SelectedMedia(
+            asset=winner,
+            selection_reason="published_media_priority",
+            temporal_match_quality=_temporal_quality(winner, target_date),
+            authenticity_class=(
+                "ai_generated_illustration" if winner.generated_by_ai else "sourced_media"
+            ),
+        )
+    return selected
 
-    selected = max(candidates, key=score)
-    return SelectedMedia(
-        asset=selected,
-        selection_reason="published_media_priority",
-        temporal_match_quality=_temporal_quality(selected, target_date),
-        authenticity_class=(
-            "ai_generated_illustration" if selected.generated_by_ai else "sourced_media"
-        ),
+
+def select_published_media(
+    *,
+    role: str,
+    country: Country | None = None,
+    currency: Currency | None = None,
+    target_date: date | None = None,
+    aspect_ratio: str | None = None,
+) -> SelectedMedia | None:
+    selected = select_published_media_for_roles(
+        roles=(role,),
+        country=country,
+        currency=currency,
+        target_date=target_date,
+        aspect_ratios={role: aspect_ratio} if aspect_ratio else None,
     )
+    return selected.get(role)

@@ -276,6 +276,9 @@ def test_unpublished_managed_media_cannot_be_rendered():
     "role",
     [
         MediaRole.COUNTRY_TEASER,
+        MediaRole.EVERYDAY_VALUE,
+        MediaRole.PAYMENT_CULTURE,
+        MediaRole.LOCAL_DETAIL,
         MediaRole.COMPARISON_THEN,
         MediaRole.COMPARISON_NOW,
         MediaRole.STORY_COVER,
