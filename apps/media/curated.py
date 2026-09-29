@@ -88,6 +88,40 @@ FINLAND_HELSINKI_TRAM_HERO = CuratedMediaSpec(
 )
 
 
+FRANCE_RUE_LAURISTON_HERO_2024 = CuratedMediaSpec(
+    slug="france-rue-lauriston-paris-2024",
+    country_code="FR",
+    currency_code="",
+    city="Paris",
+    valid_from=date(2024, 11, 16),
+    valid_to=date(2024, 11, 16),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.COUNTRY_HERO,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Rue_Lauriston_-_Paris_XVI_(FR75)_-_2024-11-16_-_1.jpg",
+    title="Rue Lauriston in Paris, November 2024",
+    alt_text="A contemporary street view along Rue Lauriston in Paris in November 2024.",
+    caption="Rue Lauriston in Paris, photographed 16 November 2024.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Rue_Lauriston_-_Paris_XVI_%28FR75%29_-_2024-11-16_-_1.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/3/39/"
+        "Rue_Lauriston_-_Paris_XVI_%28FR75%29_-_2024-11-16_-_1.jpg"
+    ),
+    creator="Chabe01",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="Chabe01 · CC BY-SA 4.0",
+    expected_width=4032,
+    expected_height=3024,
+)
+
+
 JAPAN_TOKYO_STREET_HERO_2019 = CuratedMediaSpec(
     slug="japan-tokyo-street-night-2019",
     country_code="JP",
@@ -256,6 +290,7 @@ JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
 
 CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     FINLAND_HELSINKI_TRAM_HERO.slug: FINLAND_HELSINKI_TRAM_HERO,
+    FRANCE_RUE_LAURISTON_HERO_2024.slug: FRANCE_RUE_LAURISTON_HERO_2024,
     JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
     JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
     JAPAN_SUICA_VENDING_PAYMENT_2020.slug: JAPAN_SUICA_VENDING_PAYMENT_2020,

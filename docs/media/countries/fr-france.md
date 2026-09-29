@@ -46,6 +46,25 @@ Understated Parisian elegance: stone, zinc, café culture, typography and lived 
 - red-white-blue flag palette as art direction
 - luxury-fashion logos as a shortcut to premium
 
+## Production hero source
+
+The first sourced P01 candidate uses a contemporary Paris street rather than a landmark-led tourism image.
+
+- slug: `france-rue-lauriston-paris-2024`
+- role: `country_hero`
+- kind: `contemporary_photo`
+- country scope: `FR`
+- city: Paris
+- captured: 16 November 2024
+- subject: Rue Lauriston in the 16th arrondissement
+- source: Wikimedia Commons, `Rue Lauriston - Paris XVI (FR75) - 2024-11-16 - 1.jpg`
+- creator: Chabe01
+- licence: CC BY-SA 4.0
+- upstream raster: 4032 × 3024 JPEG
+- runtime policy: ingest to managed media, review the 16:9 focal crop, create responsive derivatives, then explicitly approve/publish the reviewed derivative family
+
+The source fits the France visual thesis through ordinary Paris street texture and pale urban architecture without relying on the Eiffel Tower, staged café romance or luxury branding. Manifest inclusion is not publication: ingestion remains `needs_review` until editorial approval.
+
 ## P01 — Hero Wide
 
 **Target:** `static/images/country-media/fr/hero/fr-hero-v01.webp`
@@ -106,7 +125,7 @@ Create a 9:16 premium mobile design concept for Cultural Currency Converter focu
 
 | Prompt | Version | Date | Generator/model | Repository path | Status | Review note |
 | --- | --- | --- | --- | --- | --- | --- |
-| P01 | — | — | — | — | planned | — |
+| P01 | source selected | 2026-09-29 | Wikimedia Commons / Chabe01 | managed-media curated manifest | sourced candidate | Contemporary Rue Lauriston street source selected; ingestion/review/publication remain separate. |
 | P02 | — | — | — | — | planned | — |
 | P03 | — | — | — | — | planned | — |
 | P04 | — | — | — | — | planned | — |
