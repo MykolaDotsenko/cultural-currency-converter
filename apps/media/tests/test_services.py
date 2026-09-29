@@ -238,7 +238,7 @@ def test_selector_prefers_relevant_real_media_over_ai_even_with_coarser_date(
         color=(50, 60, 70),
     )
 
-    ai = MediaAsset.objects.create(
+    MediaAsset.objects.create(
         kind=MediaKind.GENERATED_ILLUSTRATION,
         source_kind=MediaSourceKind.GENERATED,
         role=MediaRole.HISTORICAL_TIMELINE,
