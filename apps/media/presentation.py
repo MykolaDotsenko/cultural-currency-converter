@@ -63,9 +63,7 @@ def _responsive_srcsets(assets: tuple[MediaAsset, ...]) -> dict[int, str]:
             families[source_id][width] = variant.storage_file.url
 
     return {
-        source_id: ", ".join(
-            f"{url} {width}w" for width, url in sorted(sources.items())
-        )
+        source_id: ", ".join(f"{url} {width}w" for width, url in sorted(sources.items()))
         for source_id, sources in families.items()
         if len(sources) >= 2
     }
