@@ -36,6 +36,27 @@ class ImageFrameTemplateTests(SimpleTestCase):
         self.assertNotIn("fetchpriority=", html)
         self.assertNotIn("object-position:", html)
 
+    def test_responsive_sources_render_with_layout_sizes_override(self):
+        html = render_to_string(
+            "components/media/image_frame.html",
+            {
+                "image": self._image(
+                    srcset="/media/sourced/hero-800.webp 800w, /media/sourced/hero-1600.webp 1600w",
+                    sizes="100vw",
+                ),
+                "sizes": "(max-width: 72rem) calc(100vw - 2rem), 72rem",
+            },
+        )
+
+        self.assertIn(
+            'srcset="/media/sourced/hero-800.webp 800w, /media/sourced/hero-1600.webp 1600w"',
+            html,
+        )
+        self.assertIn(
+            'sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem"',
+            html,
+        )
+
     def test_hero_can_be_eager_and_high_priority(self):
         html = render_to_string(
             "components/media/image_frame.html",

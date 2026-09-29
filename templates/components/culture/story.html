@@ -21,7 +21,7 @@
     </div>
     {% if story.status != "unavailable" %}
       {% if story_media %}
-        {% include "components/media/image_frame.html" with image=story_media.image loading="lazy" %}
+        {% include "components/media/image_frame.html" with image=story_media.image loading="lazy" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
       {% endif %}
       <div class="qa-story-chapters">
         {% for chapter in story.chapters %}

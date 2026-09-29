@@ -3,6 +3,7 @@
        style="aspect-ratio: {{ display_ratio|default:image.ratio }}">
     <img class="qa-media__image"
          src="{{ image.src }}"
+         {% if image.srcset %}srcset="{{ image.srcset }}" sizes="{{ sizes|default:image.sizes|default:'100vw' }}"{% endif %}
          alt="{{ image.alt }}"
          width="{{ image.width }}"
          height="{{ image.height }}"

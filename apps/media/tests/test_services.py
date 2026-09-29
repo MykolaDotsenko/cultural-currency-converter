@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import tempfile
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -320,7 +321,9 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
     )
     source.width = 32
     source.height = 24
-    source.save(update_fields=("width", "height"))
+    source.focal_x = Decimal("0.250")
+    source.focal_y = Decimal("0.625")
+    source.save(update_fields=("width", "height", "focal_x", "focal_y"))
 
     derivative = create_responsive_derivative(source, width=16)
 
@@ -328,6 +331,8 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
     assert derivative.variant_width == 16
     assert derivative.width == 16
     assert derivative.height == 12
+    assert derivative.focal_x == Decimal("0.250")
+    assert derivative.focal_y == Decimal("0.625")
     assert len(derivative.content_hash) == 64
     assert derivative.status == MediaStatus.NEEDS_REVIEW
     assert derivative.published_at is None
