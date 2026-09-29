@@ -115,7 +115,7 @@ def test_destination_hero_media_failure_is_optional(
     def unavailable(*args, **kwargs):
         raise DatabaseError("media lookup failed")
 
-    monkeypatch.setattr("apps.culture.media.select_media_for_display", unavailable)
+    monkeypatch.setattr("apps.culture.media.select_media_for_display_roles", unavailable)
 
     assert select_destination_hero_image("FI") is None
 
@@ -129,7 +129,7 @@ def test_destination_hero_malformed_published_row_is_optional(
     def malformed(*args, **kwargs):
         raise ValueError("published media is malformed")
 
-    monkeypatch.setattr("apps.culture.media.select_media_for_display", malformed)
+    monkeypatch.setattr("apps.culture.media.select_media_for_display_roles", malformed)
 
     assert select_destination_hero_image("FI") is None
 
