@@ -217,7 +217,7 @@ def test_japan_everyday_value_manifest_creates_country_scoped_review_candidate()
         metadata_only=True,
     )
 
-    asset = MediaAsset.objects.get(external_id="commons:Shoyu_Ramen（Tokyo_Ramen）_-_01.jpg")
+    asset = MediaAsset.objects.get(external_id="commons:shoyu-ramen-tokyo-ramen-01-2025")
     assert asset.status == MediaStatus.NEEDS_REVIEW
     assert not asset.storage_file
     assert asset.country == japan
