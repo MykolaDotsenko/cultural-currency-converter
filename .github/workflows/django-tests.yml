@@ -189,9 +189,13 @@ jobs:
           DJANGO_HSTS_INCLUDE_SUBDOMAINS: "true"
           DJANGO_HSTS_PRELOAD: "true"
           DJANGO_CSP_MODE: enforce
+          MEDIA_STORAGE_BACKEND: s3
+          MEDIA_S3_BUCKET: ci-managed-media
+          MEDIA_S3_REGION: eu-central-1
+          MEDIA_S3_PUBLIC_ORIGIN: https://media.example.test
         run: |
           python manage.py check --deploy --fail-level WARNING
-          python manage.py shell -c "from django.conf import settings; from django.test import Client; assert settings.SECURE_SSL_REDIRECT is True; assert settings.SECURE_PROXY_SSL_HEADER == ('HTTP_X_FORWARDED_PROTO', 'https'); assert settings.SECURE_HSTS_SECONDS == 300; assert settings.SESSION_COOKIE_SECURE is True; assert settings.CSRF_COOKIE_SECURE is True; assert settings.CONTENT_SECURITY_POLICY_HEADER == 'Content-Security-Policy'; response = Client(HTTP_HOST='app.example.test', HTTP_X_FORWARDED_PROTO='https').get('/health/live/'); assert response.status_code == 200; policy = response['Content-Security-Policy']; assert \"script-src 'self'\" in policy; assert \"script-src-attr 'none'\" in policy; assert \"object-src 'none'\" in policy; assert \"frame-ancestors 'none'\" in policy"
+          python manage.py shell -c "from django.conf import settings; from django.test import Client; assert settings.SECURE_SSL_REDIRECT is True; assert settings.SECURE_PROXY_SSL_HEADER == ('HTTP_X_FORWARDED_PROTO', 'https'); assert settings.SECURE_HSTS_SECONDS == 300; assert settings.SESSION_COOKIE_SECURE is True; assert settings.CSRF_COOKIE_SECURE is True; assert settings.CONTENT_SECURITY_POLICY_HEADER == 'Content-Security-Policy'; assert settings.STORAGES['default']['BACKEND'] == 'storages.s3.S3Storage'; assert settings.MEDIA_URL == 'https://media.example.test/media/'; response = Client(HTTP_HOST='app.example.test', HTTP_X_FORWARDED_PROTO='https').get('/health/live/'); assert response.status_code == 200; policy = response['Content-Security-Policy']; assert \"script-src 'self'\" in policy; assert \"script-src-attr 'none'\" in policy; assert \"object-src 'none'\" in policy; assert \"frame-ancestors 'none'\" in policy; assert \"img-src 'self' https://media.example.test\" in policy"
 
       - name: Run test suite against PostgreSQL
         run: pytest -q

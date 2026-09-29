@@ -9,6 +9,7 @@ authors = [
 ]
 dependencies = [
     "Django==5.2.17",
+    "django-storages-s3==0.1.4",
     "django-template-partials==25.3",
     "django-htmx==1.29.0",
     "psycopg[binary]==3.3.6",

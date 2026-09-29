@@ -182,6 +182,20 @@ The browser and non-browser frontend gates share one asset-budget definition so 
 
 **Revisit when:** real-user monitoring or a controlled performance runner provides stable Core Web Vitals/latency distributions suitable for regression thresholds.
 
+## ADR-018 — Production managed media uses durable object storage
+
+**Status:** active
+
+Production managed-media bytes live in S3-compatible object storage rather than the application filesystem. Local, test, demo and preview execution may use filesystem storage when persistence across deploys is not part of the environment contract.
+
+The application validates a public HTTPS media origin separately from the object-storage API endpoint. That origin is added only to the CSP image allowlist. Managed content-addressed objects use long-lived immutable browser caching; provider credentials stay in the standard S3/IAM credential chain rather than application metadata.
+
+**Why:** the application database stores media provenance and object names, but a successful PostgreSQL restore cannot recover media bytes that disappeared from an ephemeral web-service filesystem. Object storage decouples managed media lifetime from application deploys and instances.
+
+Durable object storage does not itself prove backup quality. Bucket versioning/retention and restore evidence remain deployment responsibilities and must not be inferred from CI.
+
+**Revisit when:** the deployment platform provides an alternative durable media store with equivalent cross-deploy persistence, public delivery, provenance-compatible naming and tested restore properties.
+
 ## Adding/changing a decision
 
 Create or update an ADR when a change affects a durable project-wide choice.

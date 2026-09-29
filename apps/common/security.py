@@ -74,6 +74,32 @@ PUBLIC_CONTENT_SECURITY_POLICY = _serialize_policy(_PUBLIC_DIRECTIVES)
 ADMIN_CONTENT_SECURITY_POLICY = _serialize_policy(_ADMIN_DIRECTIVES)
 
 
+def _with_media_image_source(
+    directives: Sequence[tuple[str, Sequence[str]]],
+    media_origin: str | None,
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    if not media_origin:
+        return tuple((directive, tuple(values)) for directive, values in directives)
+
+    expanded: list[tuple[str, tuple[str, ...]]] = []
+    for directive, values in directives:
+        normalized = tuple(values)
+        if directive == "img-src" and media_origin not in normalized:
+            normalized = (*normalized, media_origin)
+        expanded.append((directive, normalized))
+    return tuple(expanded)
+
+
+def _policy_for_request(request: HttpRequest) -> str:
+    directives = _ADMIN_DIRECTIVES if _is_admin_request(request) else _PUBLIC_DIRECTIVES
+    return _serialize_policy(
+        _with_media_image_source(
+            directives,
+            getattr(settings, "MEDIA_STORAGE_PUBLIC_ORIGIN", None),
+        )
+    )
+
+
 def _is_admin_request(request: HttpRequest) -> bool:
     resolver_match = getattr(request, "resolver_match", None)
     return bool(resolver_match and resolver_match.namespace == "admin")
@@ -91,11 +117,7 @@ class ContentSecurityPolicyMiddleware:
         if not header_name:
             return response
 
-        policy = (
-            ADMIN_CONTENT_SECURITY_POLICY
-            if _is_admin_request(request)
-            else PUBLIC_CONTENT_SECURITY_POLICY
-        )
+        policy = _policy_for_request(request)
         response.headers.pop("Content-Security-Policy", None)
         response.headers.pop("Content-Security-Policy-Report-Only", None)
         response[header_name] = policy
