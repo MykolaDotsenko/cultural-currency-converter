@@ -229,6 +229,49 @@ def test_japan_everyday_value_manifest_creates_country_scoped_review_candidate()
     assert asset.valid_to == date(2025, 5, 11)
 
 
+def test_japan_payment_culture_manifest_matches_reviewed_source_contract() -> None:
+    spec = get_curated_media_spec("japan-suica-vending-payment-2020")
+
+    assert spec.country_code == "JP"
+    assert spec.currency_code == ""
+    assert spec.city == ""
+    assert spec.role == MediaRole.PAYMENT_CULTURE
+    assert spec.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.valid_from == date(2020, 11, 14)
+    assert spec.valid_to == date(2020, 11, 14)
+    assert spec.date_precision == DatePrecision.EXACT_DAY
+    assert spec.expected_width == 6240
+    assert spec.expected_height == 4160
+    assert spec.creator == "Real Estate Japan / Scott Kouchi"
+    assert spec.licence_id == "CC BY 2.0"
+    assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
+
+
+@pytest.mark.django_db
+def test_japan_payment_culture_manifest_creates_country_scoped_review_candidate() -> None:
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+
+    call_command(
+        "ingest_curated_media",
+        slug="japan-suica-vending-payment-2020",
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get(
+        external_id="commons:Suica_payment_on_vending_machine_50607340823"
+    )
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert not asset.storage_file
+    assert asset.country == japan
+    assert asset.currency is None
+    assert asset.city == ""
+    assert asset.role == MediaRole.PAYMENT_CULTURE
+    assert asset.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert asset.valid_from == date(2020, 11, 14)
+    assert asset.valid_to == date(2020, 11, 14)
+
+
 def test_jpy_historical_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("jpy-series-d-1000-yen-1984-2007")
 

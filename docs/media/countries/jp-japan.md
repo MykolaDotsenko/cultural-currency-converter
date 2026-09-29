@@ -103,6 +103,27 @@ Create an elevated but ordinary Tokyo spending scene: a small lunch set or ramen
 
 Frame at table/counter/hand level rather than as a product advertisement. Do not print an invented price as a focal element. Any signage should be incidental and plausible, not AI-generated gibberish dominating the scene.
 
+## Production payment-culture source
+
+The first sourced P03 candidate documents an actual Suica payment interaction rather than a generic payment-terminal product shot.
+
+- slug: `japan-suica-vending-payment-2020`
+- role: `payment_culture`
+- kind: `contemporary_photo`
+- country scope: `JP`
+- city scope: none; the source does not establish a capture city
+- captured: 14 November 2020
+- subject: Suica contactless payment at a vending machine
+- source: Wikimedia Commons, `Suica payment on vending machine (50607340823).jpg`
+- creator/source account: Real Estate Japan; photo credit: Scott Kouchi
+- licence: CC BY 2.0
+- upstream raster: 6240 × 4160 JPEG
+- runtime policy: supporting atmosphere only; it may render beside separately reviewed payment guidance and does not establish how common any payment method is
+
+The visible Suica branding is incidental and factual to the documented interaction. The asset is not used as evidence that cashless payment is universal, preferred or exclusive in Japan.
+
+As with P01/P02, manifest inclusion is not publication. Managed ingestion remains `needs_review` until editorial review, responsive derivative creation and explicit publication.
+
 ## P03 — Payment Culture
 
 **Target:** `static/images/country-media/jp/payment-culture/jp-payment-culture-v01.webp`
@@ -165,7 +186,7 @@ This asset is historical evidence/supporting context for a JPY observation insid
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | source selected | 2026-09-29 | Wikimedia Commons / Another Believer | managed-media curated manifest | sourced candidate | Contemporary Tokyo source selected; ingestion/review/publication remain separate. |
 | P02 | source selected | 2026-09-29 | Wikimedia Commons / Quercus acuta | managed-media curated manifest | sourced candidate | Tokyo ramen-style image selected; no capture-city or price claim inferred. |
-| P03 | — | — | — | — | planned | — |
+| P03 | source selected | 2026-09-29 | Wikimedia Commons / Real Estate Japan / Scott Kouchi | managed-media curated manifest | sourced candidate | Suica vending-machine payment interaction selected; no city or payment-prevalence claim inferred. |
 | P04 | — | — | — | — | planned | — |
 | P05 | — | — | — | — | planned | — |
 | P06 | — | — | — | — | planned | — |
