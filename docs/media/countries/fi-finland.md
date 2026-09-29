@@ -124,7 +124,7 @@ The synthetic P01/P02 assets below remain historical trial artifacts only. They 
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | v01 | 2026-09-23 | OpenAI image generation (ChatGPT) | `static/images/country-media/fi/hero/fi-hero-v01.webp` | historical trial | Synthetic 16:9 Helsinki proof-of-flow only. It must not be used as the production country hero; the curated Wikimedia workflow above supersedes it for production. |
 | P02 | v01 | 2026-09-23 | OpenAI image generation (ChatGPT) + crop/inpaint cleanup | `static/images/country-media/fi/everyday-value/fi-everyday-value-v01.webp` | ✅ trial-approved | Helsinki café everyday-value scene: coffee + korvapuusti, text overlays removed, 4:5 WebP trial asset. Replace only with a clearly stronger v02 after review. |
-| P03 | — | — | — | — | planned | — |
+| P03 | v01 | 2026-09-30 | OpenAI image generation (ChatGPT) + reviewed crop | `static/images/country-media/fi/payment-culture/fi-payment-culture-v01.webp` | ✅ trial-approved | Synthetic Helsinki café contactless-payment atmosphere; supporting media only, not evidence for payment prevalence or merchant acceptance. |
 | P04 | — | — | — | — | planned | — |
 | P05 | — | — | — | — | planned | — |
 | P06 | — | — | — | — | planned | — |
