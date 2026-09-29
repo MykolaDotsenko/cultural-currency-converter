@@ -189,6 +189,48 @@ def test_japan_hero_manifest_creates_country_scoped_review_candidate() -> None:
     assert asset.date_precision == DatePrecision.EXACT_DAY
 
 
+def test_japan_everyday_value_manifest_matches_reviewed_source_contract() -> None:
+    spec = get_curated_media_spec("japan-shoyu-ramen-everyday-value-2025")
+
+    assert spec.country_code == "JP"
+    assert spec.currency_code == ""
+    assert spec.city == ""
+    assert spec.role == MediaRole.EVERYDAY_VALUE
+    assert spec.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.valid_from == date(2025, 5, 11)
+    assert spec.valid_to == date(2025, 5, 11)
+    assert spec.date_precision == DatePrecision.EXACT_DAY
+    assert spec.expected_width == 3299
+    assert spec.expected_height == 2474
+    assert spec.creator == "Quercus acuta"
+    assert spec.licence_id == "CC BY-SA 4.0"
+
+
+@pytest.mark.django_db
+def test_japan_everyday_value_manifest_creates_country_scoped_review_candidate() -> None:
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+
+    call_command(
+        "ingest_curated_media",
+        slug="japan-shoyu-ramen-everyday-value-2025",
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get(
+        external_id="commons:Shoyu_Ramen（Tokyo_Ramen）_-_01.jpg"
+    )
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert not asset.storage_file
+    assert asset.country == japan
+    assert asset.currency is None
+    assert asset.city == ""
+    assert asset.role == MediaRole.EVERYDAY_VALUE
+    assert asset.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert asset.valid_from == date(2025, 5, 11)
+    assert asset.valid_to == date(2025, 5, 11)
+
+
 def test_jpy_historical_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("jpy-series-d-1000-yen-1984-2007")
 
@@ -362,6 +404,37 @@ def test_curated_country_hero_manifest_rejects_generated_media(curated_spec) -> 
 
     with pytest.raises(ValueError, match="sourced contemporary photography"):
         validate_curated_media_spec(invalid)
+
+
+def test_curated_destination_supporting_manifest_requires_country_scope(
+    curated_spec,
+) -> None:
+    missing_country = replace(
+        curated_spec,
+        role=MediaRole.EVERYDAY_VALUE,
+        country_code="",
+        city="",
+    )
+    currency_scoped = replace(
+        curated_spec,
+        role=MediaRole.EVERYDAY_VALUE,
+        currency_code="JPY",
+    )
+    generated = replace(
+        curated_spec,
+        role=MediaRole.EVERYDAY_VALUE,
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+    )
+
+    with pytest.raises(ValueError, match="requires country_code"):
+        validate_curated_media_spec(missing_country)
+
+    with pytest.raises(ValueError, match="currency-neutral"):
+        validate_curated_media_spec(currency_scoped)
+
+    with pytest.raises(ValueError, match="requires a sourced asset"):
+        validate_curated_media_spec(generated)
 
 
 def test_curated_comparison_manifest_rejects_country_scope(comparison_curated_spec) -> None:
