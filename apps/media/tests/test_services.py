@@ -342,6 +342,33 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
 
 
 @pytest.mark.django_db
+def test_supporting_role_allows_labelled_generated_media_when_no_sourced_option(finland):
+    generated = MediaAsset.objects.create(
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+        role=MediaRole.PAYMENT_CULTURE,
+        country=finland,
+        title="Generated payment atmosphere",
+        alt_text="Editorial illustration of a contactless payment moment.",
+        storage_file="generated/payment.webp",
+        width=1200,
+        height=1500,
+        generated_by_ai=True,
+        ai_label="AI-generated editorial illustration",
+        status=MediaStatus.PUBLISHED,
+    )
+
+    selected = select_published_media(
+        role=MediaRole.PAYMENT_CULTURE,
+        country=finland,
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == generated.pk
+    assert selected.authenticity_class == "ai_generated_illustration"
+
+
+@pytest.mark.django_db
 def test_selector_matches_equivalent_aspect_ratios(finland):
     matching = MediaAsset.objects.create(
         kind=MediaKind.CONTEMPORARY_PHOTO,
