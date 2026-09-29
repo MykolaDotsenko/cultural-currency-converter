@@ -113,9 +113,7 @@ def test_pinned_quote_accepts_object_attribution_for_requested_provider():
             "base": "EUR",
             "quote": "JPY",
             "rate": Decimal("174.5"),
-            "providers": [
-                {"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}
-            ],
+            "providers": [{"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}],
         },
         expected_base="EUR",
         expected_quote="JPY",
@@ -552,9 +550,7 @@ def test_series_accepts_object_provider_attribution():
                 "base": "EUR",
                 "quote": "JPY",
                 "rate": Decimal("174.5"),
-                "providers": [
-                    {"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}
-                ],
+                "providers": [{"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}],
             }
         ],
         expected_base="EUR",
