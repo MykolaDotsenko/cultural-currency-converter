@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import tempfile
+from dataclasses import replace
+from datetime import date
 from email.message import Message
 from pathlib import Path
 
@@ -11,10 +13,17 @@ from django.core.management.base import CommandError
 from django.test import override_settings
 from PIL import Image
 
-from apps.countries.models import Country
+from apps.countries.models import Country, Currency
 from apps.media.acquisition import DownloadedMedia, MediaAcquisitionError, download_media_bytes
-from apps.media.curated import CURATED_MEDIA, CuratedMediaSpec
-from apps.media.models import MediaAsset, MediaKind, MediaRole, MediaSourceKind, MediaStatus
+from apps.media.curated import CURATED_MEDIA, JPY_AKIHABARA_1995_THEN, CuratedMediaSpec
+from apps.media.models import (
+    DatePrecision,
+    MediaAsset,
+    MediaKind,
+    MediaRole,
+    MediaSourceKind,
+    MediaStatus,
+)
 from apps.media.services import approve_media_asset
 
 
@@ -63,6 +72,11 @@ def media_root():
 @pytest.fixture
 def finland(db):
     return Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+
+
+@pytest.fixture
+def yen(db):
+    return Currency.objects.create(code="JPY", name="Japanese yen", symbol="¥", minor_units=0)
 
 
 @pytest.fixture
@@ -201,6 +215,64 @@ def test_curated_metadata_only_creates_review_candidate_without_bytes(
     assert asset.alt_text == curated_spec.alt_text
     assert asset.caption == curated_spec.caption
     assert asset.generated_by_ai is False
+
+
+@pytest.mark.django_db
+def test_curated_archival_metadata_is_currency_and_year_scoped(yen) -> None:
+    call_command(
+        "ingest_curated_media",
+        slug=JPY_AKIHABARA_1995_THEN.slug,
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get()
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert asset.role == MediaRole.COMPARISON_THEN
+    assert asset.kind == MediaKind.ARCHIVAL_PHOTO
+    assert asset.country is None
+    assert asset.currency == yen
+    assert asset.city == "Tokyo"
+    assert asset.valid_from == date(1995, 1, 1)
+    assert asset.valid_to == date(1995, 12, 31)
+    assert asset.date_precision == DatePrecision.YEAR
+    assert asset.width == 930
+    assert asset.height == 622
+    assert asset.licence_id == "CC BY-SA 2.0"
+    assert not asset.storage_file
+
+
+@pytest.mark.django_db
+def test_curated_archival_ingest_requires_seeded_currency_before_network(monkeypatch) -> None:
+    def unexpected_download(*args, **kwargs):
+        raise AssertionError("missing reference data must fail before network access")
+
+    monkeypatch.setattr(
+        "apps.media.management.commands.ingest_curated_media.download_media_bytes",
+        unexpected_download,
+    )
+
+    with pytest.raises(CommandError, match="requires currency JPY"):
+        call_command("ingest_curated_media", slug=JPY_AKIHABARA_1995_THEN.slug)
+
+    assert not MediaAsset.objects.exists()
+
+
+@pytest.mark.django_db
+def test_curated_comparison_manifest_rejects_missing_temporal_scope(yen, monkeypatch) -> None:
+    invalid = replace(
+        JPY_AKIHABARA_1995_THEN,
+        slug="test-jpy-archive-without-date",
+        external_id="commons:test-jpy-archive-without-date",
+        valid_from=None,
+        valid_to=None,
+        date_precision=DatePrecision.UNKNOWN,
+    )
+    monkeypatch.setitem(CURATED_MEDIA, invalid.slug, invalid)
+
+    with pytest.raises(CommandError, match="requires explicit temporal scope"):
+        call_command("ingest_curated_media", slug=invalid.slug, metadata_only=True)
+
+    assert not MediaAsset.objects.exists()
 
 
 @pytest.mark.django_db
