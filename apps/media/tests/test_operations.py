@@ -135,6 +135,62 @@ def test_build_media_derivative_command_covers_success_and_errors(media_root):
 
 
 @pytest.mark.django_db
+def test_build_media_derivative_command_creates_explicit_width_batch(media_root):
+    source = _publish(_sourced_asset(), _png(size=(64, 48), color=(21, 22, 23)))
+    output = io.StringIO()
+
+    call_command(
+        "build_media_derivative",
+        "--asset-id",
+        str(source.pk),
+        "--width",
+        "16",
+        "--width",
+        "32",
+        stdout=output,
+    )
+
+    derivatives = list(
+        MediaAsset.objects.filter(derivative_of=source).order_by("variant_width")
+    )
+    assert [asset.variant_width for asset in derivatives] == [16, 32]
+    assert all(asset.status == MediaStatus.NEEDS_REVIEW for asset in derivatives)
+    assert output.getvalue().count("CREATED:") == 2
+    assert "CREATED BATCH:" in output.getvalue()
+
+
+@pytest.mark.django_db
+def test_build_media_derivative_command_prevalidates_batch_before_creating(media_root):
+    source = _publish(_sourced_asset(), _png(size=(64, 48), color=(31, 32, 33)))
+
+    with pytest.raises(CommandError, match="positive and smaller"):
+        call_command(
+            "build_media_derivative",
+            "--asset-id",
+            str(source.pk),
+            "--width",
+            "16",
+            "--width",
+            "64",
+        )
+
+    assert not MediaAsset.objects.filter(derivative_of=source).exists()
+
+    with pytest.raises(CommandError, match="unique"):
+        call_command(
+            "build_media_derivative",
+            "--asset-id",
+            str(source.pk),
+            "--width",
+            "16",
+            "--width",
+            "16",
+        )
+
+    assert not MediaAsset.objects.filter(derivative_of=source).exists()
+
+
+@pytest.mark.django_db
 def test_admin_transition_actions_use_review_gates(monkeypatch):
     model_admin = MediaAssetAdmin(MediaAsset, admin.site)
     asset = MediaAsset.objects.create(
