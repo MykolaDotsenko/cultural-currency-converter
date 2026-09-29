@@ -34,6 +34,9 @@ def build_destination_context_component(
     historical: bool,
     show_explore_nav: bool = True,
     hero_image: ImageViewModel | None = None,
+    everyday_value_image: ImageViewModel | None = None,
+    payment_culture_image: ImageViewModel | None = None,
+    local_detail_image: ImageViewModel | None = None,
 ) -> dict[str, object]:
     prices = [
         {
@@ -81,6 +84,9 @@ def build_destination_context_component(
         "country_name": context.country_name,
         "has_content": context.has_content,
         "hero_image": hero_image,
+        "everyday_value_image": everyday_value_image if prices else None,
+        "payment_culture_image": payment_culture_image if payment is not None else None,
+        "local_detail_image": local_detail_image if prices or payment is not None else None,
         "prices": prices,
         "payment": payment,
         "historical_notice": (

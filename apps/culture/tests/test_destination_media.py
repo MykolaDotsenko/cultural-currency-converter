@@ -12,7 +12,7 @@ from PIL import Image
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country
-from apps.culture.media import select_destination_hero_image
+from apps.culture.media import select_destination_hero_image, select_destination_media
 from apps.media.models import MediaAsset, MediaKind, MediaRole, MediaSourceKind
 from apps.media.services import approve_media_asset, attach_media_bytes, publish_media_asset
 
@@ -73,6 +73,40 @@ def test_destination_hero_uses_only_published_managed_media(media_root) -> None:
 
 
 @pytest.mark.django_db
+def test_destination_media_returns_reviewed_supporting_roles(media_root) -> None:
+    finland = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    role_specs = (
+        (MediaRole.COUNTRY_HERO, "hero", (1600, 900)),
+        (MediaRole.EVERYDAY_VALUE, "everyday", (1200, 1500)),
+        (MediaRole.PAYMENT_CULTURE, "payment", (1200, 1500)),
+        (MediaRole.LOCAL_DETAIL, "detail", (1500, 1000)),
+    )
+    for role, name, size in role_specs:
+        MediaAsset.objects.create(
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+            source_kind=MediaSourceKind.MANUAL,
+            role=role,
+            country=finland,
+            title=name.capitalize(),
+            alt_text=f"{name} destination image",
+            storage_file=f"sourced/{name}.webp",
+            width=size[0],
+            height=size[1],
+            status="published",
+        )
+
+    media = select_destination_media("fi")
+
+    assert media.hero is not None
+    assert media.everyday_value is not None
+    assert media.payment_culture is not None
+    assert media.local_detail is not None
+    assert media.everyday_value.alt == "everyday destination image"
+    assert media.payment_culture.alt == "payment destination image"
+    assert media.local_detail.alt == "detail destination image"
+
+
+@pytest.mark.django_db
 def test_destination_hero_media_failure_is_optional(
     monkeypatch,
 ) -> None:
@@ -81,7 +115,7 @@ def test_destination_hero_media_failure_is_optional(
     def unavailable(*args, **kwargs):
         raise DatabaseError("media lookup failed")
 
-    monkeypatch.setattr("apps.culture.media.select_media_for_display", unavailable)
+    monkeypatch.setattr("apps.culture.media.select_media_for_display_roles", unavailable)
 
     assert select_destination_hero_image("FI") is None
 
@@ -95,9 +129,71 @@ def test_destination_hero_malformed_published_row_is_optional(
     def malformed(*args, **kwargs):
         raise ValueError("published media is malformed")
 
-    monkeypatch.setattr("apps.culture.media.select_media_for_display", malformed)
+    monkeypatch.setattr("apps.culture.media.select_media_for_display_roles", malformed)
 
     assert select_destination_hero_image("FI") is None
+
+
+def test_destination_context_template_renders_supporting_media_only_with_context() -> None:
+    def image(name: str) -> ImageViewModel:
+        return ImageViewModel(
+            src=f"/media/sourced/{name}.webp",
+            ratio="4 / 5",
+            alt=f"{name} supporting image",
+            decorative=False,
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+            label=name,
+            width=1200,
+            height=1500,
+            attribution_text="Example photographer · CC BY 4.0",
+            source_url="https://example.com/photo",
+            licence_id="CC BY 4.0",
+            licence_url="https://creativecommons.org/licenses/by/4.0/",
+        )
+
+    component = {
+        "country_name": "Finland",
+        "hero_image": None,
+        "everyday_value_image": image("Everyday"),
+        "payment_culture_image": image("Payment"),
+        "local_detail_image": image("Detail"),
+        "historical_notice": None,
+        "show_explore_nav": False,
+        "prices": [
+            {
+                "label": "Coffee",
+                "price_text": "4.50 EUR",
+                "equivalent_text": "About 2",
+                "scope": "Helsinki",
+                "observed": "Sep 2026",
+                "source_class": "Curated factual",
+                "confidence": "High",
+                "source_name": "Example source",
+                "source_url": "https://example.com/price",
+            }
+        ],
+        "payment": {
+            "summary": "Cards are widely accepted.",
+            "rows": [{"label": "Cards", "text": "Contactless payment is common."}],
+            "source_name": "Example source",
+            "source_url": "https://example.com/payment",
+            "verified": "29 Sep 2026",
+        },
+    }
+
+    html = render_to_string(
+        "components/culture/destination_context.html",
+        {"component": component},
+    )
+
+    assert html.count('class="qa-context-section__media"') == 2
+    assert 'class="qa-context-detail"' in html
+    assert 'style="aspect-ratio: 4 / 5"' in html
+    assert 'style="aspect-ratio: 3 / 2"' in html
+    assert "Everyday supporting image" in html
+    assert "Payment supporting image" in html
+    assert "Detail supporting image" in html
+    assert "Example photographer · CC BY 4.0" in html
 
 
 def test_destination_context_template_renders_reviewed_hero_with_provenance() -> None:

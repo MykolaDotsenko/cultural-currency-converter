@@ -7,6 +7,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
 from apps.culture.models import (
     CulturalProfile,
@@ -17,6 +18,7 @@ from apps.culture.models import (
 from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import (
     PRICE_CONTEXT_MAX_AGE,
+    DestinationContext,
     build_destination_context,
     calculate_purchase_equivalent,
 )
@@ -225,3 +227,37 @@ def test_currency_only_conversion_has_no_destination_context(japan_context):
         )
         is None
     )
+
+
+def test_supporting_media_is_suppressed_when_destination_has_no_reviewed_context():
+    image = ImageViewModel(
+        src="/media/sourced/support.webp",
+        ratio="4 / 5",
+        alt="Supporting destination image",
+        decorative=False,
+        kind="contemporary_photo",
+        label="Supporting image",
+        width=1200,
+        height=1500,
+    )
+    context = DestinationContext(
+        country_code="FI",
+        country_name="Finland",
+        as_of=date(2026, 9, 29),
+        payment=None,
+        prices=(),
+    )
+
+    component = build_destination_context_component(
+        context,
+        historical=False,
+        hero_image=image,
+        everyday_value_image=image,
+        payment_culture_image=image,
+        local_detail_image=image,
+    )
+
+    assert component["hero_image"] is image
+    assert component["everyday_value_image"] is None
+    assert component["payment_culture_image"] is None
+    assert component["local_detail_image"] is None

@@ -9,7 +9,7 @@ from django.db.models import Q
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
 from apps.media.models import MediaAsset, MediaStatus
-from apps.media.services import select_published_media
+from apps.media.services import select_published_media, select_published_media_for_roles
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,35 +37,52 @@ def _focal_position(asset: MediaAsset) -> str:
     return f"{_format_focal_percent(focal_x)} {_format_focal_percent(focal_y)}"
 
 
-def _responsive_srcset(asset: MediaAsset) -> str:
-    if asset.pk is None:
-        return ""
+def _responsive_srcsets(assets: tuple[MediaAsset, ...]) -> dict[int, str]:
+    source_ids: set[int] = set()
+    for asset in assets:
+        if asset.pk is None:
+            continue
+        source_ids.add(asset.derivative_of_id or asset.pk)
+    if not source_ids:
+        return {}
 
-    source_id = asset.derivative_of_id or asset.pk
     variants = (
         MediaAsset.objects.filter(status=MediaStatus.PUBLISHED)
-        .filter(Q(pk=source_id) | Q(derivative_of_id=source_id))
+        .filter(Q(pk__in=source_ids) | Q(derivative_of_id__in=source_ids))
         .exclude(storage_file="")
         .order_by("variant_width", "-published_at", "-pk")
     )
 
-    sources: dict[int, str] = {}
+    families: dict[int, dict[int, str]] = {source_id: {} for source_id in source_ids}
     for variant in variants:
+        source_id = variant.derivative_of_id or variant.pk
+        if source_id not in families:
+            continue
         width = variant.variant_width or variant.width
-        if width and width not in sources:
-            sources[width] = variant.storage_file.url
+        if width and width not in families[source_id]:
+            families[source_id][width] = variant.storage_file.url
 
-    if len(sources) < 2:
+    return {
+        source_id: ", ".join(f"{url} {width}w" for width, url in sorted(sources.items()))
+        for source_id, sources in families.items()
+        if len(sources) >= 2
+    }
+
+
+def _responsive_srcset(asset: MediaAsset) -> str:
+    if asset.pk is None:
         return ""
+    source_id = asset.derivative_of_id or asset.pk
+    return _responsive_srcsets((asset,)).get(source_id, "")
 
-    return ", ".join(f"{url} {width}w" for width, url in sorted(sources.items()))
 
-
-def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
+def _build_media_asset_image_view_model(
+    asset: MediaAsset,
+    *,
+    responsive_srcset: str,
+) -> ImageViewModel:
     if not asset.is_published or not asset.storage_file:
         raise ValueError("Only published managed media can be rendered.")
-
-    responsive_srcset = _responsive_srcset(asset)
 
     return ImageViewModel(
         src=asset.storage_file.url,
@@ -95,6 +112,56 @@ def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
         ),
         authenticity_label=asset.ai_label if asset.generated_by_ai else "",
     )
+
+
+def build_media_asset_image_view_model(asset: MediaAsset) -> ImageViewModel:
+    return _build_media_asset_image_view_model(
+        asset,
+        responsive_srcset=_responsive_srcset(asset),
+    )
+
+
+def select_media_for_display_roles(
+    *,
+    roles: tuple[str, ...],
+    country: Country | None = None,
+    currency: Currency | None = None,
+    target_date: date | None = None,
+    aspect_ratios: dict[str, str] | None = None,
+) -> dict[str, DisplayMediaSelection]:
+    stored_by_role = select_published_media_for_roles(
+        roles=roles,
+        country=country,
+        currency=currency,
+        target_date=target_date,
+        aspect_ratios=aspect_ratios,
+    )
+    if not stored_by_role:
+        return {}
+
+    assets = tuple(selection.asset for selection in stored_by_role.values())
+    srcsets = _responsive_srcsets(assets)
+    displayed: dict[str, DisplayMediaSelection] = {}
+    for role, stored in stored_by_role.items():
+        asset = stored.asset
+        if asset.pk is None:
+            continue
+        source_id = asset.derivative_of_id or asset.pk
+        try:
+            image = _build_media_asset_image_view_model(
+                asset,
+                responsive_srcset=srcsets.get(source_id, ""),
+            )
+        except ValueError:
+            continue
+        displayed[role] = DisplayMediaSelection(
+            image=image,
+            selection_reason=stored.selection_reason,
+            temporal_match_quality=stored.temporal_match_quality,
+            authenticity_class=stored.authenticity_class,
+            fallback_level=stored.fallback_level,
+        )
+    return displayed
 
 
 def select_media_for_display(

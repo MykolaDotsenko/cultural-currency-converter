@@ -31,6 +31,11 @@
           <h4 id="everyday-value-title">What this amount roughly buys</h4>
         </div>
         {% if destination_context.prices %}
+          {% if destination_context.everyday_value_image %}
+            <div class="qa-context-section__media">
+              {% include "components/media/image_frame.html" with image=destination_context.everyday_value_image display_ratio="4 / 5" sizes="(max-width: 58rem) calc(100vw - 2rem), 34rem" %}
+            </div>
+          {% endif %}
           <div class="qa-price-grid">
             {% for price in destination_context.prices %}
               <article class="qa-price-card">
@@ -65,6 +70,11 @@
           <h4 id="payment-context-title">Paying in {{ destination_context.country_name }}</h4>
         </div>
         {% if destination_context.payment %}
+          {% if destination_context.payment_culture_image %}
+            <div class="qa-context-section__media">
+              {% include "components/media/image_frame.html" with image=destination_context.payment_culture_image display_ratio="4 / 5" sizes="(max-width: 58rem) calc(100vw - 2rem), 28rem" %}
+            </div>
+          {% endif %}
           {% if destination_context.payment.summary %}
             <p>{{ destination_context.payment.summary }}</p>
           {% endif %}
@@ -89,5 +99,10 @@
         {% endif %}
       </section>
     </div>
+    {% if destination_context.local_detail_image %}
+      <div class="qa-context-detail">
+        {% include "components/media/image_frame.html" with image=destination_context.local_detail_image display_ratio="3 / 2" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
+      </div>
+    {% endif %}
   </section>
 {% endwith %}

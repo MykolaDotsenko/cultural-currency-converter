@@ -3,11 +3,16 @@ from __future__ import annotations
 from decimal import Decimal
 
 import pytest
+from django.db import connection
 from django.template.loader import render_to_string
+from django.test.utils import CaptureQueriesContext
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.media.models import MediaAsset, MediaKind, MediaRole, MediaSourceKind, MediaStatus
-from apps.media.presentation import build_media_asset_image_view_model
+from apps.media.presentation import (
+    build_media_asset_image_view_model,
+    select_media_for_display_roles,
+)
 
 
 def test_generated_media_authenticity_label_is_visible_not_alt_only():
@@ -168,3 +173,62 @@ def test_single_published_derivative_does_not_force_a_srcset_candidate():
 
     assert image.srcset == ""
     assert image.sizes == ""
+
+
+@pytest.mark.django_db
+def test_multi_role_presentation_batches_selection_and_srcset_queries():
+    from apps.countries.models import Country
+
+    finland = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    hero_source = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COUNTRY_HERO,
+        country=finland,
+        title="Hero source",
+        alt_text="Helsinki street scene.",
+        storage_file="sourced/hero-source.webp",
+        width=2400,
+        height=1350,
+        status=MediaStatus.APPROVED,
+    )
+    everyday_source = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.EVERYDAY_VALUE,
+        country=finland,
+        title="Everyday source",
+        alt_text="Coffee and pastry in Helsinki.",
+        storage_file="sourced/everyday-source.webp",
+        width=1800,
+        height=2250,
+        status=MediaStatus.APPROVED,
+    )
+    for source, widths in ((hero_source, (800, 1600)), (everyday_source, (600, 1200))):
+        for width in widths:
+            MediaAsset.objects.create(
+                kind=source.kind,
+                source_kind=source.source_kind,
+                role=source.role,
+                country=source.country,
+                title=f"{source.title} {width}",
+                alt_text=source.alt_text,
+                storage_file=f"sourced/{source.role}-{width}.webp",
+                width=width,
+                height=round((source.height or 1) * width / (source.width or 1)),
+                derivative_of=source,
+                variant_width=width,
+                status=MediaStatus.PUBLISHED,
+            )
+
+    with CaptureQueriesContext(connection) as captured:
+        selected = select_media_for_display_roles(
+            roles=(MediaRole.COUNTRY_HERO, MediaRole.EVERYDAY_VALUE),
+            country=finland,
+        )
+
+    assert len(captured) == 2
+    assert "800w" in selected[MediaRole.COUNTRY_HERO].image.srcset
+    assert "1600w" in selected[MediaRole.COUNTRY_HERO].image.srcset
+    assert "600w" in selected[MediaRole.EVERYDAY_VALUE].image.srcset
+    assert "1200w" in selected[MediaRole.EVERYDAY_VALUE].image.srcset

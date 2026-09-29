@@ -12,7 +12,7 @@ from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_http_methods
 
 from apps.countries.models import CountryCurrency, Currency
-from apps.culture.media import select_destination_hero_image
+from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
@@ -297,12 +297,16 @@ def converter_view(
             if result is None:
                 raise RuntimeError("Successful converter submission returned no conversion.")
             if submission.destination_context is not None:
+                destination_media = select_destination_media(
+                    submission.destination_context.country_code
+                )
                 destination_context_component = build_destination_context_component(
                     submission.destination_context,
                     historical=False,
-                    hero_image=select_destination_hero_image(
-                        submission.destination_context.country_code
-                    ),
+                    hero_image=destination_media.hero,
+                    everyday_value_image=destination_media.everyday_value,
+                    payment_culture_image=destination_media.payment_culture,
+                    local_detail_image=destination_media.local_detail,
                 )
 
     if convert_requested and not form_valid and request.method == "POST":

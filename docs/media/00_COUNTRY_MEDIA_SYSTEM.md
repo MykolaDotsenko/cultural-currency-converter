@@ -242,7 +242,9 @@ Do not use generated visuals as historical evidence, a source for prices, or pro
 
 ## Production vs design-reference boundary
 
-P01–P04 may become production atmosphere/supporting media after review and after the product's media-selection policy allows that generated role.
+P01 uses the managed country-hero role and production hero selection remains sourced, reviewed and non-generated.
+
+P02–P04 map to the runtime roles `everyday_value`, `payment_culture` and `local_detail`. They render only beside reviewed destination context. Sourced media is preferred; explicitly labelled generated editorial imagery can be used as supporting atmosphere after review, but never as evidence for prices or payment behaviour.
 
 P05–P06 stay in documentation. The real interface is always HTML/CSS/TypeScript/Django templates, not a generated screenshot.
 
