@@ -283,6 +283,43 @@ JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021 = CuratedMediaSpec(
 )
 
 
+JAPAN_AKIHABARA_1995_THEN = CuratedMediaSpec(
+    slug="jpy-akihabara-1995",
+    country_code="",
+    currency_code="JPY",
+    city="Tokyo",
+    valid_from=date(1995, 1, 1),
+    valid_to=date(1995, 12, 31),
+    date_precision=DatePrecision.YEAR,
+    role=MediaRole.COMPARISON_THEN,
+    kind=MediaKind.ARCHIVAL_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Akihabara_station_south_street_1995_Danny_Choo",
+    title="Akihabara Station south street, identified as 1995",
+    alt_text=(
+        "A sourced archival view of the street outside Akihabara Station in Tokyo, "
+        "identified by the source as 1995."
+    ),
+    caption=("Akihabara Station south street, Tokyo; the source identifies the scene as 1995."),
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Akihabara_station_south_street,_1995,_(by_Danny_Choo).jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/0/07/"
+        "Akihabara_station_south_street%2C_1995%2C_%28by_Danny_Choo%29.jpg"
+    ),
+    creator="Danny Choo",
+    licence_id="CC BY-SA 2.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/2.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 2.0 Generic",
+    attribution_text="Danny Choo · CC BY-SA 2.0",
+    expected_width=930,
+    expected_height=622,
+)
+
+
 JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
     slug="jpy-series-d-1000-yen-1984-2007",
     country_code="",
@@ -329,6 +366,7 @@ CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
     JAPAN_SUICA_VENDING_PAYMENT_2020.slug: JAPAN_SUICA_VENDING_PAYMENT_2020,
     JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021.slug: JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021,
+    JAPAN_AKIHABARA_1995_THEN.slug: JAPAN_AKIHABARA_1995_THEN,
     JAPAN_SERIES_D_1000_YEN_1984_2007.slug: JAPAN_SERIES_D_1000_YEN_1984_2007,
 }
 
