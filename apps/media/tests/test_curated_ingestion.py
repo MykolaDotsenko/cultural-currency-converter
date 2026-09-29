@@ -221,9 +221,7 @@ def test_france_everyday_value_manifest_creates_country_scoped_review_candidate(
         metadata_only=True,
     )
 
-    asset = MediaAsset.objects.get(
-        external_id="commons:Croissant_et_Pain_au_chocolat_in_Paris.jpg"
-    )
+    asset = MediaAsset.objects.get(external_id="commons:Croissant_et_Pain_au_chocolat_in_Paris.jpg")
     assert asset.status == MediaStatus.NEEDS_REVIEW
     assert not asset.storage_file
     assert asset.country == france
