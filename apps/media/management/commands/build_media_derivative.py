@@ -32,7 +32,9 @@ class Command(BaseCommand):
 
         source_width = source.width or 0
         if any(width < 1 or width >= source_width for width in widths):
-            raise CommandError("Each derivative width must be positive and smaller than the source.")
+            raise CommandError(
+                "Each derivative width must be positive and smaller than the source."
+            )
 
         existing_widths = set(
             MediaAsset.objects.filter(
