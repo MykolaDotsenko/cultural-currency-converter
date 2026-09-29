@@ -212,7 +212,8 @@ def test_france_everyday_value_manifest_matches_reviewed_source_contract() -> No
 
 
 @pytest.mark.django_db
-def test_france_everyday_value_manifest_creates_country_scoped_review_candidate() -> None:
+def test_france_everyday_value_manifest_creates_country_scoped_review_candidate(
+) -> None:
     france = Country.objects.create(iso2="FR", iso3="FRA", name="France")
 
     call_command(
