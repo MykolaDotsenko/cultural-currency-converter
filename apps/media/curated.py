@@ -122,6 +122,40 @@ FRANCE_RUE_LAURISTON_HERO_2024 = CuratedMediaSpec(
 )
 
 
+FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
+    slug="france-paris-croissant-everyday-value-2025",
+    country_code="FR",
+    currency_code="",
+    city="Paris",
+    valid_from=date(2025, 10, 19),
+    valid_to=date(2025, 10, 19),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.EVERYDAY_VALUE,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Croissant_et_Pain_au_chocolat_in_Paris.jpg",
+    title="Croissant and pain au chocolat in Paris, October 2025",
+    alt_text="A croissant and pain au chocolat photographed in Paris.",
+    caption="Croissant and pain au chocolat in Paris, photographed 19 October 2025.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Croissant_et_Pain_au_chocolat_in_Paris.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/a/aa/"
+        "Croissant_et_Pain_au_chocolat_in_Paris.jpg"
+    ),
+    creator="Wyslijp16",
+    licence_id="CC BY 4.0",
+    licence_url="https://creativecommons.org/licenses/by/4.0/",
+    rights_statement="Creative Commons Attribution 4.0 International",
+    attribution_text="Wyslijp16 · CC BY 4.0",
+    expected_width=6000,
+    expected_height=4000,
+)
+
+
 JAPAN_TOKYO_STREET_HERO_2019 = CuratedMediaSpec(
     slug="japan-tokyo-street-night-2019",
     country_code="JP",
@@ -291,6 +325,7 @@ JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
 CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     FINLAND_HELSINKI_TRAM_HERO.slug: FINLAND_HELSINKI_TRAM_HERO,
     FRANCE_RUE_LAURISTON_HERO_2024.slug: FRANCE_RUE_LAURISTON_HERO_2024,
+    FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025.slug: FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025,
     JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
     JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
     JAPAN_SUICA_VENDING_PAYMENT_2020.slug: JAPAN_SUICA_VENDING_PAYMENT_2020,
