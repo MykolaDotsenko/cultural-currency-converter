@@ -83,6 +83,40 @@ FINLAND_HELSINKI_TRAM_HERO = CuratedMediaSpec(
 )
 
 
+JAPAN_TOKYO_STREET_HERO_2019 = CuratedMediaSpec(
+    slug="japan-tokyo-street-night-2019",
+    country_code="JP",
+    currency_code="",
+    city="Tokyo",
+    valid_from=date(2019, 11, 29),
+    valid_to=date(2019, 11, 29),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.COUNTRY_HERO,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Tokyo_street_at_night,_2019_-_771.jpg",
+    title="Tokyo street at night, November 2019",
+    alt_text="A nighttime street scene in Tokyo photographed in November 2019.",
+    caption="Tokyo street at night, photographed 29 November 2019.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Tokyo_street_at_night,_2019_-_771.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/d/d6/"
+        "Tokyo_street_at_night,_2019_-_771.jpg"
+    ),
+    creator="Another Believer",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="Another Believer · CC BY-SA 4.0",
+    expected_width=4000,
+    expected_height=3000,
+)
+
+
 JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
     slug="jpy-series-d-1000-yen-1984-2007",
     country_code="",
@@ -123,6 +157,7 @@ JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
 
 CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     FINLAND_HELSINKI_TRAM_HERO.slug: FINLAND_HELSINKI_TRAM_HERO,
+    JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
     JAPAN_SERIES_D_1000_YEN_1984_2007.slug: JAPAN_SERIES_D_1000_YEN_1984_2007,
 }
 
@@ -155,6 +190,13 @@ def validate_curated_media_spec(spec: CuratedMediaSpec) -> CuratedMediaSpec:
             raise ValueError("Country hero/teaser curated media requires country_code.")
         if spec.currency_code:
             raise ValueError("Country hero/teaser curated media must remain currency-neutral.")
+        if (
+            spec.kind != MediaKind.CONTEMPORARY_PHOTO
+            or spec.source_kind == MediaSourceKind.GENERATED
+        ):
+            raise ValueError(
+                "Country hero/teaser curated media requires sourced contemporary photography."
+            )
 
     if spec.role == MediaRole.COMPARISON_THEN:
         if spec.country_code:

@@ -148,6 +148,48 @@ def comparison_curated_spec(monkeypatch):
     return spec
 
 
+def test_japan_hero_manifest_matches_reviewed_source_contract() -> None:
+    spec = get_curated_media_spec("japan-tokyo-street-night-2019")
+
+    assert spec.country_code == "JP"
+    assert spec.currency_code == ""
+    assert spec.city == "Tokyo"
+    assert spec.role == MediaRole.COUNTRY_HERO
+    assert spec.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.valid_from == date(2019, 11, 29)
+    assert spec.valid_to == date(2019, 11, 29)
+    assert spec.date_precision == DatePrecision.EXACT_DAY
+    assert spec.expected_width == 4000
+    assert spec.expected_height == 3000
+    assert spec.creator == "Another Believer"
+    assert spec.licence_id == "CC BY-SA 4.0"
+    assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
+
+
+
+@pytest.mark.django_db
+def test_japan_hero_manifest_creates_country_scoped_review_candidate() -> None:
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+
+    call_command(
+        "ingest_curated_media",
+        slug="japan-tokyo-street-night-2019",
+        metadata_only=True,
+    )
+
+    asset = MediaAsset.objects.get(external_id="commons:Tokyo_street_at_night,_2019_-_771.jpg")
+    assert asset.status == MediaStatus.NEEDS_REVIEW
+    assert not asset.storage_file
+    assert asset.country == japan
+    assert asset.currency is None
+    assert asset.role == MediaRole.COUNTRY_HERO
+    assert asset.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert asset.valid_from == date(2019, 11, 29)
+    assert asset.valid_to == date(2019, 11, 29)
+    assert asset.date_precision == DatePrecision.EXACT_DAY
+
+
 def test_jpy_historical_manifest_matches_reviewed_source_contract() -> None:
     spec = get_curated_media_spec("jpy-series-d-1000-yen-1984-2007")
 
@@ -310,6 +352,17 @@ def test_curated_country_hero_manifest_requires_country_scope(curated_spec) -> N
 
     with pytest.raises(ValueError, match="currency-neutral"):
         validate_curated_media_spec(currency_scoped)
+
+
+def test_curated_country_hero_manifest_rejects_generated_media(curated_spec) -> None:
+    invalid = replace(
+        curated_spec,
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+    )
+
+    with pytest.raises(ValueError, match="sourced contemporary photography"):
+        validate_curated_media_spec(invalid)
 
 
 def test_curated_comparison_manifest_rejects_country_scope(comparison_curated_spec) -> None:
