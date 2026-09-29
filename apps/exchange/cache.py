@@ -335,9 +335,7 @@ class LatestQuoteGateway:
         if quote_value.historical or quote_value.requested_date is not None:
             raise FxProviderInvalidPayload("Latest quote gateway received historical semantics.")
 
-        observation_gap = (
-            quote_value.fetched_at.astimezone(UTC).date() - quote_value.effective_date
-        )
+        observation_gap = quote_value.fetched_at.astimezone(UTC).date() - quote_value.effective_date
         allowed_gap = _allowed_observation_gap(
             quote_value.observation_granularity,
             daily_gap=self.max_observation_gap,
