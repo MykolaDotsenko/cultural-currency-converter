@@ -62,6 +62,8 @@ Destination supporting roles are explicit managed-media roles:
 
 For these supporting roles, reviewed sourced media is preferred. Explicitly labelled generated editorial imagery may be used as atmosphere when it passes the normal review/publication gate, but it is never evidence for a price, payment claim or local custom. The sourced text/data provenance remains authoritative.
 
+The curated external-media manifest is intentionally sourced-only for destination supporting roles. Generated supporting imagery, when used, belongs to the separate generated-media review workflow rather than being represented as an external sourced candidate.
+
 ## Media pipeline
 
 Managed external media can come from sources such as Wikimedia Commons, Europeana, institutions or manually curated licensed/owned photography.

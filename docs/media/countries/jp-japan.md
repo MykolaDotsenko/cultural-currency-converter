@@ -74,6 +74,25 @@ Photograph a refined Tokyo street at early evening after light rain: layered nar
 
 Composition: one coherent contemporary scene, not a collage. Keep the main visual interest away from at least one outer third so product UI can coexist with the crop. Preserve architectural lines and realistic scale. People, if present, should feel incidental and unposed.
 
+## Production everyday-value source
+
+The first sourced P02 candidate is a contemporary food image, not a price observation.
+
+- slug: `japan-shoyu-ramen-everyday-value-2025`
+- role: `everyday_value`
+- kind: `contemporary_photo`
+- country scope: `JP`
+- city scope: none; the Commons description identifies the dish as Tokyo ramen style but does not establish where the photograph was captured
+- captured: 11 May 2025
+- subject: shoyu ramen / Tokyo ramen style
+- source: Wikimedia Commons, `Shoyu Ramen（Tokyo Ramen） - 01.jpg`
+- creator: Quercus acuta
+- licence: CC BY-SA 4.0
+- upstream raster: 3299 × 2474 JPEG
+- runtime policy: the image can render only beside reviewed everyday-price context; it is atmosphere/supporting media and is never evidence for a price
+
+As with P01, manifest inclusion is not publication. Managed ingestion remains `needs_review` until editorial review, responsive derivative creation and explicit publication.
+
 ## P02 — Everyday Value
 
 **Target:** `static/images/country-media/jp/everyday-value/jp-everyday-value-v01.webp`
@@ -145,7 +164,7 @@ This asset is historical evidence/supporting context for a JPY observation insid
 | Prompt | Version | Date | Generator/model | Repository path | Status | Review note |
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | source selected | 2026-09-29 | Wikimedia Commons / Another Believer | managed-media curated manifest | sourced candidate | Contemporary Tokyo source selected; ingestion/review/publication remain separate. |
-| P02 | — | — | — | — | planned | — |
+| P02 | source selected | 2026-09-29 | Wikimedia Commons / Quercus acuta | managed-media curated manifest | sourced candidate | Tokyo ramen-style image selected; no capture-city or price claim inferred. |
 | P03 | — | — | — | — | planned | — |
 | P04 | — | — | — | — | planned | — |
 | P05 | — | — | — | — | planned | — |

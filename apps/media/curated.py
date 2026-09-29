@@ -16,6 +16,11 @@ _HISTORICAL_EVIDENCE_KINDS = {
     MediaKind.HERITAGE_OBJECT,
     MediaKind.MAP,
 }
+_DESTINATION_SUPPORTING_ROLES = {
+    MediaRole.EVERYDAY_VALUE,
+    MediaRole.PAYMENT_CULTURE,
+    MediaRole.LOCAL_DETAIL,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +118,37 @@ JAPAN_TOKYO_STREET_HERO_2019 = CuratedMediaSpec(
 )
 
 
+JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
+    slug="japan-shoyu-ramen-everyday-value-2025",
+    country_code="JP",
+    currency_code="",
+    city="",
+    valid_from=date(2025, 5, 11),
+    valid_to=date(2025, 5, 11),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.EVERYDAY_VALUE,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:shoyu-ramen-tokyo-ramen-01-2025",
+    title="Shoyu ramen (Tokyo ramen style), May 2025",
+    alt_text="A bowl of shoyu ramen presented in Tokyo ramen style.",
+    caption="Shoyu ramen (Tokyo ramen style), photographed 11 May 2025.",
+    source_name="Wikimedia Commons",
+    source_url="https://commons.wikimedia.org/wiki/File:Shoyu_Ramen%EF%BC%88Tokyo_Ramen%EF%BC%89_-_01.jpg",
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/c/c3/"
+        "Shoyu_Ramen%EF%BC%88Tokyo_Ramen%EF%BC%89_-_01.jpg"
+    ),
+    creator="Quercus acuta",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="Quercus acuta · CC BY-SA 4.0",
+    expected_width=3299,
+    expected_height=2474,
+)
+
+
 JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
     slug="jpy-series-d-1000-yen-1984-2007",
     country_code="",
@@ -154,6 +190,7 @@ JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
 CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     FINLAND_HELSINKI_TRAM_HERO.slug: FINLAND_HELSINKI_TRAM_HERO,
     JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
+    JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
     JAPAN_SERIES_D_1000_YEN_1984_2007.slug: JAPAN_SERIES_D_1000_YEN_1984_2007,
 }
 
@@ -193,6 +230,17 @@ def validate_curated_media_spec(spec: CuratedMediaSpec) -> CuratedMediaSpec:
             raise ValueError(
                 "Country hero/teaser curated media requires sourced contemporary photography."
             )
+
+    if spec.role in _DESTINATION_SUPPORTING_ROLES:
+        if not spec.country_code:
+            raise ValueError("Destination supporting curated media requires country_code.")
+        if spec.currency_code:
+            raise ValueError("Destination supporting curated media must remain currency-neutral.")
+        if (
+            spec.kind == MediaKind.GENERATED_ILLUSTRATION
+            or spec.source_kind == MediaSourceKind.GENERATED
+        ):
+            raise ValueError("Curated destination supporting media requires a sourced asset.")
 
     if spec.role == MediaRole.COMPARISON_THEN:
         if spec.country_code:
