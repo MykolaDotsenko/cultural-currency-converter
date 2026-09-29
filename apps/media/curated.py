@@ -139,8 +139,7 @@ FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
     caption="Croissant and pain au chocolat in Paris, photographed 19 October 2025.",
     source_name="Wikimedia Commons",
     source_url=(
-        "https://commons.wikimedia.org/wiki/"
-        "File:Croissant_et_Pain_au_chocolat_in_Paris.jpg"
+        "https://commons.wikimedia.org/wiki/File:Croissant_et_Pain_au_chocolat_in_Paris.jpg"
     ),
     source_media_url=(
         "https://upload.wikimedia.org/wikipedia/commons/a/aa/"
