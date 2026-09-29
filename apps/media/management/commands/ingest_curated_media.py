@@ -102,6 +102,9 @@ class Command(BaseCommand):
                 kind=spec.kind,
                 country=country,
                 currency=currency,
+                valid_from=spec.valid_from,
+                valid_to=spec.valid_to,
+                date_precision=spec.date_precision,
                 dry_run=options["dry_run"],
             )
         except ValueError as exc:

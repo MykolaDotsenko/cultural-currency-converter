@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.countries.models import Country, Currency
-from apps.media.models import MediaKind, MediaRole
-from apps.media.services import upsert_media_candidates
+from apps.media.models import DatePrecision, MediaKind, MediaRole
+from apps.media.services import upsert_media_candidates, validate_candidate_media_scope
 from apps.media.sources import (
     EuropeanaSearchClient,
     MediaSourceError,
@@ -33,6 +34,13 @@ class Command(BaseCommand):
         )
         parser.add_argument("--country")
         parser.add_argument("--currency")
+        parser.add_argument("--valid-from")
+        parser.add_argument("--valid-to")
+        parser.add_argument(
+            "--date-precision",
+            choices=DatePrecision.values,
+            default=DatePrecision.UNKNOWN,
+        )
         parser.add_argument("--limit", type=int, default=10)
         parser.add_argument("--dry-run", action="store_true")
 
@@ -48,6 +56,27 @@ class Command(BaseCommand):
             currency = Currency.objects.filter(code=options["currency"].upper()).first()
             if currency is None:
                 raise CommandError("Unknown currency code.")
+
+        try:
+            valid_from = (
+                date.fromisoformat(options["valid_from"]) if options["valid_from"] else None
+            )
+            valid_to = date.fromisoformat(options["valid_to"]) if options["valid_to"] else None
+        except ValueError as exc:
+            raise CommandError("Media temporal dates must use YYYY-MM-DD.") from exc
+
+        try:
+            validate_candidate_media_scope(
+                role=options["role"],
+                kind=options["kind"],
+                country=country,
+                currency=currency,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                date_precision=options["date_precision"],
+            )
+        except ValueError as exc:
+            raise CommandError(str(exc)) from exc
 
         try:
             if options["source"] == "wikimedia":
@@ -67,6 +96,9 @@ class Command(BaseCommand):
                 kind=options["kind"],
                 country=country,
                 currency=currency,
+                valid_from=valid_from,
+                valid_to=valid_to,
+                date_precision=options["date_precision"],
                 dry_run=options["dry_run"],
             )
         except (MediaSourceError, ValueError) as exc:

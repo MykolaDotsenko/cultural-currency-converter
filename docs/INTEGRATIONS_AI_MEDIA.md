@@ -143,6 +143,23 @@ Historical surfaces use sourced archival photography, documents, currency object
 
 Then & Now can render optional `comparison_then` media beside the selected historical observation. That asset must be explicitly scoped to the quote currency and its temporal range must include the selected observation date; the product does not infer a country from a shared currency such as EUR. Curated ingestion preserves that same contract by allowing a blank country scope plus an explicit currency code and temporal metadata.
 
+Historical candidate ingestion records that scope before the external search result becomes a review candidate. For example:
+
+```bash
+python manage.py ingest_media_candidates \
+  --source wikimedia \
+  --query "Tokyo 1998 street" \
+  --role comparison_then \
+  --kind archival_photo \
+  --currency JPY \
+  --valid-from 1998-01-01 \
+  --valid-to 1998-12-31 \
+  --date-precision year \
+  --dry-run
+```
+
+Remove `--dry-run` only after reviewing the query/source intent. Historical-evidence roles require a non-generated archival/artwork/heritage/map kind plus explicit temporal precision and scope; `comparison_then` additionally requires currency scope. Invalid scope is rejected before external network search.
+
 Temporal precision should be honest. A visually attractive but misleading historical image is worse than no image. Missing or malformed historical media is non-fatal and leaves the FX comparison intact.
 
 ## AI role
