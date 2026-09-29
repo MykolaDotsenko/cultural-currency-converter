@@ -14,12 +14,13 @@ from apps.countries.services import HistoricalCurrencySuggestion, historical_cur
 from apps.culture.services import DestinationContext, build_destination_context
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
 from apps.exchange.domain import (
+    ConversionRepresentationError,
     ConversionResult,
     HistoricalCurrencyMetadata,
     HistoricalObservationUnavailable,
     HistoricalOutOfCoverage,
 )
-from apps.exchange.providers.base import FxProviderError
+from apps.exchange.providers.base import FxProviderError, FxProviderInvalidPayload
 from apps.exchange.services import quote_conversion, quote_historical_conversion
 
 logger = logging.getLogger("cultural_currency.exchange")
@@ -136,6 +137,13 @@ def run_converter_submission(
                 quote_minor_units=destination_currency.minor_units,
                 gateway=latest_gateway_factory(),
             )
+    except ConversionRepresentationError as exc:
+        return ConverterSubmissionResult(
+            conversion=None,
+            error=FxProviderInvalidPayload(str(exc)),
+            historical_suggestions=historical_suggestions,
+            destination_context=None,
+        )
     except (FxProviderError, HistoricalObservationUnavailable, HistoricalOutOfCoverage) as exc:
         return ConverterSubmissionResult(
             conversion=None,

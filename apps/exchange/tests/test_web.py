@@ -56,6 +56,24 @@ class UnavailableGateway:
         raise FxProviderUnavailable("down")
 
 
+class UnrepresentableGateway:
+    def get(self, base, quote, policy, *, now):
+        return (
+            RateQuote(
+                base_currency=base,
+                quote_currency=quote,
+                rate=Decimal("1E+50"),
+                requested_date=None,
+                effective_date=date(2026, 9, 18),
+                fetched_at=datetime(2026, 9, 20, 8, tzinfo=UTC),
+                provider_policy=policy,
+                provider_keys=("ecb",),
+                historical=False,
+            ),
+            False,
+        )
+
+
 class FakeSeriesGateway:
     def __init__(self, *, stale=False):
         self.stale = stale
@@ -279,6 +297,19 @@ def test_provider_unavailable_preserves_form_without_numeric_result(client, refe
     assert response.status_code == 503
     assert b"temporarily unavailable" in response.content
     assert b'value="100.00"' in response.content
+    assert b"current-conversion-result" not in response.content
+
+
+@pytest.mark.django_db
+def test_unrepresentable_provider_result_returns_controlled_502(client, reference_data):
+    with patch(
+        "apps.exchange.views.build_latest_quote_gateway",
+        return_value=UnrepresentableGateway(),
+    ):
+        response = client.post(reverse("converter"), payload(), HTTP_HX_REQUEST="true")
+
+    assert response.status_code == 502
+    assert b"rate source returned unusable data" in response.content
     assert b"current-conversion-result" not in response.content
 
 

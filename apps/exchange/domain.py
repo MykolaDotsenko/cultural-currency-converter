@@ -10,6 +10,10 @@ class FxDomainError(ValueError):
     pass
 
 
+class ConversionRepresentationError(FxDomainError):
+    pass
+
+
 class HistoricalConversionError(FxDomainError):
     pass
 
@@ -328,7 +332,9 @@ def convert_amount(amount: Decimal, quote: RateQuote, *, minor_units: int) -> De
     try:
         return (amount * quote.rate).quantize(quantum, rounding=ROUND_HALF_EVEN)
     except InvalidOperation as exc:
-        raise FxDomainError("Conversion cannot be represented at the requested precision.") from exc
+        raise ConversionRepresentationError(
+            "Conversion cannot be represented at the requested precision."
+        ) from exc
 
 
 def same_currency_quote(
