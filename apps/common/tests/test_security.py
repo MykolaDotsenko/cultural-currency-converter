@@ -40,6 +40,22 @@ def test_admin_uses_compatibility_policy_without_weakening_public_policy(client:
     assert "'unsafe-inline'" not in PUBLIC_CONTENT_SECURITY_POLICY.split("script-src-attr", 1)[0]
 
 
+def test_validated_media_origin_is_added_only_to_image_policy() -> None:
+    request = RequestFactory().get("/health/live/")
+    request.resolver_match = None
+
+    with override_settings(
+        CONTENT_SECURITY_POLICY_HEADER="Content-Security-Policy",
+        MEDIA_STORAGE_PUBLIC_ORIGIN="https://media.example.test",
+    ):
+        response = ContentSecurityPolicyMiddleware(lambda _request: HttpResponse("ok"))(request)
+
+    policy = response["Content-Security-Policy"]
+    assert "img-src 'self' https://media.example.test" in policy
+    assert "script-src 'self' https://media.example.test" not in policy
+    assert "connect-src 'self' https://media.example.test" not in policy
+
+
 def test_report_only_mode_uses_report_only_header() -> None:
     request = RequestFactory().get("/health/live/")
     request.resolver_match = None

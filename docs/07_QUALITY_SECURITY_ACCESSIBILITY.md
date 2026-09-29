@@ -107,7 +107,7 @@ Automated axe checks are useful but do not replace interaction testing.
 
 ## Configuration
 
-Runtime configuration is validated in `config/environment.py`, `config/database.py`, `config/cache.py`, `config/csp.py` and `config/ai.py`.
+Runtime configuration is validated in `config/environment.py`, `config/database.py`, `config/cache.py`, `config/storage.py`, `config/csp.py` and `config/ai.py`.
 
 Preview and production require an explicit shared `CACHE_URL`; local/test execution may omit it and use process-local memory caching. PostgreSQL CI also exercises a real Redis service so the deployed cache backend is tested rather than only configuration-parsed.
 
@@ -153,7 +153,7 @@ Supply credential-bearing database URLs through environment/secrets rather than 
 
 The required PostgreSQL CI lane performs a real recovery drill: deterministic reference data is backed up, restored into a new empty database, migration state is checked and restored FI/EUR data is queried. It also proves that backup overwrite and non-empty restore guards reject unsafe repetition.
 
-This database procedure protects PostgreSQL data only. Managed media/object bytes need a deployment-specific storage backup/versioning policy in addition to restoring their database metadata.
+This database procedure protects PostgreSQL data only. Production now refuses ephemeral filesystem media storage and requires the configured S3-compatible backend, but the object store still needs deployment-specific versioning/retention/backup policy in addition to restoring database metadata.
 
 Do not claim a production RPO or RTO from CI alone. Set backup frequency/retention off-platform, then measure real backup age and restore duration in the chosen deployment.
 

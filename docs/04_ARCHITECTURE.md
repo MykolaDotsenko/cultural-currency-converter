@@ -87,6 +87,10 @@ Database recovery is based on native PostgreSQL logical archives. Recovery targe
 
 PostgreSQL recovery does not imply that managed media/object bytes are backed up; deployment storage must provide its own durability/versioning/backup contract.
 
+Managed media storage is environment-aware. Local/test/demo/preview may use Django filesystem storage, but production configuration must select the S3-compatible object-storage backend. The storage config requires a separate public HTTPS media origin; that validated origin is the only external image source added to CSP. Content-addressed managed filenames are served with long-lived immutable cache metadata. Provider credentials remain outside application configuration through the normal S3/IAM credential chain.
+
+Object storage makes media bytes durable across application deploys, but durability is not the same as backup. Bucket versioning/retention and restore evidence remain deployment responsibilities.
+
 ## Caching
 
 Caching is an optimization, coordination and resilience mechanism, not a second semantic truth source.
