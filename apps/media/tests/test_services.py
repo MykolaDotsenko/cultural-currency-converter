@@ -342,6 +342,43 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
 
 
 @pytest.mark.django_db
+def test_selector_matches_equivalent_aspect_ratios(finland):
+    matching = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.LOCAL_DETAIL,
+        country=finland,
+        title="Matching ratio",
+        storage_file="sourced/matching.webp",
+        width=1600,
+        height=900,
+        aspect_ratio="1600 / 900",
+        status=MediaStatus.PUBLISHED,
+    )
+    MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.LOCAL_DETAIL,
+        country=finland,
+        title="Newer non-matching ratio",
+        storage_file="sourced/non-matching.webp",
+        width=1600,
+        height=1000,
+        aspect_ratio="1600 / 1000",
+        status=MediaStatus.PUBLISHED,
+    )
+
+    selected = select_published_media(
+        role=MediaRole.LOCAL_DETAIL,
+        country=finland,
+        aspect_ratio="16 / 9",
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == matching.pk
+
+
+@pytest.mark.django_db
 def test_batch_selector_uses_one_query_and_preserves_role_authenticity_policy(finland):
     hero_generated = MediaAsset.objects.create(
         kind=MediaKind.GENERATED_ILLUSTRATION,
