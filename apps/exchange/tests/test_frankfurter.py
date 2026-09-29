@@ -101,6 +101,32 @@ def test_future_dated_latest_observation_is_rejected():
         )
 
 
+def test_pinned_quote_accepts_object_attribution_for_requested_provider():
+    policy = FxSourcePolicy(
+        mode=ProviderPolicyMode.PINNED,
+        provider_key="ecb",
+        include_attribution=True,
+    )
+    result = parse_rate_payload(
+        {
+            "date": "2026-09-18",
+            "base": "EUR",
+            "quote": "JPY",
+            "rate": Decimal("174.5"),
+            "providers": [
+                {"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}
+            ],
+        },
+        expected_base="EUR",
+        expected_quote="JPY",
+        requested_date=None,
+        policy=policy,
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+    )
+
+    assert result.provider_keys == ("ecb",)
+
+
 def test_pinned_quote_retains_identity_when_attribution_expansion_is_disabled():
     policy = FxSourcePolicy(
         mode=ProviderPolicyMode.PINNED,
@@ -516,6 +542,31 @@ def test_series_keeps_requested_grouping_separate_from_provider_cadence():
     assert result.grouping is RateSeriesGrouping.MONTH
     assert result.observation_granularity is ObservationGranularity.MONTHLY
     assert result.points[0].provider_keys == ("hmrc",)
+
+
+def test_series_accepts_object_provider_attribution():
+    result = parse_series_payload(
+        [
+            {
+                "date": "2026-09-18",
+                "base": "EUR",
+                "quote": "JPY",
+                "rate": Decimal("174.5"),
+                "providers": [
+                    {"key": "ECB", "date": "2026-09-18", "rate": Decimal("174.5")}
+                ],
+            }
+        ],
+        expected_base="EUR",
+        expected_quote="JPY",
+        start_date=date(2026, 9, 18),
+        end_date=date(2026, 9, 18),
+        grouping=RateSeriesGrouping.DAILY,
+        policy=DEFAULT_SOURCE_POLICY,
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+    )
+
+    assert result.points[0].provider_keys == ("ecb",)
 
 
 def test_frankfurter_provider_requires_bounded_constructor_settings():
