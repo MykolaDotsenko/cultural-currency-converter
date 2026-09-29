@@ -46,6 +46,24 @@ Urban precision with layered warmth: contemporary Japan should feel ordered, tac
 - torii, geisha, samurai, cherry blossoms and Mount Fuji stacked together
 - fake Japanese text as a focal point
 
+## Production hero source
+
+The reviewed contemporary source selected for the first production P01 pass is separate from the generated prompt workflow.
+
+- slug: `japan-tokyo-street-night-2019`
+- role: `country_hero`
+- kind: `contemporary_photo`
+- country scope: `JP`
+- city: Tokyo
+- captured: 29 November 2019
+- source: Wikimedia Commons, `Tokyo street at night, 2019 - 771.jpg`
+- creator: Another Believer
+- licence: CC BY-SA 4.0
+- upstream raster: 4000 × 3000 JPEG
+- runtime policy: ingest to managed media, review focal point/crop, create responsive derivatives, then explicitly approve/publish the reviewed derivative family
+
+The source is a contemporary Tokyo street photograph rather than a generated country illustration. It has no runtime status merely because it appears in the curated manifest; ingestion remains `needs_review` until editorial approval.
+
 ## P01 — Hero Wide
 
 **Target:** `static/images/country-media/jp/hero/jp-hero-v01.webp`
@@ -126,7 +144,7 @@ This asset is historical evidence/supporting context for a JPY observation insid
 
 | Prompt | Version | Date | Generator/model | Repository path | Status | Review note |
 | --- | --- | --- | --- | --- | --- | --- |
-| P01 | — | — | — | — | planned | — |
+| P01 | source selected | 2026-09-29 | Wikimedia Commons / Another Believer | managed-media curated manifest | sourced candidate | Contemporary Tokyo source selected; ingestion/review/publication remain separate. |
 | P02 | — | — | — | — | planned | — |
 | P03 | — | — | — | — | planned | — |
 | P04 | — | — | — | — | planned | — |
