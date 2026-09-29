@@ -17,8 +17,8 @@ from apps.culture.models import (
 )
 from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import (
-    PRICE_CONTEXT_MAX_AGE,
     DestinationContext,
+    PRICE_CONTEXT_MAX_AGE,
     build_destination_context,
     calculate_purchase_equivalent,
 )
