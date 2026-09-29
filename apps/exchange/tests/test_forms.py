@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency, Currency
-from apps.exchange.forms import CurrentConversionForm, parse_amount_text
+from apps.exchange.forms import CurrentConversionForm, HistoricalSeriesForm, parse_amount_text
 
 
 @pytest.mark.parametrize(
@@ -149,3 +149,36 @@ def test_latest_mode_ignores_unsubmitted_historical_date(reference_data):
 
     assert form.is_valid(), form.errors
     assert form.cleaned_data["requested_date"] is None
+
+
+def test_historical_series_form_rejects_requested_date_before_selected_observation():
+    selected_date = timezone.localdate() - timedelta(days=2)
+    form = HistoricalSeriesForm(
+        {
+            "base": "EUR",
+            "quote": "JPY",
+            "selected_date": selected_date.isoformat(),
+            "requested_date": (selected_date - timedelta(days=1)).isoformat(),
+            "period": "1y",
+        }
+    )
+
+    assert not form.is_valid()
+    assert form.errors["requested_date"] == [
+        "Requested date cannot be before the selected observation date."
+    ]
+
+
+def test_historical_series_form_rejects_future_requested_date():
+    form = HistoricalSeriesForm(
+        {
+            "base": "EUR",
+            "quote": "JPY",
+            "selected_date": (timezone.localdate() - timedelta(days=1)).isoformat(),
+            "requested_date": (timezone.localdate() + timedelta(days=1)).isoformat(),
+            "period": "1y",
+        }
+    )
+
+    assert not form.is_valid()
+    assert form.errors["requested_date"] == ["Requested date cannot be in the future."]
