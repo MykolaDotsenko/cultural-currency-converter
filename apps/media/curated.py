@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from apps.media.models import DatePrecision, MediaKind, MediaRole, MediaSourceKind
+from apps.media.models import (
+    DatePrecision,
+    MediaKind,
+    MediaRole,
+    MediaSourceKind,
+)
 
 
 _HISTORICAL_EVIDENCE_KINDS = {
