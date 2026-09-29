@@ -134,6 +134,27 @@ Show a believable tap payment using a transit/contactless card or phone at a cle
 
 Show the transaction naturally inside a real-feeling setting. Keep hands anatomically correct, device geometry plausible and the payment terminal/phone secondary to the human context. No visible bank/app logos unless they are incidental and accurate; preferably use neutral interfaces.
 
+## Production local-detail source
+
+The first sourced P04 candidate uses an ordinary Tokyo rail detail rather than a landmark or decorative souvenir composition.
+
+- slug: `japan-tokyo-metro-local-detail-2021`
+- role: `local_detail`
+- kind: `contemporary_photo`
+- country scope: `JP`
+- city scope: none; the source identifies Tokyo Metro rolling stock but does not establish the exact capture location
+- captured: 20 April 2021
+- subject: passenger information display above a door on a Tokyo Metro 13000-series train
+- source: Wikimedia Commons, `Tokyo-Metro-13000-Digital signage-On the door.jpg`
+- creator: MaedaAkihiko
+- licence: CC BY-SA 4.0
+- upstream raster: 5004 × 3336 JPEG
+- runtime policy: supporting editorial detail only; signage is shown as documented visual context, not parsed into product claims
+
+This candidate adds brushed-metal, rail and wayfinding texture without duplicating the P02 food scene or P03 payment interaction. The visible display belongs to the photographed environment; the product does not treat its text as a factual data source.
+
+As with P01–P03, manifest inclusion is not publication. Managed ingestion remains `needs_review` until editorial review, responsive derivative creation and explicit publication.
+
 ## P04 — Local Detail
 
 **Target:** `static/images/country-media/jp/local-detail/jp-local-detail-v01.webp`
@@ -187,6 +208,6 @@ This asset is historical evidence/supporting context for a JPY observation insid
 | P01 | source selected | 2026-09-29 | Wikimedia Commons / Another Believer | managed-media curated manifest | sourced candidate | Contemporary Tokyo source selected; ingestion/review/publication remain separate. |
 | P02 | source selected | 2026-09-29 | Wikimedia Commons / Quercus acuta | managed-media curated manifest | sourced candidate | Tokyo ramen-style image selected; no capture-city or price claim inferred. |
 | P03 | source selected | 2026-09-29 | Wikimedia Commons / Real Estate Japan / Scott Kouchi | managed-media curated manifest | sourced candidate | Suica vending-machine payment interaction selected; no city or payment-prevalence claim inferred. |
-| P04 | — | — | — | — | planned | — |
+| P04 | source selected | 2026-09-29 | Wikimedia Commons / MaedaAkihiko | managed-media curated manifest | sourced candidate | Tokyo Metro passenger-information detail selected; exact capture location and display text are not promoted into product claims. |
 | P05 | — | — | — | — | planned | — |
 | P06 | — | — | — | — | planned | — |
