@@ -66,7 +66,7 @@ Historical FX and historical purchasing power are different questions. Shipping 
 
 PostgreSQL backup/clean-restore recovery and runtime observability now have executable CI evidence.
 
-As public usage grows, continue with deployment-specific backup scheduling/retention and measured RPO/RTO, provider-incident drills, media/object-storage durability, and evidence-based performance budgets. Security headers remain part of the tested deployment baseline.
+As public usage grows, continue with deployment-specific backup scheduling/retention and measured RPO/RTO, provider-incident drills, and media/object-storage durability. Deterministic frontend/query performance budgets now have a measured CI baseline; real-user timing thresholds remain a future evidence task. Security headers remain part of the tested deployment baseline.
 
 ## How to add roadmap work
 

@@ -172,7 +172,33 @@ Structured operational events should expose only bounded fields needed for diagn
 
 ## Performance
 
-Performance work should be evidence-driven.
+Performance work is evidence-driven. Deterministic growth budgets are merge gates; noisy lab timings remain recorded evidence until the CI environment can support a stable threshold.
+
+The 2026-09-25 Chromium/production-build baseline measured:
+
+- core application JavaScript: 24,062 B gzip;
+- saved-state lazy chunk: 2,144 B gzip;
+- historical chart lazy chunk: 54,084 B gzip;
+- all JavaScript: 80,290 B gzip;
+- application stylesheet: about 13.05 KiB gzip;
+- normal initial pages: 4 requests; lazy-chunk pages: 5 requests.
+
+Current hard budgets intentionally leave measured headroom rather than preserving accidental size:
+
+- core JavaScript: <= 32 KiB gzip;
+- all JavaScript: <= 96 KiB gzip;
+- CSS: <= 16 KiB gzip;
+- chart chunk: <= 64 KiB gzip;
+- saved-state chunk: <= 8 KiB gzip;
+- initial browser surface: <= 5 requests;
+- initial converter render: <= 6 SQL queries;
+- story composition with a reviewed fact remains <= 4 SQL queries.
+
+The hard initial-request budget measures application page resources and excludes browser-initiated `/favicon.ico` discovery, which differs across browser engines. Browser QA still records the raw browser request count separately for diagnosis.
+
+`npm run quality` enforces production-build asset budgets without starting a browser. Full browser QA reuses the same budget definitions, verifies lazy-route loading and records per-surface request/body/navigation evidence.
+
+`domContentLoaded` and `load` timings are retained in browser artifacts for trend investigation but are not merge gates because shared CI-runner scheduling/network noise can move them without a product regression. Promote a timing metric to a hard gate only after repeated evidence shows a stable test method.
 
 Watch:
 
@@ -183,7 +209,7 @@ Watch:
 - large images;
 - slow request-path enrichment.
 
-Use profiling/measurements before introducing caches or infrastructure.
+Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold.
 
 ## Documentation quality
 

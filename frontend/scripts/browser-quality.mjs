@@ -1,9 +1,15 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { gzipSync } from "node:zlib";
 
 import AxeBuilder from "@axe-core/playwright";
 import { chromium, firefox, webkit } from "playwright";
+
+import {
+  assertBuildPerformanceBudgets,
+  measureBuildAssets,
+  PERFORMANCE_BUDGET_SOURCE,
+  PERFORMANCE_BUDGETS,
+} from "./performance-budgets.mjs";
 
 const BASE_URL = process.env.BROWSER_QUALITY_BASE_URL ?? "http://127.0.0.1:8000";
 const BROWSER_ENGINE = process.env.BROWSER_QUALITY_ENGINE ?? "chromium";
@@ -12,9 +18,6 @@ const BROWSER_TYPES = { chromium, firefox, webkit };
 const browserType = BROWSER_TYPES[BROWSER_ENGINE];
 assertBrowserConfiguration();
 const OUTPUT_DIR = resolve(process.cwd(), "../artifacts/browser-quality");
-const BUILD_ASSET_DIR = resolve(process.cwd(), "../static/build/assets");
-const BUILD_MANIFEST_PATH = resolve(process.cwd(), "../static/build/.vite/manifest.json");
-const VITE_ENTRY = "frontend/src/app.ts";
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const LOCAL_STATE_KEY = "cultural-currency:local-preferences:v1";
 
@@ -1022,76 +1025,26 @@ async function assertConverterTransitionLayout(page) {
   });
 }
 
-async function collectCompressedAssetEvidence() {
-  const names = await readdir(BUILD_ASSET_DIR);
-  const javascript = names.filter((name) => name.endsWith(".js")).sort();
-  assert(javascript.length > 0, "production build contains no JavaScript assets to measure");
-
-  const manifest = JSON.parse(await readFile(BUILD_MANIFEST_PATH, "utf8"));
-  const entry = manifest[VITE_ENTRY];
-  assert(entry?.file, `Vite manifest entry ${VITE_ENTRY} is missing`);
-
-  const coreManifestKeys = new Set();
-  const visitStaticImports = (key) => {
-    if (coreManifestKeys.has(key)) return;
-    const item = manifest[key];
-    assert(item?.file, `Vite manifest static import ${key} is missing`);
-    coreManifestKeys.add(key);
-    for (const imported of item.imports ?? []) {
-      visitStaticImports(imported);
-    }
-  };
-  visitStaticImports(VITE_ENTRY);
-
-  const coreAssetNames = new Set(
-    [...coreManifestKeys]
-      .map((key) => manifest[key]?.file)
-      .filter((file) => typeof file === "string" && file.endsWith(".js"))
-      .map((file) => file.split("/").at(-1)),
-  );
-
-  const files = [];
-  for (const name of javascript) {
-    const bytes = await readFile(resolve(BUILD_ASSET_DIR, name));
-    files.push({
-      name,
-      rawBytes: bytes.length,
-      gzipBytes: gzipSync(bytes, { level: 9 }).length,
-      loadingClass: coreAssetNames.has(name) ? "core" : "dynamic",
-    });
-  }
-
-  const coreFiles = files.filter((file) => file.loadingClass === "core");
-  const dynamicFiles = files.filter((file) => file.loadingClass === "dynamic");
-  return {
-    files,
-    coreFiles,
-    dynamicFiles,
-    coreRawBytes: coreFiles.reduce((total, file) => total + file.rawBytes, 0),
-    coreGzipBytes: coreFiles.reduce((total, file) => total + file.gzipBytes, 0),
-    dynamicRawBytes: dynamicFiles.reduce((total, file) => total + file.rawBytes, 0),
-    dynamicGzipBytes: dynamicFiles.reduce((total, file) => total + file.gzipBytes, 0),
-    totalRawBytes: files.reduce((total, file) => total + file.rawBytes, 0),
-    totalGzipBytes: files.reduce((total, file) => total + file.gzipBytes, 0),
-  };
-}
-
 async function collectPerformance(page) {
   return page.evaluate(() => {
     const resources = performance.getEntriesByType("resource");
+    const applicationResources = resources.filter(
+      (entry) => new URL(entry.name).pathname !== "/favicon.ico",
+    );
     const sum = (entries, key) => entries.reduce((total, entry) => total + (entry[key] || 0), 0);
     const byExtension = (extension) =>
-      resources.filter((entry) => new URL(entry.name).pathname.endsWith(extension));
+      applicationResources.filter((entry) => new URL(entry.name).pathname.endsWith(extension));
     const navigation = performance.getEntriesByType("navigation")[0];
 
     return {
-      requestCount: resources.length + (navigation ? 1 : 0),
-      transferBytes: sum(resources, "transferSize"),
-      encodedBodyBytes: sum(resources, "encodedBodySize"),
+      requestCount: applicationResources.length + (navigation ? 1 : 0),
+      browserRequestCount: resources.length + (navigation ? 1 : 0),
+      transferBytes: sum(applicationResources, "transferSize"),
+      encodedBodyBytes: sum(applicationResources, "encodedBodySize"),
       jsEncodedBodyBytes: sum(byExtension(".js"), "encodedBodySize"),
       jsPaths: byExtension(".js").map((entry) => new URL(entry.name).pathname),
       cssEncodedBodyBytes: sum(byExtension(".css"), "encodedBodySize"),
-      imageEncodedBodyBytes: resources
+      imageEncodedBodyBytes: applicationResources
         .filter((entry) => ["img", "image"].includes(entry.initiatorType))
         .reduce((total, entry) => total + (entry.encodedBodySize || 0), 0),
       domContentLoadedMs: navigation
@@ -1259,8 +1212,8 @@ const evidence = {
   generatedAt: new Date().toISOString(),
   surfaces: {},
   budgets: {
-    coreJavaScriptGzipBytes: 100 * 1024,
-    source: "docs/07_QUALITY_SECURITY_ACCESSIBILITY.md",
+    ...PERFORMANCE_BUDGETS,
+    source: PERFORMANCE_BUDGET_SOURCE,
   },
 };
 
@@ -1280,6 +1233,11 @@ try {
       });
 
       await openSurface(page, surface);
+      const initialPerformanceEvidence = await collectPerformance(page);
+      assert(
+        initialPerformanceEvidence.requestCount <= PERFORMANCE_BUDGETS.initialRequestCount,
+        `${surface.name}/${viewport.name}: initial request count ${initialPerformanceEvidence.requestCount} exceeds ${PERFORMANCE_BUDGETS.initialRequestCount} request budget`,
+      );
       await assertNoHorizontalOverflow(page, `${surface.name}/${viewport.name}`);
       await assertKeyboardFocus(page, surface.name);
 
@@ -1324,7 +1282,10 @@ try {
       );
 
       const performanceEvidence = await collectPerformance(page);
-      evidence.surfaces[surface.name][viewport.name] = performanceEvidence;
+      evidence.surfaces[surface.name][viewport.name] = {
+        ...performanceEvidence,
+        initial: initialPerformanceEvidence,
+      };
 
       await page.screenshot({
         path: resolve(OUTPUT_DIR, `${surface.name}-${viewport.name}.png`),
@@ -1350,11 +1311,8 @@ try {
   if (BROWSER_SCOPE === "full") {
     evidence.csp = await assertCspEnforcement(browser);
     evidence.noJavaScript = await assertNoJavaScriptSavedStateFallback(browser);
-    evidence.compressedAssets = await collectCompressedAssetEvidence();
-    assert(
-      evidence.compressedAssets.coreGzipBytes <= evidence.budgets.coreJavaScriptGzipBytes,
-      `core JavaScript gzip size ${evidence.compressedAssets.coreGzipBytes} B exceeds 100 KiB budget`,
-    );
+    evidence.compressedAssets = await measureBuildAssets();
+    assertBuildPerformanceBudgets(evidence.compressedAssets);
 
     const dynamicAssetNames = new Set(
       evidence.compressedAssets.dynamicFiles.map((file) => file.name),
