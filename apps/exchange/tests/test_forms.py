@@ -72,8 +72,8 @@ def test_budget_form_native_decimal_contract_matches_server_precision():
     )
     units = form.fields["units_coffee"]
 
-    assert units.widget.attrs["min"] == "0.01"
-    assert units.widget.attrs["step"] == "0.01"
+    assert Decimal(str(units.widget.attrs["min"])) == Decimal("0.01")
+    assert Decimal(str(units.widget.attrs["step"])) == Decimal("0.01")
     assert units.decimal_places == 2
     assert units.initial == Decimal("1")
 
