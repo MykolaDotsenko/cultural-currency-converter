@@ -108,6 +108,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Help answer “Is this amount likely to be enough for this destination and duration?” using sourced local-price context and explicit assumptions.
    - Support duration and a small number of understandable spending profiles/categories without turning the product into a full itinerary planner.
    - Label outputs as estimates and keep deterministic calculations separate from AI-written explanation.
+   - **Foundation status:** deterministic domain interpretation now supports duration, traveller count, explicit category-unit assumptions, reference-vs-payment-estimate basis, city/national scope preservation, provenance-bearing line estimates and fail-closed insufficient-data semantics. User-facing presets/forms/result UX remain future work.
 
 12. **Saved scenarios — 89/100**
    - Evolve beyond pair-only bookmarks so a user can save a reusable travel-money scenario such as a pair, trip budget or shopping calculation.
@@ -191,7 +192,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Add city-scoped local-value and budget context where data quality supports it, because national averages are often too broad for practical travel decisions.
    - Keep city/national scope visible and never silently substitute one for the other.
    - Reuse the same provenance/freshness model as country-level typical prices.
-   - **Foundation status:** canonical `City` identity exists; `TypicalPrice` now has an additive canonical city reference with legacy-row backfill, and the destination-context service can select an explicit city with national fallback for missing categories. City selection UX, broader city datasets and budget integration remain future work.
+   - **Foundation status:** canonical `City` identity exists; `TypicalPrice` has an additive canonical city reference with legacy-row backfill, the destination-context service can select an explicit city with national fallback for missing categories, and the budget domain preserves those city/national scopes. City selection UX, broader city datasets and user-facing budget integration remain future work.
 
 25. **Camera mode for menu / receipt / price / ATM understanding — 90/100**
    - Let a user explicitly capture or upload a menu, receipt, shelf price or ATM screen and extract amount/currency/context for conversion.
@@ -287,7 +288,7 @@ The target is not maximum DAU. The target is strong **saved-trip reopen**, **use
 
 The first consolidation is now shipped as a shared application contract around trusted conversion output plus optional current destination context. It explicitly preserves conversion truth, fail-open enrichment semantics and available/empty/not-applicable/degraded context states.
 
-The next work is depth, not another parallel context layer: add city-scoped data, budget interpretation, saved-trip/scenario meaning, comparison and camera/mobile consumers on top of this same contract.
+The next work is depth, not another parallel context layer: broaden city-scoped datasets, expose the budget domain through user-facing UX, then add saved-trip/scenario meaning, comparison and camera/mobile consumers on top of this same contract.
 
 Prioritize comparability, freshness, provenance and clear uncertainty over adding many shallow utility widgets.
 

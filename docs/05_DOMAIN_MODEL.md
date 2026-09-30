@@ -71,6 +71,25 @@ Its stable destination identity consists of a country code plus an optional cano
 
 Historical conversion remains financially valid but current city/destination enrichment stays not-applicable unless a separate historical context dataset exists.
 
+## BudgetInterpretation
+
+A budget interpretation is a deterministic comparison between one trusted current MoneyContext amount and an explicit daily reference basket.
+
+Its assumptions are intentionally narrow:
+
+- trip duration in days;
+- traveller count;
+- one or more unique category assumptions expressed as units per person per day;
+- an explicit amount basis: reference conversion or an attached Real Payment Estimate.
+
+The engine uses only sourced `TypicalPriceContext` rows already present in the MoneyContext. A country-level budget does not silently treat a city observation as nationally representative. A city-level budget may combine the requested city with clearly labelled national fallback rows when the destination-context layer supplied them.
+
+The result carries known low/high reference totals, per-person daily budget, source/scope metadata for each matched line and any missing categories. If a requested category is missing, the interpretation is **insufficient data** and no affordability band is guessed.
+
+Current neutral bands are **below reference**, **within reference range** and **above reference range**. They compare only against the explicit reference basket; they are not universal “cheap/expensive”, lifestyle or financial-advice labels.
+
+Historical FX is not eligible for current budget interpretation because current typical-price context is not historical purchasing-power data.
+
 ## PaymentEstimate
 
 A payment estimate is a deterministic scenario calculation layered on top of a trusted current conversion.

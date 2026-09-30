@@ -46,7 +46,9 @@ The engine should combine, when defensible:
 
 The current implementation establishes the first shared application contract for this engine: a trusted conversion is composed with optional current destination context and an explicit availability state. Known destination-enrichment/data failures degrade locally and do not invalidate the conversion. Historical conversions and currency-only conversions remain explicit non-applicable cases for current destination context.
 
-Future budget, comparison, trip, camera and mobile/offline work should extend this contract rather than create parallel calculations or duplicate destination-context semantics.
+The first budget-domain slice now extends this contract deterministically: explicit duration, traveller count and daily category-unit assumptions can be compared with sourced city/national price anchors. Missing categories produce an insufficient-data result rather than a guessed affordability label. This is a domain foundation only; user-facing budget presets/UX and saved-trip workflows remain future work.
+
+Future comparison, trip, camera and mobile/offline work should extend the same contract rather than create parallel calculations or duplicate destination-context semantics.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 
