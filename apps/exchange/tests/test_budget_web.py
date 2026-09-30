@@ -4,10 +4,10 @@ import re
 from decimal import Decimal
 from unittest.mock import patch
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
-import pytest
 
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.culture.models import (
