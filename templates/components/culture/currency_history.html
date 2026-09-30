@@ -1,0 +1,108 @@
+{% if currency_history_error %}
+  <section class="qa-inline-alert qa-inline-alert--error" role="status">
+    <h3>{{ currency_history_error.title }}</h3>
+    <p>{{ currency_history_error.detail }}</p>
+  </section>
+{% elif currency_history %}
+  <section class="qa-currency-history-surface"
+           aria-labelledby="currency-history-title">
+    <header class="qa-currency-history__header">
+      <div>
+        <p class="qa-foundation-kicker">
+          Currency history · {{ currency_history.country_name }}
+          {% if currency_history.historical %}· through {{ currency_history.selected_date|date:"j M Y" }}{% endif %}
+        </p>
+        <h2 id="currency-history-title">
+          {{ currency_history.selected_currency_name }} · {{ currency_history.selected_currency_code }}
+        </h2>
+        {% if currency_history.status == "unavailable" %}
+          <p>No reviewed currency-era history is available for this context yet.</p>
+        {% elif currency_history.historical %}
+          <p>
+            Recorded currency eras and sourced monetary milestones up to the selected FX date.
+            Later transitions are intentionally excluded.
+          </p>
+        {% else %}
+          <p>
+            Recorded currency eras and reviewed monetary milestones for
+            {{ currency_history.country_name }}.
+          </p>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if not currency_history.selected_relationship_active and currency_history.active_primary_currency_code %}
+      <aside class="qa-currency-history__context-note">
+        <p class="qa-foundation-kicker">Selected-date context</p>
+        <p>
+          On {{ currency_history.selected_date|date:"j M Y" }},
+          {{ currency_history.country_name }} records
+          {{ currency_history.active_primary_currency_name }}
+          ({{ currency_history.active_primary_currency_code }}) as its primary currency.
+          Your explicit {{ currency_history.selected_currency_code }} FX selection is unchanged.
+        </p>
+      </aside>
+    {% endif %}
+
+    {% if currency_history.eras %}
+      <section aria-labelledby="currency-era-list-title">
+        <div class="qa-currency-history__section-heading">
+          <p class="qa-foundation-kicker">Currency eras</p>
+          <h3 id="currency-era-list-title">Recorded relationships</h3>
+        </div>
+        <ol class="qa-currency-history__timeline">
+          {% for era in currency_history.eras %}
+            <li class="qa-currency-history__item{% if era.active_on_selected_date %} is-active{% endif %}">
+              <div class="qa-currency-history__marker" aria-hidden="true"></div>
+              <article>
+                <p class="qa-currency-history__eyebrow">{{ era.label }}</p>
+                <h4>{{ era.currency_name }} · {{ era.currency_code }}</h4>
+                <p class="qa-currency-history__scope">{{ era.temporal_scope }}</p>
+                {% if era.source_refs %}
+                  <div class="qa-story-source-list" aria-label="Currency relationship sources">
+                    {% for source in era.source_refs %}
+                      <a href="{{ source.url }}">{{ source.label }}</a>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </article>
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endif %}
+
+    {% if currency_history.moments %}
+      <section aria-labelledby="currency-history-moments-title">
+        <div class="qa-currency-history__section-heading">
+          <p class="qa-foundation-kicker">Sourced milestones</p>
+          <h3 id="currency-history-moments-title">Reviewed monetary transitions</h3>
+        </div>
+        <ol class="qa-currency-history__timeline qa-currency-history__timeline--moments">
+          {% for moment in currency_history.moments %}
+            <li class="qa-currency-history__item">
+              <div class="qa-currency-history__marker" aria-hidden="true"></div>
+              <article>
+                <p class="qa-currency-history__eyebrow">{{ moment.label }}</p>
+                <h4>{{ moment.title }}</h4>
+                <p>{{ moment.body }}</p>
+                <p class="qa-currency-history__scope">{{ moment.temporal_scope }}</p>
+                <div class="qa-story-source-list" aria-label="Milestone sources">
+                  {% for source in moment.source_refs %}
+                    <a href="{{ source.url }}">{{ source.label }}</a>
+                  {% endfor %}
+                </div>
+              </article>
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endif %}
+
+    <p class="qa-currency-history__disclaimer">
+      Currency history describes recorded country/currency relationships and sourced monetary
+      events. It is not a historical purchasing-power calculation and does not imply that a
+      milestone caused an exchange-rate movement.
+    </p>
+  </section>
+{% endif %}
