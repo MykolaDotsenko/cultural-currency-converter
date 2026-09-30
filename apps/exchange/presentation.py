@@ -8,9 +8,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
-from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
+from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
 _FEATURED_THEME_BY_COUNTRY = {
     "FI": "fi",
