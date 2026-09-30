@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.exchange.domain import RateSeriesRangeError, normalize_currency_code
+from apps.exchange.payment_estimate import MAX_FX_MARKUP_PERCENT
 
 MAX_CONVERSION_AMOUNT = Decimal("1000000000")
 RATE_MODE_LATEST = "latest"
@@ -240,6 +241,101 @@ class CurrentConversionForm(forms.Form):
                 "Choose a currency currently associated with this country, "
                 "or remove the country context.",
             )
+
+
+class PaymentEstimateForm(forms.Form):
+    fx_markup_percent = forms.DecimalField(
+        required=False,
+        min_value=Decimal("0"),
+        max_value=MAX_FX_MARKUP_PERCENT,
+        max_digits=5,
+        decimal_places=2,
+        initial=Decimal("0"),
+        label="FX markup",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "min": "0",
+                "max": format(MAX_FX_MARKUP_PERCENT, "f"),
+                "step": "0.01",
+            }
+        ),
+    )
+    source_fixed_fee = forms.CharField(
+        required=False,
+        initial="0",
+        max_length=64,
+        widget=forms.TextInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "autocomplete": "off",
+            }
+        ),
+    )
+    destination_fixed_fee = forms.CharField(
+        required=False,
+        initial="0",
+        max_length=64,
+        widget=forms.TextInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "autocomplete": "off",
+            }
+        ),
+    )
+
+    def __init__(
+        self,
+        *args,
+        source_currency_code: str,
+        destination_currency_code: str,
+        source_minor_units: int,
+        destination_minor_units: int,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.source_minor_units = source_minor_units
+        self.destination_minor_units = destination_minor_units
+        self.fields["source_fixed_fee"].label = f"Fixed fee in {source_currency_code}"
+        self.fields["destination_fixed_fee"].label = (
+            f"Fixed local fee in {destination_currency_code}"
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        self._clean_fee(
+            cleaned,
+            field_name="source_fixed_fee",
+            minor_units=self.source_minor_units,
+        )
+        self._clean_fee(
+            cleaned,
+            field_name="destination_fixed_fee",
+            minor_units=self.destination_minor_units,
+        )
+        if cleaned.get("fx_markup_percent") is None and not self.has_error("fx_markup_percent"):
+            cleaned["fx_markup_percent"] = Decimal("0")
+        return cleaned
+
+    def _clean_fee(
+        self,
+        cleaned: dict[str, object],
+        *,
+        field_name: str,
+        minor_units: int,
+    ) -> None:
+        raw = cleaned.get(field_name)
+        if raw is None or self.has_error(field_name):
+            return
+        try:
+            parsed = parse_amount_text(str(raw).strip() or "0", minor_units=minor_units)
+        except forms.ValidationError as exc:
+            self.add_error(field_name, exc)
+            return
+        cleaned[f"{field_name}_decimal"] = parsed
 
 
 SERIES_PERIOD_CHOICES = (
