@@ -153,6 +153,35 @@ The following additional user-facing capabilities also clear the current **60/10
 
 These scores are product-prioritization signals, not implementation guarantees. Before starting each item, validate the underlying data quality, legal/licensing implications, privacy impact and maintenance cost.
 
+### Third expansion wave from the integrated product concept
+
+The integrated product concept adds three non-duplicative user-facing capabilities that also clear the **60/100 usefulness + distinctiveness threshold**.
+
+21. **Cultural-history portal — 87/100**
+   - Provide one compact progressive-disclosure destination for cultural snapshot, currency story, previous currency, money etiquette, travel-money tip and a sourced memorable fact.
+   - Treat this as an exploration surface, not a generic help dialog; the trigger must have an accessible name even if the visual design uses a compact icon.
+   - Reuse reviewed story/provenance data and the existing currency-history domain rather than generating unsourced filler.
+
+22. **Pre-trip reminder / saved-scenario re-check — 82/100**
+   - Let an opted-in user receive a reminder to re-open a saved trip/budget scenario near its planned travel date.
+   - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
+   - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
+
+23. **Historical quick ranges and anchor values — 78/100**
+   - Add approachable historical range controls such as 1Y / 5Y / 10Y where provider coverage supports them.
+   - Pair the chart with a small number of actual anchor observations and a grounded human-readable summary.
+   - Preserve requested/effective-date semantics and avoid trading-style indicators or unsupported continuity.
+
+### Enabling data/content foundation
+
+Several ideas in the integrated concept are better treated as shared foundations rather than separate end-user features:
+
+- **Structured country money profiles** for sourced typical-price anchors, cash/card/ATM/tipping/DCC context and explicit scope/observation metadata.
+- **Country content packs** for cultural preview, currency fact, previous-currency context, local money behaviour, travel-money tip and buying-power anchors.
+- **Country theme profiles** for restrained atmosphere, approved visual cues and prohibited clichés.
+
+Build these as reusable, provenance-aware data/content systems that support multiple roadmap features instead of duplicating country-specific content inside individual views.
+
 ## Later candidate: stable external/mobile API
 
 A versioned API is useful when a native client or external consumer becomes active.
