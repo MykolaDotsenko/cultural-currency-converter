@@ -12,7 +12,6 @@ from django.utils import timezone
 
 from apps.countries.models import Currency
 from apps.countries.services import HistoricalCurrencySuggestion, historical_currency_suggestion
-from apps.culture.services import DestinationContext, build_destination_context
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
 from apps.exchange.domain import (
     ConversionRepresentationError,
@@ -21,6 +20,7 @@ from apps.exchange.domain import (
     HistoricalObservationUnavailable,
     HistoricalOutOfCoverage,
 )
+from apps.exchange.money_context import MoneyContext, compose_money_context
 from apps.exchange.providers.base import FxProviderError, FxProviderInvalidPayload
 from apps.exchange.services import quote_conversion, quote_historical_conversion
 
@@ -53,10 +53,17 @@ ConverterSubmissionError = (
 
 @dataclass(frozen=True, slots=True)
 class ConverterSubmissionResult:
-    conversion: ConversionResult | None
+    money_context: MoneyContext | None
     error: ConverterSubmissionError | None
     historical_suggestions: tuple[HistoricalSuggestion, ...]
-    destination_context: DestinationContext | None
+
+    @property
+    def conversion(self) -> ConversionResult | None:
+        return self.money_context.conversion if self.money_context is not None else None
+
+    @property
+    def destination_context(self):
+        return self.money_context.destination if self.money_context is not None else None
 
 
 LatestGatewayFactory = Callable[[], LatestQuoteGateway]
@@ -142,40 +149,40 @@ def run_converter_submission(
             )
     except ConversionRepresentationError as exc:
         return ConverterSubmissionResult(
-            conversion=None,
+            money_context=None,
             error=FxProviderInvalidPayload(str(exc)),
             historical_suggestions=historical_suggestions,
-            destination_context=None,
         )
     except (FxProviderError, HistoricalObservationUnavailable, HistoricalOutOfCoverage) as exc:
         return ConverterSubmissionResult(
-            conversion=None,
+            money_context=None,
             error=exc,
             historical_suggestions=historical_suggestions,
-            destination_context=None,
         )
 
-    destination_context = None
-    if not command.historical:
-        try:
-            destination_context = build_destination_context(
-                country_code=command.destination_country,
-                converted_amount=conversion.output_amount,
-                quote_currency=conversion.quote.quote_currency,
-                as_of=context_as_of or request_local_date,
-            )
-        except (DatabaseError, ValueError, DecimalException):
-            logger.exception(
-                "Destination context composition failed",
-                extra={
-                    "destination_country": command.destination_country,
-                    "quote_currency": conversion.quote.quote_currency,
-                },
-            )
+    context_date = context_as_of or request_local_date
+    try:
+        money_context = compose_money_context(
+            conversion=conversion,
+            destination_country=command.destination_country,
+            context_as_of=context_date,
+        )
+    except (DatabaseError, ValueError, DecimalException):
+        logger.exception(
+            "Money context composition failed",
+            extra={
+                "destination_country": command.destination_country,
+                "quote_currency": conversion.quote.quote_currency,
+            },
+        )
+        money_context = MoneyContext(
+            conversion=conversion,
+            destination_country=command.destination_country,
+            context_as_of=context_date,
+        )
 
     return ConverterSubmissionResult(
-        conversion=conversion,
+        money_context=money_context,
         error=None,
         historical_suggestions=historical_suggestions,
-        destination_context=destination_context,
     )
