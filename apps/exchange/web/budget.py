@@ -102,9 +102,7 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         ),
                     }
                 else:
-                    category_options = tuple(
-                        (anchor.category, anchor.label) for anchor in anchors
-                    )
+                    category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
                     form = BudgetInterpretationForm(
                         request.POST,
                         category_options=category_options,
@@ -113,9 +111,7 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                     if form.is_valid():
                         assumptions = form.cleaned_data.get("budget_assumptions")
                         if not isinstance(assumptions, BudgetAssumptions):
-                            raise RuntimeError(
-                                "Valid budget form returned no BudgetAssumptions."
-                            )
+                            raise RuntimeError("Valid budget form returned no BudgetAssumptions.")
                         try:
                             interpretation = interpret_budget(
                                 money_context,
