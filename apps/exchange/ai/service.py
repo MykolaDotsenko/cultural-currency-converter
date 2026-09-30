@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import transaction
+from django.db import DatabaseError, transaction
 
 from apps.exchange.ai.contracts import (
     ExplanationBullet,
@@ -68,7 +68,7 @@ class RuntimeExplanationService:
             locale=locale,
         )
 
-        cached = RuntimeExplanationCache.objects.filter(cache_key=cache_key).first()
+        cached = _safe_persistent_cache_get(cache_key)
         if cached is not None:
             try:
                 result = validate_provider_payload(cached.result, packet=packet)
@@ -84,7 +84,7 @@ class RuntimeExplanationService:
                         "cache_status": "invalid_persistent",
                     },
                 )
-                cached.delete()
+                _safe_persistent_cache_delete(cached)
             else:
                 logger.info(
                     "AI runtime explanation cache hit",
@@ -163,23 +163,38 @@ class RuntimeExplanationService:
                 )
 
             latency_ms = round((time.perf_counter() - started) * 1000)
-            RuntimeExplanationCache.objects.update_or_create(
-                cache_key=cache_key,
-                defaults={
-                    "packet_hash": packet.packet_hash,
-                    "prompt_version": PROMPT_VERSION,
-                    "schema_version": SCHEMA_VERSION,
-                    "provider": "google",
-                    "model": self.model,
-                    "provider_model_version": provider_result.provider_model,
-                    "locale": locale,
-                    "result": provider_result.payload,
-                    "input_tokens": provider_result.usage.input_tokens,
-                    "output_tokens": provider_result.usage.output_tokens,
-                    "total_tokens": provider_result.usage.total_tokens,
-                    "provider_response_id": provider_result.response_id or "",
-                },
-            )
+            cache_status = "live"
+            try:
+                RuntimeExplanationCache.objects.update_or_create(
+                    cache_key=cache_key,
+                    defaults={
+                        "packet_hash": packet.packet_hash,
+                        "prompt_version": PROMPT_VERSION,
+                        "schema_version": SCHEMA_VERSION,
+                        "provider": "google",
+                        "model": self.model,
+                        "provider_model_version": provider_result.provider_model,
+                        "locale": locale,
+                        "result": provider_result.payload,
+                        "input_tokens": provider_result.usage.input_tokens,
+                        "output_tokens": provider_result.usage.output_tokens,
+                        "total_tokens": provider_result.usage.total_tokens,
+                        "provider_response_id": provider_result.response_id or "",
+                    },
+                )
+            except DatabaseError:
+                cache_status = "live_uncached"
+                logger.warning(
+                    "AI persistent explanation cache write failed open",
+                    extra={
+                        "capability": "runtime_explanation",
+                        "dependency": "database",
+                        "operation": "persistent_cache_write",
+                        "outcome": "failure",
+                        "cache_status": cache_status,
+                    },
+                    exc_info=True,
+                )
             logger.info(
                 "AI runtime explanation success",
                 extra={
@@ -191,16 +206,52 @@ class RuntimeExplanationService:
                     "latency_ms": latency_ms,
                     "input_tokens": provider_result.usage.input_tokens,
                     "output_tokens": provider_result.usage.output_tokens,
+                    "cache_status": cache_status,
                 },
             )
             return ExplanationDelivery(
                 result=result,
-                cache_status="live",
+                cache_status=cache_status,
                 packet_hash=packet.packet_hash,
             )
         finally:
             if lock_acquired is True:
                 _safe_cache_delete(lock_key)
+
+
+def _safe_persistent_cache_get(cache_key: str) -> RuntimeExplanationCache | None:
+    try:
+        return RuntimeExplanationCache.objects.filter(cache_key=cache_key).first()
+    except DatabaseError:
+        logger.warning(
+            "AI persistent explanation cache read failed open",
+            extra={
+                "capability": "runtime_explanation",
+                "dependency": "database",
+                "operation": "persistent_cache_read",
+                "outcome": "failure",
+                "cache_status": "persistent_unavailable",
+            },
+            exc_info=True,
+        )
+        return None
+
+
+def _safe_persistent_cache_delete(cached: RuntimeExplanationCache) -> None:
+    try:
+        cached.delete()
+    except DatabaseError:
+        logger.warning(
+            "AI invalid persistent explanation cache cleanup failed",
+            extra={
+                "capability": "runtime_explanation",
+                "dependency": "database",
+                "operation": "persistent_cache_delete",
+                "outcome": "failure",
+                "cache_status": "invalid_persistent",
+            },
+            exc_info=True,
+        )
 
 
 def _safe_cache_get(key: str) -> object | None:

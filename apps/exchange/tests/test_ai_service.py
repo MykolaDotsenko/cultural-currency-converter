@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.cache import cache
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.test import override_settings
 
 from apps.exchange.ai.contracts import ProviderExplanation
@@ -310,6 +310,120 @@ def test_coordination_cache_outage_preserves_provider_fallback(snapshot, monkeyp
     assert drafter.calls == 1
     assert deleted_keys == []
     assert RuntimeExplanationCache.objects.count() == 0
+
+
+@pytest.mark.django_db(transaction=True)
+def test_persistent_cache_read_failure_does_not_break_live_generation(snapshot, caplog):
+    drafter = FakeDrafter()
+    service = RuntimeExplanationService(
+        enabled=True,
+        model="gemini-3.1-flash-lite",
+        drafter=drafter,
+    )
+
+    with (
+        caplog.at_level(logging.WARNING, logger="cultural_currency.ai"),
+        patch(
+            "apps.exchange.ai.service.RuntimeExplanationCache.objects.filter",
+            side_effect=DatabaseError("database unavailable"),
+        ),
+    ):
+        delivery = service.explain(snapshot)
+
+    assert delivery.result.generated is True
+    assert delivery.cache_status == "live"
+    assert drafter.calls == 1
+    assert RuntimeExplanationCache.objects.count() == 1
+    record = next(
+        record
+        for record in caplog.records
+        if record.msg == "AI persistent explanation cache read failed open"
+    )
+    assert record.dependency == "database"
+    assert record.operation == "persistent_cache_read"
+    assert record.cache_status == "persistent_unavailable"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_persistent_cache_write_failure_returns_live_uncached_result(snapshot, caplog):
+    drafter = FakeDrafter()
+    service = RuntimeExplanationService(
+        enabled=True,
+        model="gemini-3.1-flash-lite",
+        drafter=drafter,
+    )
+
+    with (
+        caplog.at_level(logging.WARNING, logger="cultural_currency.ai"),
+        patch(
+            "apps.exchange.ai.service.RuntimeExplanationCache.objects.update_or_create",
+            side_effect=DatabaseError("database unavailable"),
+        ),
+    ):
+        delivery = service.explain(snapshot)
+
+    assert delivery.result.generated is True
+    assert delivery.cache_status == "live_uncached"
+    assert drafter.calls == 1
+    assert RuntimeExplanationCache.objects.count() == 0
+    record = next(
+        record
+        for record in caplog.records
+        if record.msg == "AI persistent explanation cache write failed open"
+    )
+    assert record.dependency == "database"
+    assert record.operation == "persistent_cache_write"
+    assert record.cache_status == "live_uncached"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_invalid_persistent_cache_cleanup_failure_still_regenerates(snapshot, caplog):
+    seed_service = RuntimeExplanationService(
+        enabled=True,
+        model="gemini-3.1-flash-lite",
+        drafter=FakeDrafter(),
+    )
+    seed_service.explain(snapshot)
+    stored = RuntimeExplanationCache.objects.get()
+    stored.result = {
+        "headline": "Bad",
+        "bullets": [
+            {
+                "text": "100 USD is better.",
+                "supporting_fact_ids": ["conversion"],
+            }
+        ],
+        "caveat": "Bad cache.",
+    }
+    stored.save(update_fields=("result",))
+
+    replacement = FakeDrafter()
+    service = RuntimeExplanationService(
+        enabled=True,
+        model="gemini-3.1-flash-lite",
+        drafter=replacement,
+    )
+    with (
+        caplog.at_level(logging.WARNING, logger="cultural_currency.ai"),
+        patch.object(
+            RuntimeExplanationCache,
+            "delete",
+            side_effect=DatabaseError("delete unavailable"),
+        ),
+    ):
+        delivery = service.explain(snapshot)
+
+    assert delivery.result.generated is True
+    assert delivery.cache_status == "live"
+    assert replacement.calls == 1
+    assert RuntimeExplanationCache.objects.count() == 1
+    record = next(
+        record
+        for record in caplog.records
+        if record.msg == "AI invalid persistent explanation cache cleanup failed"
+    )
+    assert record.operation == "persistent_cache_delete"
+    assert record.cache_status == "invalid_persistent"
 
 
 @pytest.mark.django_db(transaction=True)
