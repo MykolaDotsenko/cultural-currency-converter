@@ -169,7 +169,7 @@ def test_scenario_rejects_destination_city_from_another_country(reference_data):
 
 @pytest.mark.django_db
 def test_scenario_rejects_non_current_country_currency_context(reference_data):
-    eur, jpy, fi, jp, tokyo, _ = reference_data
+    eur, _jpy, fi, jp, tokyo, _ = reference_data
     user = User.objects.create_user(username="owner", password="StrongPass-482!")
 
     with pytest.raises(SavedScenarioError, match="current destination currency context"):
