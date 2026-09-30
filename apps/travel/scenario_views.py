@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import DatabaseError
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
@@ -153,12 +152,14 @@ def _draft_summary(
 
 def _validate_budget_handoff(
     token: str,
-    data,
+    data: QueryDict,
 ) -> tuple[TrustedBudgetContextSnapshot, ScenarioReference, BudgetAssumptions]:
     try:
         snapshot = load_budget_context_snapshot_token(token)
     except BudgetContextTokenError as exc:
-        raise SavedScenarioFlowError("This budget plan is no longer valid. Reopen it from the converter.") from exc
+        raise SavedScenarioFlowError(
+            "This budget plan is no longer valid. Reopen it from the converter."
+        ) from exc
 
     reference = _scenario_reference(snapshot)
     money_context = build_money_context(
@@ -183,7 +184,8 @@ def _validate_budget_handoff(
     budget_form = BudgetInterpretationForm(data, category_options=category_options)
     if not budget_form.is_valid():
         raise SavedScenarioFlowError(
-            "The budget assumptions are no longer valid. Reopen the budget interpretation and review them."
+            "The budget assumptions are no longer valid. "
+            "Reopen the budget interpretation and review them."
         )
 
     assumptions = budget_form.cleaned_data.get("budget_assumptions")
@@ -394,6 +396,19 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
     )
     latest_observation = observations[0] if observations else None
 
+    budget_rows = tuple(
+        {
+            "item": item,
+            "label": item.category.replace("_", " ").title(),
+        }
+        for item in scenario.budget_items.all()
+    )
+    has_later_observation = (
+        initial_observation is not None
+        and latest_observation is not None
+        and latest_observation.pk != initial_observation.pk
+    )
+
     return render(
         request,
         "travel/scenario_detail.html",
@@ -401,7 +416,8 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
             "scenario": scenario,
             "initial_observation": initial_observation,
             "latest_observation": latest_observation,
-            "budget_items": tuple(scenario.budget_items.all()),
+            "has_later_observation": has_later_observation,
+            "budget_rows": budget_rows,
             "converter_url": _scenario_converter_url(scenario),
         },
     )
