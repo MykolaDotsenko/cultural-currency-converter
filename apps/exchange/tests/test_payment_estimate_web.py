@@ -230,6 +230,7 @@ def test_non_javascript_payment_estimate_returns_full_page(client, reference_dat
     assert b"<html" in response.content
     assert b"Reference value, with your assumptions" in response.content
     assert b"17450 JPY" in response.content
+    assert "−0 JPY" not in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -257,6 +258,11 @@ def test_payment_estimate_metadata_database_failure_is_local_and_recoverable(
     assert response.status_code == 503
     assert b"Payment estimate is temporarily unavailable" in response.content
     assert b"reference conversion remains valid" in response.content
+    assert b"Retry payment estimate" in response.content
+    assert b'name="fx_markup_percent"' in response.content
+    assert b'value="2"' in response.content
+    assert b'name="source_fixed_fee"' in response.content
+    assert b'value="1"' in response.content
     assert any(
         record.msg == "Payment estimate currency metadata lookup failed"
         for record in caplog.records
