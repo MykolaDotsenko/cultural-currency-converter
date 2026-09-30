@@ -269,6 +269,7 @@ class HistoricalSeriesForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        today = today
 
         for field_name in ("base", "quote"):
             raw_value = cleaned.get(field_name)
@@ -307,12 +308,12 @@ class HistoricalSeriesForm(forms.Form):
             )
 
         selected_date = cleaned.get("selected_date")
-        if selected_date and selected_date > timezone.localdate():
+        if selected_date and selected_date > today:
             self.add_error("selected_date", "Selected observation date cannot be in the future.")
 
         requested_date = cleaned.get("requested_date")
         if requested_date:
-            if requested_date > timezone.localdate():
+            if requested_date > today:
                 self.add_error("requested_date", "Requested date cannot be in the future.")
             if selected_date and requested_date < selected_date:
                 self.add_error(
@@ -335,7 +336,7 @@ class HistoricalSeriesForm(forms.Form):
             if start_date and end_date:
                 if end_date < start_date:
                     self.add_error("end_date", "Custom end date cannot precede the start date.")
-                if end_date > timezone.localdate():
+                if end_date > today:
                     self.add_error("end_date", "Custom end date cannot be in the future.")
                 if selected_date and not start_date <= selected_date <= end_date:
                     self.add_error(
