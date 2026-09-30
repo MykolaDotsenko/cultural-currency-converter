@@ -6,7 +6,7 @@ from django import forms
 from django.utils import timezone
 
 from apps.countries.models import Country, Currency
-from apps.culture.story import StoryRequest
+from apps.culture.story import CurrencyHistoryRequest, StoryRequest
 
 
 class StoryRequestForm(forms.Form):
@@ -63,6 +63,55 @@ class StoryRequestForm(forms.Form):
             destination_currency=self.cleaned_data["destination_currency"],
             selected_date=self.cleaned_data["selected_date"],
             historical=self.cleaned_data["historical"] == "1",
+        )
+
+
+class CurrencyHistoryRequestForm(forms.Form):
+    country = forms.CharField(max_length=2)
+    currency = forms.CharField(max_length=3)
+    selected_date = forms.DateField(required=False)
+    historical = forms.ChoiceField(
+        required=False,
+        choices=(("0", "Current"), ("1", "Historical")),
+        initial="0",
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors:
+            return cleaned
+
+        country_code = str(cleaned.get("country") or "").upper()
+        currency_code = str(cleaned.get("currency") or "").upper()
+        cleaned["country"] = country_code
+        cleaned["currency"] = currency_code
+
+        if not Country.objects.filter(iso2=country_code).exists():
+            self.add_error("country", "Unknown country code.")
+        if not Currency.objects.filter(code=currency_code).exists():
+            self.add_error("currency", "Unknown currency code.")
+
+        historical = cleaned.get("historical") == "1"
+        selected_date = cleaned.get("selected_date")
+        today = timezone.localdate()
+        if historical:
+            if selected_date is None:
+                self.add_error("selected_date", "Choose a historical date.")
+            elif selected_date > today:
+                self.add_error("selected_date", "Currency history date cannot be in the future.")
+        else:
+            cleaned["selected_date"] = today
+
+        return cleaned
+
+    def to_currency_history_request(self) -> CurrencyHistoryRequest:
+        if not self.is_valid():
+            raise ValueError("CurrencyHistoryRequestForm must be valid before conversion.")
+        return CurrencyHistoryRequest(
+            country_code=self.cleaned_data["country"],
+            currency_code=self.cleaned_data["currency"],
+            selected_date=self.cleaned_data["selected_date"],
+            historical=self.cleaned_data.get("historical") == "1",
         )
 
 
