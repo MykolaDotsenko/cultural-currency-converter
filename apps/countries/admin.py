@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 
 
 @admin.register(Country)
@@ -8,6 +8,15 @@ class CountryAdmin(admin.ModelAdmin):
     list_display = ("iso2", "name", "region", "is_active", "metadata_source")
     list_filter = ("is_active", "region")
     search_fields = ("iso2", "iso3", "name", "official_name")
+
+
+@admin.register(City)
+class CityAdmin(admin.ModelAdmin):
+    list_display = ("name", "country", "region", "slug", "is_active")
+    list_filter = ("is_active", "country")
+    search_fields = ("name", "slug", "region", "country__name", "country__iso2")
+    list_select_related = ("country",)
+    ordering = ("country__name", "name", "slug")
 
 
 @admin.register(Currency)
