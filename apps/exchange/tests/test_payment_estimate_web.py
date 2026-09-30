@@ -31,6 +31,21 @@ class FakeGateway:
         )
 
 
+class FakeHistoricalGateway:
+    def get(self, base, quote, requested_date, policy):
+        return RateQuote(
+            base_currency=base,
+            quote_currency=quote,
+            rate=Decimal("170.00"),
+            requested_date=requested_date,
+            effective_date=requested_date,
+            fetched_at=datetime(2026, 9, 21, 8, tzinfo=UTC),
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=("ecb",),
+            historical=True,
+        )
+
+
 @pytest.fixture(autouse=True)
 def use_vite_dev_mode(settings):
     settings.VITE_DEV_SERVER_ENABLED = True
@@ -163,22 +178,26 @@ def test_invalid_assumptions_return_bound_form_without_estimate(client, referenc
 
 @pytest.mark.django_db
 def test_historical_conversion_does_not_offer_current_payment_estimate(client, reference_data):
-    response = client.get(
-        reverse("converter"),
-        {
-            "convert": "1",
-            "amount": "100.00",
-            "source_country": "FI",
-            "source_currency": "EUR",
-            "destination_country": "JP",
-            "destination_currency": "JPY",
-            "rate_mode": "historical",
-            "requested_date": "2026-09-18",
-        },
-    )
+    with patch(
+        "apps.exchange.views.build_historical_quote_gateway",
+        return_value=FakeHistoricalGateway(),
+    ):
+        response = client.get(
+            reverse("converter"),
+            {
+                "convert": "1",
+                "amount": "100.00",
+                "source_country": "FI",
+                "source_currency": "EUR",
+                "destination_country": "JP",
+                "destination_currency": "JPY",
+                "rate_mode": "historical",
+                "requested_date": "2026-09-18",
+            },
+        )
 
-    # The provider may be unavailable in this isolated test, but the form must never
-    # expose a current-payment estimate from a historical conversion request.
+    assert response.status_code == 200
+    assert b"Historical reference" in response.content
     assert b"Estimate what explicit fees may change" not in response.content
 
 
