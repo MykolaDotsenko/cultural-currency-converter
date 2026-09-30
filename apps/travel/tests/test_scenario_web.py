@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -12,6 +13,7 @@ from apps.culture.services import DestinationContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
+from apps.exchange.providers.base import FxProviderUnavailable
 from apps.travel.models import SavedScenario, SavedScenarioKind
 
 User = get_user_model()
@@ -61,6 +63,40 @@ def _conversion() -> ConversionResult:
         ),
         stale=False,
     )
+
+
+class FakeLatestGateway:
+    def __init__(
+        self,
+        *,
+        rate: Decimal = Decimal("180"),
+        effective_date: date = date(2026, 10, 1),
+    ) -> None:
+        self.rate = rate
+        self.effective_date = effective_date
+        self.calls = 0
+
+    def get(self, base, quote, policy, *, now):
+        self.calls += 1
+        return (
+            RateQuote(
+                base_currency=base,
+                quote_currency=quote,
+                rate=self.rate,
+                requested_date=None,
+                effective_date=self.effective_date,
+                fetched_at=datetime(2026, 10, 1, 8, tzinfo=UTC),
+                provider_policy=policy,
+                provider_keys=("ecb",),
+                historical=False,
+            ),
+            False,
+        )
+
+
+class UnavailableLatestGateway:
+    def get(self, base, quote, policy, *, now):
+        raise FxProviderUnavailable("provider unavailable")
 
 
 def _budget_token() -> str:
@@ -331,3 +367,147 @@ def test_delete_saved_scenario_is_owner_scoped(client, scenario_reference_data):
     assert deleted.status_code == 302
     assert deleted.url == reverse("saved_state")
     assert not SavedScenario.objects.filter(pk=scenario.pk).exists()
+
+
+@pytest.mark.django_db
+def test_owner_can_recheck_scenario_without_overwriting_initial_observation(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="recheck-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo re-check",
+            "duration_days": "5",
+            "travelers": "2",
+            "units_casual_meal": "2",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    initial = scenario.observations.get()
+    gateway = FakeLatestGateway()
+
+    with patch(
+        "apps.travel.scenario_web.build_latest_quote_gateway",
+        return_value=gateway,
+    ):
+        response = client.post(reverse("recheck_saved_scenario", args=(scenario.pk,)))
+
+    assert response.status_code == 302
+    assert response.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+    assert gateway.calls == 1
+    observations = list(scenario.observations.order_by("recorded_at", "id"))
+    assert len(observations) == 2
+    assert observations[0].pk == initial.pk
+    assert observations[0].output_amount == Decimal("104700.000000000000")
+    assert observations[1].output_amount == Decimal("108000.000000000000")
+    assert observations[1].rate == Decimal("180.000000000000000000")
+
+    detail = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    assert detail.status_code == 200
+    assert b"3300 JPY more" in detail.content
+    assert b"Reference-rate difference +3.2%" in detail.content
+    assert b"104700 JPY" in detail.content
+    assert b"108000 JPY" in detail.content
+    assert b"does not recommend when to exchange money" not in detail.content
+
+
+@pytest.mark.django_db
+def test_recheck_deduplicates_same_provider_observation(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="dedupe-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    gateway = FakeLatestGateway(
+        rate=Decimal("174.50"),
+        effective_date=date(2026, 9, 30),
+    )
+
+    with patch(
+        "apps.travel.scenario_web.build_latest_quote_gateway",
+        return_value=gateway,
+    ):
+        response = client.post(
+            reverse("recheck_saved_scenario", args=(scenario.pk,)),
+            follow=True,
+        )
+
+    assert response.status_code == 200
+    assert scenario.observations.count() == 1
+    assert b"matches the most recent stored observation" in response.content
+    assert b"No later distinct reference observation is stored yet" in response.content
+
+
+@pytest.mark.django_db
+def test_recheck_provider_failure_preserves_saved_observations(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="failure-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+
+    with patch(
+        "apps.travel.scenario_web.build_latest_quote_gateway",
+        return_value=UnavailableLatestGateway(),
+    ):
+        response = client.post(
+            reverse("recheck_saved_scenario", args=(scenario.pk,)),
+            follow=True,
+        )
+
+    assert response.status_code == 200
+    assert scenario.observations.count() == 1
+    assert b"temporarily unavailable" in response.content
+    assert b"saved observation was not changed" in response.content
+
+
+@pytest.mark.django_db
+def test_recheck_is_owner_scoped_before_provider_access(client, scenario_reference_data):
+    eur, jpy, _fi, jp, tokyo = scenario_reference_data
+    owner = User.objects.create_user(username="recheck-owner-a", password="StrongPass-482!")
+    other = User.objects.create_user(username="recheck-owner-b", password="StrongPass-482!")
+    scenario = SavedScenario.objects.create(
+        user=owner,
+        kind=SavedScenarioKind.BUDGET,
+        title="Private Tokyo budget",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("600"),
+    )
+    gateway_factory = Mock()
+    client.force_login(other)
+
+    with patch(
+        "apps.travel.scenario_web.build_latest_quote_gateway",
+        gateway_factory,
+    ):
+        response = client.post(reverse("recheck_saved_scenario", args=(scenario.pk,)))
+
+    assert response.status_code == 404
+    gateway_factory.assert_not_called()
