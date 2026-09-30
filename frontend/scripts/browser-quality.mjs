@@ -379,6 +379,26 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
 
   await budgetForm.locator("#id_duration_days").fill("5");
   await budgetForm.locator("#id_travelers").fill("1");
+  const budgetFormValidity = await budgetForm.evaluate((form) => {
+    if (!(form instanceof HTMLFormElement)) {
+      throw new Error("Expected budget interpretation surface to be a form");
+    }
+    const invalidControls = Array.from(form.elements)
+      .filter((control) => control instanceof HTMLElement && "checkValidity" in control)
+      .filter((control) => !control.checkValidity())
+      .map((control) => ({
+        id: control.id,
+        name: control.getAttribute("name"),
+        value: "value" in control ? String(control.value) : "",
+        validationMessage:
+          "validationMessage" in control ? String(control.validationMessage) : "",
+      }));
+    return { valid: form.checkValidity(), invalidControls };
+  });
+  assert(
+    budgetFormValidity.valid,
+    `current-converter: budget form is blocked by native validation before submit: ${JSON.stringify(budgetFormValidity.invalidControls)}`,
+  );
   const budgetResponsePromise = waitForBudgetInterpretation();
   await budgetForm.getByRole("button", { name: "Interpret budget" }).click();
   const budgetResponse = await budgetResponsePromise;
