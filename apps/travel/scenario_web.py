@@ -17,7 +17,11 @@ from apps.exchange.budget_snapshot import (
     load_budget_context_snapshot_token,
 )
 from apps.exchange.forms import BudgetInterpretationForm
-from apps.travel.models import SavedScenario, SavedScenarioKind
+from apps.travel.models import (
+    SavedScenario,
+    SavedScenarioKind,
+    SavedScenarioObservationKind,
+)
 from apps.travel.scenarios import (
     SavedScenarioError,
     SavedScenarioSpec,
@@ -162,16 +166,16 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
             "source_country",
             "destination_country",
             "destination_city",
-        ).prefetch_related("budget_items", "observations"),
+        ).prefetch_related("budget_items"),
         pk=scenario_id,
         user=request.user,
     )
-    observations = tuple(scenario.observations.all())
-    initial_observation = next(
-        (item for item in reversed(observations) if item.kind == "initial"),
-        None,
+    initial_observation = (
+        scenario.observations.filter(kind=SavedScenarioObservationKind.INITIAL)
+        .order_by("recorded_at", "id")
+        .first()
     )
-    latest_observation = observations[0] if observations else None
+    latest_observation = scenario.observations.order_by("-recorded_at", "-id").first()
 
     budget_item_rows = tuple(
         {
