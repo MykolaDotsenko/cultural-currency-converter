@@ -233,9 +233,7 @@ def test_current_destination_context_failure_is_local_and_htmx_visible(client, r
     "failure",
     [DatabaseError("media database unavailable"), ValueError("malformed managed media")],
 )
-def test_story_cover_media_failure_keeps_story_available(
-    client, reference_data, failure, caplog
-):
+def test_story_cover_media_failure_keeps_story_available(client, reference_data, failure, caplog):
     with (
         patch("apps.culture.views.select_media_for_display", side_effect=failure),
         caplog.at_level("WARNING", logger="cultural_currency.culture"),
@@ -250,8 +248,7 @@ def test_story_cover_media_failure_keeps_story_available(
     assert b"The sourced story behind this currency context" in response.content
     assert b"temporarily unavailable" not in response.content
     assert any(
-        record.msg == "Money and culture story cover media unavailable"
-        for record in caplog.records
+        record.msg == "Money and culture story cover media unavailable" for record in caplog.records
     )
 
 
