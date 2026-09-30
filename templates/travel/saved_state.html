@@ -83,8 +83,8 @@
                         · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
                         ·
                       {% endif %}
-                      {% if row.latest_observation %}
-                        Last saved reference effective {{ row.latest_observation.effective_date|date:"j M Y" }}
+                      {% if row.latest_effective_date %}
+                        Last saved reference effective {{ row.latest_effective_date|date:"j M Y" }}
                       {% else %}
                         No stored reference observation
                       {% endif %}
