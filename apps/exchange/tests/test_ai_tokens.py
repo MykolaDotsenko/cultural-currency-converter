@@ -84,7 +84,7 @@ def test_signed_conversion_snapshot_preserves_multi_provider_attribution():
 
     snapshot = load_trusted_conversion_snapshot_token(token)
 
-    assert snapshot.provider_keys == provider_keys
+    assert snapshot.provider_keys == tuple(sorted(provider_keys))
 
 
 def test_signed_conversion_snapshot_preserves_historical_semantics():
