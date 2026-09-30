@@ -16,7 +16,12 @@ from apps.culture.models import (
     StorySourceKind,
 )
 from apps.culture.services import approve_story_moment, publish_story_moment
-from apps.culture.story import StoryRequest, compose_story
+from apps.culture.story import (
+    CurrencyHistoryRequest,
+    StoryRequest,
+    compose_currency_history,
+    compose_story,
+)
 
 
 @pytest.fixture
@@ -135,6 +140,123 @@ def test_historical_story_excludes_future_moment_but_keeps_currency_era(context_
 
     assert all(chapter.title != "Future from selected date" for chapter in story.chapters)
     assert any(chapter.kind == "destination_currency_era" for chapter in story.chapters)
+
+
+def _add_finland_markka_history(context_data):
+    fi, _jp, _eur, _jpy = context_data
+    fim = Currency.objects.create(
+        code="FIM",
+        name="Finnish markka",
+        symbol="mk",
+        is_active=False,
+        active_to=date(2001, 12, 31),
+    )
+    CountryCurrency.objects.create(
+        country=fi,
+        currency=fim,
+        is_primary=True,
+        valid_to=date(2001, 12, 31),
+        source="https://example.org/finland-markka",
+    )
+    return fim
+
+
+@pytest.mark.django_db
+def test_currency_history_includes_previous_primary_era_and_reviewed_milestone(context_data):
+    fi, _jp, eur, _jpy = context_data
+    _add_finland_markka_history(context_data)
+    moment = StoryMoment.objects.create(
+        category=StoryMomentCategory.CASH_CHANGEOVER,
+        title="Euro cash arrived in Finland",
+        summary="A reviewed sourced cash-changeover milestone.",
+        start_date=date(2002, 1, 1),
+        end_date=date(2002, 2, 28),
+        date_precision=StoryDatePrecision.RANGE,
+        source_kind=StorySourceKind.OFFICIAL,
+        source_name="European Commission",
+        source_url="https://example.org/changeover",
+        verified_at=timezone.now(),
+        status=StoryMomentStatus.NEEDS_REVIEW,
+    )
+    moment.countries.add(fi)
+    moment.currencies.add(eur)
+    approve_story_moment(moment)
+    publish_story_moment(moment)
+
+    history = compose_currency_history(
+        CurrencyHistoryRequest(
+            country_code="FI",
+            currency_code="EUR",
+            selected_date=date(2026, 9, 21),
+            historical=False,
+        )
+    )
+
+    assert history.status == "full"
+    assert [era.currency_code for era in history.eras] == ["FIM", "EUR"]
+    assert history.eras[0].label == "Previous primary currency"
+    assert history.eras[1].selected is True
+    assert history.eras[1].active_on_selected_date is True
+    assert history.active_primary_currency_code == "EUR"
+    assert history.selected_relationship_active is True
+    assert [item.title for item in history.moments] == ["Euro cash arrived in Finland"]
+    assert history.moments[0].source_refs[0].label == "European Commission"
+
+
+@pytest.mark.django_db
+def test_historical_currency_history_excludes_later_era_and_milestone(context_data):
+    fi, _jp, eur, _jpy = context_data
+    _add_finland_markka_history(context_data)
+    moment = StoryMoment.objects.create(
+        category=StoryMomentCategory.MONETARY_UNION,
+        title="Later euro transition",
+        summary="This transition is later than the selected historical date.",
+        start_date=date(1999, 1, 1),
+        end_date=date(1999, 1, 1),
+        date_precision=StoryDatePrecision.EXACT_DAY,
+        source_kind=StorySourceKind.OFFICIAL,
+        source_name="European Commission",
+        source_url="https://example.org/euro",
+        verified_at=timezone.now(),
+        status=StoryMomentStatus.NEEDS_REVIEW,
+    )
+    moment.countries.add(fi)
+    moment.currencies.add(eur)
+    approve_story_moment(moment)
+    publish_story_moment(moment)
+
+    history = compose_currency_history(
+        CurrencyHistoryRequest(
+            country_code="FI",
+            currency_code="EUR",
+            selected_date=date(1998, 6, 15),
+            historical=True,
+        )
+    )
+
+    assert [era.currency_code for era in history.eras] == ["FIM"]
+    assert history.moments == ()
+    assert history.selected_relationship_active is False
+    assert history.active_primary_currency_code == "FIM"
+    assert history.active_primary_currency_name == "Finnish markka"
+
+
+@pytest.mark.django_db
+def test_currency_history_has_bounded_query_count(context_data):
+    _add_finland_markka_history(context_data)
+
+    with CaptureQueriesContext(connection) as captured:
+        history = compose_currency_history(
+            CurrencyHistoryRequest(
+                country_code="FI",
+                currency_code="EUR",
+                selected_date=date(2026, 9, 21),
+                historical=False,
+            )
+        )
+
+    assert history.eras
+    assert len(captured) <= 4
 
 
 @pytest.mark.django_db
