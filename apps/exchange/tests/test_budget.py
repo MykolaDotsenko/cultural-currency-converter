@@ -423,3 +423,34 @@ def test_destination_minor_units_are_bounded(minor_units):
             ),
             destination_minor_units=minor_units,
         )
+
+
+def test_budget_rejects_typical_price_minor_unit_mismatch():
+    context = _context(
+        prices=(
+            _price(
+                category="coffee",
+                label="Coffee",
+                low=Decimal("100"),
+            ),
+        ),
+    )
+
+    with pytest.raises(BudgetInterpretationError, match="minor units do not match"):
+        interpret_budget(
+            context,
+            assumptions=_assumptions(
+                BudgetCategoryAssumption("coffee", Decimal("1")),
+            ),
+            destination_minor_units=2,
+        )
+
+
+def test_budget_basis_must_be_explicit_enum_value():
+    with pytest.raises(BudgetInterpretationError, match="Budget basis"):
+        BudgetAssumptions(
+            duration_days=2,
+            travelers=1,
+            categories=(BudgetCategoryAssumption("coffee", Decimal("1")),),
+            basis="reference_conversion",  # type: ignore[arg-type]
+        )
