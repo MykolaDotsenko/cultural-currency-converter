@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
-from apps.countries.models import Country, CountryCurrency, Currency, primary_currency_for
+from apps.countries.models import City, Country, CountryCurrency, Currency, primary_currency_for
 
 
 @pytest.fixture
@@ -281,3 +281,25 @@ def test_currency_covered_on_respects_terminal_archived_coverage():
 
     assert Currency.objects.covered_on(date(1998, 6, 15)).get() == fim
     assert not Currency.objects.covered_on(date(2002, 1, 1)).filter(pk=fim.pk).exists()
+
+
+@pytest.mark.django_db
+def test_city_identity_is_scoped_to_country():
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    united_states = Country.objects.create(iso2="US", iso3="USA", name="United States")
+
+    tokyo = City.objects.create(country=japan, slug="TOKYO ", name="Tokyo")
+    tokyo_us = City.objects.create(country=united_states, slug="tokyo", name="Tokyo")
+
+    assert tokyo.slug == "tokyo"
+    assert tokyo_us.slug == "tokyo"
+    assert str(tokyo) == "Tokyo, JP"
+
+
+@pytest.mark.django_db
+def test_city_slug_must_be_unique_within_country():
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    City.objects.create(country=japan, slug="tokyo", name="Tokyo")
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        City.objects.create(country=japan, slug="TOKYO", name="Tokyo duplicate")
