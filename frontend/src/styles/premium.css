@@ -1599,3 +1599,37 @@ h3 {
     text-align: start;
   }
 }
+
+@media (forced-colors: active) {
+  .qa-budget-interpretation,
+  .qa-budget-interpretation__result,
+  .qa-budget-interpretation__facts > div,
+  .qa-budget-interpretation__line,
+  .qa-budget-interpretation__category {
+    border-color: CanvasText;
+  }
+
+  .qa-budget-interpretation,
+  .qa-budget-interpretation__category {
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .qa-budget-interpretation .qa-field__label,
+  .qa-budget-interpretation .qa-field__message,
+  .qa-budget-interpretation .qa-context-source,
+  .qa-budget-interpretation__reference,
+  .qa-budget-interpretation__daily,
+  .qa-budget-interpretation__band,
+  .qa-budget-interpretation__facts dt,
+  .qa-budget-interpretation__facts dd,
+  .qa-budget-interpretation__line-title,
+  .qa-budget-interpretation__line-values,
+  .qa-budget-interpretation__caveat {
+    color: CanvasText;
+  }
+
+  .qa-budget-interpretation a {
+    color: LinkText;
+  }
+}
