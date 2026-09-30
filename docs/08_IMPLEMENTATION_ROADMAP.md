@@ -33,12 +33,7 @@ The following previously planned items are now part of the current product basel
 - **#4 Country ↔ currency smart filtering — shipped.** The current picker supports country-context and currency-only choices, respects historical mode/date semantics and labels historical options; form validation rejects mismatched country/currency submissions before provider access.
 - **#10 Real Payment Estimate — shipped first production slice.** Current non-identity conversions can apply explicit FX markup plus source/destination fixed-fee assumptions through a signed trusted conversion snapshot. Reusable saved fee profiles remain future work.
 - **#23 Historical quick ranges and anchor values — shipped.** The historical-series UI supports 1Y / 5Y / 10Y / custom ranges with selected/minimum/maximum/last observations, provider/stale context and Then & Now where available.
-
-## Immediate quality correction
-
-Before the next feature PR, restore green browser QA for the Real Payment Estimate flow. The current browser script submits `1.001` as a source fixed fee but waits for the excess-decimal-places message; the shared parser correctly treats that value as ambiguous first. Align the browser test with the parser contract, then re-run Chromium required quality plus Firefox/WebKit evidence.
-
-This is test debt, not a reason to weaken financial-input validation.
+- **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. This is the foundation for budget, comparison, trip, camera and mobile/offline work; those higher-level workflows are not shipped yet.
 
 ## Now: premium visual pass
 
@@ -289,11 +284,11 @@ The target is not maximum DAU. The target is strong **saved-trip reopen**, **use
 
 ### Strategic product foundation: Money Context Engine
 
-Treat the existing everyday-value capability as a reusable product engine, not merely one post-conversion card.
+The first consolidation is now shipped as a shared application contract around trusted conversion output plus optional current destination context. It explicitly preserves conversion truth, fail-open enrichment semantics and available/empty/not-applicable/degraded context states.
 
-The engine should serve converter, destination comparison, budget interpretation, trip/scenario detail, camera input and future mobile/offline experiences from the same scoped/provenance-aware context model.
+The next work is depth, not another parallel context layer: add city-scoped data, budget interpretation, saved-trip/scenario meaning, comparison and camera/mobile consumers on top of this same contract.
 
-Prioritize depth, comparability, freshness and clear uncertainty over adding many shallow utility widgets.
+Prioritize comparability, freshness, provenance and clear uncertainty over adding many shallow utility widgets.
 
 ## Later candidate: stable external/mobile API
 
