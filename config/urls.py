@@ -19,6 +19,7 @@ from apps.exchange.views import (
 )
 from apps.travel.scenario_web import (
     delete_saved_scenario,
+    recheck_saved_scenario,
     save_budget_scenario,
     saved_scenario_detail,
 )
@@ -54,6 +55,11 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/",
         saved_scenario_detail,
         name="saved_scenario_detail",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/recheck/",
+        recheck_saved_scenario,
+        name="recheck_saved_scenario",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/delete/",
