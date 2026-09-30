@@ -34,7 +34,7 @@ Those boundaries are more important to this project than adding another conversi
 - explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
 - sourced everyday-value and payment context;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions;
-- account-owned saved budget scenarios with immutable FX observations and explicit reopen/delete flow;
+- account-owned saved budget scenarios with immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison and reopen/delete flow;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
 - optional Gemini explanation with deterministic fallback;
