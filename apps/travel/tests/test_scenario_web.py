@@ -113,9 +113,7 @@ def test_signed_in_user_can_save_budget_without_second_live_price_lookup(
     assert scenario.source_amount == Decimal("600.000000000000")
     assert scenario.duration_days == 5
     assert scenario.travelers == 2
-    assert list(
-        scenario.budget_items.values_list("category", "units_per_person_per_day")
-    ) == [
+    assert list(scenario.budget_items.values_list("category", "units_per_person_per_day")) == [
         ("casual_meal", Decimal("2.00")),
         ("coffee", Decimal("1.00")),
         ("transit", Decimal("2.00")),
