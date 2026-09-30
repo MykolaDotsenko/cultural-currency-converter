@@ -113,8 +113,7 @@ def build_budget_component(
             "duration_days": interpretation.duration_days,
             "travelers": interpretation.travelers,
             "missing_categories": tuple(
-                category.replace("_", " ").title()
-                for category in interpretation.missing_categories
+                category.replace("_", " ").title() for category in interpretation.missing_categories
             ),
             "lines": tuple(
                 {
