@@ -1332,8 +1332,18 @@ h3 {
   .qa-payment-estimate__facts,
   .qa-payment-estimate__facts > div,
   .qa-historical-suggestions,
-  .qa-historical-suggestion {
+  .qa-historical-suggestion,
+  .qa-budget-interpretation,
+  .qa-budget-interpretation__result,
+  .qa-budget-interpretation__facts > div,
+  .qa-budget-interpretation__line,
+  .qa-budget-interpretation__category {
     border-color: CanvasText;
+  }
+
+  .qa-budget-interpretation {
+    background: Canvas;
+    color: CanvasText;
   }
 
   .qa-text-input {
@@ -1534,10 +1544,8 @@ h3 {
   background: color-mix(in srgb, var(--color-canvas) 97%, var(--color-ink) 3%);
 }
 
-.qa-budget-interpretation__trip-fields .qa-field__label,
-.qa-budget-interpretation__basket > .qa-field__message,
-.qa-budget-interpretation__category .qa-field__label,
-.qa-budget-interpretation__category .qa-field__message {
+.qa-budget-interpretation .qa-field__label,
+.qa-budget-interpretation .qa-field__message:not(.qa-field__message--error) {
   color: var(--color-ink);
 }
 
