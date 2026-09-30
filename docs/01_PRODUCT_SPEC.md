@@ -48,6 +48,8 @@ The current implementation establishes the first shared application contract for
 
 The first budget slice now extends this contract end to end: explicit duration, traveller count and editable daily category-unit assumptions can be compared with sourced city/national price anchors through a progressive web surface. Missing categories produce an insufficient-data result rather than a guessed affordability label. The current UX deliberately uses a visible reference basket rather than opaque “travel style” presets; richer presets and saved-trip workflows remain future work.
 
+Saved-scenario persistence now has a normalized domain foundation for account-owned trip/budget/shopping scenarios. User-entered planning assumptions are stored separately from immutable trusted FX observations, so re-check flows can compare against an original baseline without treating stale local-price context as durable truth. User-facing save/reopen workflows remain future work.
+
 Future comparison, trip, camera and mobile/offline work should extend the same contract rather than create parallel calculations or duplicate destination-context semantics.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
