@@ -103,6 +103,29 @@ class FakeSeriesGateway:
         )
 
 
+class UnrepresentableSeriesGateway(FakeSeriesGateway):
+    def get(self, base, quote, start_date, end_date, grouping, policy, *, now):
+        self.calls.append((base, quote, start_date, end_date, grouping, policy, now))
+        points = (
+            RateSeriesPoint(start_date, Decimal("170.25"), ("ecb",)),
+            RateSeriesPoint(end_date, Decimal("1E+50"), ("ecb",)),
+        )
+        return (
+            RateSeries(
+                base_currency=base,
+                quote_currency=quote,
+                start_date=start_date,
+                end_date=end_date,
+                grouping=grouping,
+                points=points,
+                fetched_at=datetime(2026, 9, 20, 8, tzinfo=UTC),
+                provider_policy=policy,
+                observation_granularity=ObservationGranularity.DAILY,
+            ),
+            False,
+        )
+
+
 class FakeHistoricalGateway:
     def __init__(self, *, effective_date=None, granularity=ObservationGranularity.DAILY):
         self.effective_date = effective_date
@@ -1044,6 +1067,62 @@ def test_historical_series_media_failure_does_not_break_then_now(client, referen
 
     assert response.status_code == 200
     assert b"Same amount, two reference observations" in response.content
+    assert b"Historical rate trend" in response.content
+
+
+@pytest.mark.django_db
+def test_historical_series_unrepresentable_selected_amount_keeps_trend_valid(
+    client, reference_data
+):
+    with (
+        patch(
+            "apps.exchange.views.build_historical_series_gateway",
+            return_value=UnrepresentableSeriesGateway(),
+        ),
+        patch("apps.exchange.views.build_latest_quote_gateway") as latest_factory,
+    ):
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "2026-09-18",
+                "period": "1y",
+                "amount": "100.00",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b"selected reference rate cannot be represented safely" in response.content
+    assert b"Historical rate trend" in response.content
+    latest_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_historical_series_latest_unrepresentable_amount_is_non_fatal(client, reference_data):
+    with (
+        patch(
+            "apps.exchange.views.build_historical_series_gateway",
+            return_value=FakeSeriesGateway(),
+        ),
+        patch(
+            "apps.exchange.views.build_latest_quote_gateway",
+            return_value=UnrepresentableGateway(),
+        ),
+    ):
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "2026-09-18",
+                "period": "1y",
+                "amount": "100.00",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b"latest reference amount cannot be represented safely" in response.content
     assert b"Historical rate trend" in response.content
 
 
