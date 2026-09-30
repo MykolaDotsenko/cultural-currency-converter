@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.utils.formats import date_format
 
 from apps.exchange.budget import (
+    BudgetAssumptions,
     BudgetBand,
     BudgetInterpretation,
     BudgetInterpretationState,
@@ -42,6 +43,7 @@ def build_budget_component(
     form: BudgetInterpretationForm | None = None,
     token: str | None = None,
     interpretation: BudgetInterpretation | None = None,
+    assumptions: BudgetAssumptions | None = None,
 ) -> dict[str, object] | None:
     anchors = available_budget_categories(context)
     if not anchors:
@@ -88,6 +90,20 @@ def build_budget_component(
                 "currency_code": anchor.currency_code,
             }
         )
+
+    save_payload = None
+    if interpretation is not None and assumptions is not None:
+        save_payload = {
+            "duration_days": assumptions.duration_days,
+            "travelers": assumptions.travelers,
+            "categories": tuple(
+                {
+                    "field_name": BudgetInterpretationForm.units_field_name(item.category),
+                    "value": _decimal_text(item.units_per_person_per_day),
+                }
+                for item in assumptions.categories
+            ),
+        }
 
     result_component = None
     if interpretation is not None:
@@ -158,4 +174,5 @@ def build_budget_component(
         ),
         "as_of": date_format(context.as_of, "j M Y"),
         "result": result_component,
+        "save_payload": save_payload,
     }

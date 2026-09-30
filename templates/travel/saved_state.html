@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Saved & recent · Cultural Currency Converter{% endblock %}
 {% block head_meta %}
+  <meta name="robots" content="noindex">
   <meta name="description"
-        content="Review account-saved currency pairs and recent conversion history.">
+        content="Review saved travel-money scenarios, currency pairs and recent conversion history.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
@@ -14,8 +15,9 @@
     <h1 id="saved-page-title">Saved &amp; recent</h1>
     {% if user.is_authenticated %}
       <p class="qa-foundation-lede">
-        Saved pairs belong to your account. Cross-device recent history is separate and stays off
-        until you explicitly enable it; browser-only history is never uploaded automatically.
+        Saved scenarios and pairs belong to your account. Cross-device recent history is separate
+        and stays off until you explicitly enable it; browser-only history is never uploaded
+        automatically.
       </p>
     {% else %}
       <p class="qa-foundation-lede">
@@ -37,14 +39,82 @@
     <noscript>
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
-          Account-saved pairs and account recent history remain available. JavaScript is required
-          only to read browser-only recent history on this device.
+          Account-saved scenarios, pairs and account recent history remain available. JavaScript is
+          required only to read browser-only recent history on this device.
         {% else %}
           JavaScript is required to read browser-local saved pairs and recent history. The converter
           still works without JavaScript.
         {% endif %}
       </p>
     </noscript>
+    {% if user.is_authenticated %}
+      <section class="qa-saved-section" aria-labelledby="saved-scenarios-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Plans</p>
+            <h2 id="saved-scenarios-title">Saved scenarios</h2>
+            <p>
+              Budget scenarios keep the trusted conversion snapshot, destination scope and only
+              the assumptions you explicitly chose. They do not import browser-only history.
+            </p>
+          </div>
+        </div>
+        {% if account_scenario_rows %}
+          <div class="qa-saved-list">
+            {% for row in account_scenario_rows %}
+              {% with scenario=row.scenario %}
+                <article class="qa-saved-row" data-saved-scenario-id="{{ scenario.pk }}">
+                  <div class="qa-saved-row__copy">
+                    <h3>{{ scenario.title|default:scenario.get_kind_display }}</h3>
+                    <p>
+                      {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                      →
+                      {{ scenario.destination_currency.code }}
+                      ·
+                      {% if scenario.destination_city %}
+                        {{ scenario.destination_city.name }}, {{ scenario.destination_country.name }}
+                      {% elif scenario.destination_country %}
+                        {{ scenario.destination_country.name }}
+                      {% else %}
+                        No destination context
+                      {% endif %}
+                    </p>
+                    <p class="qa-saved-row__meta">
+                      {% if scenario.duration_days %}
+                        {{ scenario.duration_days }} day{{ scenario.duration_days|pluralize }}
+                        · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
+                        ·
+                      {% endif %}
+                      {% if row.latest_effective_date %}
+                        Last saved reference effective {{ row.latest_effective_date|date:"j M Y" }}
+                      {% else %}
+                        No stored reference observation
+                      {% endif %}
+                    </p>
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    <a class="qa-secondary-button"
+                       href="{{ row.detail_url }}"
+                       aria-label="Open saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">Open</a>
+                    <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
+                      {% csrf_token %}
+                      <button class="qa-secondary-button qa-destructive-button"
+                              type="submit"
+                              aria-label="Remove saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">Remove</button>
+                    </form>
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">
+            No account-saved scenarios yet. Interpret a destination budget, then save the result
+            when you want to reopen the same assumptions later.
+          </p>
+        {% endif %}
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="saved-pairs-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -255,9 +325,10 @@
     {% endif %}
     <p class="qa-saved-state__privacy">
       {% if user.is_authenticated %}
-        Browser-only history is never uploaded automatically. Turning account history off stops
-        future server recording but keeps existing rows until you remove or clear them. Deleting
-        your account removes all account-owned favourites and recent history.
+        Browser-only history is never uploaded automatically. Saved scenarios are created only by
+        an explicit account action. Turning account history off stops future recent-history
+        recording but keeps existing rows until you remove or clear them. Deleting your account
+        removes account-owned scenarios, favourites and recent history.
       {% else %}
         Clearing browser site data also removes these items. Sign in only if you want saved pairs
         to sync across devices.

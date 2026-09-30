@@ -5,13 +5,20 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import OuterRef, Subquery
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
-from apps.travel.models import FavouritePair, RecentConversion
+from apps.travel.models import (
+    FavouritePair,
+    RecentConversion,
+    SavedScenario,
+    SavedScenarioObservation,
+)
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
 
 MAX_SYNC_BODY_BYTES = 16_384
@@ -101,12 +108,43 @@ def _recent_rows(user) -> list[dict[str, object]]:
     ]
 
 
+def _scenario_rows(user) -> list[dict[str, object]]:
+    latest_observation = (
+        SavedScenarioObservation.objects.filter(scenario_id=OuterRef("pk"))
+        .order_by("-recorded_at", "-id")
+        .values("effective_date")[:1]
+    )
+    scenarios = (
+        SavedScenario.objects.filter(user=user)
+        .select_related(
+            "source_currency",
+            "destination_currency",
+            "destination_country",
+            "destination_city",
+        )
+        .annotate(latest_effective_date=Subquery(latest_observation))
+        .order_by("-updated_at", "-id")
+    )
+    return [
+        {
+            "scenario": scenario,
+            "latest_effective_date": scenario.latest_effective_date,
+            "detail_url": reverse("saved_scenario_detail", args=(scenario.pk,)),
+        }
+        for scenario in scenarios
+    ]
+
+
+@never_cache
 @require_GET
 def saved_state(request: HttpRequest) -> HttpResponse:
     return render(
         request,
         "travel/saved_state.html",
         {
+            "account_scenario_rows": (
+                _scenario_rows(request.user) if request.user.is_authenticated else []
+            ),
             "account_favourite_rows": (
                 _favourite_rows(request.user) if request.user.is_authenticated else []
             ),

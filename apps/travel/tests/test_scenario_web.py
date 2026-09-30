@@ -1,0 +1,333 @@
+from __future__ import annotations
+
+from datetime import UTC, date, datetime
+from decimal import Decimal
+
+import pytest
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+
+from apps.countries.models import City, Country, CountryCurrency, Currency
+from apps.culture.services import DestinationContext
+from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
+from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
+from apps.exchange.money_context import MoneyContext, MoneyContextState
+from apps.travel.models import SavedScenario, SavedScenarioKind
+
+User = get_user_model()
+
+
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
+@pytest.fixture
+def scenario_reference_data(db):
+    eur = Currency.objects.create(code="EUR", name="Euro", minor_units=2)
+    jpy = Currency.objects.create(code="JPY", name="Japanese yen", minor_units=0)
+    fi = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    jp = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    CountryCurrency.objects.create(
+        country=fi,
+        currency=eur,
+        is_primary=True,
+        source="https://example.test/fi-eur",
+    )
+    CountryCurrency.objects.create(
+        country=jp,
+        currency=jpy,
+        is_primary=True,
+        source="https://example.test/jp-jpy",
+    )
+    tokyo = City.objects.create(country=jp, slug="tokyo", name="Tokyo")
+    return eur, jpy, fi, jp, tokyo
+
+
+def _conversion() -> ConversionResult:
+    return ConversionResult(
+        input_amount=Decimal("600.00"),
+        output_amount=Decimal("104700"),
+        quote=RateQuote(
+            base_currency="EUR",
+            quote_currency="JPY",
+            rate=Decimal("174.50"),
+            requested_date=None,
+            effective_date=date(2026, 9, 30),
+            fetched_at=datetime(2026, 9, 30, 18, tzinfo=UTC),
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=("ecb",),
+            historical=False,
+        ),
+        stale=False,
+    )
+
+
+def _budget_token() -> str:
+    destination = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 9, 30),
+        payment=None,
+        prices=(),
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+    return build_budget_context_snapshot_token(
+        MoneyContext(
+            conversion=_conversion(),
+            destination_country_code="JP",
+            destination_city_slug="tokyo",
+            as_of=date(2026, 9, 30),
+            destination_context=destination,
+            destination_state=MoneyContextState.EMPTY,
+        )
+    )
+
+
+@pytest.mark.django_db
+def test_signed_in_user_can_save_budget_without_second_live_price_lookup(
+    client,
+    scenario_reference_data,
+):
+    _eur, _jpy, _fi, _jp, tokyo = scenario_reference_data
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo food and transit",
+            "duration_days": "5",
+            "travelers": "2",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+            "units_transit": "2",
+        },
+    )
+
+    scenario = SavedScenario.objects.get(user=user)
+    assert response.status_code == 302
+    assert response.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+    assert scenario.kind == SavedScenarioKind.BUDGET
+    assert scenario.title == "Tokyo food and transit"
+    assert scenario.destination_city == tokyo
+    assert scenario.destination_country.iso2 == "JP"
+    assert scenario.source_country is None
+    assert scenario.source_amount == Decimal("600.000000000000")
+    assert scenario.duration_days == 5
+    assert scenario.travelers == 2
+    assert list(scenario.budget_items.values_list("category", "units_per_person_per_day")) == [
+        ("casual_meal", Decimal("2.00")),
+        ("coffee", Decimal("1.00")),
+        ("transit", Decimal("2.00")),
+    ]
+    observation = scenario.observations.get()
+    assert observation.output_amount == Decimal("104700.000000000000")
+    assert observation.effective_date == date(2026, 9, 30)
+    assert observation.provider_keys == ["ecb"]
+
+
+@pytest.mark.django_db
+def test_blank_title_gets_destination_aware_default(client, scenario_reference_data):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "   ",
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+
+    assert response.status_code == 302
+    assert SavedScenario.objects.get(user=user).title == "Tokyo budget"
+
+
+@pytest.mark.django_db
+def test_budget_save_requires_authentication(client, scenario_reference_data):
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+
+    assert response.status_code == 302
+    assert reverse("login") in response.url
+    assert SavedScenario.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_tampered_budget_snapshot_is_rejected(client, scenario_reference_data):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+    token = _budget_token()
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": f"{token}tampered",
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse("converter")
+    assert SavedScenario.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_invalid_budget_assumptions_are_not_saved(client, scenario_reference_data):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "duration_days": "0",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse("converter")
+    assert SavedScenario.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_saved_scenario_detail_is_owner_scoped(client, scenario_reference_data):
+    eur, jpy, _fi, jp, tokyo = scenario_reference_data
+    owner = User.objects.create_user(username="owner", password="StrongPass-482!")
+    other = User.objects.create_user(username="other", password="StrongPass-482!")
+    scenario = SavedScenario.objects.create(
+        user=owner,
+        kind=SavedScenarioKind.BUDGET,
+        title="Tokyo budget",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("600"),
+        duration_days=5,
+        travelers=2,
+    )
+
+    client.force_login(other)
+    response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_saved_scenario_detail_renders_explicit_budget_and_converter_return(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo spring budget",
+            "duration_days": "5",
+            "travelers": "2",
+            "units_casual_meal": "2",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+
+    response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+
+    assert response.status_code == 200
+    assert "no-store" in response.headers["Cache-Control"]
+    assert "max-age=0" in response.headers["Cache-Control"]
+    assert b'<meta name="robots" content="noindex">' in response.content
+    assert b"Tokyo spring budget" in response.content
+    assert b"Casual Meal" in response.content
+    assert b"2 per person / day" in response.content
+    assert b"104700" in response.content
+    assert b"effective 30 Sep 2026" in response.content
+    assert b"Re-run conversion" in response.content
+    assert b"amount=600" in response.content
+    assert b"source_currency=EUR" in response.content
+    assert b"destination_currency=JPY" in response.content
+
+
+@pytest.mark.django_db
+def test_saved_state_lists_only_current_users_scenarios(client, scenario_reference_data):
+    eur, jpy, _fi, jp, tokyo = scenario_reference_data
+    owner = User.objects.create_user(username="owner", password="StrongPass-482!")
+    other = User.objects.create_user(username="other", password="StrongPass-482!")
+    SavedScenario.objects.create(
+        user=owner,
+        kind=SavedScenarioKind.BUDGET,
+        title="Owner Tokyo plan",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("600"),
+    )
+    SavedScenario.objects.create(
+        user=other,
+        kind=SavedScenarioKind.BUDGET,
+        title="Other private plan",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("800"),
+    )
+
+    client.force_login(owner)
+    response = client.get(reverse("saved_state"))
+
+    assert response.status_code == 200
+    assert "no-store" in response.headers["Cache-Control"]
+    assert "max-age=0" in response.headers["Cache-Control"]
+    assert b'<meta name="robots" content="noindex">' in response.content
+    assert b"Owner Tokyo plan" in response.content
+    assert b"Other private plan" not in response.content
+
+
+@pytest.mark.django_db
+def test_delete_saved_scenario_is_owner_scoped(client, scenario_reference_data):
+    eur, jpy, _fi, jp, tokyo = scenario_reference_data
+    owner = User.objects.create_user(username="owner", password="StrongPass-482!")
+    other = User.objects.create_user(username="other", password="StrongPass-482!")
+    scenario = SavedScenario.objects.create(
+        user=owner,
+        kind=SavedScenarioKind.BUDGET,
+        title="Tokyo budget",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("600"),
+    )
+
+    client.force_login(other)
+    denied = client.post(reverse("delete_saved_scenario", args=(scenario.pk,)))
+    assert denied.status_code == 404
+    assert SavedScenario.objects.filter(pk=scenario.pk).exists()
+
+    client.force_login(owner)
+    deleted = client.post(reverse("delete_saved_scenario", args=(scenario.pk,)))
+    assert deleted.status_code == 302
+    assert deleted.url == reverse("saved_state")
+    assert not SavedScenario.objects.filter(pk=scenario.pk).exists()
