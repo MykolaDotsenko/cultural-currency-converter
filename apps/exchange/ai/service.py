@@ -17,7 +17,7 @@ from apps.exchange.ai.contracts import (
 from apps.exchange.ai.packets import build_explanation_packet
 from apps.exchange.ai.prompts import PROMPT_VERSION, SCHEMA_VERSION
 from apps.exchange.ai.providers.gemini import GeminiExplanationDrafter
-from apps.exchange.ai.tokens import TrustedConversionSnapshot
+from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 from apps.exchange.ai.validation import (
     ExplanationValidationError,
     validate_provider_payload,
