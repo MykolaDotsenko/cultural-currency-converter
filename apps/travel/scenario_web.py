@@ -25,10 +25,17 @@ from apps.travel.scenarios import (
 )
 
 
+def _decimal_input_text(value) -> str:
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
+
 def _scenario_converter_url(scenario: SavedScenario) -> str:
     params = {
         "convert": "1",
-        "amount": format(scenario.source_amount, "f").rstrip("0").rstrip(".") or "0",
+        "amount": _decimal_input_text(scenario.source_amount),
         "source_currency": scenario.source_currency.code,
         "destination_currency": scenario.destination_currency.code,
     }
@@ -44,7 +51,9 @@ def _scenario_default_title(
     destination_country: Country,
     destination_city: City | None,
 ) -> str:
-    destination_name = destination_city.name if destination_city is not None else destination_country.name
+    destination_name = (
+        destination_city.name if destination_city is not None else destination_country.name
+    )
     return f"{destination_name} budget"
 
 
@@ -164,12 +173,20 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
     )
     latest_observation = observations[0] if observations else None
 
+    budget_item_rows = tuple(
+        {
+            "item": item,
+            "label": item.category.replace("_", " ").title(),
+        }
+        for item in scenario.budget_items.all()
+    )
+
     return render(
         request,
         "travel/saved_scenario_detail.html",
         {
             "scenario": scenario,
-            "budget_items": tuple(scenario.budget_items.all()),
+            "budget_item_rows": budget_item_rows,
             "initial_observation": initial_observation,
             "latest_observation": latest_observation,
             "converter_url": _scenario_converter_url(scenario),
