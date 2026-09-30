@@ -148,9 +148,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     }
     fragment = is_htmx(request)
     template = (
-        "components/converter/payment_estimate.html"
-        if fragment
-        else "pages/payment_estimate.html"
+        "components/converter/payment_estimate.html" if fragment else "pages/payment_estimate.html"
     )
     response = render(request, template, context, status=response_status)
     patch_vary_headers(response, ["HX-Request"])
