@@ -10,6 +10,7 @@ from apps.exchange.domain import (
     FxSourcePolicy,
     ProviderPolicyMode,
     RateQuote,
+    RateSeriesPoint,
     convert_amount,
     same_currency_quote,
 )
@@ -38,9 +39,30 @@ def test_unrepresentable_conversion_uses_specific_domain_error():
         convert_amount(Decimal("100"), quote("1E+50"), minor_units=0)
 
 
+def test_conversion_overflow_uses_specific_domain_error():
+    with pytest.raises(ConversionRepresentationError, match="cannot be represented"):
+        convert_amount(Decimal("1000000000"), quote("1E+308"), minor_units=0)
+
+
 def test_invalid_rate_cannot_enter_domain():
     with pytest.raises(FxDomainError):
         quote("0")
+
+
+@pytest.mark.parametrize("raw_rate", ["1E+309", "1E-325"])
+def test_quote_rejects_rates_outside_shared_numeric_representation(raw_rate):
+    with pytest.raises(FxDomainError, match="supported numeric representation range"):
+        quote(raw_rate)
+
+
+@pytest.mark.parametrize("raw_rate", ["1E+309", "1E-325"])
+def test_series_point_rejects_rates_outside_shared_numeric_representation(raw_rate):
+    with pytest.raises(FxDomainError, match="supported numeric representation range"):
+        RateSeriesPoint(
+            observation_date=date(2026, 9, 18),
+            rate=Decimal(raw_rate),
+            provider_keys=("ecb",),
+        )
 
 
 def test_pinned_policy_requires_provider():
