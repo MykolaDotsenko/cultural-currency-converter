@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 
-from apps.exchange.domain import FxDomainError, validate_rate_decimal
+from apps.exchange.domain import ConversionResult, FxDomainError, validate_rate_decimal
 
 MAX_FX_MARKUP_PERCENT = Decimal("25")
 _EXTRA_CALCULATION_PRECISION = 32
@@ -15,6 +15,13 @@ class PaymentEstimateError(FxDomainError):
 
 class PaymentEstimateRepresentationError(PaymentEstimateError):
     pass
+
+
+@dataclass(frozen=True, slots=True)
+class PaymentEstimateAssumptions:
+    fx_markup_percent: Decimal = Decimal("0")
+    source_fixed_fee: Decimal = Decimal("0")
+    destination_fixed_fee: Decimal = Decimal("0")
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +114,34 @@ def estimate_payment_value(
         source_fixed_fee=source_fixed_fee,
         destination_fixed_fee=destination_fixed_fee,
         effective_source_amount=effective_source_amount,
+    )
+
+
+def estimate_conversion_payment_value(
+    *,
+    conversion: ConversionResult,
+    assumptions: PaymentEstimateAssumptions,
+    destination_minor_units: int,
+) -> PaymentEstimate:
+    """Apply explicit payment assumptions to one trusted current conversion."""
+
+    if conversion.quote.historical:
+        raise PaymentEstimateError(
+            "Payment estimates are not defined for historical conversion results."
+        )
+    if conversion.quote.base_currency == conversion.quote.quote_currency:
+        raise PaymentEstimateError(
+            "Payment estimates are not needed for exact same-currency conversions."
+        )
+
+    return estimate_payment_value(
+        source_budget=conversion.input_amount,
+        reference_destination_amount=conversion.output_amount,
+        rate=conversion.quote.rate,
+        fx_markup_percent=assumptions.fx_markup_percent,
+        source_fixed_fee=assumptions.source_fixed_fee,
+        destination_fixed_fee=assumptions.destination_fixed_fee,
+        destination_minor_units=destination_minor_units,
     )
 
 

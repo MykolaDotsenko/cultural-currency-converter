@@ -198,6 +198,18 @@ Durable object storage does not itself prove backup quality. Bucket versioning/r
 
 **Revisit when:** the deployment platform provides an alternative durable media store with equivalent cross-deploy persistence, public delivery, provenance-compatible naming and tested restore properties.
 
+## ADR-019 — Money Context Engine is a shared application contract
+
+**Status:** active
+
+Trusted conversion output and optional destination money context are composed through a project-owned Money Context application contract. The conversion remains the authoritative financial result; local-value/payment enrichment has explicit availability state and may degrade without invalidating conversion truth.
+
+Historical and currency-only conversions do not silently receive current destination context. The contract also checks destination-country/date/price-currency consistency before exposing enrichment to downstream workflows.
+
+**Why:** budget, destination comparison, saved trips, camera and mobile/offline use cases all need the same money meaning. A shared contract prevents each feature from inventing its own rate/local-value/payment semantics while preserving current fail-open and provenance boundaries.
+
+**Revisit when:** a future domain boundary can provide the same semantics more cleanly without duplicating financial truth or coupling all consumers to web presentation structures.
+
 ## Adding/changing a decision
 
 Create or update an ADR when a change affects a durable project-wide choice.

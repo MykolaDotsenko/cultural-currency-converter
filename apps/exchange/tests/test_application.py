@@ -9,6 +9,7 @@ from apps.countries.models import Country, CountryCurrency, Currency
 from apps.culture.services import DestinationContext
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
+from apps.exchange.money_context import MoneyContextState
 from apps.exchange.providers.base import FxProviderInvalidPayload, FxProviderUnavailable
 
 
@@ -133,7 +134,7 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
     )
 
     with patch(
-        "apps.exchange.application.build_destination_context",
+        "apps.exchange.money_context.build_destination_context_default",
         return_value=destination_context,
     ) as context_builder:
         outcome = run_converter_submission(
@@ -144,6 +145,8 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
         )
 
     assert outcome.error is None
+    assert outcome.money_context is not None
+    assert outcome.money_context.destination_state is MoneyContextState.EMPTY
     assert outcome.conversion is not None
     assert outcome.conversion.output_amount == Decimal("17450")
     assert outcome.destination_context == destination_context
@@ -155,6 +158,7 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
         converted_amount=Decimal("17450"),
         quote_currency="JPY",
         as_of=date(2026, 9, 22),
+        price_limit=3,
     )
 
 
@@ -229,7 +233,7 @@ def test_historical_submission_returns_currency_era_suggestion(reference_data):
         requested_date=requested,
     )
 
-    with patch("apps.exchange.application.build_destination_context") as context_builder:
+    with patch("apps.exchange.money_context.build_destination_context_default") as context_builder:
         outcome = run_converter_submission(
             command,
             latest_gateway_factory=latest_factory,
@@ -241,6 +245,8 @@ def test_historical_submission_returns_currency_era_suggestion(reference_data):
     assert outcome.conversion is not None
     assert outcome.conversion.quote.historical is True
     assert outcome.conversion.quote.requested_date == requested
+    assert outcome.money_context is not None
+    assert outcome.money_context.destination_state is MoneyContextState.NOT_APPLICABLE
     assert outcome.destination_context is None
     context_builder.assert_not_called()
     assert len(outcome.historical_suggestions) == 1
@@ -293,7 +299,7 @@ def test_destination_context_failure_never_invalidates_conversion(reference_data
     )
 
     with patch(
-        "apps.exchange.application.build_destination_context",
+        "apps.exchange.money_context.build_destination_context_default",
         side_effect=DatabaseError("context unavailable"),
     ):
         outcome = run_converter_submission(
@@ -306,6 +312,8 @@ def test_destination_context_failure_never_invalidates_conversion(reference_data
     assert outcome.error is None
     assert outcome.conversion is not None
     assert outcome.conversion.output_amount == Decimal("17450")
+    assert outcome.money_context is not None
+    assert outcome.money_context.destination_state is MoneyContextState.DEGRADED
     assert outcome.destination_context is None
 
 
@@ -322,7 +330,7 @@ def test_unexpected_destination_context_programming_error_is_not_silenced(refere
 
     with (
         patch(
-            "apps.exchange.application.build_destination_context",
+            "apps.exchange.money_context.build_destination_context_default",
             side_effect=RuntimeError("programming bug"),
         ),
         pytest.raises(RuntimeError, match="programming bug"),

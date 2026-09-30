@@ -77,6 +77,8 @@ jobs:
         run: >-
           mypy
           apps/exchange/domain.py
+          apps/exchange/money_context.py
+          apps/exchange/payment_estimate.py
           apps/exchange/providers/base.py
           apps/exchange/providers/frankfurter.py
           config/environment.py

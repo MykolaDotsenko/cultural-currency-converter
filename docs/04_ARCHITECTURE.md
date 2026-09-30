@@ -75,6 +75,22 @@ Use an application function/service when work coordinates multiple boundaries su
 
 Views should remain focused on HTTP concerns and presentation orchestration.
 
+## Money Context Engine
+
+`apps/exchange/money_context.py` is the shared application contract for composing trusted conversion meaning with optional destination context.
+
+The contract keeps these concerns explicit:
+
+- the `ConversionResult` remains the authoritative financial result;
+- current destination context may add sourced local-value and payment guidance;
+- historical conversions and currency-only conversions do not silently receive current destination meaning;
+- optional destination enrichment has explicit `available`, `empty`, `not_applicable` and `degraded` states;
+- known database/data/decimal enrichment failures fail open without replacing the conversion;
+- unexpected programming errors still propagate;
+- destination country, context date and price currency must remain consistent with the conversion contract.
+
+The Money Context Engine is not a second datastore, rate provider or calculation truth source. It is an application-level composition boundary intended for reuse by future budget, destination comparison, saved-trip, camera and mobile/offline flows.
+
 ## Persistence
 
 PostgreSQL is the production-oriented durable store. Local development can use SQLite.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, MaxValueValidator, MinValueValidator
@@ -47,10 +48,10 @@ class StoryDatePrecision(models.TextChoices):
 
 
 class StoryMomentQuerySet(models.QuerySet):
-    def published(self):
+    def published(self) -> StoryMomentQuerySet:
         return self.filter(status=StoryMomentStatus.PUBLISHED)
 
-    def relevant_on(self, selected_date: date, *, historical: bool):
+    def relevant_on(self, selected_date: date, *, historical: bool) -> StoryMomentQuerySet:
         if not historical:
             return self
         return self.filter(start_date__isnull=False, start_date__lte=selected_date).filter(
@@ -155,7 +156,7 @@ class StoryMoment(models.Model):
         if not self.start_date and self.end_date:
             raise ValidationError({"start_date": "end_date requires start_date."})
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk:
             current = (
                 StoryMoment.objects.filter(pk=self.pk)

@@ -15,7 +15,7 @@ The current CI runs checks equivalent to:
 ```bash
 ruff format --check apps config scripts manage.py
 ruff check apps config scripts manage.py
-mypy apps/exchange/domain.py apps/exchange/providers/base.py apps/exchange/providers/frankfurter.py config/environment.py config/database.py config/cache.py config/csp.py config/ai.py integrations/gemini/client.py
+mypy apps/exchange/domain.py apps/exchange/money_context.py apps/exchange/payment_estimate.py apps/exchange/providers/base.py apps/exchange/providers/frankfurter.py config/environment.py config/database.py config/cache.py config/csp.py config/ai.py integrations/gemini/client.py
 djlint templates --check
 python manage.py check
 python manage.py makemigrations --check --dry-run
@@ -41,14 +41,6 @@ npm run build
 Browser QA uses Playwright and axe. Chromium carries the broadest gate; Firefox/WebKit provide smoke coverage.
 
 Use browser tests for high-value interaction behaviour, not every CSS detail.
-
-## Current known QA debt
-
-The Real Payment Estimate domain/web implementation is covered by Python tests, and the latest PR evidence passed Python, PostgreSQL and frontend quality lanes. The browser lanes are not currently green.
-
-The failing browser-quality assertion uses the source-fee value `1.001` and waits for the “at most 2 decimal places” message. The shared amount parser intentionally classifies that input as an ambiguous three-digit fractional/grouping form first, so Chromium, Firefox and WebKit time out waiting for text that the application does not emit.
-
-Treat browser QA as **not green** until the test input/expectation is aligned with the parser semantics and the required Chromium lane passes again. Do not weaken the parser merely to satisfy the stale browser expectation.
 
 ## Testing priorities
 
