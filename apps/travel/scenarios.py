@@ -133,7 +133,7 @@ def create_saved_scenario(
         _create_observation(
             scenario,
             conversion=conversion,
-            kind=SavedScenarioObservationKind.INITIAL.value,
+            kind="initial",
             provider_keys=provider_keys,
         )
 
@@ -162,7 +162,7 @@ def record_scenario_recheck(
         return _create_observation(
             locked,
             conversion=conversion,
-            kind=SavedScenarioObservationKind.RECHECK.value,
+            kind="recheck",
             provider_keys=provider_keys,
         )
 
