@@ -347,13 +347,19 @@ def converter_view(
     )
     account_favourite_saved = False
     if result is not None and request.user.is_authenticated:
-        account_favourite_saved = is_user_favourite_fn(
-            request.user,
-            source_currency=form.cleaned_data["source_currency"],
-            destination_currency=form.cleaned_data["destination_currency"],
-            source_country=form.cleaned_data.get("source_country", ""),
-            destination_country=form.cleaned_data.get("destination_country", ""),
-        )
+        try:
+            account_favourite_saved = is_user_favourite_fn(
+                request.user,
+                source_currency=form.cleaned_data["source_currency"],
+                destination_currency=form.cleaned_data["destination_currency"],
+                source_country=form.cleaned_data.get("source_country", ""),
+                destination_country=form.cleaned_data.get("destination_country", ""),
+            )
+        except DatabaseError as exc:
+            logger.warning(
+                "Account favourite lookup failed",
+                extra={"error_code": exc.__class__.__name__},
+            )
 
     context = build_converter_context(
         form,
