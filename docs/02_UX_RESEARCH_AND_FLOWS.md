@@ -211,6 +211,24 @@ Repeated saved/recent row actions should keep concise visible verbs while exposi
 
 Signed-in data should respect ownership. Cross-device recent history is separately opt-in; signing in should not silently upload existing local recent activity.
 
+### Current saved-plan flow
+
+The first shipped saved-scenario UX is deliberately account-owned and budget-led:
+
+**Current conversion → Budget interpretation → Save this plan → Name/dates → Saved plan detail**
+
+The handoff must preserve trust boundaries:
+
+- the conversion/destination scope comes from the signed budget-context token, not editable hidden amount/rate fields;
+- explicit duration, traveller count and daily reference-item assumptions are normalized and re-signed before persistence;
+- the saved plan stores assumptions and an immutable initial FX observation, not a frozen claim that today's local prices will remain true;
+- plan detail is owner-scoped and noindex;
+- opening a plan in the converter does not overwrite the stored initial observation;
+- deletion is explicit and owner-scoped;
+- the whole save flow works without JavaScript.
+
+This first slice does not silently sync browser-local state into the account, does not create reminders and does not yet calculate a live “rate changed since saved” result.
+
 ### Actionable history
 
 History should support useful re-entry, not only archival viewing. Where the required data exists, a previous conversion may offer concise actions such as:
