@@ -275,6 +275,23 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
         new URL(response.url()).pathname === "/payment/estimate/",
     );
 
+  const paymentEstimateForm = page.locator(".qa-payment-estimate__form");
+  const paymentEstimateToken = await paymentEstimateForm
+    .locator('input[name="payment_estimate_token"]')
+    .inputValue();
+  assert(
+    paymentEstimateToken.length > 40 && paymentEstimateToken.split(":").length >= 3,
+    `current-converter: payment estimate token is missing or malformed in DOM; length=${paymentEstimateToken.length}`,
+  );
+  const postedPaymentToken = await paymentEstimateForm.evaluate((form) => {
+    if (!(form instanceof HTMLFormElement)) return "";
+    return String(new FormData(form).get("payment_estimate_token") ?? "");
+  });
+  assert(
+    postedPaymentToken === paymentEstimateToken,
+    "current-converter: payment estimate token is not included in form data",
+  );
+
   // Exercise both parser branches explicitly. A three-digit fractional form
   // such as 1.001 is intentionally treated as ambiguous before precision
   // validation, while 1.0001 is unambiguously a too-precise EUR amount.
