@@ -63,6 +63,14 @@ The current payment-estimate flow uses this boundary so a user cannot replace th
 
 A trusted snapshot is not a new FX observation and does not extend the freshness or historical meaning of the underlying quote.
 
+## MoneyContext
+
+A MoneyContext composes one trusted `ConversionResult` with optional current destination meaning.
+
+Its stable destination identity consists of a country code plus an optional canonical city slug. City scope never changes conversion truth; it only narrows optional local-value enrichment. If returned destination enrichment identifies a different city than the requested MoneyContext scope, the enrichment degrades rather than being exposed as trusted context.
+
+Historical conversion remains financially valid but current city/destination enrichment stays not-applicable unless a separate historical context dataset exists.
+
 ## PaymentEstimate
 
 A payment estimate is a deterministic scenario calculation layered on top of a trusted current conversion.
