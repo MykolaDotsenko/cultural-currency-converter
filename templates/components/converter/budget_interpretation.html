@@ -153,13 +153,11 @@
                 <span class="qa-field__message qa-field__message--error"
                       id="{{ item.field.html_name }}-error">{{ item.field.errors.0 }}</span>
               {% endif %}
-              <span class="qa-field__message"
-                    id="{{ item.field.html_name }}-anchor">
+              <span class="qa-field__message" id="{{ item.field.html_name }}-anchor">
                 Anchor {{ item.price_low }}{% if item.price_high %}–{{ item.price_high }}{% endif %}
                 {{ item.currency_code }} · {{ item.scope_label }}
               </span>
-              <span class="qa-context-source"
-                    id="{{ item.field.html_name }}-source">
+              <span class="qa-context-source" id="{{ item.field.html_name }}-source">
                 Observed {{ item.observed_at }} · {{ item.confidence }} confidence ·
                 <a href="{{ item.source_url }}" rel="noopener noreferrer">{{ item.source_name }}</a>
               </span>
