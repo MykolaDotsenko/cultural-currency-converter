@@ -793,7 +793,6 @@
   .qa-workspace__context::before {
     display: none;
   }
-
 }
 
 /* Keep the bilateral converter within a 320px viewport at 200% text zoom. */
