@@ -1337,7 +1337,8 @@ h3 {
   .qa-budget-interpretation__result,
   .qa-budget-interpretation__facts > div,
   .qa-budget-interpretation__line,
-  .qa-budget-interpretation__category {
+  .qa-budget-interpretation__category,
+  .qa-budget-interpretation__save {
     border-color: CanvasText;
   }
 
@@ -1568,6 +1569,37 @@ h3 {
   gap: var(--qa-space-4);
 }
 
+.qa-budget-interpretation__save {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(17rem, 0.9fr);
+  gap: var(--qa-space-7);
+  align-items: end;
+  padding-block: var(--qa-space-6);
+  border-block: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+}
+
+.qa-budget-interpretation__save h4 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.qa-budget-interpretation__save > div > .qa-field__message {
+  max-width: 39rem;
+  margin-block-start: var(--qa-space-3);
+}
+
+.qa-budget-interpretation__save-form {
+  display: grid;
+  gap: var(--qa-space-4);
+}
+
+.qa-budget-interpretation__save-form .qa-secondary-button {
+  justify-self: start;
+}
+
 .qa-budget-interpretation__caveat {
   max-width: 52rem;
   margin: 0;
@@ -1590,7 +1622,8 @@ h3 {
   .qa-budget-interpretation__facts,
   .qa-budget-interpretation__trip-fields,
   .qa-budget-interpretation__category-grid,
-  .qa-budget-interpretation__line {
+  .qa-budget-interpretation__line,
+  .qa-budget-interpretation__save {
     grid-template-columns: 1fr;
   }
 
@@ -1630,6 +1663,7 @@ h3 {
   .qa-budget-interpretation__facts dd,
   .qa-budget-interpretation__line-title,
   .qa-budget-interpretation__line-values,
+  .qa-budget-interpretation__save h4,
   .qa-budget-interpretation__caveat {
     color: CanvasText;
   }
