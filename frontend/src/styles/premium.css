@@ -1549,6 +1549,10 @@ h3 {
   color: var(--color-ink);
 }
 
+.qa-budget-interpretation .qa-context-source {
+  color: var(--color-ink);
+}
+
 .qa-budget-interpretation__category .qa-context-source {
   margin-block-start: var(--qa-space-2);
 }
