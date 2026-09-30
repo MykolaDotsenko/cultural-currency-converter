@@ -108,6 +108,7 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         category_options=category_options,
                     )
                     interpretation = None
+                    assumptions = None
                     if form.is_valid():
                         assumptions = form.cleaned_data.get("budget_assumptions")
                         if not isinstance(assumptions, BudgetAssumptions):
@@ -130,6 +131,7 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         form=form,
                         token=token,
                         interpretation=interpretation,
+                        assumptions=assumptions if interpretation is not None else None,
                     )
 
     context = {
