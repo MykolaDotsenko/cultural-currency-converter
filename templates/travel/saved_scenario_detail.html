@@ -96,10 +96,15 @@
           <p class="qa-foundation-kicker">Trusted reference</p>
           <h2 id="scenario-observation-title">Saved FX observation</h2>
           <p>
-            Stored observations are immutable. Re-checking will be added as a separate action so
-            a new observation never overwrites the one you originally saved.
+            Stored observations are immutable. Re-check uses the same amount and currency pair,
+            and never overwrites the reference you originally saved.
           </p>
         </div>
+        <form method="post"
+              action="{% url 'recheck_saved_scenario' scenario.pk %}">
+          {% csrf_token %}
+          <button class="qa-secondary-button" type="submit">Re-check reference rate</button>
+        </form>
       </div>
       {% if latest_observation %}
         <div class="qa-saved-list">
@@ -127,6 +132,33 @@
         </div>
       {% else %}
         <p class="qa-saved-empty">No trusted reference observation is attached.</p>
+      {% endif %}
+      {% if rate_comparison %}
+        <div class="qa-saved-list" aria-label="Reference change since saved">
+          <article class="qa-saved-row">
+            <div class="qa-saved-row__copy">
+              <p class="qa-foundation-kicker">Since you saved this</p>
+              <h3>{{ rate_comparison.difference_phrase }}</h3>
+              <p>
+                For the same {{ scenario.source_amount|floatformat:"-12" }}
+                {{ scenario.source_currency.code }}, the saved reference was
+                {{ rate_comparison.initial_output }} {{ scenario.destination_currency.code }}
+                and the latest stored reference is
+                {{ rate_comparison.latest_output }} {{ scenario.destination_currency.code }}.
+              </p>
+              <p class="qa-saved-row__meta">
+                Reference-rate difference {{ rate_comparison.rate_change_percent }}%
+                · saved observation {{ rate_comparison.initial_effective_date|date:"j M Y" }}
+                · latest observation {{ rate_comparison.latest_effective_date|date:"j M Y" }}
+              </p>
+            </div>
+          </article>
+        </div>
+      {% elif initial_observation %}
+        <p class="qa-saved-state__privacy">
+          No later distinct reference observation is stored yet. Re-checking is informational and
+          does not recommend when to exchange money.
+        </p>
       {% endif %}
       {% if initial_observation and latest_observation and initial_observation.pk != latest_observation.pk %}
         <p class="qa-saved-state__privacy">
