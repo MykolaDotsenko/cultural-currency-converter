@@ -84,6 +84,44 @@ def test_malformed_or_wrong_pair_payload_is_rejected(payload):
         )
 
 
+def test_rate_payload_rejects_browser_unrepresentable_rate():
+    with pytest.raises(FxProviderInvalidPayload, match="supported numeric representation range"):
+        parse_rate_payload(
+            {
+                "date": "2026-09-18",
+                "base": "EUR",
+                "quote": "JPY",
+                "rate": Decimal("1E+309"),
+            },
+            expected_base="EUR",
+            expected_quote="JPY",
+            requested_date=None,
+            policy=DEFAULT_SOURCE_POLICY,
+            fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+        )
+
+
+def test_series_payload_normalizes_unrepresentable_point_to_provider_error():
+    with pytest.raises(FxProviderInvalidPayload, match="supported numeric representation range"):
+        parse_series_payload(
+            [
+                {
+                    "date": "2026-09-18",
+                    "base": "EUR",
+                    "quote": "JPY",
+                    "rate": Decimal("1E+309"),
+                }
+            ],
+            expected_base="EUR",
+            expected_quote="JPY",
+            start_date=date(2026, 9, 18),
+            end_date=date(2026, 9, 18),
+            grouping=RateSeriesGrouping.DAILY,
+            policy=DEFAULT_SOURCE_POLICY,
+            fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+        )
+
+
 def test_future_dated_latest_observation_is_rejected():
     with pytest.raises(FxProviderInvalidPayload, match="after fetch date"):
         parse_rate_payload(
