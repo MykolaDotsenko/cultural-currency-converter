@@ -158,9 +158,7 @@ def interpret_budget(
         available_budget / Decimal(assumptions.duration_days) / Decimal(assumptions.travelers)
     ).quantize(quantum, rounding=ROUND_HALF_EVEN)
 
-    selected_by_category = {
-        price.category: price for price in available_budget_categories(context)
-    }
+    selected_by_category = {price.category: price for price in available_budget_categories(context)}
 
     lines: list[BudgetLineEstimate] = []
     missing_categories: list[str] = []
