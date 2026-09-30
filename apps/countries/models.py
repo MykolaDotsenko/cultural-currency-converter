@@ -35,6 +35,40 @@ class Country(models.Model):
         return f"{self.name} ({self.iso2})"
 
 
+class City(models.Model):
+    """Canonical city identity within one country.
+
+    The slug is a stable product identifier. Display names may evolve without
+    changing saved/scoped references.
+    """
+
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.CASCADE,
+        related_name="cities",
+    )
+    slug = models.SlugField(max_length=140)
+    name = models.CharField(max_length=120)
+    region = models.CharField(max_length=120, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("country__name", "name", "slug")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("country", "slug"),
+                name="unique_city_slug_per_country",
+            ),
+        ]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.slug = self.slug.strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.name}, {self.country.iso2}"
+
+
 class CurrencyQuerySet(models.QuerySet):
     def active_on(self, selected_date: date) -> CurrencyQuerySet:
         return self.filter(
