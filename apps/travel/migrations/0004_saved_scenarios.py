@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                 "indexes": [
                     models.Index(
                         fields=["user", "-updated_at"],
-                        name="travel_scenario_user_updated_idx",
+                        name="travel_scn_user_upd_idx",
                     ),
                     models.Index(
                         fields=["user", "kind", "-updated_at"],
