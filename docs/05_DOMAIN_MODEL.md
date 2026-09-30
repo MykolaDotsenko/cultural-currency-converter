@@ -122,6 +122,8 @@ Examples of durable invariants:
 - country and currency identity remain separate;
 - temporal country/currency relationships are explicit and primary eras do not overlap;
 - financial arithmetic uses Decimal semantics;
+- accepted FX rates must also fit the shared finite positive binary64 presentation envelope used by browser charts; binary floating point is never used as the financial source of truth;
+- arithmetic representation failures degrade explicitly rather than producing partial or oversized numeric output;
 - historical requested date and effective observation date are not silently conflated;
 - provider observations cannot be dated after the time they were fetched;
 - synthetic exact same-currency identity quotes may bridge at most one calendar-day local/UTC rollover because they are not provider observations;
