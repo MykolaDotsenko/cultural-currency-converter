@@ -10,6 +10,36 @@ Cultural Currency Converter helps a traveller answer three connected questions:
 
 The conversion is the primary task. Context and culture should make the conversion more useful, not turn the product into an encyclopedia.
 
+## Product identity and decision model
+
+Cultural Currency Converter is best understood as a **country-aware travel-money decision assistant**: deterministic financial meaning at the core, practical local context around it, and cultural discovery as an optional layer.
+
+The working product formula is:
+
+**Rate + Real Cost + Local Buying Power + Local Money Behavior + Cultural Context**
+
+- **Rate** — a trustworthy reference FX observation with source/effective-date semantics.
+- **Real Cost** — a clearly labelled estimate of card/ATM/exchange outcomes only when inputs or assumptions are defensible.
+- **Local Buying Power** — sourced examples that translate an amount into everyday meaning.
+- **Local Money Behavior** — practical cash/card/ATM/tipping/DCC context.
+- **Cultural Context** — concise historical and cultural meaning that enriches, rather than blocks, the financial task.
+
+### Mission
+
+**To make currency conversion more useful, human, and culturally meaningful.**
+
+### Vision
+
+Turn currency conversion from a mechanical calculation into **understanding of money in place**.
+
+### Product philosophy
+
+- **Utility first. Cultural soul always.**
+- **Practical first. Human always. Cultural in small doses.**
+- **Two countries. Two worlds. One conversion experience.**
+
+The product should preserve the original **“Bridging cultures through currency conversion”** idea without allowing cultural decoration to overpower trust, speed or practical usefulness.
+
 ## Messaging and tagline hierarchy
 
 The product should keep one recognizable brand voice while adapting the message to the surface. Messaging should emphasize useful travel-money context rather than making unsupported claims about executable rates, exact fees or guaranteed savings.
@@ -37,6 +67,18 @@ This is the strongest explanatory hero/subheadline because it states the product
 **A smarter currency converter for travelers.** — **93/100**
 
 Use for concise product descriptions, directory/App-Store-style copy and portfolio summaries. Follow it with concrete capability copy rather than leaving “smarter” undefined.
+
+Additional market-facing line:
+
+**See what your money means there.** — **94/100**
+
+Use when the surrounding surface already makes conversion explicit and the job is to communicate the product's distinctive local-meaning proposition in the fewest words.
+
+Emotional brand line:
+
+**Bridging cultures through currency conversion.** — **86/100**
+
+Use for brand story, portfolio narrative and cultural/editorial surfaces rather than as the primary utility headline.
 
 ### Utility / practical campaign lines
 
@@ -169,6 +211,24 @@ Media, external enrichment and AI should degrade gracefully. Core conversion sho
 ### Country and currency are distinct
 
 A currency can belong to multiple countries and country/currency relationships change over time. Product language and data modelling should preserve that distinction.
+
+### Feature decision guardrail
+
+Before adding a meaningful product capability, ask:
+
+1. Does it help the user understand their money?
+2. Does it help them understand the place?
+3. Does it help them make a better travel-money decision?
+4. Does it add cultural value without adding noise?
+5. Can it stay off the critical conversion path?
+
+If the answers are mostly no, the feature should not enter the core product.
+
+### Tone of voice
+
+The product voice is **clear utility + warm intelligence + cultural restraint**.
+
+Prefer copy that is calm, concise, human and specific. Avoid tourism clichés, financial jargon for its own sake and vague “AI-powered intelligence” language.
 
 ## Non-goals
 
