@@ -18,7 +18,6 @@
       with your account. It does not silently refresh rates or local prices.
     </p>
   </section>
-
   <div class="qa-saved-state">
     <section class="qa-saved-section" aria-labelledby="scenario-summary-title">
       <div class="qa-saved-section__heading">
@@ -35,7 +34,6 @@
           </form>
         </div>
       </div>
-
       <div class="qa-saved-list">
         <article class="qa-saved-row">
           <div class="qa-saved-row__copy">
@@ -65,7 +63,6 @@
         </article>
       </div>
     </section>
-
     <section class="qa-saved-section" aria-labelledby="scenario-budget-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -92,7 +89,6 @@
         <p class="qa-saved-empty">No budget-category assumptions were stored with this scenario.</p>
       {% endif %}
     </section>
-
     <section class="qa-saved-section" aria-labelledby="scenario-observation-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -122,7 +118,7 @@
                   Provider attribution: {{ latest_observation.provider_keys|join:", " }}
                   ·
                 {% endif %}
-                {% if latest_observation.stale %}stored as stale · {% endif %}
+                {% if latest_observation.stale %}stored as stale ·{% endif %}
                 recorded {{ latest_observation.recorded_at|date:"j M Y, H:i" }}
               </p>
             </div>
@@ -138,7 +134,6 @@
         </p>
       {% endif %}
     </section>
-
     <p class="qa-saved-state__privacy">
       Saved scenarios are account-owned and are not populated from browser-only history. Removing
       this scenario also removes its stored assumptions and immutable observations from your account.
