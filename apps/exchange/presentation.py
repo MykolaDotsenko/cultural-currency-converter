@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
-from apps.exchange.snapshot_tokens import build_conversion_snapshot_token
+from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
 
@@ -166,7 +166,7 @@ def build_result_component(
     }
 
     trusted_snapshot_token = (
-        build_conversion_snapshot_token(result) if not same_currency else None
+        build_trusted_conversion_snapshot_token(result) if not same_currency else None
     )
     payment_estimate_form = (
         PaymentEstimateForm(
