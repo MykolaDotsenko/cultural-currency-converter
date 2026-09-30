@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from decimal import DecimalException
 
 from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
@@ -38,7 +39,7 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
         story_request = form.to_story_request()
         try:
             story = compose_story(story_request)
-        except Exception:
+        except DatabaseError:
             logger.exception(
                 "Money and culture story composition failed",
                 extra={
@@ -103,7 +104,7 @@ def current_destination_context(request: HttpRequest) -> HttpResponse:
                 converted_amount=form.cleaned_data["amount"],
                 quote_currency=form.cleaned_data["currency"],
             )
-        except Exception:
+        except (DatabaseError, ValueError, DecimalException):
             logger.exception(
                 "Current destination context composition failed",
                 extra={

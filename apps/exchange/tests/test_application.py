@@ -3,6 +3,7 @@ from decimal import Decimal
 from unittest.mock import Mock, patch
 
 import pytest
+from django.db import DatabaseError
 
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.culture.services import DestinationContext
@@ -293,7 +294,7 @@ def test_destination_context_failure_never_invalidates_conversion(reference_data
 
     with patch(
         "apps.exchange.application.build_destination_context",
-        side_effect=RuntimeError("context unavailable"),
+        side_effect=DatabaseError("context unavailable"),
     ):
         outcome = run_converter_submission(
             command,
@@ -306,6 +307,32 @@ def test_destination_context_failure_never_invalidates_conversion(reference_data
     assert outcome.conversion is not None
     assert outcome.conversion.output_amount == Decimal("17450")
     assert outcome.destination_context is None
+
+
+@pytest.mark.django_db
+def test_unexpected_destination_context_programming_error_is_not_silenced(reference_data):
+    latest = FakeLatestGateway()
+    command = ConverterSubmissionCommand(
+        amount=Decimal("100"),
+        source_country="FI",
+        source_currency="EUR",
+        destination_country="JP",
+        destination_currency="JPY",
+    )
+
+    with (
+        patch(
+            "apps.exchange.application.build_destination_context",
+            side_effect=RuntimeError("programming bug"),
+        ),
+        pytest.raises(RuntimeError, match="programming bug"),
+    ):
+        run_converter_submission(
+            command,
+            latest_gateway_factory=lambda: latest,
+            historical_gateway_factory=Mock(),
+            context_as_of=date(2026, 9, 22),
+        )
 
 
 @pytest.mark.django_db

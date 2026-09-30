@@ -4,9 +4,10 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, DecimalException
 from typing import Literal
 
+from django.db import DatabaseError
 from django.utils import timezone
 
 from apps.countries.models import Currency
@@ -163,7 +164,7 @@ def run_converter_submission(
                 quote_currency=conversion.quote.quote_currency,
                 as_of=context_as_of or request_local_date,
             )
-        except Exception:
+        except (DatabaseError, ValueError, DecimalException):
             logger.exception(
                 "Destination context composition failed",
                 extra={
