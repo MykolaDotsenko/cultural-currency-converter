@@ -275,7 +275,11 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
         new URL(response.url()).pathname === "/payment/estimate/",
     );
 
-  await page.locator("#id_fx_markup_percent").fill("26");
+  // Use a value that passes native HTML constraints but fails our currency-
+  // precision validation so the progressive 422 response is exercised.
+  await page.locator("#id_fx_markup_percent").fill("2");
+  await page.locator("#id_source_fixed_fee").fill("1.001");
+  await page.locator("#id_destination_fixed_fee").fill("0");
   const invalidEstimate = waitForPaymentEstimate();
   await page.getByRole("button", { name: "Calculate estimate" }).click();
   const invalidEstimateResponse = await invalidEstimate;
@@ -283,7 +287,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     invalidEstimateResponse.status() === 422,
     `current-converter: invalid payment estimate returned ${invalidEstimateResponse.status()} instead of 422`,
   );
-  await page.getByText("Ensure this value is less than or equal to 25.").waitFor();
+  await page.getByText("This currency supports at most 2 decimal places.").waitFor();
   assert(
     await page.locator("[data-previous-result-note]").isHidden(),
     "current-converter: payment-estimate validation incorrectly marked the conversion as failed",
