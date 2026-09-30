@@ -61,7 +61,7 @@ def create_saved_scenario(
 ) -> SavedScenario:
     """Create one user-owned scenario with an immutable initial FX observation."""
 
-    if not user.is_authenticated:
+    if not user.is_authenticated or user.pk is None:
         raise SavedScenarioError("Authentication is required to save a scenario.")
     if not isinstance(spec.kind, SavedScenarioKind):
         raise SavedScenarioError("Scenario kind must be a SavedScenarioKind value.")
