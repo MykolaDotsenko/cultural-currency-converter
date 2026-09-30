@@ -14,6 +14,12 @@ The conversion is the primary task. Context and culture should make the conversi
 
 Cultural Currency Converter is best understood as a **country-aware travel-money decision assistant**: deterministic financial meaning at the core, practical local context around it, and cultural discovery as an optional layer.
 
+### Category framing
+
+Useful category language is **travel-money intelligence** or **destination money companion**. These phrases describe the product's broader role without changing the core trust boundary: the product helps users understand and use money in another country; it does not execute transfers, guarantee payment outcomes or provide regulated financial advice.
+
+The long-term category ambition is a travel-money intelligence product that can support the user before and during a trip through conversion, local-value context, payment guidance, comparison, saved scenarios and optional AI-assisted explanation.
+
 The working product formula is:
 
 **Rate + Real Cost + Local Buying Power + Local Money Behavior + Cultural Context**
@@ -73,6 +79,12 @@ Additional market-facing line:
 **See what your money means there.** — **94/100**
 
 Use when the surrounding surface already makes conversion explicit and the job is to communicate the product's distinctive local-meaning proposition in the fewest words.
+
+Alternative category/hero line:
+
+**Understand what your money means abroad.** — **95/100**
+
+Use when the audience benefit should be explicit and travel-oriented without implying exact purchasing-power or payment certainty.
 
 Emotional brand line:
 
@@ -224,11 +236,34 @@ Before adding a meaningful product capability, ask:
 
 If the answers are mostly no, the feature should not enter the core product.
 
+### Product North Star
+
+**Does this help the user better understand or use their money in another country?**
+
+This is the shortest decision test for new product work. A feature that cannot answer it clearly should remain outside the core experience.
+
 ### Tone of voice
 
 The product voice is **clear utility + warm intelligence + cultural restraint**.
 
 Prefer copy that is calm, concise, human and specific. Avoid tourism clichés, financial jargon for its own sake and vague “AI-powered intelligence” language.
+
+## Product measurement
+
+When product analytics are introduced, prefer a small privacy-conscious measurement set tied to real user value rather than vanity events.
+
+Useful candidate measures include:
+
+- successful first conversion;
+- local-context engagement;
+- compare usage;
+- saved-scenario creation;
+- saved-scenario reopen / pre-trip return;
+- optional AI quick-prompt usage;
+- share-card usage;
+- D1 / D7 / D30 return where lawful and proportionate.
+
+Measurement must not silently turn sensitive travel/financial context into broad behavioural tracking. Collect only what is needed to evaluate product usefulness, document retention, and respect user/account privacy boundaries.
 
 ## Non-goals
 
