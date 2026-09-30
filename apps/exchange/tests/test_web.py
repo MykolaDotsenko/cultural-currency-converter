@@ -719,6 +719,33 @@ def test_historical_htmx_and_full_get_render_equivalent_numeric_semantics(client
 
 
 @pytest.mark.django_db
+def test_favourite_lookup_failure_does_not_break_successful_conversion(
+    client, reference_data, django_user_model, caplog
+):
+    user = django_user_model.objects.create_user(username="member", password="secret")
+    client.force_login(user)
+
+    with (
+        patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()),
+        patch(
+            "apps.exchange.views.is_user_favourite",
+            side_effect=DatabaseError("database unavailable"),
+        ),
+        caplog.at_level("WARNING", logger="cultural_currency.exchange"),
+    ):
+        response = client.post(
+            reverse("converter"),
+            payload(),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b'id="current-conversion-result"' in response.content
+    assert b'data-account-saved="false"' in response.content
+    assert any(record.msg == "Account favourite lookup failed" for record in caplog.records)
+
+
+@pytest.mark.django_db
 def test_historical_series_page_uses_bounded_one_year_range(client, reference_data):
     gateway = FakeSeriesGateway()
     with (
