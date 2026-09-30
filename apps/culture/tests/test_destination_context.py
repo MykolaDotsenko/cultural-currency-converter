@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.common.presentation.media_view_models import ImageViewModel
-from apps.countries.models import Country, Currency
+from apps.countries.models import City, Country, Currency
 from apps.culture.models import (
     CulturalProfile,
     TypicalPrice,
@@ -28,6 +28,7 @@ from apps.culture.services import (
 def japan_context(db):
     japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
     jpy = Currency.objects.create(code="JPY", name="Japanese yen", symbol="¥", minor_units=0)
+    tokyo = City.objects.create(country=japan, slug="tokyo", name="Tokyo")
     profile = CulturalProfile.objects.create(
         country=japan,
         summary="Current sourced payment context.",
@@ -42,6 +43,7 @@ def japan_context(db):
     price = TypicalPrice.objects.create(
         country=japan,
         city="Tokyo",
+        city_ref=tokyo,
         category=TypicalPriceCategory.TRANSIT,
         label="Metro ticket",
         amount_low=Decimal("180"),
@@ -153,6 +155,138 @@ def test_destination_context_preserves_city_scope_and_provenance(japan_context):
     assert len(context.prices) == 1
     assert context.prices[0].scope_label == "Tokyo"
     assert context.prices[0].source_name == "Tokyo Metro"
+
+
+@pytest.mark.django_db
+def test_city_scoped_context_prefers_city_and_falls_back_only_to_national(japan_context):
+    japan, jpy, _profile, tokyo_transit = japan_context
+    osaka = City.objects.create(country=japan, slug="osaka", name="Osaka")
+    today = timezone.localdate()
+
+    national_coffee = TypicalPrice.objects.create(
+        country=japan,
+        category=TypicalPriceCategory.COFFEE,
+        label="National coffee anchor",
+        amount_low=Decimal("500"),
+        currency=jpy,
+        source_name="National source",
+        source_url="https://example.org/national-coffee",
+        observed_at=today,
+        verified_at=timezone.now(),
+        display_order=10,
+        is_published=True,
+    )
+    national_meal = TypicalPrice.objects.create(
+        country=japan,
+        category=TypicalPriceCategory.CASUAL_MEAL,
+        label="National meal anchor",
+        amount_low=Decimal("900"),
+        currency=jpy,
+        source_name="National source",
+        source_url="https://example.org/national-meal",
+        observed_at=today,
+        verified_at=timezone.now(),
+        display_order=20,
+        is_published=True,
+    )
+    TypicalPrice.objects.create(
+        country=japan,
+        city="Osaka",
+        city_ref=osaka,
+        category=TypicalPriceCategory.CASUAL_MEAL,
+        label="Osaka meal",
+        amount_low=Decimal("800"),
+        currency=jpy,
+        source_name="Osaka source",
+        source_url="https://example.org/osaka-meal",
+        observed_at=today,
+        verified_at=timezone.now(),
+        display_order=1,
+        is_published=True,
+    )
+
+    context = build_destination_context(
+        country_code="JP",
+        city_slug="TOKYO",
+        converted_amount=Decimal("17450"),
+        quote_currency="JPY",
+        price_limit=3,
+    )
+
+    assert context is not None
+    assert context.city_slug == "tokyo"
+    assert context.city_name == "Tokyo"
+    assert [item.label for item in context.prices] == [
+        tokyo_transit.label,
+        national_coffee.label,
+        national_meal.label,
+    ]
+    assert [item.scope_label for item in context.prices] == [
+        "Tokyo",
+        "Japan · national estimate",
+        "Japan · national estimate",
+    ]
+    assert all(item.label != "Osaka meal" for item in context.prices)
+
+
+@pytest.mark.django_db
+def test_city_scoped_context_does_not_duplicate_category_with_national_fallback(japan_context):
+    japan, jpy, _profile, _tokyo_transit = japan_context
+    TypicalPrice.objects.create(
+        country=japan,
+        category=TypicalPriceCategory.TRANSIT,
+        label="National transit",
+        amount_low=Decimal("200"),
+        currency=jpy,
+        source_name="National source",
+        source_url="https://example.org/national-transit",
+        observed_at=timezone.localdate(),
+        verified_at=timezone.now(),
+        is_published=True,
+    )
+
+    context = build_destination_context(
+        country_code="JP",
+        city_slug="tokyo",
+        converted_amount=Decimal("17450"),
+        quote_currency="JPY",
+    )
+
+    assert context is not None
+    assert [item.category for item in context.prices].count(TypicalPriceCategory.TRANSIT) == 1
+
+
+@pytest.mark.django_db
+def test_unknown_city_scope_is_rejected_instead_of_silently_using_national_data(japan_context):
+    with pytest.raises(ValueError, match="Destination city is not available"):
+        build_destination_context(
+            country_code="JP",
+            city_slug="kyoto",
+            converted_amount=Decimal("17450"),
+            quote_currency="JPY",
+        )
+
+
+@pytest.mark.django_db
+def test_typical_price_rejects_city_from_another_country(japan_context):
+    japan, jpy, _profile, _price = japan_context
+    finland = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    helsinki = City.objects.create(country=finland, slug="helsinki", name="Helsinki")
+    price = TypicalPrice(
+        country=japan,
+        city="Helsinki",
+        city_ref=helsinki,
+        category=TypicalPriceCategory.COFFEE,
+        label="Invalid city scope",
+        amount_low=Decimal("500"),
+        currency=jpy,
+        source_name="Source",
+        source_url="https://example.org/price",
+        observed_at=timezone.localdate(),
+    )
+
+    with pytest.raises(ValidationError, match="city must belong"):
+        price.full_clean()
 
 
 @pytest.mark.django_db

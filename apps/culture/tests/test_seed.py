@@ -71,6 +71,9 @@ def test_destination_context_seed_is_sourced_and_idempotent():
 
     transit = prices.get(category=TypicalPriceCategory.TRANSIT)
     assert transit.city == "Tokyo"
+    assert transit.city_ref is not None
+    assert transit.city_ref.slug == "tokyo"
+    assert transit.city_ref.name == "Tokyo"
     assert transit.amount_low == 180
     assert transit.amount_high == 330
     assert transit.currency.code == "JPY"

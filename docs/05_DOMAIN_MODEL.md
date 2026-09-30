@@ -10,6 +10,12 @@ Important distinction: a country is not a currency.
 
 Typical identity fields include ISO codes and display name.
 
+## City
+
+A canonical city identity scoped to one country.
+
+The city slug is the stable product identifier used by future city-level money-context, budget, comparison and saved-trip flows. Display names may evolve without changing saved references. A city slug is unique only within its country.
+
 ## Currency
 
 A monetary unit identified by a currency code plus metadata such as name, symbol and decimal behaviour.
@@ -88,12 +94,16 @@ A scoped price observation used to give rough everyday-value intuition.
 Important meaning includes:
 
 - city/national scope;
+- canonical `City` relationship for normalized city-scoped observations;
+- legacy city display text retained during the expand-first migration;
 - range/value;
 - observation date;
 - provenance;
 - confidence/trust class.
 
 A typical price is an example, not a universal price for a country.
+
+When a city is explicitly requested, city-scoped observations take priority and only clearly national observations may fill missing categories. Data from another city must never be substituted silently. National fallback remains visibly labelled as a national estimate.
 
 ## Story/cultural facts
 

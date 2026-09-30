@@ -191,6 +191,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Add city-scoped local-value and budget context where data quality supports it, because national averages are often too broad for practical travel decisions.
    - Keep city/national scope visible and never silently substitute one for the other.
    - Reuse the same provenance/freshness model as country-level typical prices.
+   - **Foundation status:** canonical `City` identity exists; `TypicalPrice` now has an additive canonical city reference with legacy-row backfill, and the destination-context service can select an explicit city with national fallback for missing categories. City selection UX, broader city datasets and budget integration remain future work.
 
 25. **Camera mode for menu / receipt / price / ATM understanding — 90/100**
    - Let a user explicitly capture or upload a menu, receipt, shelf price or ATM screen and extract amount/currency/context for conversion.
