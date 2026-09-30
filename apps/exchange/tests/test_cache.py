@@ -279,6 +279,26 @@ def test_corrupted_cached_provider_keys_are_ignored():
     assert provider.calls == 1
 
 
+def test_unbounded_latest_cache_rate_is_ignored_and_refetched():
+    key = latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY)
+    payload = serialize_quote(make_quote())
+    payload["rate"] = "1E+500000"
+    cache.set(key, payload, 100)
+    provider_quote = make_quote(fetched_at=NOW)
+    provider = FakeProvider(result=provider_quote)
+
+    result, stale = LatestQuoteGateway(provider).get(
+        "EUR",
+        "JPY",
+        DEFAULT_SOURCE_POLICY,
+        now=NOW,
+    )
+
+    assert result == provider_quote
+    assert stale is False
+    assert provider.calls == 1
+
+
 def test_fresh_semantically_wrong_latest_cache_is_ignored_and_refetched():
     wrong_pair = RateQuote(
         base_currency="EUR",
@@ -977,6 +997,36 @@ def test_rate_series_provider_identity_is_verified_before_caching():
             DEFAULT_SOURCE_POLICY,
             now=NOW,
         )
+
+
+def test_unbounded_rate_series_cache_value_is_ignored_and_refetched():
+    series = make_rate_series(fetched_at=NOW - timedelta(hours=1))
+    key = rate_series_cache_key(
+        "EUR",
+        "JPY",
+        series.start_date,
+        series.end_date,
+        series.grouping,
+        DEFAULT_SOURCE_POLICY,
+    )
+    payload = serialize_series(series)
+    payload["points"][0]["rate"] = "1E+500000"
+    cache.set(key, payload, 100)
+    provider = FakeProvider(result=series)
+
+    result, stale = HistoricalSeriesGateway(provider).get(
+        "EUR",
+        "JPY",
+        series.start_date,
+        series.end_date,
+        series.grouping,
+        DEFAULT_SOURCE_POLICY,
+        now=NOW,
+    )
+
+    assert result == series
+    assert stale is False
+    assert provider.calls == 1
 
 
 def test_rate_series_semantically_wrong_fresh_cache_is_ignored():

@@ -21,6 +21,7 @@ from apps.exchange.domain import (
     RateSeriesGrouping,
     RateSeriesPoint,
     normalize_currency_code,
+    validate_rate_decimal,
 )
 from apps.exchange.providers.base import (
     FxProviderAuthenticationError,
@@ -120,9 +121,10 @@ def _rate_decimal(value: Any) -> Decimal:
         rate = value if isinstance(value, Decimal) else Decimal(str(value))
     except (ArithmeticError, ValueError) as exc:
         raise FxProviderInvalidPayload("Frankfurter returned a non-decimal rate.") from exc
-    if not rate.is_finite() or rate <= 0:
-        raise FxProviderInvalidPayload("Frankfurter returned an invalid rate.")
-    return rate
+    try:
+        return validate_rate_decimal(rate)
+    except FxDomainError as exc:
+        raise FxProviderInvalidPayload(str(exc)) from exc
 
 
 def parse_rate_payload(

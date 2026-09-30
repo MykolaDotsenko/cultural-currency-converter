@@ -97,6 +97,22 @@ class FxSourcePolicy:
 
 DEFAULT_SOURCE_POLICY = FxSourcePolicy()
 
+MAX_RATE_SIGNIFICANT_DIGITS = 64
+MAX_RATE_ABS_ADJUSTED_EXPONENT = 100
+
+
+def validate_rate_decimal(value: Decimal, *, label: str = "FX rate") -> Decimal:
+    if not isinstance(value, Decimal):
+        raise FxDomainError(f"{label} must be a Decimal.")
+    if not value.is_finite() or value <= 0:
+        raise FxDomainError(f"{label} must be a finite positive Decimal.")
+    if (
+        len(value.as_tuple().digits) > MAX_RATE_SIGNIFICANT_DIGITS
+        or abs(value.adjusted()) > MAX_RATE_ABS_ADJUSTED_EXPONENT
+    ):
+        raise FxDomainError(f"{label} exceeds supported numeric representation limits.")
+    return value
+
 
 @dataclass(frozen=True)
 class HistoricalCurrencyMetadata:
@@ -178,10 +194,7 @@ class RateQuote:
     def __post_init__(self) -> None:
         base = normalize_currency_code(self.base_currency)
         quote = normalize_currency_code(self.quote_currency)
-        if not isinstance(self.rate, Decimal):
-            raise FxDomainError("FX rate must be a Decimal.")
-        if not self.rate.is_finite() or self.rate <= 0:
-            raise FxDomainError("FX rate must be a finite positive Decimal.")
+        validate_rate_decimal(self.rate)
         if self.fetched_at.tzinfo is None:
             raise FxDomainError("FX fetched_at must be timezone-aware.")
         providers = tuple(
@@ -230,10 +243,7 @@ class RateSeriesPoint:
     provider_keys: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if not isinstance(self.rate, Decimal):
-            raise FxDomainError("FX series rate must be a Decimal.")
-        if not self.rate.is_finite() or self.rate <= 0:
-            raise FxDomainError("FX series rate must be a finite positive Decimal.")
+        validate_rate_decimal(self.rate, label="FX series rate")
         providers = tuple(
             sorted({key.lower().strip() for key in self.provider_keys if key.strip()})
         )
