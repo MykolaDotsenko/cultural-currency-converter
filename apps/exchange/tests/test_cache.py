@@ -180,6 +180,56 @@ def test_monthly_latest_quote_uses_monthly_observation_window():
     assert provider.calls == 1
 
 
+def test_future_dated_latest_cache_is_ignored_and_refetched():
+    cached = make_quote(fetched_at=NOW + timedelta(minutes=6))
+    key = latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY)
+    cache.set(key, serialize_quote(cached), 100)
+    provider_quote = make_quote(fetched_at=NOW)
+    provider = FakeProvider(result=provider_quote)
+
+    result, stale = LatestQuoteGateway(provider).get(
+        "EUR",
+        "JPY",
+        DEFAULT_SOURCE_POLICY,
+        now=NOW,
+    )
+
+    assert result == provider_quote
+    assert stale is False
+    assert provider.calls == 1
+
+
+def test_provider_latest_quote_beyond_future_clock_skew_is_rejected():
+    provider_quote = make_quote(fetched_at=NOW + timedelta(minutes=6))
+    gateway = LatestQuoteGateway(FakeProvider(result=provider_quote))
+
+    with pytest.raises(FxProviderInvalidPayload, match="future clock skew"):
+        gateway.get("EUR", "JPY", DEFAULT_SOURCE_POLICY, now=NOW)
+
+    assert cache.get(latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY)) is None
+
+
+def test_provider_latest_quote_within_future_clock_skew_is_allowed():
+    provider_quote = make_quote(fetched_at=NOW + timedelta(minutes=2))
+    provider = FakeProvider(result=provider_quote)
+
+    result, stale = LatestQuoteGateway(provider).get(
+        "EUR",
+        "JPY",
+        DEFAULT_SOURCE_POLICY,
+        now=NOW,
+    )
+
+    assert result == provider_quote
+    assert stale is False
+    assert provider.calls == 1
+
+
+def test_latest_gateway_rejects_negative_future_clock_skew():
+    with pytest.raises(ValueError, match="future clock skew"):
+        LatestQuoteGateway(FakeProvider(), max_future_skew=timedelta(seconds=-1))
+
+
 def test_provider_policy_changes_cache_identity():
     pinned = FxSourcePolicy(mode=ProviderPolicyMode.PINNED, provider_key="ecb")
     assert latest_cache_key("EUR", "JPY", DEFAULT_SOURCE_POLICY) != latest_cache_key(
@@ -813,6 +863,66 @@ def test_rate_series_too_old_stale_data_is_rejected():
             DEFAULT_SOURCE_POLICY,
             now=NOW,
         )
+
+
+def test_future_dated_rate_series_cache_is_ignored_and_refetched():
+    cached = make_rate_series(fetched_at=NOW + timedelta(minutes=6))
+    key = rate_series_cache_key(
+        "EUR",
+        "JPY",
+        cached.start_date,
+        cached.end_date,
+        cached.grouping,
+        DEFAULT_SOURCE_POLICY,
+    )
+    cache.set(key, serialize_series(cached), 100)
+    provider_series = make_rate_series(fetched_at=NOW)
+    provider = FakeProvider(result=provider_series)
+
+    result, stale = HistoricalSeriesGateway(provider).get(
+        "EUR",
+        "JPY",
+        cached.start_date,
+        cached.end_date,
+        cached.grouping,
+        DEFAULT_SOURCE_POLICY,
+        now=NOW,
+    )
+
+    assert result == provider_series
+    assert stale is False
+    assert provider.calls == 1
+
+
+def test_provider_rate_series_beyond_future_clock_skew_is_rejected():
+    provider_series = make_rate_series(fetched_at=NOW + timedelta(minutes=6))
+    gateway = HistoricalSeriesGateway(FakeProvider(result=provider_series))
+
+    with pytest.raises(FxProviderInvalidPayload, match="future clock skew"):
+        gateway.get(
+            "EUR",
+            "JPY",
+            provider_series.start_date,
+            provider_series.end_date,
+            provider_series.grouping,
+            DEFAULT_SOURCE_POLICY,
+            now=NOW,
+        )
+
+    key = rate_series_cache_key(
+        "EUR",
+        "JPY",
+        provider_series.start_date,
+        provider_series.end_date,
+        provider_series.grouping,
+        DEFAULT_SOURCE_POLICY,
+    )
+    assert cache.get(key) is None
+
+
+def test_rate_series_gateway_rejects_negative_future_clock_skew():
+    with pytest.raises(ValueError, match="future clock skew"):
+        HistoricalSeriesGateway(FakeProvider(), max_future_skew=timedelta(seconds=-1))
 
 
 def test_rate_series_wrong_grouping_cache_is_not_reused():

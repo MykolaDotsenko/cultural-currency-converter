@@ -249,16 +249,20 @@ class LatestQuoteGateway:
         fresh_for: timedelta = timedelta(hours=6),
         stale_for: timedelta = timedelta(days=7),
         max_observation_gap: timedelta = timedelta(days=7),
+        max_future_skew: timedelta = timedelta(minutes=5),
         physical_ttl_seconds: int = 8 * 24 * 60 * 60,
     ):
         if fresh_for <= timedelta(0) or stale_for <= fresh_for:
             raise ValueError("FX freshness windows must be positive and ordered.")
         if max_observation_gap < timedelta(0):
             raise ValueError("Latest FX observation gap cannot be negative.")
+        if max_future_skew < timedelta(0):
+            raise ValueError("Latest FX future clock skew cannot be negative.")
         self.provider = provider
         self.fresh_for = fresh_for
         self.stale_for = stale_for
         self.max_observation_gap = max_observation_gap
+        self.max_future_skew = max_future_skew
         self.physical_ttl_seconds = physical_ttl_seconds
 
     def get(
@@ -268,7 +272,13 @@ class LatestQuoteGateway:
         cached = self._cache_get(key)
         if cached is not None:
             try:
-                self._assert_quote_identity(cached, base=base, quote=quote, policy=policy)
+                self._assert_quote_identity(
+                    cached,
+                    base=base,
+                    quote=quote,
+                    policy=policy,
+                    now=now,
+                )
             except FxProviderInvalidPayload:
                 logger.warning(
                     "Ignoring semantically mismatched latest FX cache entry",
@@ -293,7 +303,13 @@ class LatestQuoteGateway:
 
         try:
             fresh = self.provider.latest_quote(base, quote, policy)
-            self._assert_quote_identity(fresh, base=base, quote=quote, policy=policy)
+            self._assert_quote_identity(
+                fresh,
+                base=base,
+                quote=quote,
+                policy=policy,
+                now=now,
+            )
         except (FxProviderUnavailable, FxProviderInvalidPayload):
             if (
                 cached
@@ -325,7 +341,12 @@ class LatestQuoteGateway:
         base: str,
         quote: str,
         policy: FxSourcePolicy,
+        now: datetime,
     ) -> None:
+        if quote_value.fetched_at.astimezone(UTC) > now.astimezone(UTC) + self.max_future_skew:
+            raise FxProviderInvalidPayload(
+                "Latest quote fetch timestamp exceeds the allowed future clock skew."
+            )
         if quote_value.base_currency != base.upper() or quote_value.quote_currency != quote.upper():
             raise FxProviderInvalidPayload("Provider returned a quote for a different pair.")
         if quote_value.provider_policy != policy:
@@ -385,13 +406,17 @@ class HistoricalSeriesGateway:
         *,
         fresh_for: timedelta = timedelta(hours=24),
         stale_for: timedelta = timedelta(days=30),
+        max_future_skew: timedelta = timedelta(minutes=5),
         physical_ttl_seconds: int = 31 * 24 * 60 * 60,
     ):
         if fresh_for <= timedelta(0) or stale_for <= fresh_for:
             raise ValueError("FX series freshness windows must be positive and ordered.")
+        if max_future_skew < timedelta(0):
+            raise ValueError("FX series future clock skew cannot be negative.")
         self.provider = provider
         self.fresh_for = fresh_for
         self.stale_for = stale_for
+        self.max_future_skew = max_future_skew
         self.physical_ttl_seconds = physical_ttl_seconds
 
     def get(
@@ -424,6 +449,7 @@ class HistoricalSeriesGateway:
                     end_date=end_date,
                     grouping=grouping,
                     policy=policy,
+                    now=now,
                 )
             except FxProviderInvalidPayload:
                 logger.warning(
@@ -467,6 +493,7 @@ class HistoricalSeriesGateway:
                 end_date=end_date,
                 grouping=grouping,
                 policy=policy,
+                now=now,
             )
         except (FxProviderUnavailable, FxProviderInvalidPayload):
             if (
@@ -495,8 +522,8 @@ class HistoricalSeriesGateway:
         self._cache_set(key, fresh)
         return fresh, False
 
-    @staticmethod
     def _assert_series_identity(
+        self,
         series: RateSeries,
         *,
         base: str,
@@ -505,7 +532,12 @@ class HistoricalSeriesGateway:
         end_date: date,
         grouping: RateSeriesGrouping,
         policy: FxSourcePolicy,
+        now: datetime,
     ) -> None:
+        if series.fetched_at.astimezone(UTC) > now.astimezone(UTC) + self.max_future_skew:
+            raise FxProviderInvalidPayload(
+                "FX series fetch timestamp exceeds the allowed future clock skew."
+            )
         if series.base_currency != base.upper() or series.quote_currency != quote.upper():
             raise FxProviderInvalidPayload("Provider returned a series for a different pair.")
         if series.start_date != start_date or series.end_date != end_date:

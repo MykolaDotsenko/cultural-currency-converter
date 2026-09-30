@@ -124,6 +124,7 @@ Examples of durable invariants:
 - financial arithmetic uses Decimal semantics;
 - historical requested date and effective observation date are not silently conflated;
 - provider observations cannot be dated after the time they were fetched;
+- cached/provider retrieval timestamps beyond bounded clock skew are rejected rather than treated as fresh;
 - latest/reference observations stay within the accepted window for their publication frequency;
 - current context is not silently backdated;
 - user-owned data is ownership scoped;
