@@ -195,6 +195,29 @@ The intended loop is:
 Convert → Understand → Explore → Save → Return
 ```
 
+### Retention model: trip-cycle habit
+
+The product should not optimize for artificial daily usage across the whole year. Travel-money needs are naturally episodic. The healthier retention model is a **trip-cycle habit**:
+
+```text
+Discover destination
+→ Create trip/scenario
+→ Set budget
+→ Save
+→ Re-check before travel
+→ Refresh/download destination context
+→ Use during the trip
+→ Track simple remaining budget
+→ Finish trip
+→ Reuse preferences for the next trip
+```
+
+The strongest retention mechanisms are continuity of state and point-of-use utility, not generic engagement mechanics.
+
+Before travel, the product should make it easy to return to a saved scenario and understand what changed. During travel, the product should become more useful through fast conversion, camera-assisted price understanding, offline context and a lightweight remaining-budget view. After travel, it should preserve only the preferences and reusable assumptions that make the next trip faster to set up.
+
+Avoid manufacturing retention through streaks, badges, random rate notifications, generic content feeds or forced login.
+
 The signature interaction keeps source and destination identities visible together. Country context can change atmosphere and enrichment while the financial calculation remains stable and independently trustworthy.
 
 ## Primary users
@@ -214,7 +237,9 @@ The web product currently supports:
 - historical FX conversion;
 - explicit requested/effective observation dates;
 - bilateral country/currency selection;
-- historical trend views and Then & Now;
+- historical trend views, 1Y / 5Y / 10Y quick ranges and Then & Now;
+- smart country/currency filtering that respects shared and historical relationships;
+- explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
 - sourced current destination context;
 - everyday-value examples;
 - cash/card/ATM/tipping guidance;
@@ -290,6 +315,16 @@ Useful candidate measures include:
 - optional AI quick-prompt usage;
 - share-card usage;
 - D1 / D7 / D30 return where lawful and proportionate.
+
+### Retention measurement priority
+
+Do not treat generic DAU as the primary success metric for this product. Prefer metrics that reflect the natural travel lifecycle:
+
+1. **Saved Trip / Scenario → Reopen rate** — whether planning state creates a reason to return.
+2. **Active Trip → Uses per travel day** — whether the product is genuinely useful at the point of use.
+3. **Completed Trip → Return for next trip** — whether the product earns long-term trust and reuse.
+
+Supporting measures can include pre-trip re-check completion, offline-pack refresh/use, camera-to-confirmed-conversion completion, add-to-trip usage, and the percentage of returning users who can start a new trip without re-entering unchanged preferences.
 
 Measurement must not silently turn sensitive travel/financial context into broad behavioural tracking. Collect only what is needed to evaluate product usefulness, document retention, and respect user/account privacy boundaries.
 
