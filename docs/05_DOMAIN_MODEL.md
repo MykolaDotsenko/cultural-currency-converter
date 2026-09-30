@@ -164,6 +164,35 @@ Browser-local recents and account recents are intentionally distinct privacy sur
 
 Account recent history is only recorded after explicit opt-in and does not silently import existing local browser history.
 
+## SavedScenario
+
+A SavedScenario is a signed-in user's reusable planning state for a **trip**, **budget** or future **shopping** workflow.
+
+It is deliberately separate from `FavouritePair` and `RecentConversion`:
+
+- a favourite is a lightweight pair shortcut;
+- a recent conversion is bounded history;
+- a saved scenario carries explicit planning assumptions that should survive reopening and re-checking.
+
+Current scenario identity includes source/destination currencies, optional source/destination countries, optional canonical destination city, source amount, optional trip dates, explicit duration and traveller count.
+
+Trip and budget scenarios require destination-country context. A destination city must belong to that country. Country/currency associations are validated against the current temporal mapping when the scenario is created.
+
+### SavedScenarioBudgetItem
+
+Budget assumptions are normalized child rows rather than an opaque JSON payload. Each scenario can store at most one assumption per category, expressed as positive units per person per day.
+
+This keeps saved assumptions reusable by the deterministic BudgetInterpretation engine while allowing current price/provenance data to be reloaded on re-open instead of freezing old local-price claims into the scenario.
+
+### SavedScenarioObservation
+
+A scenario observation is an immutable trusted current FX observation recorded when the scenario is first saved or explicitly re-checked.
+
+It stores the scenario amount, output amount, rate, effective date, provider attribution, fetch timestamp and stale state. Historical FX is not accepted into this current travel-scenario path.
+
+Observations are append-only. This provides the evidence needed for future **rate changed since saved / last re-check** features without rewriting the original baseline.
+
+
 ## Account preferences
 
 Privacy-affecting persistence preferences belong to the account and should have explicit defaults.

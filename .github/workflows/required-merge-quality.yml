@@ -109,6 +109,7 @@ jobs:
             apps/exchange/payment_estimate.py \
             apps/exchange/providers/base.py \
             apps/exchange/providers/frankfurter.py \
+            apps/travel/scenarios.py \
             config/environment.py \
             config/database.py \
             config/cache.py \
