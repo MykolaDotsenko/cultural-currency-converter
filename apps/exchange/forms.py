@@ -439,7 +439,7 @@ class BudgetInterpretationForm(forms.Form):
                         "inputmode": "decimal",
                         "min": "0.01",
                         "max": "100",
-                        "step": "0.25",
+                        "step": "0.01",
                     }
                 ),
             )
