@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal, DecimalException
 from enum import StrEnum
+from typing import Protocol
 
 from django.db import DatabaseError
 from django.utils import timezone
@@ -127,7 +127,16 @@ class MoneyContext:
         )
 
 
-DestinationContextBuilder = Callable[..., DestinationContext | None]
+class DestinationContextBuilder(Protocol):
+    def __call__(
+        self,
+        *,
+        country_code: str,
+        converted_amount: Decimal,
+        quote_currency: str,
+        as_of: date,
+        price_limit: int,
+    ) -> DestinationContext | None: ...
 
 
 def build_money_context(
