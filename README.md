@@ -21,7 +21,7 @@ The arithmetic is the easy part. A useful currency product also has to answer:
 - **Which rate was used?** Current and historical conversions keep source and effective-date semantics explicit.
 - **What happens when a provider fails?** Core conversion still works if optional media, enrichment or AI is unavailable.
 - **Where did local context come from?** Destination content and managed media keep provenance instead of presenting generated filler as fact.
-- **Who owns saved data?** Anonymous favourites/recent conversions stay browser-local; signed-in data is owner-scoped and cross-device history is opt-in.
+- **Who owns saved data?** Anonymous favourites/recent conversions stay browser-local; signed-in favourites, history and saved plans are owner-scoped, while cross-device recent history remains separately opt-in.
 
 Those boundaries are more important to this project than adding another conversion widget.
 
@@ -33,6 +33,8 @@ Those boundaries are more important to this project than adding another conversi
 - historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now comparison;
 - explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
 - sourced everyday-value and payment context;
+- explicit city/national Budget Interpretation with signed context handoff;
+- account-owned saved trip/budget plans with immutable starting FX observations;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
 - optional Gemini explanation with deterministic fallback;
