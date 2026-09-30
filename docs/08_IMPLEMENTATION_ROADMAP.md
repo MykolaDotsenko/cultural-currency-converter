@@ -182,6 +182,62 @@ Several ideas in the integrated concept are better treated as shared foundations
 
 Build these as reusable, provenance-aware data/content systems that support multiple roadmap features instead of duplicating country-specific content inside individual views.
 
+### Fourth expansion wave from the travel-money intelligence concept
+
+The travel-money intelligence concept adds the following non-duplicative user-facing capabilities above the current **60/100 usefulness + distinctiveness threshold**.
+
+24. **City-level money intelligence — 93/100**
+   - Add city-scoped local-value and budget context where data quality supports it, because national averages are often too broad for practical travel decisions.
+   - Keep city/national scope visible and never silently substitute one for the other.
+   - Reuse the same provenance/freshness model as country-level typical prices.
+
+25. **Camera mode for menu / receipt / price / ATM understanding — 90/100**
+   - Let a user explicitly capture or upload a menu, receipt, shelf price or ATM screen and extract amount/currency/context for conversion.
+   - Require user confirmation before financial interpretation when OCR/model extraction is uncertain.
+   - Treat screenshots and receipts as potentially sensitive; minimize retention and never infer hidden banking credentials.
+
+26. **Explore / discovery mode — 88/100**
+   - Offer a discovery surface for sourced money-context collections such as same-amount destination comparisons, card/cash patterns, currency stories and regional exploration.
+   - Use only comparable, scoped data for rankings or “goes further” claims.
+   - Keep Explore downstream of the converter rather than turning the product into a generic travel-content portal.
+
+27. **Contextual AI quick prompts — 87/100**
+   - Offer a few relevant next questions derived from the current conversion/scenario instead of presenting an empty chatbot.
+   - Examples can cover budget fit, cash need, payment warnings, rate explanation and destination comparison.
+   - Prompts must resolve through bounded trusted context and remain optional.
+
+28. **Structured AI insight panel — 86/100**
+   - Present AI-assisted answers in a predictable structure such as short answer, key factors, one caution and next step.
+   - Keep deterministic/sourced facts visually distinguishable from generated explanation.
+   - A failed AI response must not remove or invalidate the conversion/context result.
+
+29. **Smart result summary — 84/100**
+   - After a successful conversion, optionally show one concise grounded sentence describing the most useful implication of the result.
+   - Prefer deterministic templating when it can communicate the point reliably; use AI only when it adds material explanatory value.
+   - Never turn the summary into an unsupported recommendation or investment-style signal.
+
+30. **Offline destination packs — 82/100**
+   - For future mobile/offline use, allow selected destination money context to remain useful with limited connectivity.
+   - Define freshness/expiry for rates versus slower-moving payment/cultural content; never present stale FX as current.
+   - Keep offline scope small enough to remain maintainable and privacy-conscious.
+
+31. **Lightweight personalization — 79/100**
+   - Allow opt-in preferences such as home currency, preferred language, travel style or answer-detail level to reduce repetitive setup.
+   - Use saved/recent behaviour cautiously; do not silently build a sensitive travel/financial profile.
+   - Personalization should improve defaults and explanations without changing deterministic financial truth.
+
+32. **Actionable history shortcuts — 74/100**
+   - Let a past conversion reopen into useful follow-up actions such as repeat, compare, save as scenario/trip or open relevant context.
+   - Preserve original requested/effective dates and provider semantics when historical records are reused.
+   - Avoid turning history into a noisy action dashboard.
+
+33. **Voice interaction — 68/100**
+   - Allow an explicit voice query for travel-money questions when hands-free interaction materially helps, especially on mobile during travel.
+   - Route recognized content through the same structured budget/conversion/context services as text.
+   - Keep voice optional, privacy-conscious and non-essential to any core workflow.
+
+Items already represented elsewhere—destination comparison, trip dashboard/detail, saved trips, alerts, share cards and payment profiles—remain part of their existing roadmap entries rather than being duplicated here.
+
 ## Later candidate: stable external/mobile API
 
 A versioned API is useful when a native client or external consumer becomes active.
