@@ -148,7 +148,7 @@ Create a 9:16 premium mobile design concept for Cultural Currency Converter focu
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | source selected | 2026-09-29 | Wikimedia Commons / Chabe01 | managed-media curated manifest | sourced candidate | Contemporary Rue Lauriston street source selected; ingestion/review/publication remain separate. |
 | P02 | source selected | 2026-09-29 | Wikimedia Commons / Wyslijp16 | managed-media curated manifest | sourced candidate | Paris croissant and pain-au-chocolat source selected; image remains atmosphere, not price evidence. |
-| P03 | — | — | — | — | planned | — |
-| P04 | — | — | — | — | planned | — |
+| P03 | v01 | 2026-09-30 | Higgsfield Z Image + reviewed crop | `static/images/country-media/fr/payment-culture/fr-payment-culture-v01.webp` | ✅ trial-approved | Synthetic Paris café/boulangerie contactless-payment atmosphere; landmark/flag cues remain secondary under softened review; supporting media only, never evidence for payment prevalence or merchant acceptance. |
+| P04 | v01 | 2026-09-30 | Higgsfield Z Image + reviewed crop | `static/images/country-media/fr/local-detail/fr-local-detail-v01.webp` | ✅ trial-approved | Synthetic café-detail study with espresso cups, paper slip and brass/zinc-like counter; blurred Paris landmark cue accepted as secondary; not evidence for pricing or venue facts. |
 | P05 | — | — | — | — | planned | — |
 | P06 | — | — | — | — | planned | — |
