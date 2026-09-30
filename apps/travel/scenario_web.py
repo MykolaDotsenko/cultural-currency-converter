@@ -11,13 +11,12 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, Country, Currency
-from apps.exchange.budget import BudgetAssumptions, available_budget_categories
+from apps.exchange.budget import BudgetAssumptions
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
     load_budget_context_snapshot_token,
 )
 from apps.exchange.forms import BudgetInterpretationForm
-from apps.exchange.money_context import MoneyContextState, build_money_context
 from apps.travel.models import SavedScenario, SavedScenarioKind
 from apps.travel.scenarios import (
     SavedScenarioError,
@@ -89,30 +88,10 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         )
         return redirect("converter")
 
-    money_context = build_money_context(
-        conversion=snapshot.conversion,
-        destination_country_code=destination_country.iso2,
-        destination_city_slug=destination_city.slug if destination_city is not None else "",
-        as_of=snapshot.as_of,
-        price_limit=6,
-    )
-    if money_context.destination_state is MoneyContextState.DEGRADED:
-        messages.error(
-            request,
-            "Current destination context could not be verified, so this budget was not saved.",
-        )
-        return redirect("converter")
-
-    anchors = available_budget_categories(money_context)
-    category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
-    if not category_options:
-        messages.error(
-            request,
-            "There is not enough current local-price context to save this budget.",
-        )
-        return redirect("converter")
-
-    form = BudgetInterpretationForm(request.POST, category_options=category_options)
+    # The signed snapshot already establishes the trusted conversion and
+    # destination scope. Re-validate only the explicit user assumptions here;
+    # saving must not depend on a second live local-price lookup.
+    form = BudgetInterpretationForm(request.POST, category_options=())
     if not form.is_valid():
         messages.error(
             request,
@@ -150,8 +129,14 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
             spec=spec,
             conversion=snapshot.conversion,
         )
-    except (SavedScenarioError, DatabaseError) as exc:
+    except SavedScenarioError as exc:
         messages.error(request, f"Could not save this budget: {exc}")
+        return redirect("converter")
+    except DatabaseError:
+        messages.error(
+            request,
+            "Saved scenarios are temporarily unavailable. Your conversion was not changed.",
+        )
         return redirect("converter")
 
     messages.success(request, "Budget saved to your account.")
