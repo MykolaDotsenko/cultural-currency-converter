@@ -272,7 +272,6 @@ def test_latest_observation_date_is_not_treated_as_terminal_coverage():
     assert result.quote.effective_date == date(2026, 9, 18)
 
 
-
 def test_then_now_unrepresentable_rate_difference_uses_specific_error():
     historical_quote = RateQuote(
         base_currency="EUR",
