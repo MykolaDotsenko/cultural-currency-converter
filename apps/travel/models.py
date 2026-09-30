@@ -330,7 +330,7 @@ class SavedScenarioBudgetItem(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.scenario_id}: {self.category} × {self.units_per_person_per_day}"
+        return f"{self.scenario_id}: {self.category} x {self.units_per_person_per_day}"
 
 
 class SavedScenarioObservationKind(models.TextChoices):
