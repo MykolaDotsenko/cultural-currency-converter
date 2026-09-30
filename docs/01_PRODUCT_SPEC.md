@@ -44,6 +44,10 @@ The engine should combine, when defensible:
 
 “What this buys” should therefore be treated as a first-class product capability rather than decorative post-conversion content. The interface can stay simple, but the underlying context model should be reusable by converter, comparison, budget, trip, camera and mobile/offline flows.
 
+The current implementation establishes the first shared application contract for this engine: a trusted conversion is composed with optional current destination context and an explicit availability state. Known destination-enrichment/data failures degrade locally and do not invalidate the conversion. Historical conversions and currency-only conversions remain explicit non-applicable cases for current destination context.
+
+Future budget, comparison, trip, camera and mobile/offline work should extend this contract rather than create parallel calculations or duplicate destination-context semantics.
+
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 
 - **Rate** — a trustworthy reference FX observation with source/effective-date semantics.
