@@ -114,6 +114,7 @@ def run_converter_submission(
 
     source_currency, destination_currency = _currency_pair(command)
     historical_suggestions = _historical_suggestions(command)
+    request_local_date = timezone.localdate()
 
     try:
         if command.historical:
@@ -128,6 +129,7 @@ def run_converter_submission(
                 gateway=historical_gateway_factory,
                 base_metadata=_historical_currency_metadata(source_currency),
                 quote_metadata=_historical_currency_metadata(destination_currency),
+                current_date=request_local_date,
             )
         else:
             conversion = quote_conversion(
@@ -159,7 +161,7 @@ def run_converter_submission(
                 country_code=command.destination_country,
                 converted_amount=conversion.output_amount,
                 quote_currency=conversion.quote.quote_currency,
-                as_of=context_as_of or timezone.localdate(),
+                as_of=context_as_of or request_local_date,
             )
         except Exception:
             logger.exception(

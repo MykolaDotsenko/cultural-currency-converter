@@ -126,6 +126,7 @@ Examples of durable invariants:
 - provider observations cannot be dated after the time they were fetched;
 - cached/provider retrieval timestamps beyond bounded clock skew are rejected rather than treated as fresh;
 - latest/reference observations stay within the accepted window for their publication frequency;
+- user-facing future-date validation uses the configured application-local calendar date rather than a UTC rollover;
 - current context is not silently backdated;
 - user-owned data is ownership scoped;
 - account recent history requires explicit opt-in;

@@ -144,6 +144,27 @@ def test_valid_one_year_series_uses_daily_grouping():
     assert gateway.calls[0][4] is RateSeriesGrouping.DAILY
 
 
+def test_series_local_today_can_be_ahead_of_utc_date():
+    series = make_series(
+        start_date=date(2025, 9, 21),
+        end_date=date(2026, 9, 21),
+    )
+    gateway = SeriesGateway(series)
+
+    result = get_rate_series(
+        base_currency="EUR",
+        quote_currency="JPY",
+        start_date=series.start_date,
+        end_date=series.end_date,
+        gateway=gateway,
+        now=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
+        current_date=date(2026, 9, 21),
+    )
+
+    assert result.series == series
+    assert gateway.calls[0][3] == date(2026, 9, 21)
+
+
 def test_explicit_series_grouping_is_preserved():
     series = make_series(grouping=RateSeriesGrouping.MONTH)
     gateway = SeriesGateway(series)
