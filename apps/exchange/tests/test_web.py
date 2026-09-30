@@ -1076,7 +1076,6 @@ def test_historical_series_latest_comparison_failure_is_non_fatal(client, refere
 
 
 @pytest.mark.django_db
-@pytest.mark.django_db
 def test_historical_series_unrepresentable_latest_comparison_is_non_fatal(
     client, reference_data
 ):
