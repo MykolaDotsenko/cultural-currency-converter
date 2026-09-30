@@ -10,7 +10,9 @@ The web product already includes:
 
 - current and historical FX conversion;
 - country/currency temporal modelling;
-- historical trends and Then & Now;
+- historical trends with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now;
+- smart country/currency filtering across current, shared and historical relationships;
+- explicit-assumption Real Payment Estimate for current non-identity conversions;
 - destination payment/everyday-value context;
 - deterministic culture/story content;
 - managed raster media with provenance/review;
@@ -21,6 +23,22 @@ The web product already includes:
 - browser accessibility/reflow quality gates.
 
 The old release-owned cartoon SVG media pack has been removed.
+
+Roadmap item numbers are stable planning IDs. When an item ships, it moves to the shipped section instead of being renumbered, so the remaining future queue can contain gaps.
+
+## Shipped roadmap items
+
+The following previously planned items are now part of the current product baseline:
+
+- **#4 Country ↔ currency smart filtering — shipped.** The current picker supports country-context and currency-only choices, respects historical mode/date semantics and labels historical options; form validation rejects mismatched country/currency submissions before provider access.
+- **#10 Real Payment Estimate — shipped first production slice.** Current non-identity conversions can apply explicit FX markup plus source/destination fixed-fee assumptions through a signed trusted conversion snapshot. Reusable saved fee profiles remain future work.
+- **#23 Historical quick ranges and anchor values — shipped.** The historical-series UI supports 1Y / 5Y / 10Y / custom ranges with selected/minimum/maximum/last observations, provider/stale context and Then & Now where available.
+
+## Immediate quality correction
+
+Before the next feature PR, restore green browser QA for the Real Payment Estimate flow. The current browser script submits `1.001` as a source fixed fee but waits for the excess-decimal-places message; the shared parser correctly treats that value as ambiguous first. Align the browser test with the parser contract, then re-run Chromium required quality plus Firefox/WebKit evidence.
+
+This is test debt, not a reason to weaken financial-input validation.
 
 ## Now: premium visual pass
 
@@ -61,11 +79,6 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Prioritize what an amount roughly means locally, payment habits, cash/card/ATM guidance, tipping/customs and repeat-trip usefulness.
    - Keep claims sourced, scoped and current; optional enrichment must remain non-blocking for conversion.
 
-4. **Country ↔ currency smart filtering — 82/100**
-   - Make the selector behaviour explicit: choosing a currency should narrow or explain relevant countries, and choosing a country should narrow or explain currencies valid for that country/date.
-   - Preserve currency-only conversion when country context is unknown or unnecessary.
-   - Respect shared currencies, archived currencies and temporal CountryCurrency relationships instead of hard-coding current-only mappings.
-
 5. **Historical guide / currency timeline — 80/100**
    - Build a deeper historical exploration layer from the existing historical FX and Then & Now foundations.
    - Prefer concise timelines, currency-era transitions, sourced archival media and provenance over encyclopedia-style long-form content.
@@ -95,12 +108,6 @@ Implementation order inside this queue can change when dependencies overlap. Pre
 ### Second expansion wave from the broader product specification
 
 The following additional user-facing capabilities also clear the current **60/100 usefulness + distinctiveness threshold**. They should follow or interleave with the queue above when dependencies make that more efficient.
-
-10. **Real Payment Estimate — 94/100**
-   - Explain the gap between a reference market rate and what a user may actually experience when paying by card or withdrawing cash.
-   - Model only defensible inputs/ranges such as user-supplied bank/card markup, known fixed fees or clearly labelled scenario assumptions.
-   - Optionally allow a signed-in user to save explicit fee assumptions/profile defaults for reuse, with clear ownership/edit/delete controls; never infer issuer fees from unrelated behaviour.
-   - Never present guessed bank, ATM, DCC or merchant fees as known facts; preserve the existing trust/provenance boundary.
 
 11. **Budget interpretation — 91/100**
    - Help answer “Is this amount likely to be enough for this destination and duration?” using sourced local-price context and explicit assumptions.
@@ -170,11 +177,6 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
    - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
    - Include destination/offline-pack freshness when it materially affects readiness for travel.
    - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
-
-23. **Historical quick ranges and anchor values — 78/100**
-   - Add approachable historical range controls such as 1Y / 5Y / 10Y where provider coverage supports them.
-   - Pair the chart with a small number of actual anchor observations and a grounded human-readable summary.
-   - Preserve requested/effective-date semantics and avoid trading-style indicators or unsupported continuity.
 
 ### Enabling data/content foundation
 
