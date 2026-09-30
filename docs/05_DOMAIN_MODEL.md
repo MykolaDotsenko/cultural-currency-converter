@@ -192,6 +192,10 @@ It stores the scenario amount, output amount, rate, effective date, provider att
 
 Observations are append-only. This provides the evidence needed for future **rate changed since saved / last re-check** features without rewriting the original baseline.
 
+The first account-facing budget save flow persists only normalized scenario assumptions plus the trusted FX observation. Current TypicalPrice rows and rendered budget results are intentionally **not** copied into the scenario: when the product later re-checks a scenario, current local-price context should be recomputed from the canonical provenance-aware data layer rather than presenting an old local-price snapshot as current truth.
+
+Scenario read/delete operations are always owner-scoped. Anonymous browser-local scenario persistence is a separate future privacy surface and must not be inferred from account persistence.
+
 
 ## Account preferences
 
