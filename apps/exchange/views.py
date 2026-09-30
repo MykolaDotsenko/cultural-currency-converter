@@ -16,6 +16,7 @@ from apps.exchange.web.gateways import (
     build_latest_quote_gateway,
 )
 from apps.exchange.web.history import historical_series_view
+from apps.exchange.web.payment_estimate import payment_estimate_view
 from apps.exchange.web.picker import picker_options_view
 from apps.travel.history import record_recent_conversion
 from apps.travel.queries import is_user_favourite
@@ -48,6 +49,10 @@ def historical_series(request: HttpRequest) -> HttpResponse:
         quote_conversion_fn=quote_conversion,
         compare_historical_to_latest_fn=compare_historical_to_latest,
     )
+
+
+def payment_estimate(request: HttpRequest) -> HttpResponse:
+    return payment_estimate_view(request)
 
 
 def conversion_explanation(request: HttpRequest) -> HttpResponse:
