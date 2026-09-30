@@ -40,6 +40,8 @@ class BudgetCategoryAssumption:
     units_per_person_per_day: Decimal
 
     def __post_init__(self) -> None:
+        if not isinstance(self.category, str):
+            raise BudgetInterpretationError("Budget category must be a string.")
         category = self.category.strip().lower()
         if not category:
             raise BudgetInterpretationError("Budget category cannot be empty.")
@@ -75,9 +77,18 @@ class BudgetAssumptions:
             raise BudgetInterpretationError("Budget traveler count must be an integer.")
         if not 1 <= self.travelers <= 20:
             raise BudgetInterpretationError("Budget traveler count must be between 1 and 20.")
+        if not isinstance(self.basis, BudgetBasis):
+            raise BudgetInterpretationError("Budget basis must be a BudgetBasis value.")
+        if not isinstance(self.categories, tuple):
+            raise BudgetInterpretationError("Budget category assumptions must be an immutable tuple.")
         if not 1 <= len(self.categories) <= 8:
             raise BudgetInterpretationError(
                 "Budget interpretation requires between 1 and 8 category assumptions."
+            )
+
+        if any(not isinstance(item, BudgetCategoryAssumption) for item in self.categories):
+            raise BudgetInterpretationError(
+                "Budget categories must be BudgetCategoryAssumption values."
             )
 
         category_names = [item.category for item in self.categories]
@@ -167,6 +178,7 @@ def interpret_budget(
                 category_assumption=category_assumption,
                 duration_days=assumptions.duration_days,
                 travelers=assumptions.travelers,
+                destination_minor_units=destination_minor_units,
                 quantum=quantum,
             )
         )
@@ -258,8 +270,14 @@ def _estimate_line(
     category_assumption: BudgetCategoryAssumption,
     duration_days: int,
     travelers: int,
+    destination_minor_units: int,
     quantum: Decimal,
 ) -> BudgetLineEstimate:
+    if price.currency_minor_units != destination_minor_units:
+        raise BudgetInterpretationError(
+            "Typical-price minor units do not match destination currency metadata."
+        )
+
     high_price = price.amount_high or price.amount_low
     units = category_assumption.units_per_person_per_day
 
