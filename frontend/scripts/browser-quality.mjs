@@ -390,8 +390,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
         id: control.id,
         name: control.getAttribute("name"),
         value: "value" in control ? String(control.value) : "",
-        validationMessage:
-          "validationMessage" in control ? String(control.validationMessage) : "",
+        validationMessage: "validationMessage" in control ? String(control.validationMessage) : "",
       }));
     return { valid: form.checkValidity(), invalidControls };
   });
