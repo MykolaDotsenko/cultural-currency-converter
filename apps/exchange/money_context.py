@@ -5,13 +5,22 @@ from datetime import date
 from decimal import Decimal
 from typing import Protocol
 
-from apps.culture.services import DestinationContext, build_destination_context
+from apps.culture.services import (
+    DestinationContext,
+    PaymentContext,
+    TypicalPriceContext,
+    build_destination_context,
+)
 from apps.exchange.domain import ConversionResult
 from apps.exchange.payment_estimate import (
     PaymentEstimate,
     PaymentEstimateAssumptions,
     estimate_conversion_payment_value,
 )
+
+
+class MoneyContextInvariantError(RuntimeError):
+    pass
 
 
 class DestinationContextBuilder(Protocol):
@@ -41,40 +50,48 @@ class MoneyContext:
 
         if self.destination is not None:
             if self.conversion.quote.historical:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Current destination context cannot be attached to a historical conversion."
                 )
             if not destination_country:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Destination context requires an explicit destination country."
                 )
             if self.destination.country_code != destination_country:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Destination context country must match the money-context destination."
                 )
             if self.destination.as_of != self.context_as_of:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Destination context date must match the money-context date."
+                )
+
+            if any(
+                price.currency_code != self.conversion.quote.quote_currency
+                for price in self.destination.prices
+            ):
+                raise MoneyContextInvariantError(
+                    "Destination price currency must match the conversion quote currency."
                 )
 
         if self.payment_estimate is not None:
             if self.conversion.quote.historical:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Payment estimates cannot be attached to historical money context."
                 )
             if self.conversion.quote.base_currency == self.conversion.quote.quote_currency:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Payment estimates cannot be attached to same-currency money context."
                 )
             if self.payment_estimate.source_budget != self.conversion.input_amount:
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Payment estimate source budget must match the conversion input."
                 )
             if (
                 self.payment_estimate.reference_destination_amount
                 != self.conversion.output_amount
             ):
-                raise ValueError(
+                raise MoneyContextInvariantError(
                     "Payment estimate reference amount must match the conversion output."
                 )
 
@@ -83,11 +100,11 @@ class MoneyContext:
         return self.destination is not None and self.destination.has_content
 
     @property
-    def prices(self):
+    def prices(self) -> tuple[TypicalPriceContext, ...]:
         return self.destination.prices if self.destination is not None else ()
 
     @property
-    def payment(self):
+    def payment(self) -> PaymentContext | None:
         return self.destination.payment if self.destination is not None else None
 
 
