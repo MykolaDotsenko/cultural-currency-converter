@@ -49,6 +49,28 @@ A time series represents normalized FX observations for a pair and interval.
 
 Chart presentation should not invent observations or imply trading-quality market data.
 
+## Trusted conversion snapshot
+
+A signed trusted conversion snapshot carries the already-established conversion inputs/results needed by optional follow-up calculations without trusting editable browser fields as financial truth.
+
+The current payment-estimate flow uses this boundary so a user cannot replace the reference amount/rate by posting arbitrary hidden fields.
+
+A trusted snapshot is not a new FX observation and does not extend the freshness or historical meaning of the underlying quote.
+
+## PaymentEstimate
+
+A payment estimate is a deterministic scenario calculation layered on top of a trusted current conversion.
+
+Current explicit inputs are:
+
+- non-negative FX markup percentage within the product bound;
+- non-negative source-currency fixed fee;
+- non-negative destination-currency fixed fee.
+
+The calculation uses Decimal arithmetic and destination-currency minor-unit rounding. Non-negative assumptions must never produce a better destination result than the trusted reference conversion.
+
+It is not a bank/card/ATM quote, does not infer provider fees and is not currently defined for historical payment costs.
+
 ## CulturalProfile / destination context
 
 Curated current destination guidance such as:
