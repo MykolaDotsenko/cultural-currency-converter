@@ -149,6 +149,41 @@ def test_known_enrichment_failure_degrades_without_losing_conversion(failure):
     assert context.destination_context is None
 
 
+def test_mismatched_destination_enrichment_degrades_instead_of_rewriting_conversion():
+    mismatched = DestinationContext(
+        country_code="FI",
+        country_name="Finland",
+        as_of=date(2026, 9, 22),
+        payment=_payment_context(),
+        prices=(),
+    )
+
+    context = build_money_context(
+        conversion=_conversion(),
+        destination_country_code="JP",
+        as_of=date(2026, 9, 22),
+        destination_context_builder=Mock(return_value=mismatched),
+    )
+
+    assert context.destination_state is MoneyContextState.DEGRADED
+    assert context.destination_context is None
+    assert context.conversion.output_amount == Decimal("17450")
+
+
+def test_invalid_destination_country_code_is_rejected_without_enrichment():
+    builder = Mock()
+
+    with pytest.raises(ValueError, match="two ASCII letters"):
+        build_money_context(
+            conversion=_conversion(),
+            destination_country_code="JPN",
+            as_of=date(2026, 9, 22),
+            destination_context_builder=builder,
+        )
+
+    builder.assert_not_called()
+
+
 def test_programming_error_is_not_silenced():
     with pytest.raises(RuntimeError, match="programming bug"):
         build_money_context(
