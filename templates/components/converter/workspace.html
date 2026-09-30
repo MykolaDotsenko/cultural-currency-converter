@@ -21,12 +21,7 @@
       <div class="qa-workspace__pair">
         <section class="qa-workspace__context qa-workspace__context--source"
                  data-country-theme="fi"
-                 aria-labelledby="workspace-source-title">
-          <div class="qa-workspace__identity">
-            <p class="qa-workspace__role">Source</p>
-            <h3 id="workspace-source-title">Finland</h3>
-            <p>Euro · EUR</p>
-          </div>
+                 aria-labelledby="workspace-source-label">
           {% with component=workspace_source %}
             {% include "components/converter/primitives.html#country-currency-trigger" %}
           {% endwith %}
@@ -36,12 +31,7 @@
         </div>
         <section class="qa-workspace__context qa-workspace__context--destination"
                  data-country-theme="jp"
-                 aria-labelledby="workspace-destination-title">
-          <div class="qa-workspace__identity">
-            <p class="qa-workspace__role">Destination</p>
-            <h3 id="workspace-destination-title">Japan</h3>
-            <p>Japanese yen · JPY</p>
-          </div>
+                 aria-labelledby="workspace-destination-label">
           {% with component=workspace_destination %}
             {% include "components/converter/primitives.html#country-currency-trigger" %}
           {% endwith %}

@@ -668,22 +668,6 @@
   opacity: 0.72;
 }
 
-.qa-workspace__identity {
-  min-width: 0;
-  padding-inline-start: var(--qa-space-3);
-  border-inline-start: 0.25rem solid var(--qa-context-accent);
-}
-
-.qa-workspace__identity h3 {
-  margin-block-end: var(--qa-space-1);
-  font-size: clamp(1.25rem, 5cqi, 1.75rem);
-}
-
-.qa-workspace__identity p {
-  margin-block-end: 0;
-  color: var(--color-muted);
-}
-
 .qa-workspace__role {
   margin-block-end: var(--qa-space-1) !important;
   color: var(--color-ink) !important;
@@ -785,13 +769,12 @@
     border-radius: var(--radius-md);
   }
 
-  .qa-workspace__identity > p:not(.qa-workspace__role),
-  .qa-workspace__context .qa-selector-trigger__country {
-    display: none;
-  }
-
-  .qa-workspace__identity h3 {
-    font-size: var(--text-heading-3);
+  .qa-workspace__context .qa-selector-trigger__country,
+  .qa-workspace__context .qa-selector-trigger__currency {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -810,25 +793,15 @@
   .qa-workspace__context::before {
     display: none;
   }
-
-  .qa-workspace__identity {
-    border-inline-start-color: CanvasText;
-  }
 }
 
-/* Master hotfix — keep the bilateral converter within a 320px viewport at 200% text zoom. */
-.qa-workspace__identity,
-.qa-workspace__identity h3,
-.qa-workspace__identity p,
+/* Keep the bilateral converter within a 320px viewport at 200% text zoom. */
 .qa-workspace__amount,
-.qa-amount-control {
+.qa-amount-control,
+.qa-selector-trigger,
+.qa-selector-trigger__copy {
   min-inline-size: 0;
   max-inline-size: 100%;
-}
-
-.qa-workspace__identity h3,
-.qa-workspace__identity p {
-  overflow-wrap: anywhere;
 }
 
 .qa-amount-control__input {
