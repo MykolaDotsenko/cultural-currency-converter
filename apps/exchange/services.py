@@ -129,11 +129,13 @@ def get_rate_series(
     grouping: RateSeriesGrouping | None = None,
     policy: FxSourcePolicy = DEFAULT_SOURCE_POLICY,
     now: datetime | None = None,
+    current_date: date | None = None,
 ) -> RateSeriesResult:
     current_time = now or datetime.now(UTC)
+    validation_date = current_date or current_time.date()
     if end_date < start_date:
         raise RateSeriesRangeError("FX series end date cannot precede start date.")
-    if end_date > current_time.date():
+    if end_date > validation_date:
         raise RateSeriesRangeError("FX series end date cannot be in the future.")
     if (end_date - start_date).days > MAX_RATE_SERIES_DAYS:
         raise RateSeriesRangeError(
