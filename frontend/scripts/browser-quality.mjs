@@ -407,6 +407,11 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   );
   await page.getByText("Reference-basket comparison", { exact: true }).waitFor();
   await page.getByText("not a full trip-cost forecast", { exact: false }).waitFor();
+  await page.getByRole("link", { name: "Sign in to save" }).waitFor();
+  assert(
+    (await page.locator('form[action="/saved/scenarios/budget/create/"]').count()) === 0,
+    "current-converter: anonymous budget interpretation exposed an account-save form",
+  );
   assert(
     await page.locator("[data-previous-result-note]").isHidden(),
     "current-converter: budget interpretation incorrectly marked the conversion as failed",
