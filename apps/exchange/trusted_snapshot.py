@@ -13,9 +13,8 @@ from apps.exchange.domain import ConversionResult, ObservationGranularity, norma
 # boundary was generalized remain valid for their normal short lifetime.
 _TOKEN_SALT = "exchange.runtime-explanation:v1"
 TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60
-MAX_PROVIDER_KEYS = 64
-MAX_PROVIDER_KEY_LENGTH = 64
-_PROVIDER_KEY_PUNCTUATION = frozenset("-_.")
+MAX_PROVIDER_KEYS = 128
+MAX_PROVIDER_KEY_LENGTH = 80
 
 
 class TrustedSnapshotTokenError(ValueError):
@@ -112,11 +111,7 @@ def load_trusted_conversion_snapshot_token(
                 "Conversion snapshot token provider attribution is invalid."
             )
         normalized = value.strip().lower()
-        valid_characters = normalized.isascii() and all(
-            character.isalnum() or character in _PROVIDER_KEY_PUNCTUATION
-            for character in normalized
-        )
-        if not normalized or len(normalized) > MAX_PROVIDER_KEY_LENGTH or not valid_characters:
+        if not normalized or len(normalized) > MAX_PROVIDER_KEY_LENGTH:
             raise TrustedSnapshotTokenError(
                 "Conversion snapshot token provider attribution is invalid."
             )
