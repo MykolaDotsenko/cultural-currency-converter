@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
@@ -51,14 +52,24 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                 "detail": "The conversion remains valid. Try the story again later.",
             }
         else:
-            country = _country_for_story(story_request.destination_country)
-            currency = _currency_for_story(story_request.destination_currency)
-            story_media = select_media_for_display(
-                role=MediaRole.STORY_COVER,
-                country=country,
-                currency=currency,
-                target_date=story_request.selected_date if story_request.historical else None,
-            )
+            try:
+                country = _country_for_story(story_request.destination_country)
+                currency = _currency_for_story(story_request.destination_currency)
+                story_media = select_media_for_display(
+                    role=MediaRole.STORY_COVER,
+                    country=country,
+                    currency=currency,
+                    target_date=story_request.selected_date if story_request.historical else None,
+                )
+            except (DatabaseError, ValueError) as exc:
+                logger.warning(
+                    "Money and culture story cover media unavailable",
+                    extra={
+                        "error_code": exc.__class__.__name__,
+                        "culture.status": "media_unavailable",
+                        "culture.historical": story_request.historical,
+                    },
+                )
 
     context = {
         "story": story,
