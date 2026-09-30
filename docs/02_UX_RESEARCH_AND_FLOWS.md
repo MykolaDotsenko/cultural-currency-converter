@@ -74,6 +74,16 @@ Historical mode should make the temporal boundary obvious:
 
 Historical charts and Then & Now are explanatory features, not trading/investment surfaces.
 
+## Local meaning as a primary contextual surface
+
+After the trusted conversion result, the strongest contextual question is:
+
+**What does this amount mean here?**
+
+Everyday-value anchors should be treated as a primary product surface, not a novelty card buried beneath culture or AI. The UX can summarize categories such as food, transport, coffee or other sourced local spending anchors without implying universal prices.
+
+Prefer a small number of useful, scoped examples over a long list. City/country scope, freshness and uncertainty should remain visible enough to prevent false precision.
+
 ## Explore layer
 
 The compact first-level exploration is:
@@ -127,6 +137,18 @@ Prefer:
 - a concise human-readable explanation grounded in the actual series.
 
 Do not turn range controls into a trading surface, and do not invent continuity where historical observations are missing.
+
+## Destination mode
+
+A future **Destination mode** can let the user start from the place they are in or are travelling to rather than from a currency pair.
+
+A simple explicit flow is:
+
+**I’m in / I’m going to → country or city → local currency + money context**
+
+The product can then preselect the relevant current currency, everyday-value context, payment guidance and saved-trip actions while preserving the ability to change currency manually.
+
+Do not require precise device location for this mode. Manual destination selection must always work. If location assistance is ever added, it should be opt-in, coarse enough for the task and never silently persisted as travel history.
 
 ## Discovery / Explore experience
 
