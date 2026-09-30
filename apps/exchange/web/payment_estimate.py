@@ -25,6 +25,11 @@ def _money_text(value, *, minor_units: int) -> str:
     return f"{value:.{minor_units}f}"
 
 
+def _bounded_post_value(request: HttpRequest, field_name: str, *, max_length: int = 64) -> str:
+    value = request.POST.get(field_name, "")
+    return value[:max_length] if isinstance(value, str) else ""
+
+
 @require_POST
 def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     token = request.POST.get("payment_estimate_token", "")
@@ -32,6 +37,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     estimate_error = None
     form = None
     component = None
+    retry = None
     response_status = 200
 
     try:
@@ -75,6 +81,21 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                     "detail": (
                         "Your reference conversion remains valid. "
                         "Try the fee estimate again in a moment."
+                    ),
+                }
+                retry = {
+                    "token": token,
+                    "fx_markup_percent": _bounded_post_value(
+                        request,
+                        "fx_markup_percent",
+                    ),
+                    "source_fixed_fee": _bounded_post_value(
+                        request,
+                        "source_fixed_fee",
+                    ),
+                    "destination_fixed_fee": _bounded_post_value(
+                        request,
+                        "destination_fixed_fee",
                     ),
                 }
                 currencies = {}
@@ -129,6 +150,9 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                                 estimate.destination_value_lost,
                                 minor_units=destination_currency.minor_units,
                             ),
+                            "difference_prefix": (
+                                "−" if estimate.destination_value_lost > 0 else ""
+                            ),
                             "fx_markup_percent": format(estimate.fx_markup_percent, "f"),
                             "source_fixed_fee": _money_text(
                                 estimate.source_fixed_fee,
@@ -169,6 +193,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     context = {
         "payment_estimate": component,
         "payment_estimate_error": estimate_error,
+        "payment_estimate_retry": retry,
     }
     fragment = is_htmx(request)
     template = (
