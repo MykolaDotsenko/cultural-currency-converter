@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.countries.models import Country, CountryCurrency
+from apps.countries.models import City, Country, CountryCurrency
 from apps.culture.models import (
     CulturalProfile,
     StoryDatePrecision,
@@ -231,6 +231,7 @@ class TypicalPriceContext:
     source_name: str
     source_url: str
     equivalent: PurchaseEquivalent
+    city_slug: str = ""
 
     @property
     def scope_label(self) -> str:
@@ -244,6 +245,8 @@ class DestinationContext:
     as_of: date
     payment: PaymentContext | None
     prices: tuple[TypicalPriceContext, ...]
+    city_slug: str = ""
+    city_name: str = ""
 
     @property
     def has_content(self) -> bool:
@@ -291,6 +294,7 @@ def build_destination_context(
     quote_currency: str,
     as_of: date | None = None,
     price_limit: int = 3,
+    city_slug: str = "",
 ) -> DestinationContext | None:
     if not country_code:
         return None
@@ -302,6 +306,17 @@ def build_destination_context(
         return None
 
     selected_date = as_of or timezone.localdate()
+    normalized_city_slug = city_slug.strip().lower()
+    city = None
+    if normalized_city_slug:
+        city = City.objects.filter(
+            country=country,
+            slug=normalized_city_slug,
+            is_active=True,
+        ).first()
+        if city is None:
+            raise ValueError("Destination city is not available for the selected country.")
+
     profile = (
         CulturalProfile.objects.filter(
             country=country,
@@ -331,8 +346,8 @@ def build_destination_context(
         )
 
     cutoff = selected_date - PRICE_CONTEXT_MAX_AGE
-    price_candidate_limit = min(price_limit * 2, 12)
-    price_rows = (
+    price_candidate_limit = min(price_limit * 4, 24)
+    base_prices = (
         TypicalPrice.objects.filter(
             country=country,
             currency__code=quote_currency.upper(),
@@ -343,14 +358,44 @@ def build_destination_context(
         )
         .exclude(source_name="")
         .exclude(source_url="")
-        .select_related("country", "currency")
-        .order_by("display_order", "city", "label", "pk")[:price_candidate_limit]
+        .select_related("country", "currency", "city_ref")
     )
+
+    if city is None:
+        price_rows = tuple(
+            base_prices.order_by("display_order", "city", "label", "pk")[:price_candidate_limit]
+        )
+    else:
+        city_rows = tuple(
+            base_prices.filter(city_ref=city).order_by("display_order", "label", "pk")[
+                :price_candidate_limit
+            ]
+        )
+        national_rows = tuple(
+            base_prices.filter(city_ref__isnull=True, city="").order_by(
+                "display_order",
+                "label",
+                "pk",
+            )[:price_candidate_limit]
+        )
+        selected_rows = []
+        selected_categories: set[str] = set()
+        for row in (*city_rows, *national_rows):
+            if row.category in selected_categories:
+                continue
+            if not row.source_name.strip() or not is_valid_provenance_url(row.source_url):
+                continue
+            selected_rows.append(row)
+            selected_categories.add(row.category)
+            if len(selected_rows) >= price_limit:
+                break
+        price_rows = tuple(selected_rows)
+
     prices = tuple(
         TypicalPriceContext(
             label=row.label,
             category=row.category,
-            city=row.city,
+            city=row.city_ref.name if row.city_ref_id is not None else row.city,
             country_name=row.country.name,
             currency_code=row.currency.code,
             currency_minor_units=row.currency.minor_units,
@@ -366,6 +411,7 @@ def build_destination_context(
                 row.amount_low,
                 row.amount_high,
             ),
+            city_slug=row.city_ref.slug if row.city_ref_id is not None else "",
         )
         for row in price_rows
         if row.source_name.strip() and is_valid_provenance_url(row.source_url)
@@ -377,4 +423,6 @@ def build_destination_context(
         as_of=selected_date,
         payment=payment,
         prices=prices,
+        city_slug=city.slug if city is not None else "",
+        city_name=city.name if city is not None else "",
     )
