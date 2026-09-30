@@ -87,11 +87,7 @@
       <section class="qa-workspace__context qa-workspace__context--source"
                {% if source.theme %}data-country-theme="{{ source.theme }}"{% endif %}
                aria-labelledby="current-source-title">
-        <div class="qa-workspace__identity">
-          <p class="qa-workspace__role">Source</p>
-          <h3 id="current-source-title">{{ source.country_name }}</h3>
-          <p>{{ source.currency_name }}{% if source.currency_code %} · {{ source.currency_code }}{% endif %}</p>
-        </div>
+        <p class="qa-workspace__role" id="current-source-title">Source</p>
         <div class="qa-selection-fallback"
              data-native-selection="source"
              data-has-errors="{% if form.source_country.errors or form.source_currency.errors %}true{% else %}false{% endif %}">
@@ -147,13 +143,7 @@
       <section class="qa-workspace__context qa-workspace__context--destination"
                {% if destination.theme %}data-country-theme="{{ destination.theme }}"{% endif %}
                aria-labelledby="current-destination-title">
-        <div class="qa-workspace__identity">
-          <p class="qa-workspace__role">Destination</p>
-          <h3 id="current-destination-title">{{ destination.country_name }}</h3>
-          <p>
-            {{ destination.currency_name }}{% if destination.currency_code %} · {{ destination.currency_code }}{% endif %}
-          </p>
-        </div>
+        <p class="qa-workspace__role" id="current-destination-title">Destination</p>
         <div class="qa-selection-fallback"
              data-native-selection="destination"
              data-has-errors="{% if form.destination_country.errors or form.destination_currency.errors %}true{% else %}false{% endif %}">
