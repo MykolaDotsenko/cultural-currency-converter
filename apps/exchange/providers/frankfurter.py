@@ -206,13 +206,15 @@ def parse_series_payload(
                 "Frankfurter series returned duplicate observation dates."
             )
         seen_dates.add(observation_date)
-        points.append(
-            RateSeriesPoint(
+        try:
+            point = RateSeriesPoint(
                 observation_date=observation_date,
                 rate=_rate_decimal(row.get("rate")),
                 provider_keys=_provider_keys(row, policy),
             )
-        )
+        except FxDomainError as exc:
+            raise FxProviderInvalidPayload(str(exc)) from exc
+        points.append(point)
 
     points.sort(key=lambda point: point.observation_date)
     try:
