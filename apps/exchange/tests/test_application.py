@@ -133,7 +133,7 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
     )
 
     with patch(
-        "apps.exchange.application.build_destination_context",
+        "apps.exchange.money_context.build_destination_context",
         return_value=destination_context,
     ) as context_builder:
         outcome = run_converter_submission(
@@ -144,9 +144,11 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
         )
 
     assert outcome.error is None
+    assert outcome.money_context is not None
     assert outcome.conversion is not None
     assert outcome.conversion.output_amount == Decimal("17450")
     assert outcome.destination_context == destination_context
+    assert outcome.money_context.destination == destination_context
     assert outcome.historical_suggestions == ()
     assert len(latest.calls) == 1
     historical_factory.assert_not_called()
@@ -229,7 +231,7 @@ def test_historical_submission_returns_currency_era_suggestion(reference_data):
         requested_date=requested,
     )
 
-    with patch("apps.exchange.application.build_destination_context") as context_builder:
+    with patch("apps.exchange.money_context.build_destination_context") as context_builder:
         outcome = run_converter_submission(
             command,
             latest_gateway_factory=latest_factory,
@@ -293,7 +295,7 @@ def test_destination_context_failure_never_invalidates_conversion(reference_data
     )
 
     with patch(
-        "apps.exchange.application.build_destination_context",
+        "apps.exchange.money_context.build_destination_context",
         side_effect=DatabaseError("context unavailable"),
     ):
         outcome = run_converter_submission(
@@ -322,7 +324,7 @@ def test_unexpected_destination_context_programming_error_is_not_silenced(refere
 
     with (
         patch(
-            "apps.exchange.application.build_destination_context",
+            "apps.exchange.money_context.build_destination_context",
             side_effect=RuntimeError("programming bug"),
         ),
         pytest.raises(RuntimeError, match="programming bug"),
