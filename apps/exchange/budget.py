@@ -80,7 +80,9 @@ class BudgetAssumptions:
         if not isinstance(self.basis, BudgetBasis):
             raise BudgetInterpretationError("Budget basis must be a BudgetBasis value.")
         if not isinstance(self.categories, tuple):
-            raise BudgetInterpretationError("Budget category assumptions must be an immutable tuple.")
+            raise BudgetInterpretationError(
+                "Budget category assumptions must be an immutable tuple."
+            )
         if not 1 <= len(self.categories) <= 8:
             raise BudgetInterpretationError(
                 "Budget interpretation requires between 1 and 8 category assumptions."
