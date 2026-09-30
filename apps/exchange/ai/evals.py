@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 
-from apps.exchange.ai.tokens import TrustedConversionSnapshot
+from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 from apps.exchange.domain import ObservationGranularity
 
 
