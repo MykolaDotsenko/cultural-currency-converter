@@ -232,3 +232,36 @@ def test_non_javascript_budget_interpretation_returns_full_page(client, referenc
     assert b"<html" in response.content
     assert b"A transparent reference basket, not a guessed travel budget" in response.content
     assert b"Above this reference basket" in response.content
+
+
+@pytest.mark.django_db
+def test_budget_interpretation_preserves_requested_category_when_source_row_disappears(
+    client,
+    reference_data,
+):
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()):
+        conversion_response = client.post(
+            reverse("converter"),
+            _payload(),
+            HTTP_HX_REQUEST="true",
+        )
+
+    token = _extract_budget_token(conversion_response.content)
+    TypicalPrice.objects.filter(category="casual_meal").delete()
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": token,
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    assert b"Insufficient current data" in response.content
+    assert b"Missing: Casual Meal" in response.content
+    assert b"Within this reference range" not in response.content
