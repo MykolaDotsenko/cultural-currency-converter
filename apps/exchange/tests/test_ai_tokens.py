@@ -165,7 +165,15 @@ def test_historical_flag_cannot_disagree_with_requested_date():
         load_trusted_conversion_snapshot_token(token)
 
 
-def test_provider_attribution_is_bounded_and_validated():
+@pytest.mark.parametrize(
+    "provider_keys",
+    [
+        [123],
+        ["x" * (tokens.MAX_PROVIDER_KEY_LENGTH + 1)],
+        [f"provider-{index}" for index in range(tokens.MAX_PROVIDER_KEYS + 1)],
+    ],
+)
+def test_provider_attribution_is_bounded_and_validated(provider_keys):
     payload = {
         "v": 1,
         "input_amount": "100",
@@ -177,7 +185,7 @@ def test_provider_attribution_is_bounded_and_validated():
         "effective_date": "2026-09-18",
         "historical": False,
         "observation_granularity": "daily",
-        "provider_keys": ["../secret"],
+        "provider_keys": provider_keys,
         "stale": False,
     }
     token = signing.dumps(payload, salt=tokens._TOKEN_SALT)
