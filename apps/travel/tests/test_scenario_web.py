@@ -254,6 +254,9 @@ def test_saved_scenario_detail_renders_explicit_budget_and_converter_return(
     response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
 
     assert response.status_code == 200
+    assert "no-store" in response.headers["Cache-Control"]
+    assert "max-age=0" in response.headers["Cache-Control"]
+    assert b'<meta name="robots" content="noindex">' in response.content
     assert b"Tokyo spring budget" in response.content
     assert b"Casual Meal" in response.content
     assert b"2 per person / day" in response.content
@@ -295,6 +298,9 @@ def test_saved_state_lists_only_current_users_scenarios(client, scenario_referen
     response = client.get(reverse("saved_state"))
 
     assert response.status_code == 200
+    assert "no-store" in response.headers["Cache-Control"]
+    assert "max-age=0" in response.headers["Cache-Control"]
+    assert b'<meta name="robots" content="noindex">' in response.content
     assert b"Owner Tokyo plan" in response.content
     assert b"Other private plan" not in response.content
 
