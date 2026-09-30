@@ -81,9 +81,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
 
             source_currency = currencies.get(snapshot.base_currency)
             destination_currency = currencies.get(snapshot.quote_currency)
-            if estimate_error is None and (
-                source_currency is None or destination_currency is None
-            ):
+            if estimate_error is None and (source_currency is None or destination_currency is None):
                 response_status = 422
                 estimate_error = {
                     "title": "Currency precision metadata is unavailable.",
