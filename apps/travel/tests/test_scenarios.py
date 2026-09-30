@@ -408,6 +408,4 @@ def test_recheck_observation_limit_is_enforced_without_deleting_history(
         )
 
     assert scenario.observations.count() == 2
-    assert scenario.observations.filter(
-        kind=SavedScenarioObservationKind.INITIAL
-    ).count() == 1
+    assert scenario.observations.filter(kind=SavedScenarioObservationKind.INITIAL).count() == 1
