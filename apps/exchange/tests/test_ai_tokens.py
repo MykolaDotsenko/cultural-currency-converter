@@ -6,9 +6,8 @@ from decimal import Decimal
 import pytest
 from django.core import signing
 
-from apps.exchange.ai import tokens
+from apps.exchange import trusted_snapshot as tokens
 from apps.exchange.ai.tokens import (
-    ExplanationTokenError,
     build_conversion_explanation_token,
     load_conversion_explanation_token,
 )
@@ -17,6 +16,11 @@ from apps.exchange.domain import (
     ConversionResult,
     ObservationGranularity,
     RateQuote,
+)
+from apps.exchange.trusted_snapshot import (
+    TrustedSnapshotTokenError,
+    build_trusted_conversion_snapshot_token,
+    load_trusted_conversion_snapshot_token,
 )
 
 
@@ -48,10 +52,20 @@ def _result(
     )
 
 
-def test_signed_conversion_snapshot_round_trips_current_result():
+def test_ai_legacy_token_aliases_use_the_trusted_snapshot_contract():
     token = build_conversion_explanation_token(_result())
 
     snapshot = load_conversion_explanation_token(token)
+
+    assert snapshot.base_currency == "EUR"
+    assert snapshot.quote_currency == "JPY"
+    assert snapshot.rate == Decimal("174.50")
+
+
+def test_signed_conversion_snapshot_round_trips_current_result():
+    token = build_trusted_conversion_snapshot_token(_result())
+
+    snapshot = load_trusted_conversion_snapshot_token(token)
 
     assert snapshot.input_amount == Decimal("100.00")
     assert snapshot.output_amount == Decimal("17450")
@@ -64,7 +78,7 @@ def test_signed_conversion_snapshot_round_trips_current_result():
 
 
 def test_signed_conversion_snapshot_preserves_historical_semantics():
-    token = build_conversion_explanation_token(
+    token = build_trusted_conversion_snapshot_token(
         _result(
             historical=True,
             requested_date=date(1998, 6, 14),
@@ -74,7 +88,7 @@ def test_signed_conversion_snapshot_preserves_historical_semantics():
         )
     )
 
-    snapshot = load_conversion_explanation_token(token)
+    snapshot = load_trusted_conversion_snapshot_token(token)
 
     assert snapshot.historical is True
     assert snapshot.requested_date == date(1998, 6, 14)
@@ -84,13 +98,13 @@ def test_signed_conversion_snapshot_preserves_historical_semantics():
 
 
 def test_tampered_or_expired_token_is_rejected():
-    token = build_conversion_explanation_token(_result())
+    token = build_trusted_conversion_snapshot_token(_result())
 
-    with pytest.raises(ExplanationTokenError, match="invalid"):
-        load_conversion_explanation_token(token + "tamper")
+    with pytest.raises(TrustedSnapshotTokenError, match="invalid"):
+        load_trusted_conversion_snapshot_token(token + "tamper")
 
-    with pytest.raises(ExplanationTokenError, match="expired"):
-        load_conversion_explanation_token(token, max_age=-1)
+    with pytest.raises(TrustedSnapshotTokenError, match="expired"):
+        load_trusted_conversion_snapshot_token(token, max_age=-1)
 
 
 @pytest.mark.parametrize(
@@ -116,8 +130,8 @@ def test_tampered_or_expired_token_is_rejected():
 def test_malformed_signed_payload_is_rejected(payload):
     token = signing.dumps(payload, salt=tokens._TOKEN_SALT)
 
-    with pytest.raises(ExplanationTokenError):
-        load_conversion_explanation_token(token)
+    with pytest.raises(TrustedSnapshotTokenError):
+        load_trusted_conversion_snapshot_token(token)
 
 
 def test_historical_flag_cannot_disagree_with_requested_date():
@@ -137,8 +151,8 @@ def test_historical_flag_cannot_disagree_with_requested_date():
     }
     token = signing.dumps(payload, salt=tokens._TOKEN_SALT)
 
-    with pytest.raises(ExplanationTokenError, match="historical semantics"):
-        load_conversion_explanation_token(token)
+    with pytest.raises(TrustedSnapshotTokenError, match="historical semantics"):
+        load_trusted_conversion_snapshot_token(token)
 
 
 def test_provider_attribution_is_bounded_and_validated():
@@ -158,5 +172,5 @@ def test_provider_attribution_is_bounded_and_validated():
     }
     token = signing.dumps(payload, salt=tokens._TOKEN_SALT)
 
-    with pytest.raises(ExplanationTokenError, match="provider attribution"):
-        load_conversion_explanation_token(token)
+    with pytest.raises(TrustedSnapshotTokenError, match="provider attribution"):
+        load_trusted_conversion_snapshot_token(token)

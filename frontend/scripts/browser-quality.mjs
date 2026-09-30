@@ -261,6 +261,59 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
 
   await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
 
+  // Real Payment Estimate is a separate progressive surface: it must use the
+  // trusted conversion snapshot, render validation errors, and never mark the
+  // successful conversion itself as failed.
+  await page.locator("#id_amount").fill("100");
+  await Promise.all([waitForPost(), page.locator(".qa-primary-button").click()]);
+  await page.getByRole("heading", { name: "Estimate what explicit fees may change" }).waitFor();
+
+  const waitForPaymentEstimate = () =>
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/payment/estimate/",
+    );
+
+  // Use a value that passes native HTML constraints but fails our currency-
+  // precision validation so the progressive 422 response is exercised.
+  await page.locator("#id_fx_markup_percent").fill("2");
+  await page.locator("#id_source_fixed_fee").fill("1.001");
+  await page.locator("#id_destination_fixed_fee").fill("0");
+  const invalidEstimate = waitForPaymentEstimate();
+  await page.getByRole("button", { name: "Calculate estimate" }).click();
+  const invalidEstimateResponse = await invalidEstimate;
+  assert(
+    invalidEstimateResponse.status() === 422,
+    `current-converter: invalid payment estimate returned ${invalidEstimateResponse.status()} instead of 422`,
+  );
+  await page.getByText("This currency supports at most 2 decimal places.").waitFor();
+  assert(
+    await page.locator("[data-previous-result-note]").isHidden(),
+    "current-converter: payment-estimate validation incorrectly marked the conversion as failed",
+  );
+
+  await page.locator("#id_fx_markup_percent").fill("2");
+  await page.locator("#id_source_fixed_fee").fill("1");
+  await page.locator("#id_destination_fixed_fee").fill("220");
+  const validEstimate = waitForPaymentEstimate();
+  await page.getByRole("button", { name: "Calculate estimate" }).click();
+  const validEstimateResponse = await validEstimate;
+  assert(
+    validEstimateResponse.status() === 200,
+    `current-converter: payment estimate returned ${validEstimateResponse.status()} instead of 200`,
+  );
+  await page.getByText("Estimated destination value", { exact: true }).waitFor();
+  await page
+    .getByText("This is a scenario estimate, not a bank/card/ATM quote.", {
+      exact: false,
+    })
+    .waitFor();
+  await assertAxe(page, "current-converter/payment-estimate");
+
+  await page.evaluate((key) => localStorage.removeItem(key), LOCAL_STATE_KEY);
+  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+
   await page.locator("#source-picker-trigger").click();
   const sourceDialog = page.locator('[data-picker-dialog="source"]');
   const viewport = page.viewportSize();

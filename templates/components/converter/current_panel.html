@@ -428,6 +428,11 @@
       {% endif %}
     </div>
   </form>
+  {% if result_component.payment_estimate %}
+    <div id="payment-estimate-region">
+      {% include "components/converter/payment_estimate.html" with payment_estimate=result_component.payment_estimate %}
+    </div>
+  {% endif %}
   {% include "components/converter/picker_dialog.html" with side="source" role_label="source" %}
   {% include "components/converter/picker_dialog.html" with side="destination" role_label="destination" %}
 </section>

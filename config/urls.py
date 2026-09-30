@@ -13,6 +13,7 @@ from apps.exchange.views import (
     conversion_explanation,
     converter,
     historical_series,
+    payment_estimate,
     picker_options,
 )
 from apps.travel.views import (
@@ -28,6 +29,7 @@ urlpatterns = [
     path("", converter, name="converter"),
     path("picker/options/", picker_options, name="picker_options"),
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
+    path("payment/estimate/", payment_estimate, name="payment_estimate"),
     path("story/", money_culture_story, name="money_culture_story"),
     path(
         "destination/current-context/",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from apps.exchange.ai.contracts import ExplanationPacket, GroundedFact
-from apps.exchange.ai.tokens import TrustedConversionSnapshot
+from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 
 PACKET_VERSION = "exchange-conversion:v1"
 
