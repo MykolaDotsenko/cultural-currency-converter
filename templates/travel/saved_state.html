@@ -2,7 +2,7 @@
 {% block title %}Saved & recent · Cultural Currency Converter{% endblock %}
 {% block head_meta %}
   <meta name="description"
-        content="Review account-saved currency pairs and recent conversion history.">
+        content="Review saved travel-money plans, currency pairs and recent conversion history.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
@@ -37,8 +37,8 @@
     <noscript>
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
-          Account-saved pairs and account recent history remain available. JavaScript is required
-          only to read browser-only recent history on this device.
+          Account-saved plans, pairs and account recent history remain available. JavaScript is
+          required only to read browser-only recent history on this device.
         {% else %}
           JavaScript is required to read browser-local saved pairs and recent history. The converter
           still works without JavaScript.
