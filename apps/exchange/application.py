@@ -52,14 +52,21 @@ ConverterSubmissionError = (
 
 @dataclass(frozen=True, slots=True)
 class ConverterSubmissionResult:
-    conversion: ConversionResult | None
+    money_context: MoneyContext | None
     error: ConverterSubmissionError | None
     historical_suggestions: tuple[HistoricalSuggestion, ...]
-    money_context: MoneyContext | None
+
+    @property
+    def conversion(self) -> ConversionResult | None:
+        """Compatibility projection; successful financial truth lives in MoneyContext."""
+
+        if self.money_context is None:
+            return None
+        return self.money_context.conversion
 
     @property
     def destination_context(self) -> DestinationContext | None:
-        """Compatibility view for existing presentation consumers."""
+        """Compatibility projection for existing presentation consumers."""
 
         if self.money_context is None:
             return None
@@ -149,17 +156,15 @@ def run_converter_submission(
             )
     except ConversionRepresentationError as exc:
         return ConverterSubmissionResult(
-            conversion=None,
+            money_context=None,
             error=FxProviderInvalidPayload(str(exc)),
             historical_suggestions=historical_suggestions,
-            money_context=None,
         )
     except (FxProviderError, HistoricalObservationUnavailable, HistoricalOutOfCoverage) as exc:
         return ConverterSubmissionResult(
-            conversion=None,
+            money_context=None,
             error=exc,
             historical_suggestions=historical_suggestions,
-            money_context=None,
         )
 
     money_context = build_money_context(
@@ -169,8 +174,7 @@ def run_converter_submission(
     )
 
     return ConverterSubmissionResult(
-        conversion=conversion,
+        money_context=money_context,
         error=None,
         historical_suggestions=historical_suggestions,
-        money_context=money_context,
     )
