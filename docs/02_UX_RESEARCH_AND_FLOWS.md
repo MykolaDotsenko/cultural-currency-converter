@@ -84,6 +84,34 @@ The compact first-level exploration is:
 
 These paths can evolve. Their purpose is more important than a fixed card layout.
 
+## Cultural-history portal
+
+A compact progressive-disclosure surface may combine the deeper **Money & culture** experience into one coherent portal. The entry point can be a labelled button or icon, but it must not rely on an unexplained “?” glyph for meaning.
+
+A useful structure is:
+
+- quick cultural snapshot;
+- currency fact;
+- previous-currency context where historically relevant;
+- local money etiquette;
+- one concise travel-money tip;
+- one memorable sourced fact.
+
+The portal should normally be readable in well under a minute. It is not a general help dialog and should not become an encyclopedia.
+
+## Historical quick exploration
+
+Historical analysis can expose simple user-oriented ranges such as **1 year / 5 years / 10 years** when the provider has defensible coverage.
+
+Prefer:
+
+- a simple chart;
+- a small number of anchor values;
+- requested/effective-date meaning;
+- a concise human-readable explanation grounded in the actual series.
+
+Do not turn range controls into a trading surface, and do not invent continuity where historical observations are missing.
+
 ## Saved and recent state
 
 Anonymous browser storage is useful for convenience but should be described as local-only. Browser-local controls that require JavaScript should not render as inert actions before enhancement, and empty-state claims should appear only after the browser state has actually been inspected.
@@ -91,6 +119,21 @@ Anonymous browser storage is useful for convenience but should be described as l
 Repeated saved/recent row actions should keep concise visible verbs while exposing row-specific accessible names. Collection-wide clear operations are destructive actions and should be visually distinguishable from routine secondary navigation without adding unnecessary confirmation friction.
 
 Signed-in data should respect ownership. Cross-device recent history is separately opt-in; signing in should not silently upload existing local recent activity.
+
+## Re-check and pre-trip return flow
+
+Saved scenarios should eventually support a deliberate return loop:
+
+**Plan → Save → Re-check → Travel**
+
+When a user reopens a saved scenario, the product can surface:
+
+- the latest reference observation;
+- the change from the last relevant saved observation;
+- refreshed local-value/payment context;
+- whether the saved budget interpretation changed under the same explicit assumptions.
+
+Optional pre-trip reminders may invite the user to re-check a saved scenario close to its travel date. Reminder delivery must be opt-in, easy to disable and separate from rate-alert/trading-style messaging.
 
 ## Accessibility
 
