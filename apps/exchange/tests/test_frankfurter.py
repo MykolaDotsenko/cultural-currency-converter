@@ -85,7 +85,10 @@ def test_malformed_or_wrong_pair_payload_is_rejected(payload):
 
 
 def test_rate_payload_rejects_browser_unrepresentable_rate():
-    with pytest.raises(FxProviderInvalidPayload, match="supported numeric representation range"):
+    with pytest.raises(
+        FxProviderInvalidPayload,
+        match="supported numeric representation range",
+    ):
         parse_rate_payload(
             {
                 "date": "2026-09-18",
@@ -102,7 +105,10 @@ def test_rate_payload_rejects_browser_unrepresentable_rate():
 
 
 def test_series_payload_normalizes_unrepresentable_point_to_provider_error():
-    with pytest.raises(FxProviderInvalidPayload, match="supported numeric representation range"):
+    with pytest.raises(
+        FxProviderInvalidPayload,
+        match="supported numeric representation range",
+    ):
         parse_series_payload(
             [
                 {
