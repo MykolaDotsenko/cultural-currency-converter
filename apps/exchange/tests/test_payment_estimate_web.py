@@ -10,7 +10,7 @@ from django.db import DatabaseError
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
-from apps.exchange.snapshot_tokens import build_conversion_snapshot_token
+from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 
 
@@ -93,7 +93,7 @@ def _signed_snapshot() -> str:
         provider_keys=("ecb",),
         historical=False,
     )
-    return build_conversion_snapshot_token(
+    return build_trusted_conversion_snapshot_token(
         ConversionResult(
             input_amount=Decimal("100.00"),
             output_amount=Decimal("17450"),
