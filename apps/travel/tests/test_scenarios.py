@@ -108,9 +108,7 @@ def test_create_saved_trip_persists_normalized_assumptions_and_initial_observati
     assert scenario.destination_city == tokyo
     assert scenario.duration_days == 5
     assert scenario.travelers == 2
-    assert list(
-        scenario.budget_items.values_list("category", "units_per_person_per_day")
-    ) == [
+    assert list(scenario.budget_items.values_list("category", "units_per_person_per_day")) == [
         ("casual_meal", Decimal("2.00")),
         ("coffee", Decimal("1.00")),
     ]
@@ -231,9 +229,7 @@ def test_invalid_budget_item_rolls_back_scenario_and_observation(reference_data)
         destination_country=jp,
         destination_city=tokyo,
         source_amount=Decimal("100"),
-        budget_categories=(
-            BudgetCategoryAssumption("x" * 25, Decimal("1")),
-        ),
+        budget_categories=(BudgetCategoryAssumption("x" * 25, Decimal("1")),),
     )
 
     with pytest.raises(SavedScenarioError):
