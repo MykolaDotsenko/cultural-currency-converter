@@ -249,9 +249,5 @@ def _provider_keys(values: tuple[str, ...]) -> list[str]:
 
 def _validation_message(exc: ValidationError) -> str:
     if hasattr(exc, "message_dict"):
-        return "; ".join(
-            message
-            for messages in exc.message_dict.values()
-            for message in messages
-        )
+        return "; ".join(message for messages in exc.message_dict.values() for message in messages)
     return "; ".join(exc.messages)
