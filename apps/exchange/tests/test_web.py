@@ -1076,9 +1076,7 @@ def test_historical_series_latest_comparison_failure_is_non_fatal(client, refere
 
 
 @pytest.mark.django_db
-def test_historical_series_unrepresentable_latest_comparison_is_non_fatal(
-    client, reference_data
-):
+def test_historical_series_unrepresentable_latest_comparison_is_non_fatal(client, reference_data):
     with (
         patch(
             "apps.exchange.views.build_historical_series_gateway",
@@ -1106,9 +1104,7 @@ def test_historical_series_unrepresentable_latest_comparison_is_non_fatal(
 
 
 @pytest.mark.django_db
-def test_historical_series_unrepresentable_selected_rate_is_non_fatal(
-    client, reference_data
-):
+def test_historical_series_unrepresentable_selected_rate_is_non_fatal(client, reference_data):
     class UnrepresentableSeriesGateway(FakeSeriesGateway):
         def get(self, base, quote, start_date, end_date, grouping, policy, *, now):
             self.calls.append((base, quote, start_date, end_date, grouping, policy, now))
