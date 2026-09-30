@@ -44,6 +44,40 @@ class FavouritePair(models.Model):
         ordering = ("-updated_at", "-id")
         constraints = [
             models.UniqueConstraint(
+                fields=("user", "source_currency", "destination_currency"),
+                condition=Q(
+                    source_country__isnull=True,
+                    destination_country__isnull=True,
+                ),
+                name="unique_fav_no_countries",
+            ),
+            models.UniqueConstraint(
+                fields=(
+                    "user",
+                    "source_currency",
+                    "destination_currency",
+                    "destination_country",
+                ),
+                condition=Q(
+                    source_country__isnull=True,
+                    destination_country__isnull=False,
+                ),
+                name="unique_fav_destination_country",
+            ),
+            models.UniqueConstraint(
+                fields=(
+                    "user",
+                    "source_currency",
+                    "destination_currency",
+                    "source_country",
+                ),
+                condition=Q(
+                    source_country__isnull=False,
+                    destination_country__isnull=True,
+                ),
+                name="unique_fav_source_country",
+            ),
+            models.UniqueConstraint(
                 fields=(
                     "user",
                     "source_currency",
@@ -51,9 +85,12 @@ class FavouritePair(models.Model):
                     "source_country",
                     "destination_country",
                 ),
-                name="unique_user_favourite_pair",
-                nulls_distinct=False,
-            )
+                condition=Q(
+                    source_country__isnull=False,
+                    destination_country__isnull=False,
+                ),
+                name="unique_fav_both_countries",
+            ),
         ]
         indexes = [
             models.Index(
