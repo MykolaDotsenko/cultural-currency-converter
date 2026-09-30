@@ -236,7 +236,6 @@ def test_payment_estimate_capability_respects_temporal_and_identity_boundaries()
     assert identity.can_estimate_payment is False
 
 
-
 def test_payment_assumptions_enrich_context_without_mutating_base_context():
     context = build_money_context(
         conversion=_conversion(),
@@ -313,29 +312,3 @@ def test_money_context_rejects_payment_estimate_for_a_different_conversion():
             destination_state=MoneyContextState.NOT_APPLICABLE,
             payment_estimate=enriched.payment_estimate,
         )
-
-
-def test_payment_assumptions_create_new_context_without_mutating_base_context():
-    base = build_money_context(
-        conversion=_conversion(),
-        destination_country_code="",
-        as_of=date(2026, 9, 22),
-    )
-    assumptions = PaymentEstimateAssumptions(
-        fx_markup_percent=Decimal("2"),
-        source_fixed_fee=Decimal("1"),
-        destination_fixed_fee=Decimal("220"),
-    )
-
-    enriched = apply_payment_assumptions(
-        base,
-        assumptions=assumptions,
-        destination_minor_units=0,
-    )
-
-    assert base.payment_estimate is None
-    assert enriched is not base
-    assert enriched.conversion is base.conversion
-    assert enriched.destination_state is base.destination_state
-    assert enriched.payment_estimate is not None
-    assert enriched.payment_estimate.estimated_destination_amount == Decimal("16717")
