@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
@@ -217,6 +218,7 @@ def historical_series_view(
                 start_date=cleaned["start_date_resolved"],
                 end_date=cleaned["end_date_resolved"],
                 gateway=series_gateway_factory,
+                current_date=timezone.localdate(),
             )
             currencies = {
                 currency.code: currency
