@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Save plan · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Save a trusted travel-money budget scenario to your account.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro"
+           aria-labelledby="save-plan-page-title">
+    <p class="qa-foundation-kicker">Saved planning</p>
+    <h1 id="save-plan-page-title">Keep the assumptions, not a frozen promise.</h1>
+    <p class="qa-foundation-lede">
+      Save this plan to your account so the amount, destination scope and explicit daily reference
+      assumptions can be reopened later. Current local-price context is reloaded when future
+      workflows need it instead of being treated as permanently true.
+    </p>
+  </section>
+
+  {% if scenario_error %}
+    <section class="qa-inline-alert qa-inline-alert--error" role="alert">
+      <h2>{{ scenario_error.title }}</h2>
+      <p>{{ scenario_error.detail }}</p>
+    </section>
+    <p>
+      <a class="qa-secondary-button" href="{% url 'converter' %}">Back to converter</a>
+    </p>
+  {% elif scenario_form and scenario_summary %}
+    <div class="qa-saved-state">
+      <section class="qa-saved-section" aria-labelledby="save-plan-summary-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Trusted starting point</p>
+            <h2 id="save-plan-summary-title">{{ scenario_summary.destination_name }}</h2>
+            <p>
+              {{ scenario_summary.source_amount }} {{ scenario_summary.source_currency }}
+              →
+              {{ scenario_summary.destination_amount }} {{ scenario_summary.destination_currency }}
+            </p>
+          </div>
+        </div>
+        <dl class="qa-budget-interpretation__facts">
+          <div>
+            <dt>Reference observation</dt>
+            <dd>{{ scenario_summary.effective_date|date:"j M Y" }}</dd>
+          </div>
+          <div>
+            <dt>Duration</dt>
+            <dd>{{ scenario_summary.duration_days }} day{{ scenario_summary.duration_days|pluralize }}</dd>
+          </div>
+          <div>
+            <dt>Travelers</dt>
+            <dd>{{ scenario_summary.travelers }}</dd>
+          </div>
+          <div>
+            <dt>Saved assumptions</dt>
+            <dd>{{ scenario_summary.categories|length }} reference item{{ scenario_summary.categories|length|pluralize }}</dd>
+          </div>
+        </dl>
+        {% if scenario_summary.categories %}
+          <div class="qa-saved-list">
+            {% for item in scenario_summary.categories %}
+              <article class="qa-saved-row">
+                <div class="qa-saved-row__copy">
+                  <h3>{{ item.category }}</h3>
+                  <p>{{ item.units }} per person / day</p>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="qa-saved-section" aria-labelledby="save-plan-details-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Plan details</p>
+            <h2 id="save-plan-details-title">Name it and optionally add travel dates</h2>
+            <p>
+              Dates are planning context only. Saving never schedules a reminder or notification
+              unless you explicitly enable one in a future workflow.
+            </p>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'create_saved_scenario' %}">
+          {% csrf_token %}
+          <input type="hidden"
+                 name="scenario_draft_token"
+                 value="{{ scenario_draft_token }}">
+
+          {% if scenario_form.non_field_errors %}
+            <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+              <p>{{ scenario_form.non_field_errors.0 }}</p>
+            </div>
+          {% endif %}
+
+          <div class="qa-budget-interpretation__trip-fields">
+            <label class="qa-field">
+              <span class="qa-field__label">{{ scenario_form.kind.label }}</span>
+              {{ scenario_form.kind }}
+              {% if scenario_form.kind.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="kind-error">{{ scenario_form.kind.errors.0 }}</span>
+              {% endif %}
+              <span class="qa-field__message">
+                Trip plans are destination-led; budget plans keep the same assumptions without
+                implying itinerary management.
+              </span>
+            </label>
+
+            <label class="qa-field">
+              <span class="qa-field__label">{{ scenario_form.title.label }}</span>
+              {{ scenario_form.title }}
+              {% if scenario_form.title.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="title-error">{{ scenario_form.title.errors.0 }}</span>
+              {% endif %}
+              <span class="qa-field__message">Optional. Keep it short and recognizable.</span>
+            </label>
+
+            <label class="qa-field">
+              <span class="qa-field__label">{{ scenario_form.travel_start_date.label }}</span>
+              {{ scenario_form.travel_start_date }}
+              {% if scenario_form.travel_start_date.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="travel_start_date-error">{{ scenario_form.travel_start_date.errors.0 }}</span>
+              {% endif %}
+            </label>
+
+            <label class="qa-field">
+              <span class="qa-field__label">{{ scenario_form.travel_end_date.label }}</span>
+              {{ scenario_form.travel_end_date }}
+              {% if scenario_form.travel_end_date.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="travel_end_date-error">{{ scenario_form.travel_end_date.errors.0 }}</span>
+              {% endif %}
+            </label>
+          </div>
+
+          <div class="qa-budget-interpretation__actions">
+            <a class="qa-secondary-button" href="{% url 'converter' %}">Cancel</a>
+            <button class="qa-primary-button" type="submit">Save plan</button>
+          </div>
+        </form>
+      </section>
+
+      <p class="qa-saved-state__privacy">
+        This is account-owned planning data. The saved FX observation is immutable evidence of the
+        starting reference, while future re-checks append new observations instead of rewriting it.
+      </p>
+    </div>
+  {% endif %}
+{% endblock %}
