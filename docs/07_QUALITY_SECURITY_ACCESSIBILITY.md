@@ -165,7 +165,8 @@ Keep the health endpoints semantically narrow:
 - `/health/ready/` verifies PostgreSQL because durable application state cannot be served safely without it;
 - when a deployed shared cache is unavailable, readiness remains HTTP 200 with `status=degraded`; FX/cache and AI coordination paths are designed to fail open;
 - optional runtime AI explanation persistence also fails open: database read/write/cleanup failures are logged, while the user still receives either a live uncached explanation or the deterministic fallback;
-- external FX/AI providers are observed through real request telemetry, not synthetic health probes.
+- external FX/AI providers are observed through real request telemetry, not synthetic health probes;
+- fail-open enrichment boundaries catch explicit dependency/data failures rather than arbitrary programming exceptions, so optional content can degrade without hiding regressions in application code.
 
 PostgreSQL CI runs the readiness endpoint against real PostgreSQL and Redis so this contract remains executable.
 
