@@ -9,7 +9,13 @@ from django.db import DatabaseError
 
 from apps.culture.services import DestinationContext, PaymentContext
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
-from apps.exchange.money_context import MoneyContextState, build_money_context
+from apps.exchange.money_context import (
+    MoneyContext,
+    MoneyContextState,
+    apply_payment_assumptions,
+    build_money_context,
+)
+from apps.exchange.payment_estimate import PaymentEstimateAssumptions, PaymentEstimateError
 
 
 def _conversion(
@@ -228,3 +234,82 @@ def test_payment_estimate_capability_respects_temporal_and_identity_boundaries()
     assert current.can_estimate_payment is True
     assert historical.can_estimate_payment is False
     assert identity.can_estimate_payment is False
+
+
+
+def test_payment_assumptions_enrich_context_without_mutating_base_context():
+    context = build_money_context(
+        conversion=_conversion(),
+        destination_country_code="",
+        as_of=date(2026, 9, 22),
+    )
+    assumptions = PaymentEstimateAssumptions(
+        fx_markup_percent=Decimal("2.00"),
+        source_fixed_fee=Decimal("1.00"),
+        destination_fixed_fee=Decimal("220"),
+    )
+
+    enriched = apply_payment_assumptions(
+        context,
+        assumptions=assumptions,
+        destination_minor_units=0,
+    )
+
+    assert context.payment_estimate is None
+    assert enriched.payment_estimate is not None
+    assert enriched.payment_estimate.estimated_destination_amount == Decimal("16717")
+    assert enriched.payment_estimate.destination_value_lost == Decimal("733")
+    assert enriched.conversion is context.conversion
+
+
+@pytest.mark.parametrize(
+    "conversion",
+    [
+        _conversion(historical=True),
+        _conversion(base="EUR", quote="EUR"),
+    ],
+)
+def test_payment_assumptions_reject_unsupported_money_context(conversion):
+    context = build_money_context(
+        conversion=conversion,
+        destination_country_code="",
+        as_of=date(2026, 9, 22),
+    )
+
+    with pytest.raises(PaymentEstimateError):
+        apply_payment_assumptions(
+            context,
+            assumptions=PaymentEstimateAssumptions(),
+            destination_minor_units=0,
+        )
+
+
+def test_money_context_rejects_payment_estimate_for_a_different_conversion():
+    context = build_money_context(
+        conversion=_conversion(),
+        destination_country_code="",
+        as_of=date(2026, 9, 22),
+    )
+    enriched = apply_payment_assumptions(
+        context,
+        assumptions=PaymentEstimateAssumptions(source_fixed_fee=Decimal("1")),
+        destination_minor_units=0,
+    )
+    assert enriched.payment_estimate is not None
+
+    different_conversion = ConversionResult(
+        input_amount=Decimal("200"),
+        output_amount=Decimal("34900"),
+        quote=context.conversion.quote,
+        stale=False,
+    )
+
+    with pytest.raises(ValueError, match="source budget must match"):
+        MoneyContext(
+            conversion=different_conversion,
+            destination_country_code="",
+            as_of=context.as_of,
+            destination_context=None,
+            destination_state=MoneyContextState.NOT_APPLICABLE,
+            payment_estimate=enriched.payment_estimate,
+        )
