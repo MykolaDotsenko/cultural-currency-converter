@@ -87,9 +87,9 @@ The contract keeps these concerns explicit:
 - optional destination enrichment has explicit `available`, `empty`, `not_applicable` and `degraded` states;
 - known database/data/decimal enrichment failures fail open without replacing the conversion;
 - unexpected programming errors still propagate;
-- destination country, context date and price currency must remain consistent with the conversion contract.
+- destination country, optional canonical city scope, context date and price currency must remain consistent with the conversion contract.
 
-The Money Context Engine is not a second datastore, rate provider or calculation truth source. It is an application-level composition boundary intended for reuse by future budget, destination comparison, saved-trip, camera and mobile/offline flows.
+The Money Context Engine is not a second datastore, rate provider or calculation truth source. It is an application-level composition boundary intended for reuse by future budget, destination comparison, saved-trip, camera and mobile/offline flows. Canonical city scope now travels through this contract so those consumers do not need a parallel city-context path.
 
 ## Persistence
 

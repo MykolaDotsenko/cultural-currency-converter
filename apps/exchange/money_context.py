@@ -31,6 +31,13 @@ def _normalize_country_code(value: str) -> str:
     return country_code
 
 
+def _normalize_city_slug(value: str) -> str:
+    city_slug = value.strip().lower()
+    if city_slug and any(character.isspace() for character in city_slug):
+        raise ValueError("Money context destination city must use a canonical slug.")
+    return city_slug
+
+
 class MoneyContextState(StrEnum):
     """Availability of optional destination money context for one conversion."""
 
@@ -53,17 +60,25 @@ class MoneyContext:
     as_of: date
     destination_context: DestinationContext | None
     destination_state: MoneyContextState
+    destination_city_slug: str = ""
     payment_estimate: PaymentEstimate | None = None
 
     def __post_init__(self) -> None:
         country_code = _normalize_country_code(self.destination_country_code)
+        city_slug = _normalize_city_slug(self.destination_city_slug)
         object.__setattr__(self, "destination_country_code", country_code)
+        object.__setattr__(self, "destination_city_slug", city_slug)
+
+        if city_slug and not country_code:
+            raise ValueError("Money context destination city requires a destination country.")
 
         if self.destination_context is not None:
             if self.destination_context.country_code != country_code:
                 raise ValueError("Money context destination country does not match enrichment.")
             if self.destination_context.as_of != self.as_of:
                 raise ValueError("Money context date does not match destination enrichment.")
+            if self.destination_context.city_slug != city_slug:
+                raise ValueError("Money context destination city does not match enrichment.")
             if any(
                 item.currency_code != self.conversion.quote.quote_currency
                 for item in self.destination_context.prices
@@ -136,6 +151,7 @@ class DestinationContextBuilder(Protocol):
         quote_currency: str,
         as_of: date,
         price_limit: int,
+        city_slug: str,
     ) -> DestinationContext | None: ...
 
 
@@ -143,6 +159,7 @@ def build_money_context(
     *,
     conversion: ConversionResult,
     destination_country_code: str,
+    destination_city_slug: str = "",
     as_of: date | None = None,
     price_limit: int = 3,
     destination_context_builder: DestinationContextBuilder | None = None,
@@ -158,6 +175,9 @@ def build_money_context(
 
     selected_date = as_of or timezone.localdate()
     country_code = _normalize_country_code(destination_country_code)
+    city_slug = _normalize_city_slug(destination_city_slug)
+    if city_slug and not country_code:
+        raise ValueError("Money context destination city requires a destination country.")
 
     if conversion.quote.historical or not country_code:
         return MoneyContext(
@@ -166,6 +186,7 @@ def build_money_context(
             as_of=selected_date,
             destination_context=None,
             destination_state=MoneyContextState.NOT_APPLICABLE,
+            destination_city_slug=city_slug,
         )
 
     builder = destination_context_builder or build_destination_context_default
@@ -177,6 +198,7 @@ def build_money_context(
             quote_currency=conversion.quote.quote_currency,
             as_of=selected_date,
             price_limit=price_limit,
+            city_slug=city_slug,
         )
     except (DatabaseError, DecimalException, ValueError) as exc:
         logger.warning(
@@ -193,6 +215,7 @@ def build_money_context(
             as_of=selected_date,
             destination_context=None,
             destination_state=MoneyContextState.DEGRADED,
+            destination_city_slug=city_slug,
         )
 
     state = (
@@ -207,6 +230,7 @@ def build_money_context(
             as_of=selected_date,
             destination_context=destination_context,
             destination_state=state,
+            destination_city_slug=city_slug,
         )
     except ValueError as exc:
         logger.warning(
@@ -223,6 +247,7 @@ def build_money_context(
             as_of=selected_date,
             destination_context=None,
             destination_state=MoneyContextState.DEGRADED,
+            destination_city_slug=city_slug,
         )
 
 

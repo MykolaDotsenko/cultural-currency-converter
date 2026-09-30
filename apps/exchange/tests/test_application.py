@@ -159,6 +159,52 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
         quote_currency="JPY",
         as_of=date(2026, 9, 22),
         price_limit=3,
+        city_slug="",
+    )
+
+
+@pytest.mark.django_db
+def test_current_submission_passes_city_scope_into_money_context(reference_data):
+    latest = FakeLatestGateway()
+    command = ConverterSubmissionCommand(
+        amount=Decimal("100"),
+        source_country="FI",
+        source_currency="EUR",
+        destination_country="JP",
+        destination_currency="JPY",
+        destination_city_slug="tokyo",
+    )
+    destination_context = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 9, 22),
+        payment=None,
+        prices=(),
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+
+    with patch(
+        "apps.exchange.money_context.build_destination_context_default",
+        return_value=destination_context,
+    ) as context_builder:
+        outcome = run_converter_submission(
+            command,
+            latest_gateway_factory=lambda: latest,
+            historical_gateway_factory=Mock(),
+            context_as_of=date(2026, 9, 22),
+        )
+
+    assert outcome.error is None
+    assert outcome.money_context is not None
+    assert outcome.money_context.destination_city_slug == "tokyo"
+    context_builder.assert_called_once_with(
+        country_code="JP",
+        converted_amount=Decimal("17450"),
+        quote_currency="JPY",
+        as_of=date(2026, 9, 22),
+        price_limit=3,
+        city_slug="tokyo",
     )
 
 

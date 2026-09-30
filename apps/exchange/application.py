@@ -35,6 +35,7 @@ class ConverterSubmissionCommand:
     source_currency: str
     destination_country: str
     destination_currency: str
+    destination_city_slug: str = ""
     historical: bool = False
     requested_date: date | None = None
 
@@ -170,6 +171,7 @@ def run_converter_submission(
     money_context = build_money_context(
         conversion=conversion,
         destination_country_code=command.destination_country,
+        destination_city_slug=command.destination_city_slug,
         as_of=context_as_of or request_local_date,
     )
 
