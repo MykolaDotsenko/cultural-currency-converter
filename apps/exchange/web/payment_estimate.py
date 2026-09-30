@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+
+from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
@@ -7,10 +10,15 @@ from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 
 from apps.countries.models import Currency
-from apps.exchange.ai.tokens import ExplanationTokenError, load_conversion_explanation_token
+from apps.exchange.snapshot_tokens import (
+    ConversionSnapshotTokenError,
+    load_conversion_snapshot_token,
+)
 from apps.exchange.forms import PaymentEstimateForm
 from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.web.common import is_htmx
+
+logger = logging.getLogger("cultural_currency.exchange")
 
 
 def _money_text(value, *, minor_units: int) -> str:
@@ -27,8 +35,8 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     response_status = 200
 
     try:
-        snapshot = load_conversion_explanation_token(token)
-    except ExplanationTokenError:
+        snapshot = load_conversion_snapshot_token(token)
+    except ConversionSnapshotTokenError:
         response_status = 422
         estimate_error = {
             "title": "This payment estimate request is no longer valid.",
@@ -51,19 +59,37 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                 "detail": "Choose two different currencies to estimate FX markup or fixed fees.",
             }
         else:
-            currencies = Currency.objects.in_bulk(
-                [snapshot.base_currency, snapshot.quote_currency],
-                field_name="code",
-            )
+            try:
+                currencies = Currency.objects.in_bulk(
+                    [snapshot.base_currency, snapshot.quote_currency],
+                    field_name="code",
+                )
+            except DatabaseError as exc:
+                logger.warning(
+                    "Payment estimate currency metadata lookup failed",
+                    extra={"error_code": exc.__class__.__name__},
+                )
+                response_status = 503
+                estimate_error = {
+                    "title": "Payment estimate is temporarily unavailable.",
+                    "detail": (
+                        "Your reference conversion remains valid. "
+                        "Try the fee estimate again in a moment."
+                    ),
+                }
+                currencies = {}
+
             source_currency = currencies.get(snapshot.base_currency)
             destination_currency = currencies.get(snapshot.quote_currency)
-            if source_currency is None or destination_currency is None:
+            if estimate_error is None and (
+                source_currency is None or destination_currency is None
+            ):
                 response_status = 422
                 estimate_error = {
                     "title": "Currency precision metadata is unavailable.",
                     "detail": "Run the conversion again after reference data is restored.",
                 }
-            else:
+            elif estimate_error is None:
                 form = PaymentEstimateForm(
                     request.POST,
                     source_currency_code=source_currency.code,
