@@ -10,7 +10,7 @@ from django.utils.formats import date_format
 
 from apps.exchange.ai.tokens import build_conversion_explanation_token
 from apps.exchange.domain import ConversionResult, ObservationGranularity
-from apps.exchange.forms import CurrentConversionForm
+from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
 
 _FEATURED_THEME_BY_COUNTRY = {
     "FI": "fi",
@@ -165,6 +165,20 @@ def build_result_component(
         "amount": format(result.output_amount, "f"),
     }
 
+    trusted_snapshot_token = (
+        build_conversion_explanation_token(result) if not same_currency else None
+    )
+    payment_estimate_form = (
+        PaymentEstimateForm(
+            source_currency_code=result.quote.base_currency,
+            destination_currency_code=result.quote.quote_currency,
+            source_minor_units=base_minor_units,
+            destination_minor_units=quote_minor_units,
+        )
+        if not historical and not same_currency
+        else None
+    )
+
     return {
         "id": "current-conversion-result",
         "input_amount": input_text,
@@ -210,10 +224,24 @@ def build_result_component(
         ),
         "ai_explanation": (
             {
-                "token": build_conversion_explanation_token(result),
+                "token": trusted_snapshot_token,
                 "label": "Optional AI explanation",
             }
             if settings.AI_RUNTIME_EXPLANATION_ENABLED and not same_currency
+            else None
+        ),
+        "payment_estimate": (
+            {
+                "token": trusted_snapshot_token,
+                "form": payment_estimate_form,
+                "source_currency": result.quote.base_currency,
+                "destination_currency": result.quote.quote_currency,
+                "reference_amount": output_text,
+                "effective_date": effective_date,
+                "provider": provider,
+                "stale": result.stale,
+            }
+            if payment_estimate_form is not None
             else None
         ),
         "historical_trend": (
