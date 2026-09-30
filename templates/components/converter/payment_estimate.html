@@ -1,0 +1,115 @@
+{% if payment_estimate_error %}
+  <section class="qa-inline-alert qa-inline-alert--error" role="alert">
+    <h3>{{ payment_estimate_error.title }}</h3>
+    <p>{{ payment_estimate_error.detail }}</p>
+  </section>
+{% elif payment_estimate %}
+  <section class="qa-payment-estimate" aria-labelledby="payment-estimate-title">
+    <div class="qa-payment-estimate__heading">
+      <div>
+        <p class="qa-foundation-kicker">Payment estimate</p>
+        <h3 id="payment-estimate-title">Estimate what explicit fees may change</h3>
+        <p>
+          Start from the trusted reference conversion, then add only fees or FX markup you
+          actually know or want to test. Nothing here guesses your bank, card, ATM or merchant fees.
+        </p>
+      </div>
+      <p class="qa-payment-estimate__reference">
+        Reference: {{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}
+      </p>
+    </div>
+
+    {% if payment_estimate.estimated_amount %}
+      <div class="qa-payment-estimate__result" aria-live="polite">
+        <div>
+          <p class="qa-foundation-kicker">Estimated destination value</p>
+          <p class="qa-payment-estimate__amount">
+            {{ payment_estimate.estimated_amount }}
+            <span>{{ payment_estimate.destination_currency }}</span>
+          </p>
+        </div>
+        <dl class="qa-payment-estimate__facts">
+          <div>
+            <dt>Reference value</dt>
+            <dd>{{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}</dd>
+          </div>
+          <div>
+            <dt>Difference from reference</dt>
+            <dd>−{{ payment_estimate.difference_amount }} {{ payment_estimate.destination_currency }}</dd>
+          </div>
+          <div>
+            <dt>FX markup assumption</dt>
+            <dd>{{ payment_estimate.fx_markup_percent }}%</dd>
+          </div>
+          <div>
+            <dt>Fixed-fee assumptions</dt>
+            <dd>
+              {{ payment_estimate.source_fixed_fee }} {{ payment_estimate.source_currency }} +
+              {{ payment_estimate.destination_fixed_fee }} {{ payment_estimate.destination_currency }}
+            </dd>
+          </div>
+        </dl>
+        <p class="qa-context-source">
+          Reference observation {{ payment_estimate.effective_date }} · {{ payment_estimate.provider }}.
+          {% if payment_estimate.stale %}The underlying reference quote is cached/stale.{% endif %}
+        </p>
+      </div>
+    {% endif %}
+
+    <form class="qa-payment-estimate__form"
+          method="post"
+          action="{% url 'payment_estimate' %}"
+          hx-post="{% url 'payment_estimate' %}"
+          hx-target="#payment-estimate-region"
+          hx-swap="innerHTML"
+          hx-indicator="#payment-estimate-loading">
+      {% csrf_token %}
+      <input type="hidden"
+             name="payment_estimate_token"
+             value="{{ payment_estimate.token }}">
+      {% if payment_estimate.form.non_field_errors %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ payment_estimate.form.non_field_errors.0 }}</p>
+        </div>
+      {% endif %}
+      <div class="qa-payment-estimate__fields">
+        <label class="qa-field">
+          <span class="qa-field__label">{{ payment_estimate.form.fx_markup_percent.label }}</span>
+          {{ payment_estimate.form.fx_markup_percent }}
+          {% if payment_estimate.form.fx_markup_percent.errors %}
+            <span class="qa-field__message qa-field__message--error">{{ payment_estimate.form.fx_markup_percent.errors.0 }}</span>
+          {% else %}
+            <span class="qa-field__message">Percent added to the source-currency cost. Use 0 if unknown or not applicable.</span>
+          {% endif %}
+        </label>
+        <label class="qa-field">
+          <span class="qa-field__label">{{ payment_estimate.form.source_fixed_fee.label }}</span>
+          {{ payment_estimate.form.source_fixed_fee }}
+          {% if payment_estimate.form.source_fixed_fee.errors %}
+            <span class="qa-field__message qa-field__message--error">{{ payment_estimate.form.source_fixed_fee.errors.0 }}</span>
+          {% else %}
+            <span class="qa-field__message">A fixed fee taken from your {{ payment_estimate.source_currency }} budget before conversion.</span>
+          {% endif %}
+        </label>
+        <label class="qa-field">
+          <span class="qa-field__label">{{ payment_estimate.form.destination_fixed_fee.label }}</span>
+          {{ payment_estimate.form.destination_fixed_fee }}
+          {% if payment_estimate.form.destination_fixed_fee.errors %}
+            <span class="qa-field__message qa-field__message--error">{{ payment_estimate.form.destination_fixed_fee.errors.0 }}</span>
+          {% else %}
+            <span class="qa-field__message">A known local fee, such as an explicit ATM fee, deducted after conversion.</span>
+          {% endif %}
+        </label>
+      </div>
+      <div class="qa-payment-estimate__actions">
+        <span id="payment-estimate-loading"
+              class="qa-loading-indicator htmx-indicator"
+              aria-live="polite">Calculating estimate…</span>
+        <button class="qa-secondary-button" type="submit">Calculate estimate</button>
+      </div>
+    </form>
+    <p class="qa-payment-estimate__caveat">
+      This is a scenario estimate, not a bank/card/ATM quote. Actual executable rates and fees can differ.
+    </p>
+  </section>
+{% endif %}
