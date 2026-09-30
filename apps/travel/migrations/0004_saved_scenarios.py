@@ -111,6 +111,10 @@ class Migration(migrations.Migration):
                 ],
                 "constraints": [
                     models.CheckConstraint(
+                        condition=models.Q(("kind__in", ["trip", "budget", "shopping"])),
+                        name="scenario_kind_valid",
+                    ),
+                    models.CheckConstraint(
                         condition=models.Q(("source_amount__gte", 0)),
                         name="scenario_source_amount_non_negative",
                     ),
@@ -230,6 +234,10 @@ class Migration(migrations.Migration):
                     )
                 ],
                 "constraints": [
+                    models.CheckConstraint(
+                        condition=models.Q(("kind__in", ["initial", "recheck"])),
+                        name="scenario_observation_kind_valid",
+                    ),
                     models.CheckConstraint(
                         condition=models.Q(("input_amount__gte", 0)),
                         name="scenario_observation_input_non_negative",
