@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Iterable
+from typing import Any, Protocol
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -29,6 +30,13 @@ class SavedScenarioError(ValueError):
     """Raised when a saved-scenario request violates the domain contract."""
 
 
+class ScenarioOwner(Protocol):
+    pk: Any
+
+    @property
+    def is_authenticated(self) -> bool: ...
+
+
 @dataclass(frozen=True, slots=True)
 class SavedScenarioSpec:
     kind: SavedScenarioKind
@@ -47,7 +55,7 @@ class SavedScenarioSpec:
 
 
 def create_saved_scenario(
-    user,
+    user: ScenarioOwner,
     *,
     spec: SavedScenarioSpec,
     conversion: ConversionResult,
@@ -56,6 +64,8 @@ def create_saved_scenario(
 
     if not user.is_authenticated:
         raise SavedScenarioError("Authentication is required to save a scenario.")
+    if not isinstance(spec.kind, SavedScenarioKind):
+        raise SavedScenarioError("Scenario kind must be a SavedScenarioKind value.")
     if conversion.quote.historical:
         raise SavedScenarioError("Saved travel scenarios require a current conversion.")
     if conversion.quote.base_currency != spec.source_currency.code:
