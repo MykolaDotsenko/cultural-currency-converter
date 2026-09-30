@@ -172,6 +172,41 @@
         <button class="qa-secondary-button" type="submit">Interpret budget</button>
       </div>
     </form>
+    {% if budget_interpretation.result and budget_interpretation.result.save_assumptions %}
+      <section class="qa-story-entry"
+               aria-labelledby="budget-save-plan-title">
+        <div>
+          <p class="qa-foundation-kicker">Keep this plan</p>
+          <h3 id="budget-save-plan-title">Save these exact assumptions for later</h3>
+          <p>
+            Preserve the amount, destination scope and daily reference-item assumptions without
+            freezing today's local-price claims as permanent truth.
+          </p>
+        </div>
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'prepare_saved_scenario' %}">
+            {% csrf_token %}
+            <input type="hidden"
+                   name="budget_context_token"
+                   value="{{ budget_interpretation.token }}">
+            <input type="hidden"
+                   name="duration_days"
+                   value="{{ budget_interpretation.result.save_assumptions.duration_days }}">
+            <input type="hidden"
+                   name="travelers"
+                   value="{{ budget_interpretation.result.save_assumptions.travelers }}">
+            {% for item in budget_interpretation.result.save_assumptions.categories %}
+              <input type="hidden"
+                     name="{{ item.field_name }}"
+                     value="{{ item.value }}">
+            {% endfor %}
+            <button class="qa-secondary-button" type="submit">Save this plan</button>
+          </form>
+        {% else %}
+          <a class="qa-secondary-button" href="{% url 'login' %}">Sign in to save plans</a>
+        {% endif %}
+      </section>
+    {% endif %}
     <p class="qa-budget-interpretation__caveat">
       This compares only the visible reference basket with current sourced price anchors. It is
       not a full trip-cost forecast, historical purchasing-power estimate or financial advice.
