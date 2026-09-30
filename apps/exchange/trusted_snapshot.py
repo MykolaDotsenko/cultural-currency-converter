@@ -13,6 +13,8 @@ from apps.exchange.domain import ConversionResult, ObservationGranularity, norma
 # boundary was generalized remain valid for their normal short lifetime.
 _TOKEN_SALT = "exchange.runtime-explanation:v1"
 TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60
+MAX_TRUSTED_PROVIDER_KEYS = 64
+MAX_TRUSTED_PROVIDER_KEY_LENGTH = 40
 MAX_PROVIDER_KEYS = 128
 MAX_PROVIDER_KEY_LENGTH = 80
 
