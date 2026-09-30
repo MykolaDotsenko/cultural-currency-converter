@@ -7,6 +7,7 @@ from django import forms
 from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency, Currency
+from apps.culture.models import TypicalPriceCategory
 from apps.exchange.budget import (
     BudgetAssumptions,
     BudgetBasis,
@@ -402,19 +403,35 @@ class BudgetInterpretationForm(forms.Form):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        allowed_categories = {value for value, _label in TypicalPriceCategory.choices}
+        visible_labels: dict[str, str] = {}
+        for category, label in category_options:
+            if category not in allowed_categories or not re.fullmatch(r"[a-z0-9_]+", category):
+                raise ValueError("Budget category keys must be canonical identifiers.")
+            if category in visible_labels:
+                raise ValueError("Budget category options must be unique.")
+            visible_labels[category] = label
         self.category_options = category_options
 
-        for category, label in category_options:
-            if not re.fullmatch(r"[a-z0-9_]+", category):
-                raise ValueError("Budget category keys must be canonical identifiers.")
+        # Define every known category as an optional field, but render only the
+        # currently sourced options. This preserves a submitted category as an
+        # explicit assumption if its source row disappears between page load
+        # and POST; the domain can then return insufficient-data rather than
+        # silently shrinking the user's basket.
+        for category, generic_label in TypicalPriceCategory.choices:
             field_name = self.units_field_name(category)
+            label = visible_labels.get(category, generic_label)
             self.fields[field_name] = forms.DecimalField(
                 required=False,
                 min_value=Decimal("0.01"),
                 max_value=Decimal("100"),
                 max_digits=5,
                 decimal_places=2,
-                initial=_BUDGET_DEFAULT_UNITS.get(category, Decimal("1")),
+                initial=(
+                    _BUDGET_DEFAULT_UNITS.get(category, Decimal("1"))
+                    if category in visible_labels
+                    else None
+                ),
                 label=f"{label} per person / day",
                 widget=forms.NumberInput(
                     attrs={
@@ -447,7 +464,7 @@ class BudgetInterpretationForm(forms.Form):
             return cleaned
 
         categories: list[BudgetCategoryAssumption] = []
-        for category, _label in self.category_options:
+        for category, _label in TypicalPriceCategory.choices:
             value = cleaned.get(self.units_field_name(category))
             if value is None:
                 continue
