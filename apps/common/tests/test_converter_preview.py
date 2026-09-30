@@ -68,7 +68,7 @@ class ConverterPrimitivePreviewTests(SimpleTestCase):
         workspace_end = html.index("Illustrative layout fixture only.", workspace_start)
         workspace = html[workspace_start:workspace_end]
 
-        self.assertLess(workspace.index(">Source<"), workspace.index(">Destination<"))
+        self.assertLess(workspace.index(">From<"), workspace.index(">To<"))
         self.assertLess(
             workspace.index('id="workspace-source"'),
             workspace.index('id="workspace-destination"'),
