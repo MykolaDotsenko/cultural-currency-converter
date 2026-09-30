@@ -45,9 +45,9 @@ def compare_scenario_observations(
     rate_difference = latest.rate - initial.rate
     output_difference = latest.output_amount - initial.output_amount
     try:
-        rate_difference_percent = (
-            rate_difference / initial.rate * Decimal("100")
-        ).quantize(Decimal("0.1"), rounding=ROUND_HALF_EVEN)
+        rate_difference_percent = (rate_difference / initial.rate * Decimal("100")).quantize(
+            Decimal("0.1"), rounding=ROUND_HALF_EVEN
+        )
     except InvalidOperation as exc:
         raise ValueError("Scenario rate difference cannot be represented.") from exc
 
