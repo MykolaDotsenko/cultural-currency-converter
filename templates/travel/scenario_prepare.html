@@ -10,8 +10,7 @@
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
 {% endblock %}
 {% block content %}
-  <section class="qa-foundation-intro"
-           aria-labelledby="save-plan-page-title">
+  <section class="qa-foundation-intro" aria-labelledby="save-plan-page-title">
     <p class="qa-foundation-kicker">Saved planning</p>
     <h1 id="save-plan-page-title">Keep the assumptions, not a frozen promise.</h1>
     <p class="qa-foundation-lede">
@@ -20,7 +19,6 @@
       workflows need it instead of being treated as permanently true.
     </p>
   </section>
-
   {% if scenario_error %}
     <section class="qa-inline-alert qa-inline-alert--error" role="alert">
       <h2>{{ scenario_error.title }}</h2>
@@ -46,19 +44,27 @@
         <dl class="qa-budget-interpretation__facts">
           <div>
             <dt>Reference observation</dt>
-            <dd>{{ scenario_summary.effective_date|date:"j M Y" }}</dd>
+            <dd>
+              {{ scenario_summary.effective_date|date:"j M Y" }}
+            </dd>
           </div>
           <div>
             <dt>Duration</dt>
-            <dd>{{ scenario_summary.duration_days }} day{{ scenario_summary.duration_days|pluralize }}</dd>
+            <dd>
+              {{ scenario_summary.duration_days }} day{{ scenario_summary.duration_days|pluralize }}
+            </dd>
           </div>
           <div>
             <dt>Travelers</dt>
-            <dd>{{ scenario_summary.travelers }}</dd>
+            <dd>
+              {{ scenario_summary.travelers }}
+            </dd>
           </div>
           <div>
             <dt>Saved assumptions</dt>
-            <dd>{{ scenario_summary.categories|length }} reference item{{ scenario_summary.categories|length|pluralize }}</dd>
+            <dd>
+              {{ scenario_summary.categories|length }} reference item{{ scenario_summary.categories|length|pluralize }}
+            </dd>
           </div>
         </dl>
         {% if scenario_summary.categories %}
@@ -92,7 +98,6 @@
           <input type="hidden"
                  name="scenario_draft_token"
                  value="{{ scenario_draft_token }}">
-
           {% if scenario_form.non_field_errors %}
             <div class="qa-inline-alert qa-inline-alert--error" role="alert">
               <p>{{ scenario_form.non_field_errors.0 }}</p>
@@ -112,7 +117,6 @@
                 implying itinerary management.
               </span>
             </label>
-
             <label class="qa-field">
               <span class="qa-field__label">{{ scenario_form.title.label }}</span>
               {{ scenario_form.title }}
@@ -148,7 +152,6 @@
           </div>
         </form>
       </section>
-
       <p class="qa-saved-state__privacy">
         This is account-owned planning data. The saved FX observation is immutable evidence of the
         starting reference, while future re-checks append new observations instead of rewriting it.
