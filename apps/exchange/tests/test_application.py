@@ -155,6 +155,7 @@ def test_current_submission_coordinates_quote_and_destination_context(reference_
         converted_amount=Decimal("17450"),
         quote_currency="JPY",
         as_of=date(2026, 9, 22),
+        price_limit=3,
     )
 
 
