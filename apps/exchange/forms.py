@@ -442,9 +442,7 @@ class BudgetInterpretationForm(forms.Form):
                         "min": "0.01",
                         "max": "100",
                         "step": "0.01",
-                        "aria-describedby": (
-                            f"{field_name}-anchor {field_name}-source"
-                        ),
+                        "aria-describedby": (f"{field_name}-anchor {field_name}-source"),
                     }
                 ),
             )
