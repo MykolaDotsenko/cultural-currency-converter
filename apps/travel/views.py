@@ -5,13 +5,19 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import OuterRef, Subquery
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
-from apps.travel.models import FavouritePair, RecentConversion, SavedScenario
+from apps.travel.models import (
+    FavouritePair,
+    RecentConversion,
+    SavedScenario,
+    SavedScenarioObservation,
+)
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
 
 MAX_SYNC_BODY_BYTES = 16_384
@@ -102,6 +108,11 @@ def _recent_rows(user) -> list[dict[str, object]]:
 
 
 def _scenario_rows(user) -> list[dict[str, object]]:
+    latest_observation = (
+        SavedScenarioObservation.objects.filter(scenario_id=OuterRef("pk"))
+        .order_by("-recorded_at", "-id")
+        .values("effective_date")[:1]
+    )
     scenarios = (
         SavedScenario.objects.filter(user=user)
         .select_related(
@@ -110,21 +121,17 @@ def _scenario_rows(user) -> list[dict[str, object]]:
             "destination_country",
             "destination_city",
         )
-        .prefetch_related("observations")
+        .annotate(latest_effective_date=Subquery(latest_observation))
         .order_by("-updated_at", "-id")
     )
-    rows: list[dict[str, object]] = []
-    for scenario in scenarios:
-        observations = tuple(scenario.observations.all())
-        latest = observations[0] if observations else None
-        rows.append(
-            {
-                "scenario": scenario,
-                "latest_observation": latest,
-                "detail_url": reverse("saved_scenario_detail", args=(scenario.pk,)),
-            }
-        )
-    return rows
+    return [
+        {
+            "scenario": scenario,
+            "latest_effective_date": scenario.latest_effective_date,
+            "detail_url": reverse("saved_scenario_detail", args=(scenario.pk,)),
+        }
+        for scenario in scenarios
+    ]
 
 
 @require_GET
