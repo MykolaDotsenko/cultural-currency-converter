@@ -89,7 +89,81 @@ def test_current_money_context_composes_destination_enrichment():
         quote_currency="JPY",
         as_of=date(2026, 9, 22),
         price_limit=3,
+        city_slug="",
     )
+
+
+def test_current_money_context_preserves_canonical_city_scope():
+    expected = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 9, 22),
+        payment=_payment_context(),
+        prices=(),
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+    builder = Mock(return_value=expected)
+
+    context = build_money_context(
+        conversion=_conversion(),
+        destination_country_code="JP",
+        destination_city_slug=" TOKYO ",
+        as_of=date(2026, 9, 22),
+        destination_context_builder=builder,
+    )
+
+    assert context.destination_city_slug == "tokyo"
+    assert context.destination_context is expected
+    builder.assert_called_once_with(
+        country_code="JP",
+        converted_amount=Decimal("17450"),
+        quote_currency="JPY",
+        as_of=date(2026, 9, 22),
+        price_limit=3,
+        city_slug="tokyo",
+    )
+
+
+def test_mismatched_city_enrichment_degrades_instead_of_rewriting_conversion():
+    mismatched = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 9, 22),
+        payment=_payment_context(),
+        prices=(),
+        city_slug="osaka",
+        city_name="Osaka",
+    )
+
+    context = build_money_context(
+        conversion=_conversion(),
+        destination_country_code="JP",
+        destination_city_slug="tokyo",
+        as_of=date(2026, 9, 22),
+        destination_context_builder=Mock(return_value=mismatched),
+    )
+
+    assert context.destination_state is MoneyContextState.DEGRADED
+    assert context.destination_context is None
+    assert context.destination_city_slug == "tokyo"
+    assert context.conversion.output_amount == Decimal("17450")
+
+
+def test_city_scope_requires_country_and_canonical_slug_shape():
+    with pytest.raises(ValueError, match="requires a destination country"):
+        build_money_context(
+            conversion=_conversion(),
+            destination_country_code="",
+            destination_city_slug="tokyo",
+        )
+
+    with pytest.raises(ValueError, match="canonical slug"):
+        build_money_context(
+            conversion=_conversion(),
+            destination_country_code="JP",
+            destination_city_slug="Tokyo City",
+        )
 
 
 def test_empty_destination_context_is_distinct_from_dependency_failure():
