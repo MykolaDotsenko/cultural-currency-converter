@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
-from apps.travel.models import FavouritePair, RecentConversion
+from apps.travel.models import FavouritePair, RecentConversion, SavedScenario
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
 
 MAX_SYNC_BODY_BYTES = 16_384
@@ -80,6 +80,29 @@ def _favourite_rows(user) -> list[dict[str, object]]:
     ]
 
 
+def _scenario_rows(user) -> list[dict[str, object]]:
+    scenarios = (
+        SavedScenario.objects.filter(user=user)
+        .select_related(
+            "source_currency",
+            "destination_currency",
+            "destination_country",
+            "destination_city",
+        )
+        .order_by("-updated_at", "-id")
+    )
+    return [
+        {
+            "scenario": scenario,
+            "detail_url": reverse(
+                "saved_scenario_detail",
+                kwargs={"scenario_id": scenario.pk},
+            ),
+        }
+        for scenario in scenarios
+    ]
+
+
 def _recent_rows(user) -> list[dict[str, object]]:
     recents = (
         RecentConversion.objects.filter(user=user)
@@ -107,6 +130,9 @@ def saved_state(request: HttpRequest) -> HttpResponse:
         request,
         "travel/saved_state.html",
         {
+            "account_scenario_rows": (
+                _scenario_rows(request.user) if request.user.is_authenticated else []
+            ),
             "account_favourite_rows": (
                 _favourite_rows(request.user) if request.user.is_authenticated else []
             ),
