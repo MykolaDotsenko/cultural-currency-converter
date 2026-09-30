@@ -5,6 +5,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
@@ -18,6 +19,9 @@ from apps.culture.services import DestinationContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
+
+
+User = get_user_model()
 
 
 class FakeGateway:
@@ -174,6 +178,57 @@ def test_budget_interpretation_uses_signed_conversion_and_explicit_basket(
     assert b"26000" in response.content
     assert b"999999999" not in response.content
     assert b"not a full trip-cost forecast" in response.content
+
+
+@pytest.mark.django_db
+def test_valid_budget_interpretation_exposes_account_save_payload(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "4",
+            "travelers": "2",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    assert b"Save this budget scenario" in response.content
+    assert b'action="/saved/scenarios/budget/create/"' in response.content
+    assert b'name="duration_days" value="4"' in response.content
+    assert b'name="travelers" value="2"' in response.content
+    assert b'name="units_coffee" value="1"' in response.content
+    assert b'name="units_casual_meal" value="2"' in response.content
+
+
+@pytest.mark.django_db
+def test_anonymous_budget_interpretation_keeps_save_opt_in(
+    client,
+    reference_data,
+):
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "4",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    assert b"Sign in to save" in response.content
+    assert b"not uploaded automatically" in response.content
+    assert b'action="/saved/scenarios/budget/create/"' not in response.content
 
 
 @pytest.mark.django_db
