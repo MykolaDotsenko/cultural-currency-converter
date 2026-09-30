@@ -100,7 +100,7 @@ def build_money_context(
     destination_country_code: str,
     as_of: date | None = None,
     price_limit: int = 3,
-    destination_context_builder: DestinationContextBuilder = build_destination_context_default,
+    destination_context_builder: DestinationContextBuilder | None = None,
 ) -> MoneyContext:
     """Compose optional destination context around a trusted conversion.
 
@@ -123,8 +123,10 @@ def build_money_context(
             destination_state=MoneyContextState.NOT_APPLICABLE,
         )
 
+    builder = destination_context_builder or build_destination_context_default
+
     try:
-        destination_context = destination_context_builder(
+        destination_context = builder(
             country_code=country_code,
             converted_amount=conversion.output_amount,
             quote_currency=conversion.quote.quote_currency,
