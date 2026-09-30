@@ -6,7 +6,12 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency, Currency
-from apps.exchange.forms import CurrentConversionForm, HistoricalSeriesForm, parse_amount_text
+from apps.exchange.forms import (
+    BudgetInterpretationForm,
+    CurrentConversionForm,
+    HistoricalSeriesForm,
+    parse_amount_text,
+)
 
 
 @pytest.mark.parametrize(
@@ -59,6 +64,35 @@ def reference_data(db):
         source="test",
     )
     return fi, jp, eur, jpy
+
+
+def test_budget_form_native_decimal_contract_matches_server_precision():
+    form = BudgetInterpretationForm(
+        category_options=(("coffee", "Cup of coffee"),),
+    )
+    units = form.fields["units_coffee"]
+
+    assert units.widget.attrs["min"] == "0.01"
+    assert units.widget.attrs["step"] == "0.01"
+    assert units.decimal_places == 2
+    assert units.initial == Decimal("1")
+
+
+def test_budget_form_accepts_its_default_reference_unit_grid():
+    form = BudgetInterpretationForm(
+        {
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1.00",
+        },
+        category_options=(("coffee", "Cup of coffee"),),
+    )
+
+    assert form.is_valid(), form.errors
+    assumptions = form.cleaned_data["budget_assumptions"]
+    assert assumptions.duration_days == 5
+    assert assumptions.travelers == 1
+    assert assumptions.categories[0].units_per_person_per_day == Decimal("1.00")
 
 
 @pytest.mark.django_db
