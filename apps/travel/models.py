@@ -264,13 +264,11 @@ class SavedScenario(models.Model):
                 name="scenario_travel_dates_ordered",
             ),
             models.CheckConstraint(
-                condition=Q(destination_city__isnull=True)
-                | Q(destination_country__isnull=False),
+                condition=Q(destination_city__isnull=True) | Q(destination_country__isnull=False),
                 name="scenario_city_requires_country",
             ),
             models.CheckConstraint(
-                condition=Q(kind=SavedScenarioKind.SHOPPING)
-                | Q(destination_country__isnull=False),
+                condition=Q(kind=SavedScenarioKind.SHOPPING) | Q(destination_country__isnull=False),
                 name="scenario_travel_kinds_require_destination",
             ),
         ]
@@ -326,8 +324,7 @@ class SavedScenarioBudgetItem(models.Model):
                 name="unique_scenario_budget_category",
             ),
             models.CheckConstraint(
-                condition=Q(units_per_person_per_day__gt=0)
-                & Q(units_per_person_per_day__lte=100),
+                condition=Q(units_per_person_per_day__gt=0) & Q(units_per_person_per_day__lte=100),
                 name="scenario_budget_units_range",
             ),
         ]
