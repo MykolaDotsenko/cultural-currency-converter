@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency
@@ -190,6 +190,77 @@ def currency_era_links(
         .select_related("country", "currency")
         .order_by("country__name", "-is_primary", "-valid_from")
     )
+
+
+def currency_history_links(
+    *,
+    country_code: str,
+    selected_currency_code: str,
+    selected_date: date,
+    limit: int = 8,
+) -> tuple[CountryCurrency, ...]:
+    if not country_code:
+        return ()
+    if not 1 <= limit <= 12:
+        raise ValueError("Currency history relationship limit must be between 1 and 12.")
+
+    filters = Q(is_primary=True)
+    if selected_currency_code:
+        filters |= Q(currency__code=selected_currency_code.upper())
+
+    return tuple(
+        CountryCurrency.objects.filter(
+            country__iso2=country_code.upper(),
+        )
+        .filter(filters)
+        .filter(Q(valid_from__isnull=True) | Q(valid_from__lte=selected_date))
+        .select_related("country", "currency")
+        .order_by(
+            F("valid_from").asc(nulls_first=True),
+            F("valid_to").asc(nulls_last=True),
+            "currency__code",
+        )[:limit]
+    )
+
+
+def select_currency_history_moments(
+    *,
+    country_code: str,
+    currency_codes: tuple[str, ...],
+    selected_date: date,
+    limit: int = 6,
+) -> tuple[StoryMoment, ...]:
+    if not country_code and not currency_codes:
+        return ()
+    if not 1 <= limit <= 8:
+        raise ValueError("Currency history moment limit must be between 1 and 8.")
+
+    filters = Q()
+    if country_code:
+        filters |= Q(countries__iso2=country_code.upper())
+    if currency_codes:
+        filters |= Q(currencies__code__in=tuple(code.upper() for code in currency_codes))
+
+    queryset = (
+        StoryMoment.objects.published()
+        .filter(
+            filters,
+            category__in=_TEMPORAL_CATEGORIES,
+            start_date__isnull=False,
+            start_date__lte=selected_date,
+            verified_at__isnull=False,
+        )
+        .exclude(source_name="")
+        .exclude(source_url="")
+        .distinct()
+        .order_by("start_date", "end_date", "title")
+    )
+    candidate_limit = min(limit * 2, 16)
+    return tuple(
+        moment
+        for moment in queryset[:candidate_limit]
+        if is_valid_provenance_url(moment.source_url)
+    )[:limit]
 
 
 PRICE_CONTEXT_MAX_AGE = timedelta(days=730)
