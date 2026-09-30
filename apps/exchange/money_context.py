@@ -96,7 +96,7 @@ def compose_money_context(
     conversion: ConversionResult,
     destination_country: str,
     context_as_of: date,
-    destination_context_builder: DestinationContextBuilder = build_destination_context,
+    destination_context_builder: DestinationContextBuilder | None = None,
 ) -> MoneyContext:
     """Compose current destination meaning around a successful conversion.
 
@@ -112,7 +112,8 @@ def compose_money_context(
             context_as_of=context_as_of,
         )
 
-    destination = destination_context_builder(
+    builder = destination_context_builder or build_destination_context
+    destination = builder(
         country_code=country_code,
         converted_amount=conversion.output_amount,
         quote_currency=conversion.quote.quote_currency,
