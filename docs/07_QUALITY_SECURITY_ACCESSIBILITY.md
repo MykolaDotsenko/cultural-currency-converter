@@ -170,6 +170,8 @@ Keep the health endpoints semantically narrow:
 
 PostgreSQL CI runs the readiness endpoint against real PostgreSQL and Redis so this contract remains executable.
 
+The repository-level `render.yaml` is the deployment configuration source of truth for the hosted demo. It pins the existing Render service name, Frankfurt region, build/start commands, application-level `/health/ready/` health check and `checksPass` auto-deploy policy. Dashboard changes should be synchronized back to the Blueprint instead of becoming undocumented service drift.
+
 Structured operational events should expose only bounded fields needed for diagnosis/aggregation. Current provider signals include operation, outcome, attempts and latency; AI signals also expose model and token counts. Stale FX fallback is logged explicitly as a degraded-but-successful path. Do not add raw provider URLs, query parameters, payloads, user conversion values or AI packet hashes to routine telemetry.
 
 ## Performance
