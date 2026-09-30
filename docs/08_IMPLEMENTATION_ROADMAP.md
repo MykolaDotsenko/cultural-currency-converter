@@ -97,9 +97,10 @@ Implementation order inside this queue can change when dependencies overlap. Pre
 The following additional user-facing capabilities also clear the current **60/100 usefulness + distinctiveness threshold**. They should follow or interleave with the queue above when dependencies make that more efficient.
 
 10. **Real Payment Estimate — 94/100**
+   - **First production slice delivered:** current cross-currency conversions can model an explicit user-supplied FX markup plus source/destination fixed-fee assumptions from the signed trusted conversion snapshot, with currency-aware Decimal rounding, HTMX/no-JS support and local degraded states.
    - Explain the gap between a reference market rate and what a user may actually experience when paying by card or withdrawing cash.
    - Model only defensible inputs/ranges such as user-supplied bank/card markup, known fixed fees or clearly labelled scenario assumptions.
-   - Optionally allow a signed-in user to save explicit fee assumptions/profile defaults for reuse, with clear ownership/edit/delete controls; never infer issuer fees from unrelated behaviour.
+   - Remaining optional extension: allow a signed-in user to save explicit fee assumptions/profile defaults for reuse, with clear ownership/edit/delete controls; never infer issuer fees from unrelated behaviour.
    - Never present guessed bank, ATM, DCC or merchant fees as known facts; preserve the existing trust/provenance boundary.
 
 11. **Budget interpretation — 91/100**
