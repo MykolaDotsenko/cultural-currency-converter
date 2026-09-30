@@ -10,12 +10,12 @@ from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 
 from apps.countries.models import Currency
+from apps.exchange.forms import PaymentEstimateForm
+from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.trusted_snapshot import (
     TrustedSnapshotTokenError,
     load_trusted_conversion_snapshot_token,
 )
-from apps.exchange.forms import PaymentEstimateForm
-from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.web.common import is_htmx
 
 logger = logging.getLogger("cultural_currency.exchange")
