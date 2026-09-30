@@ -84,6 +84,25 @@ def test_historical_same_currency_preserves_requested_and_effective_date_without
     assert result.output_amount == Decimal("12.34")
 
 
+def test_historical_same_currency_accepts_local_today_ahead_of_utc_date():
+    requested = date(2026, 9, 21)
+    result = quote_historical_conversion(
+        amount=Decimal("12.34"),
+        base_currency="EUR",
+        quote_currency="EUR",
+        quote_minor_units=2,
+        requested_date=requested,
+        gateway=HistoricalExplodingGateway(),
+        now=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
+        current_date=requested,
+    )
+
+    assert result.quote.rate == Decimal("1")
+    assert result.quote.requested_date == requested
+    assert result.quote.effective_date == requested
+    assert result.output_amount == Decimal("12.34")
+
+
 def test_historical_future_date_is_rejected_before_gateway():
     with pytest.raises(HistoricalDateError):
         quote_historical_conversion(
