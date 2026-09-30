@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 
 from apps.exchange.ai.packets import build_explanation_packet
-from apps.exchange.ai.tokens import TrustedConversionSnapshot
+from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 from apps.exchange.ai.validation import ExplanationValidationError, validate_provider_payload
 from apps.exchange.domain import ObservationGranularity
 
