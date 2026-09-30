@@ -170,7 +170,42 @@ AI is optional synthesis, not a source of FX rates, historical observations or p
 
 Current runtime behaviour remains server-side, explicit, structured, validated and AI-independent for the core conversion path.
 
+## AI interaction contract
+
+A useful shorthand is: **truth is deterministic; experience may be AI-shaped**.
+
+AI may:
+
+- summarize trusted conversion/context packets;
+- explain which grounded factor matters most;
+- format concise cultural or historical context;
+- compare destinations only from normalized comparable inputs;
+- propose context-aware follow-up questions;
+- personalize wording within explicit user-controlled context.
+
+AI must not invent rates, price anchors, payment prevalence, fees, historical observations or country/currency relationships.
+
+For quick prompts and insight panels, prefer bounded structured output over open-ended prose. A response should be able to map to predictable UI fields such as `short_answer`, `key_factors`, `watch_out_for` and `next_step`.
+
+A model failure, timeout or validation failure must leave the deterministic result and sourced context intact.
+
 The configured provider/model is an implementation choice and may change after quality, latency, cost and reliability evaluation.
+
+## Future multimodal inputs
+
+Camera or voice features are future capabilities, not current runtime requirements.
+
+If introduced, a camera flow may help interpret user-supplied menus, receipts, shelf prices or ATM screens. A voice flow may make trip/budget questions easier during travel. Both require stricter privacy boundaries than ordinary destination context:
+
+- explicit user action before capture/upload;
+- minimize retained raw image/audio;
+- extract only the fields needed for the requested task;
+- do not treat OCR/model interpretation as authoritative when the source is ambiguous;
+- never infer bank/account secrets from screenshots;
+- allow the user to correct extracted amounts/currencies before financial calculations;
+- keep deterministic conversion/payment math outside the model.
+
+Prefer on-device or ephemeral processing when practical, and document any external provider that receives user-supplied media.
 
 ## Generated imagery
 
