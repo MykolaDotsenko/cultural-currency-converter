@@ -6,7 +6,12 @@ import pytest
 
 from apps.culture.services import DestinationContext, PaymentContext
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
-from apps.exchange.money_context import MoneyContext, apply_payment_assumptions, compose_money_context
+from apps.exchange.money_context import (
+    MoneyContext,
+    MoneyContextInvariantError,
+    apply_payment_assumptions,
+    compose_money_context,
+)
 from apps.exchange.payment_estimate import PaymentEstimateAssumptions, PaymentEstimateError
 
 
@@ -118,7 +123,7 @@ def test_money_context_rejects_mismatched_destination_enrichment():
         prices=(),
     )
 
-    with pytest.raises(ValueError, match="country must match"):
+    with pytest.raises(MoneyContextInvariantError, match="country must match"):
         MoneyContext(
             conversion=_conversion(),
             destination_country="JP",
