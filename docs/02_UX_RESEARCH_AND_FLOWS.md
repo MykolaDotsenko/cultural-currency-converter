@@ -28,6 +28,20 @@ On wider layouts they may appear side by side. On narrow layouts they can stack 
 
 Avoid repeating country/currency wording in multiple adjacent controls when one clear identity label is enough.
 
+## Current country/currency picker behaviour
+
+The shipped picker searches country/currency options through temporal country/currency relationships.
+
+Current behaviour includes:
+
+- country-context options and currency-only options;
+- current selection labelling;
+- historical labelling for archived/date-scoped options;
+- date-aware option lookup in historical mode;
+- preservation of currency-only conversion when country context is unnecessary.
+
+Form validation remains the final authority: a submitted country/currency mismatch is rejected before any FX provider call.
+
 ## Core states
 
 ### Initial
@@ -73,6 +87,29 @@ Historical mode should make the temporal boundary obvious:
 - current payment/price context should not be backdated implicitly.
 
 Historical charts and Then & Now are explanatory features, not trading/investment surfaces.
+
+## Current Real Payment Estimate
+
+The shipped current-conversion flow includes a progressive Real Payment Estimate for non-identity currency pairs.
+
+It starts from a signed trusted conversion snapshot and accepts only explicit user assumptions:
+
+- FX markup percentage;
+- a fixed fee in the source currency;
+- a fixed fee in the destination currency.
+
+The result shows the estimated destination value and the difference from the trusted reference conversion. Currency-specific minor-unit rounding is preserved.
+
+Important current boundaries:
+
+- current reference conversions only;
+- no estimate for exact same-currency 1:1 conversion;
+- no inferred bank/card/ATM/DCC/merchant fee;
+- no historical payment-cost estimate;
+- no reusable saved fee profile yet;
+- HTMX enhancement has a full-page no-JavaScript fallback.
+
+This is a scenario estimate, not an executable quote.
 
 ## Local meaning as a primary contextual surface
 
@@ -127,14 +164,16 @@ The portal should normally be readable in well under a minute. It is not a gener
 
 ## Historical quick exploration
 
-Historical analysis can expose simple user-oriented ranges such as **1 year / 5 years / 10 years** when the provider has defensible coverage.
+The shipped historical-series surface exposes **1 year / 5 years / 10 years** plus a custom range when provider coverage supports it.
 
-Prefer:
+Current presentation includes:
 
-- a simple chart;
-- a small number of anchor values;
-- requested/effective-date meaning;
-- a concise human-readable explanation grounded in the actual series.
+- the normalized chart;
+- selected, minimum, maximum and last observations when present;
+- provider attribution and stale state;
+- requested/effective-date context;
+- a concise summary derived from the actual series;
+- Then & Now comparison where the required observations are available.
 
 Do not turn range controls into a trading surface, and do not invent continuity where historical observations are missing.
 
