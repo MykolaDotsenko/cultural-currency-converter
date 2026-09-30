@@ -237,9 +237,9 @@ The web product currently supports:
 - historical FX conversion;
 - explicit requested/effective observation dates;
 - bilateral country/currency selection;
-- historical trend views, 1Y / 5Y / 10Y quick ranges and Then & Now;
-- smart country/currency filtering that respects shared and historical relationships;
-- explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
+- historical trend views with 1Y / 5Y / 10Y / custom ranges, selected/minimum/maximum/last observations and Then & Now;
+- smart country/currency filtering that respects shared, archived and date-scoped historical relationships while preserving currency-only choices;
+- explicit-assumption Real Payment Estimate for current non-identity conversions, using signed trusted conversion snapshots plus user-entered FX markup and source/destination fixed fees;
 - sourced current destination context;
 - everyday-value examples;
 - cash/card/ATM/tipping guidance;
@@ -248,6 +248,8 @@ The web product currently supports:
 - anonymous local favourites/recent conversions;
 - account-owned favourites;
 - separately opt-in account recent history.
+
+Current Real Payment Estimate does not persist a reusable fee profile and does not estimate historical card/ATM/merchant costs. Those remain future work.
 
 Current code and tests are the authoritative detail for these capabilities.
 
