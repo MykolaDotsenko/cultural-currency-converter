@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}{{ scenario.title|default:scenario.get_kind_display }} · Saved plan{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Review one account-owned saved travel-money plan and its stored reference observation.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro"
+           aria-labelledby="saved-plan-page-title">
+    <p class="qa-foundation-kicker">{{ scenario.get_kind_display }} · saved plan</p>
+    <h1 id="saved-plan-page-title">
+      {% if scenario.title %}{{ scenario.title }}{% else %}{{ scenario.get_kind_display }}{% endif %}
+    </h1>
+    <p class="qa-foundation-lede">
+      This page preserves the assumptions and trusted FX observation captured when the plan was
+      saved. It does not silently replace them with a new rate.
+    </p>
+  </section>
+
+  <div class="qa-saved-state">
+    <section class="qa-saved-section" aria-labelledby="saved-plan-summary-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Plan</p>
+          <h2 id="saved-plan-summary-title">
+            {% if scenario.destination_city %}
+              {{ scenario.destination_city.name }},
+            {% endif %}
+            {% if scenario.destination_country %}
+              {{ scenario.destination_country.name }}
+            {% else %}
+              Destination context unavailable
+            {% endif %}
+          </h2>
+          <p>
+            {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+            → {{ scenario.destination_currency.code }}
+          </p>
+        </div>
+        <div class="qa-saved-row__actions">
+          <a class="qa-secondary-button" href="{{ converter_url }}">Open in converter</a>
+        </div>
+      </div>
+
+      <dl class="qa-budget-interpretation__facts">
+        <div>
+          <dt>Duration</dt>
+          <dd>
+            {% if scenario.duration_days %}
+              {{ scenario.duration_days }} day{{ scenario.duration_days|pluralize }}
+            {% else %}
+              Not set
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Travelers</dt>
+          <dd>{{ scenario.travelers }}</dd>
+        </div>
+        <div>
+          <dt>Travel dates</dt>
+          <dd>
+            {% if scenario.travel_start_date and scenario.travel_end_date %}
+              {{ scenario.travel_start_date|date:"j M Y" }}–{{ scenario.travel_end_date|date:"j M Y" }}
+            {% elif scenario.travel_start_date %}
+              From {{ scenario.travel_start_date|date:"j M Y" }}
+            {% elif scenario.travel_end_date %}
+              Until {{ scenario.travel_end_date|date:"j M Y" }}
+            {% else %}
+              Not set
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Last updated</dt>
+          <dd>{{ scenario.updated_at|date:"j M Y, H:i" }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="qa-saved-section" aria-labelledby="saved-plan-reference-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Stored reference</p>
+          <h2 id="saved-plan-reference-title">Starting FX observation</h2>
+          <p>
+            This is evidence of what the plan used when it was saved, not a live quote.
+          </p>
+        </div>
+      </div>
+      {% if initial_observation %}
+        <article class="qa-saved-row">
+          <div class="qa-saved-row__copy">
+            <h3>
+              {{ initial_observation.input_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+              →
+              {{ initial_observation.output_amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}
+            </h3>
+            <p>
+              Rate {{ initial_observation.rate|floatformat:"-18" }} · effective
+              {{ initial_observation.effective_date|date:"j M Y" }}
+            </p>
+            <p class="qa-saved-row__meta">
+              {% if initial_observation.provider_keys %}
+                Source: {{ initial_observation.provider_keys|join:", " }} ·
+              {% endif %}
+              {% if initial_observation.stale %}stored as stale · {% endif %}
+              recorded {{ initial_observation.recorded_at|date:"j M Y, H:i" }}
+            </p>
+          </div>
+        </article>
+      {% else %}
+        <p class="qa-saved-empty">No trusted starting observation is available.</p>
+      {% endif %}
+      {% if latest_observation and latest_observation.pk != initial_observation.pk %}
+        <p class="qa-context-source">
+          A later re-check observation is also stored. Rate-change comparison will be surfaced in
+          the dedicated re-check workflow rather than inferred here.
+        </p>
+      {% endif %}
+    </section>
+
+    <section class="qa-saved-section" aria-labelledby="saved-plan-assumptions-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Explicit assumptions</p>
+          <h2 id="saved-plan-assumptions-title">Daily reference items</h2>
+          <p>
+            These are your saved units per person / day. Current prices and provenance are not
+            frozen into the plan and should be refreshed when the plan is re-checked.
+          </p>
+        </div>
+      </div>
+      {% if budget_items %}
+        <div class="qa-saved-list">
+          {% for item in budget_items %}
+            <article class="qa-saved-row">
+              <div class="qa-saved-row__copy">
+                <h3>{{ item.category|cut:"_"|title }}</h3>
+                <p>{{ item.units_per_person_per_day|floatformat:"-2" }} per person / day</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="qa-saved-empty">No daily reference-item assumptions are stored.</p>
+      {% endif %}
+    </section>
+
+    <section class="qa-saved-section" aria-labelledby="saved-plan-actions-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Actions</p>
+          <h2 id="saved-plan-actions-title">Use or remove this plan</h2>
+        </div>
+      </div>
+      <div class="qa-saved-row__actions">
+        <a class="qa-secondary-button" href="{{ converter_url }}">Open in converter</a>
+        <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
+          {% csrf_token %}
+          <button class="qa-secondary-button qa-destructive-button" type="submit">Remove plan</button>
+        </form>
+      </div>
+    </section>
+
+    <p class="qa-saved-state__privacy">
+      Saved plans are account-owned. Opening the converter does not overwrite the stored initial
+      observation; future explicit re-checks will append evidence instead.
+    </p>
+  </div>
+{% endblock %}
