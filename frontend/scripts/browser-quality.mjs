@@ -275,22 +275,39 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
         new URL(response.url()).pathname === "/payment/estimate/",
     );
 
-  // Use a value that passes native HTML constraints but fails our currency-
-  // precision validation so the progressive 422 response is exercised.
+  // Exercise both parser branches explicitly. A three-digit fractional form
+  // such as 1.001 is intentionally treated as ambiguous before precision
+  // validation, while 1.0001 is unambiguously a too-precise EUR amount.
   await page.locator("#id_fx_markup_percent").fill("2");
   await page.locator("#id_source_fixed_fee").fill("1.001");
   await page.locator("#id_destination_fixed_fee").fill("0");
-  const invalidEstimate = waitForPaymentEstimate();
+  const ambiguousEstimate = waitForPaymentEstimate();
   await page.getByRole("button", { name: "Calculate estimate" }).click();
-  const invalidEstimateResponse = await invalidEstimate;
+  const ambiguousEstimateResponse = await ambiguousEstimate;
   assert(
-    invalidEstimateResponse.status() === 422,
-    `current-converter: invalid payment estimate returned ${invalidEstimateResponse.status()} instead of 422`,
+    ambiguousEstimateResponse.status() === 422,
+    `current-converter: ambiguous payment estimate returned ${ambiguousEstimateResponse.status()} instead of 422`,
+  );
+  await page
+    .getByText("This amount is ambiguous. Enter it without thousands separators.")
+    .waitFor();
+  assert(
+    await page.locator("[data-previous-result-note]").isHidden(),
+    "current-converter: payment-estimate validation incorrectly marked the conversion as failed",
+  );
+
+  await page.locator("#id_source_fixed_fee").fill("1.0001");
+  const precisionEstimate = waitForPaymentEstimate();
+  await page.getByRole("button", { name: "Calculate estimate" }).click();
+  const precisionEstimateResponse = await precisionEstimate;
+  assert(
+    precisionEstimateResponse.status() === 422,
+    `current-converter: over-precise payment estimate returned ${precisionEstimateResponse.status()} instead of 422`,
   );
   await page.getByText("This currency supports at most 2 decimal places.").waitFor();
   assert(
     await page.locator("[data-previous-result-note]").isHidden(),
-    "current-converter: payment-estimate validation incorrectly marked the conversion as failed",
+    "current-converter: payment-estimate precision error incorrectly marked the conversion as failed",
   );
 
   await page.locator("#id_fx_markup_percent").fill("2");
