@@ -357,6 +357,43 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     .waitFor();
   await assertAxe(page, "current-converter/payment-estimate");
 
+  // Budget interpretation is a separate deterministic progressive surface. It
+  // must carry a signed Money Context scope, keep its assumptions explicit,
+  // and leave the successful conversion untouched.
+  const budgetForm = page.locator(".qa-budget-interpretation__form");
+  await budgetForm.waitFor();
+  const budgetContextToken = await budgetForm
+    .locator('input[name="budget_context_token"]')
+    .inputValue();
+  assert(
+    budgetContextToken.length > 40 && budgetContextToken.split(":").length >= 3,
+    `current-converter: budget context token is missing or malformed; length=${budgetContextToken.length}`,
+  );
+
+  const waitForBudgetInterpretation = () =>
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/budget/interpret/",
+    );
+
+  await budgetForm.locator("#id_duration_days").fill("5");
+  await budgetForm.locator("#id_travelers").fill("1");
+  const budgetResponsePromise = waitForBudgetInterpretation();
+  await budgetForm.getByRole("button", { name: "Interpret budget" }).click();
+  const budgetResponse = await budgetResponsePromise;
+  assert(
+    budgetResponse.status() === 200,
+    `current-converter: budget interpretation returned ${budgetResponse.status()} instead of 200`,
+  );
+  await page.getByText("Reference-basket comparison", { exact: true }).waitFor();
+  await page.getByText("not a full trip-cost forecast", { exact: false }).waitFor();
+  assert(
+    await page.locator("[data-previous-result-note]").isHidden(),
+    "current-converter: budget interpretation incorrectly marked the conversion as failed",
+  );
+  await assertAxe(page, "current-converter/budget-interpretation");
+
   await page.evaluate((key) => localStorage.removeItem(key), LOCAL_STATE_KEY);
   await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
 
