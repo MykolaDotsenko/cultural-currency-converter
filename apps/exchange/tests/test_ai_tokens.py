@@ -8,6 +8,10 @@ from django.core import signing
 
 from apps.exchange import trusted_snapshot as tokens
 from apps.exchange.ai.tokens import (
+    build_conversion_explanation_token,
+    load_conversion_explanation_token,
+)
+from apps.exchange.trusted_snapshot import (
     TrustedSnapshotTokenError,
     build_trusted_conversion_snapshot_token,
     load_trusted_conversion_snapshot_token,
@@ -46,6 +50,16 @@ def _result(
         quote=quote,
         stale=stale,
     )
+
+
+def test_ai_legacy_token_aliases_use_the_trusted_snapshot_contract():
+    token = build_conversion_explanation_token(_result())
+
+    snapshot = load_conversion_explanation_token(token)
+
+    assert snapshot.base_currency == "EUR"
+    assert snapshot.quote_currency == "JPY"
+    assert snapshot.rate == Decimal("174.50")
 
 
 def test_signed_conversion_snapshot_round_trips_current_result():
