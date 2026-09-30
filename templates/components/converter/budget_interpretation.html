@@ -122,10 +122,9 @@
           {% if budget_interpretation.form.duration_days.errors %}
             <span class="qa-field__message qa-field__message--error"
                   id="duration_days-error">{{ budget_interpretation.form.duration_days.errors.0 }}</span>
-          {% else %}
-            <span class="qa-field__message"
-                  id="duration_days-hint">Calendar days in this scenario.</span>
           {% endif %}
+          <span class="qa-field__message"
+                id="duration_days-hint">Calendar days in this scenario.</span>
         </label>
         <label class="qa-field">
           <span class="qa-field__label">{{ budget_interpretation.form.travelers.label }}</span>
@@ -133,10 +132,9 @@
           {% if budget_interpretation.form.travelers.errors %}
             <span class="qa-field__message qa-field__message--error"
                   id="travelers-error">{{ budget_interpretation.form.travelers.errors.0 }}</span>
-          {% else %}
-            <span class="qa-field__message"
-                  id="travelers-hint">People sharing the converted amount.</span>
           {% endif %}
+          <span class="qa-field__message"
+                id="travelers-hint">People sharing the converted amount.</span>
         </label>
       </div>
       <fieldset class="qa-budget-interpretation__basket">
@@ -154,13 +152,12 @@
               {% if item.field.errors %}
                 <span class="qa-field__message qa-field__message--error"
                       id="{{ item.field.html_name }}-error">{{ item.field.errors.0 }}</span>
-              {% else %}
-                <span class="qa-field__message"
-                      id="{{ item.field.html_name }}-anchor">
-                  Anchor {{ item.price_low }}{% if item.price_high %}–{{ item.price_high }}{% endif %}
-                  {{ item.currency_code }} · {{ item.scope_label }}
-                </span>
               {% endif %}
+              <span class="qa-field__message"
+                    id="{{ item.field.html_name }}-anchor">
+                Anchor {{ item.price_low }}{% if item.price_high %}–{{ item.price_high }}{% endif %}
+                {{ item.currency_code }} · {{ item.scope_label }}
+              </span>
               <span class="qa-context-source"
                     id="{{ item.field.html_name }}-source">
                 Observed {{ item.observed_at }} · {{ item.confidence }} confidence ·
