@@ -932,7 +932,12 @@ h3 {
   }
 
   .qa-result__output {
-    font-size: clamp(3rem, 18vw, 5rem);
+    gap: 0.12em 0.2em;
+    font-size: clamp(2.75rem, 15vw, 4.5rem);
+  }
+
+  .qa-result__currency {
+    font-size: 0.27em;
   }
 
   .qa-destination-context__heading {
