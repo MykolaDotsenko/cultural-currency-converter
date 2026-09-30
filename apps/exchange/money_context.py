@@ -17,6 +17,15 @@ from apps.exchange.domain import ConversionResult
 logger = logging.getLogger("cultural_currency.exchange")
 
 
+def _normalize_country_code(value: str) -> str:
+    country_code = value.upper().strip()
+    if country_code and (
+        len(country_code) != 2 or not country_code.isascii() or not country_code.isalpha()
+    ):
+        raise ValueError("Money context destination country code must be two ASCII letters.")
+    return country_code
+
+
 class MoneyContextState(StrEnum):
     """Availability of optional destination money context for one conversion."""
 
@@ -41,11 +50,7 @@ class MoneyContext:
     destination_state: MoneyContextState
 
     def __post_init__(self) -> None:
-        country_code = self.destination_country_code.upper().strip()
-        if country_code and (
-            len(country_code) != 2 or not country_code.isascii() or not country_code.isalpha()
-        ):
-            raise ValueError("Money context destination country code must be two ASCII letters.")
+        country_code = _normalize_country_code(self.destination_country_code)
         object.__setattr__(self, "destination_country_code", country_code)
 
         if self.destination_context is not None:
@@ -127,7 +132,7 @@ def build_money_context(
         raise ValueError("Money context price limit must be between 1 and 6.")
 
     selected_date = as_of or timezone.localdate()
-    country_code = destination_country_code.upper().strip()
+    country_code = _normalize_country_code(destination_country_code)
 
     if conversion.quote.historical or not country_code:
         return MoneyContext(
