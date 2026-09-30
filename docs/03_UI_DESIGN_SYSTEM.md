@@ -40,6 +40,24 @@ The converter should remain elegant without an image. Missing media is preferabl
 
 For country hero/teaser roles, production selection uses reviewed contemporary photography rather than illustration fallbacks.
 
+## Country theme profiles
+
+A country may define a restrained theme profile so source and destination can feel culturally distinct without becoming separate visual systems.
+
+A theme profile may include:
+
+- restrained accent/surface palette;
+- atmosphere/mood words;
+- approved editorial image cues and roles;
+- one short optional cultural micro-line;
+- material/architecture/transit/everyday-life cues;
+- prohibited clichés or stereotypes;
+- motion tone for state transitions.
+
+Theme profiles must not prescribe flags, famous people, brands, landmarks or decorative motifs as mandatory identity shortcuts. Real reviewed photography, typography and material atmosphere remain preferred.
+
+The bilateral workspace may show two different country atmospheres at once, but both sides must still feel like one **Quiet Atlas Premium** product.
+
 ## Photography art direction
 
 Target a consistent editorial look:
@@ -109,6 +127,17 @@ Photography should elevate the experience without overpowering the financial tas
 Motion should clarify state change, not decorate routine interaction.
 
 Respect reduced-motion preferences and avoid animation that delays access to information.
+
+Signature motion may include:
+
+- restrained country-atmosphere crossfades;
+- source/destination swap transitions;
+- monetary result transitions;
+- contextual-card reveals;
+- cultural/history surface reveals;
+- short save/re-check feedback.
+
+Motion should explain a state change, not decorate a static screen.
 
 ## Responsive design
 
