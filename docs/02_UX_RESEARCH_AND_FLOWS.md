@@ -84,6 +84,22 @@ The compact first-level exploration is:
 
 These paths can evolve. Their purpose is more important than a fixed card layout.
 
+### One useful insight at a time
+
+Progressive context should prioritize the most useful next insight rather than showing every possible warning, fact and recommendation at once. A single strong payment warning or local-value takeaway is usually better than a dense advice grid.
+
+## Contextual AI interaction
+
+AI should not open as an empty general-purpose chat box by default. When AI adds value, prefer context-aware entry points derived from the current conversion, destination or saved scenario.
+
+A useful pattern is:
+
+- **Smart result summary** — one short sentence explaining the most relevant implication of trusted conversion/context data;
+- **Quick prompts** — a small set of relevant next questions such as budget fit, cash need, payment warning or destination comparison;
+- **Structured insight panel** — short answer, what matters most, one caution and a useful next action.
+
+AI answers must remain downstream of trusted structured data. The interface should make it easy to dismiss or ignore AI without weakening the core conversion experience.
+
 ## Cultural-history portal
 
 A compact progressive-disclosure surface may combine the deeper **Money & culture** experience into one coherent portal. The entry point can be a labelled button or icon, but it must not rely on an unexplained “?” glyph for meaning.
@@ -112,6 +128,20 @@ Prefer:
 
 Do not turn range controls into a trading surface, and do not invent continuity where historical observations are missing.
 
+## Discovery / Explore experience
+
+A future Explore surface can make the product useful even when the user is not performing an immediate conversion.
+
+Potential discovery collections include:
+
+- what the same source amount roughly means across destinations;
+- card-first versus cash-relevant destinations;
+- currency stories and historical transitions;
+- region-based exploration;
+- destination alternatives with comparable sourced money context.
+
+Discovery rankings or labels should appear only when the underlying data is comparable enough to support them. Avoid pseudo-precise global “cheapest/most expensive” claims built from inconsistent country or city data.
+
 ## Saved and recent state
 
 Anonymous browser storage is useful for convenience but should be described as local-only. Browser-local controls that require JavaScript should not render as inert actions before enhancement, and empty-state claims should appear only after the browser state has actually been inspected.
@@ -119,6 +149,18 @@ Anonymous browser storage is useful for convenience but should be described as l
 Repeated saved/recent row actions should keep concise visible verbs while exposing row-specific accessible names. Collection-wide clear operations are destructive actions and should be visually distinguishable from routine secondary navigation without adding unnecessary confirmation friction.
 
 Signed-in data should respect ownership. Cross-device recent history is separately opt-in; signing in should not silently upload existing local recent activity.
+
+### Actionable history
+
+History should support useful re-entry, not only archival viewing. Where the required data exists, a previous conversion may offer concise actions such as:
+
+- repeat/reopen;
+- compare destination;
+- save as a scenario/trip;
+- open the relevant cultural/history context;
+- ask a bounded AI question about the saved conversion.
+
+Do not expose actions that cannot preserve the original rate/date/source semantics.
 
 ## Re-check and pre-trip return flow
 
