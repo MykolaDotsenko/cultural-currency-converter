@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ scenario.title|default:scenario.get_kind_display }} · Saved scenario{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Review a saved Cultural Currency Converter budget scenario and its trusted reference observation.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-saved-intro"
+           aria-labelledby="saved-scenario-title">
+    <p class="qa-foundation-kicker">Saved budget scenario</p>
+    <h1 id="saved-scenario-title">{{ scenario.title|default:scenario.get_kind_display }}</h1>
+    <p class="qa-foundation-lede">
+      This page preserves the planning assumptions and trusted FX observation that were saved
+      with your account. It does not silently refresh rates or local prices.
+    </p>
+  </section>
+
+  <div class="qa-saved-state">
+    <section class="qa-saved-section" aria-labelledby="scenario-summary-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Plan</p>
+          <h2 id="scenario-summary-title">Scenario summary</h2>
+        </div>
+        <div class="qa-saved-row__actions">
+          <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
+          <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
+            {% csrf_token %}
+            <button class="qa-secondary-button qa-destructive-button"
+                    type="submit">Remove scenario</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="qa-saved-list">
+        <article class="qa-saved-row">
+          <div class="qa-saved-row__copy">
+            <h3>
+              {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+              → {{ scenario.destination_currency.code }}
+            </h3>
+            <p>
+              {% if scenario.destination_city %}
+                {{ scenario.destination_city.name }}, {{ scenario.destination_country.name }}
+              {% elif scenario.destination_country %}
+                {{ scenario.destination_country.name }}
+              {% else %}
+                No destination context
+              {% endif %}
+            </p>
+            <p class="qa-saved-row__meta">
+              {% if scenario.duration_days %}
+                {{ scenario.duration_days }} day{{ scenario.duration_days|pluralize }}
+                · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
+              {% else %}
+                No duration saved
+              {% endif %}
+              · saved {{ scenario.created_at|date:"j M Y, H:i" }}
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="qa-saved-section" aria-labelledby="scenario-budget-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Explicit assumptions</p>
+          <h2 id="scenario-budget-title">Daily reference basket</h2>
+          <p>
+            These are the exact units you chose when saving the scenario. They are planning
+            assumptions, not claims about universal traveler spending.
+          </p>
+        </div>
+      </div>
+      {% if budget_items %}
+        <div class="qa-saved-list">
+          {% for item in budget_items %}
+            <article class="qa-saved-row">
+              <div class="qa-saved-row__copy">
+                <h3>{{ item.category|cut:"_"|title }}</h3>
+                <p>{{ item.units_per_person_per_day|floatformat:"-2" }} per person / day</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="qa-saved-empty">No budget-category assumptions were stored with this scenario.</p>
+      {% endif %}
+    </section>
+
+    <section class="qa-saved-section" aria-labelledby="scenario-observation-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Trusted reference</p>
+          <h2 id="scenario-observation-title">Saved FX observation</h2>
+          <p>
+            Stored observations are immutable. Re-checking will be added as a separate action so
+            a new observation never overwrites the one you originally saved.
+          </p>
+        </div>
+      </div>
+      {% if latest_observation %}
+        <div class="qa-saved-list">
+          <article class="qa-saved-row">
+            <div class="qa-saved-row__copy">
+              <h3>
+                {{ latest_observation.input_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                →
+                {{ latest_observation.output_amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}
+              </h3>
+              <p>
+                Rate {{ latest_observation.rate|floatformat:"-18" }}
+                · effective {{ latest_observation.effective_date|date:"j M Y" }}
+              </p>
+              <p class="qa-saved-row__meta">
+                {% if latest_observation.provider_keys %}
+                  Provider attribution: {{ latest_observation.provider_keys|join:", " }}
+                  ·
+                {% endif %}
+                {% if latest_observation.stale %}stored as stale · {% endif %}
+                recorded {{ latest_observation.recorded_at|date:"j M Y, H:i" }}
+              </p>
+            </div>
+          </article>
+        </div>
+      {% else %}
+        <p class="qa-saved-empty">No trusted reference observation is attached.</p>
+      {% endif %}
+      {% if initial_observation and latest_observation and initial_observation.pk != latest_observation.pk %}
+        <p class="qa-saved-state__privacy">
+          Initial observation effective {{ initial_observation.effective_date|date:"j M Y" }} remains
+          preserved separately from later re-checks.
+        </p>
+      {% endif %}
+    </section>
+
+    <p class="qa-saved-state__privacy">
+      Saved scenarios are account-owned and are not populated from browser-only history. Removing
+      this scenario also removes its stored assumptions and immutable observations from your account.
+    </p>
+  </div>
+{% endblock %}
