@@ -45,6 +45,74 @@
         {% endif %}
       </p>
     </noscript>
+    {% if user.is_authenticated %}
+      <section class="qa-saved-section" aria-labelledby="saved-scenarios-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Plans</p>
+            <h2 id="saved-scenarios-title">Saved scenarios</h2>
+            <p>
+              Budget scenarios keep the trusted conversion snapshot, destination scope and only
+              the assumptions you explicitly chose. They do not import browser-only history.
+            </p>
+          </div>
+        </div>
+        {% if account_scenario_rows %}
+          <div class="qa-saved-list">
+            {% for row in account_scenario_rows %}
+              {% with scenario=row.scenario %}
+                <article class="qa-saved-row" data-saved-scenario-id="{{ scenario.pk }}">
+                  <div class="qa-saved-row__copy">
+                    <h3>{{ scenario.title|default:scenario.get_kind_display }}</h3>
+                    <p>
+                      {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                      →
+                      {{ scenario.destination_currency.code }}
+                      ·
+                      {% if scenario.destination_city %}
+                        {{ scenario.destination_city.name }}, {{ scenario.destination_country.name }}
+                      {% elif scenario.destination_country %}
+                        {{ scenario.destination_country.name }}
+                      {% else %}
+                        No destination context
+                      {% endif %}
+                    </p>
+                    <p class="qa-saved-row__meta">
+                      {% if scenario.duration_days %}
+                        {{ scenario.duration_days }} day{{ scenario.duration_days|pluralize }}
+                        · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
+                        ·
+                      {% endif %}
+                      {% if row.latest_observation %}
+                        Last saved reference effective {{ row.latest_observation.effective_date|date:"j M Y" }}
+                      {% else %}
+                        No stored reference observation
+                      {% endif %}
+                    </p>
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    <a class="qa-secondary-button"
+                       href="{{ row.detail_url }}"
+                       aria-label="Open saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">Open</a>
+                    <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
+                      {% csrf_token %}
+                      <button class="qa-secondary-button qa-destructive-button"
+                              type="submit"
+                              aria-label="Remove saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">Remove</button>
+                    </form>
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">
+            No account-saved scenarios yet. Interpret a destination budget, then save the result
+            when you want to reopen the same assumptions later.
+          </p>
+        {% endif %}
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="saved-pairs-title">
       <div class="qa-saved-section__heading">
         <div>
