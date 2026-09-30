@@ -5,6 +5,7 @@ import pytest
 
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
+    ConversionRepresentationError,
     ConversionResult,
     FxDomainError,
     FxSourcePolicy,
@@ -80,6 +81,44 @@ def test_then_now_component_covers_directional_copy(latest_rate, expected_percen
     assert copy in component["difference_text"]
     assert component["then"]["providers"] == "ECB"
     assert component["latest"]["providers"] == "ECB"
+
+
+def test_then_now_comparison_normalizes_unrepresentable_rate_difference():
+    historical = ConversionResult(
+        input_amount=Decimal("1"),
+        output_amount=Decimal("1"),
+        quote=RateQuote(
+            base_currency="EUR",
+            quote_currency="JPY",
+            rate=Decimal("1"),
+            requested_date=date(2020, 1, 2),
+            effective_date=date(2020, 1, 2),
+            fetched_at=NOW,
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=("ecb",),
+            historical=True,
+        ),
+        stale=False,
+    )
+    latest = ConversionResult(
+        input_amount=Decimal("1"),
+        output_amount=Decimal("1"),
+        quote=RateQuote(
+            base_currency="EUR",
+            quote_currency="JPY",
+            rate=Decimal("1E+50"),
+            requested_date=None,
+            effective_date=date(2026, 9, 18),
+            fetched_at=NOW,
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=("ecb",),
+            historical=False,
+        ),
+        stale=False,
+    )
+
+    with pytest.raises(ConversionRepresentationError, match="display precision"):
+        compare_historical_to_latest(historical, latest)
 
 
 def test_rate_series_component_exposes_chart_state_and_optional_query_context():
