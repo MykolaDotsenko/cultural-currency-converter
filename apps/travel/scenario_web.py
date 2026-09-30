@@ -8,6 +8,7 @@ from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, Country, Currency
@@ -157,6 +158,7 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
+@never_cache
 @require_GET
 def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpResponse:
     scenario = get_object_or_404(
