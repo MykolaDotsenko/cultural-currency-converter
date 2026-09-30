@@ -9,7 +9,10 @@ from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_http_methods
 
-from apps.exchange.ai.tokens import ExplanationTokenError, load_conversion_explanation_token
+from apps.exchange.snapshot_tokens import (
+    ConversionSnapshotTokenError,
+    load_conversion_snapshot_token,
+)
 from apps.exchange.web.common import is_htmx
 
 
@@ -28,8 +31,8 @@ def conversion_explanation_view(
     response_status = 200
 
     try:
-        snapshot = load_conversion_explanation_token(token)
-    except ExplanationTokenError:
+        snapshot = load_conversion_snapshot_token(token)
+    except ConversionSnapshotTokenError:
         response_status = 422
         explanation_error = {
             "title": "This explanation request is no longer valid.",
