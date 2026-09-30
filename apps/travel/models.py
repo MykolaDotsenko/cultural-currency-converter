@@ -241,6 +241,10 @@ class SavedScenario(models.Model):
         ordering = ("-updated_at", "-id")
         constraints = [
             models.CheckConstraint(
+                condition=Q(kind__in=SavedScenarioKind.values),
+                name="scenario_kind_valid",
+            ),
+            models.CheckConstraint(
                 condition=Q(source_amount__gte=0),
                 name="scenario_source_amount_non_negative",
             ),
@@ -361,6 +365,10 @@ class SavedScenarioObservation(models.Model):
     class Meta:
         ordering = ("-recorded_at", "-id")
         constraints = [
+            models.CheckConstraint(
+                condition=Q(kind__in=SavedScenarioObservationKind.values),
+                name="scenario_observation_kind_valid",
+            ),
             models.CheckConstraint(
                 condition=Q(input_amount__gte=0),
                 name="scenario_observation_input_non_negative",
