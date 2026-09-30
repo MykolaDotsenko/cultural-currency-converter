@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from django.utils import timezone
 
@@ -21,6 +21,9 @@ from apps.exchange.domain import (
 from apps.exchange.money_context import MoneyContext, build_money_context
 from apps.exchange.providers.base import FxProviderError, FxProviderInvalidPayload
 from apps.exchange.services import quote_conversion, quote_historical_conversion
+
+if TYPE_CHECKING:
+    from apps.culture.services import DestinationContext
 
 ConverterSide = Literal["source", "destination"]
 
@@ -55,7 +58,7 @@ class ConverterSubmissionResult:
     money_context: MoneyContext | None
 
     @property
-    def destination_context(self):
+    def destination_context(self) -> DestinationContext | None:
         """Compatibility view for existing presentation consumers."""
 
         if self.money_context is None:
