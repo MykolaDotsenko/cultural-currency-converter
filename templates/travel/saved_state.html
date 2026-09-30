@@ -99,8 +99,7 @@
                     <a class="qa-secondary-button"
                        href="{{ row.detail_url }}"
                        aria-label="Open saved plan: {% if scenario.title %}{{ scenario.title }}{% else %}{{ scenario.get_kind_display }}{% endif %}">Open plan</a>
-                    <form method="post"
-                          action="{% url 'delete_saved_scenario' scenario.pk %}">
+                    <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
                       {% csrf_token %}
                       <button class="qa-secondary-button"
                               type="submit"
