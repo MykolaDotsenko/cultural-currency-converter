@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
-from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation
+from decimal import ROUND_HALF_EVEN, Decimal, DecimalException
 from enum import StrEnum
 
 
@@ -162,6 +163,19 @@ def normalize_currency_code(value: str) -> str:
     return code
 
 
+def _validate_rate_representation(rate: Decimal, *, label: str) -> None:
+    if not isinstance(rate, Decimal):
+        raise FxDomainError(f"{label} must be a Decimal.")
+    if not rate.is_finite() or rate <= 0:
+        raise FxDomainError(f"{label} must be a finite positive Decimal.")
+
+    binary64_rate = float(rate)
+    if not math.isfinite(binary64_rate) or binary64_rate <= 0:
+        raise FxDomainError(
+            f"{label} falls outside the supported numeric representation range."
+        )
+
+
 @dataclass(frozen=True)
 class RateQuote:
     base_currency: str
@@ -178,10 +192,7 @@ class RateQuote:
     def __post_init__(self) -> None:
         base = normalize_currency_code(self.base_currency)
         quote = normalize_currency_code(self.quote_currency)
-        if not isinstance(self.rate, Decimal):
-            raise FxDomainError("FX rate must be a Decimal.")
-        if not self.rate.is_finite() or self.rate <= 0:
-            raise FxDomainError("FX rate must be a finite positive Decimal.")
+        _validate_rate_representation(self.rate, label="FX rate")
         if self.fetched_at.tzinfo is None:
             raise FxDomainError("FX fetched_at must be timezone-aware.")
         providers = tuple(
@@ -230,10 +241,7 @@ class RateSeriesPoint:
     provider_keys: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        if not isinstance(self.rate, Decimal):
-            raise FxDomainError("FX series rate must be a Decimal.")
-        if not self.rate.is_finite() or self.rate <= 0:
-            raise FxDomainError("FX series rate must be a finite positive Decimal.")
+        _validate_rate_representation(self.rate, label="FX series rate")
         providers = tuple(
             sorted({key.lower().strip() for key in self.provider_keys if key.strip()})
         )
@@ -343,7 +351,7 @@ def convert_amount(amount: Decimal, quote: RateQuote, *, minor_units: int) -> De
     quantum = Decimal(1).scaleb(-minor_units)
     try:
         return (amount * quote.rate).quantize(quantum, rounding=ROUND_HALF_EVEN)
-    except InvalidOperation as exc:
+    except DecimalException as exc:
         raise ConversionRepresentationError(
             "Conversion cannot be represented at the requested precision."
         ) from exc
