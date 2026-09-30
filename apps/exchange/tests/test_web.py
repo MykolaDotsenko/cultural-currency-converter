@@ -195,6 +195,21 @@ def test_initial_page_does_not_request_rate(client, reference_data):
 
 
 @pytest.mark.django_db
+def test_context_identity_is_presented_once_before_enhancement(client, reference_data):
+    response = client.get(reverse("converter"))
+
+    assert response.status_code == 200
+    assert b'class="qa-workspace__identity"' not in response.content
+    assert b'<p class="qa-workspace__role" id="current-source-title">Source</p>' in response.content
+    assert (
+        b'<p class="qa-workspace__role" id="current-destination-title">Destination</p>'
+        in response.content
+    )
+    assert b'id="source-picker-trigger"' in response.content
+    assert b'id="destination-picker-trigger"' in response.content
+
+
+@pytest.mark.django_db
 def test_initial_converter_page_has_bounded_query_count(client, reference_data):
     with (
         patch("apps.exchange.views.build_latest_quote_gateway") as factory,
