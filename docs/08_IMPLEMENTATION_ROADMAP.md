@@ -114,6 +114,7 @@ The following additional user-facing capabilities also clear the current **60/10
 
 13. **Saved trip / budget detail — 85/100**
    - Give a saved travel-money scenario a focused detail page with current local value, typical costs, money tips, relevant conversion history and remaining budget where the user has entered spending.
+   - During an active trip, surface simple spent / remaining / approximate-per-day values without becoming a general-purpose expense tracker.
    - Keep scope intentionally narrower than a full trip planner or expense-management product.
    - Reuse destination context, history and scenario data rather than duplicating them into a separate content system.
 
@@ -139,6 +140,7 @@ The following additional user-facing capabilities also clear the current **60/10
 
 18. **Rate alerts — 74/100**
    - Allow an opted-in user to watch a saved pair/scenario and receive a notification when a clearly defined rate-change condition is met.
+   - Prefer scenario meaning over generic FX noise: explain what the movement changes for the user's saved trip amount when that is defensible.
    - Make thresholds, cadence and disable/delete controls explicit.
    - Keep alerts informational and avoid trading/investment framing.
 
@@ -166,6 +168,7 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
 22. **Pre-trip reminder / saved-scenario re-check — 82/100**
    - Let an opted-in user receive a reminder to re-open a saved trip/budget scenario near its planned travel date.
    - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
+   - Include destination/offline-pack freshness when it materially affects readiness for travel.
    - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
 
 23. **Historical quick ranges and anchor values — 78/100**
@@ -195,6 +198,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
 25. **Camera mode for menu / receipt / price / ATM understanding — 90/100**
    - Let a user explicitly capture or upload a menu, receipt, shelf price or ATM screen and extract amount/currency/context for conversion.
    - Require user confirmation before financial interpretation when OCR/model extraction is uncertain.
+   - When an active saved trip exists, optionally let the user add the confirmed expense amount to that trip so the lightweight remaining-budget view updates.
    - Treat screenshots and receipts as potentially sensitive; minimize retention and never infer hidden banking credentials.
 
 26. **Explore / discovery mode — 88/100**
@@ -225,7 +229,8 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
 
 31. **Lightweight personalization — 79/100**
    - Allow opt-in preferences such as home currency, preferred language, travel style or answer-detail level to reduce repetitive setup.
-   - Use saved/recent behaviour cautiously; do not silently build a sensitive travel/financial profile.
+   - Reuse stable user-selected defaults when creating the next trip so returning users do not repeat unchanged setup.
+   - Use saved/recent behaviour cautiously; do not silently build a sensitive travel/financial profile or copy destination-specific spending history into a new trip.
    - Personalization should improve defaults and explanations without changing deterministic financial truth.
 
 32. **Actionable history shortcuts — 74/100**
@@ -249,6 +254,37 @@ The market assessment adds one genuinely new user-facing capability above the **
    - Manual destination selection is the baseline; device-location assistance, if ever added, must be optional and privacy-preserving.
    - Reuse country/currency temporal logic, city-level context, payment guidance, My Places and saved-trip flows rather than introducing a parallel destination data model.
 
+### Sixth expansion wave: retention and trip continuity
+
+The retention strategy adds three non-duplicative capabilities that strengthen the natural travel lifecycle instead of manufacturing generic daily engagement.
+
+35. **Trip Budget Remaining — 92/100**
+   - Let an active saved trip keep a deliberately simple starting budget, confirmed spend, remaining amount and approximate remaining-per-day value.
+   - Accept manual additions and, later, confirmed camera-extracted expenses; never auto-bookkeep ambiguous OCR results.
+   - Keep this narrower than expense management: no accounting categories, reconciliation or ledger complexity unless later evidence justifies expansion.
+
+36. **Returning-user trip home — 89/100**
+   - For users with an upcoming trip, replace repetitive setup with a compact continuity surface showing destination, dates, budget, rate change, context freshness and the next useful action.
+   - Keep first-time/anonymous entry converter-first; only personalize the home surface when the user has saved relevant state.
+   - Prefer quick actions such as Scan price, Check budget, Money tips and Open trip over a dense dashboard.
+
+37. **Mobile home-screen quick actions / widget — 80/100**
+   - When native mobile is active, expose a minimal glanceable surface for an active trip, such as current reference conversion or remaining trip budget.
+   - Provide fast entry to the highest-value point-of-use actions, especially Scan and Convert.
+   - Never show a stale/offline FX observation as current; include freshness/state when a number could otherwise be misread.
+
+### Retention-first sequencing
+
+Retention work should follow the dependency order of the product, not engagement-fashion conventions.
+
+**P0:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode.
+
+**P1:** Camera → Add confirmed expense to trip → Trip Budget Remaining → Offline destination packs → Returning-user trip home.
+
+**P2:** Scenario-based notifications → mobile quick actions/widget → destination comparison → Explore.
+
+The target is not maximum DAU. The target is strong **saved-trip reopen**, **uses per active travel day**, and **return for the next trip**.
+
 ### Strategic product foundation: Money Context Engine
 
 Treat the existing everyday-value capability as a reusable product engine, not merely one post-conversion card.
@@ -267,7 +303,7 @@ Before implementation, re-evaluate framework/schema/authentication/offline choic
 
 Mobile is a strategically important point-of-use surface for this product: users may need money context at checkout, in cafés/shops, on public transport or before using an ATM. It should become an active product priority once the Money Context Engine, API contract and offline/staleness semantics are stable enough to reuse safely.
 
-A native client should reuse backend/domain meaning rather than duplicate web business rules.
+A native client should reuse backend/domain meaning rather than duplicate web business rules. Point-of-use value should include quick conversion, Camera, active-trip budget continuity, offline destination context and—when platform support is appropriate—a small home-screen widget/quick-action surface.
 
 Choose the current stable mobile stack when implementation starts; do not rewrite the web architecture merely to anticipate mobile.
 
