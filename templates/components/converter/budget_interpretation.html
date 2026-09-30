@@ -147,8 +147,8 @@
         </p>
         <div class="qa-budget-interpretation__category-grid">
           {% for item in budget_interpretation.fields %}
-            <label class="qa-budget-interpretation__category">
-              <span class="qa-field__label">{{ item.field.label }}</span>
+            <div class="qa-budget-interpretation__category">
+              <label class="qa-field__label" for="{{ item.field.id_for_label }}">{{ item.field.label }}</label>
               {{ item.field }}
               {% if item.field.errors %}
                 <span class="qa-field__message qa-field__message--error"
@@ -163,7 +163,7 @@
                 Observed {{ item.observed_at }} · {{ item.confidence }} confidence ·
                 <a href="{{ item.source_url }}" rel="noopener noreferrer">{{ item.source_name }}</a>
               </span>
-            </label>
+            </div>
           {% endfor %}
         </div>
       </fieldset>
