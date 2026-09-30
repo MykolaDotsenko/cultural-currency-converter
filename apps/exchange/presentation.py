@@ -8,8 +8,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
+from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
+from apps.exchange.money_context import MoneyContext
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
 _FEATURED_THEME_BY_COUNTRY = {
@@ -72,6 +74,7 @@ def build_result_component(
     result: ConversionResult,
     *,
     form: CurrentConversionForm,
+    money_context: MoneyContext | None = None,
 ) -> dict[str, object]:
     base_currency = form.currency_for_code(result.quote.base_currency)
     quote_currency = form.currency_for_code(result.quote.quote_currency)
@@ -178,6 +181,16 @@ def build_result_component(
         if not historical and not same_currency
         else None
     )
+    budget_interpretation = (
+        build_budget_component(
+            money_context,
+            destination_minor_units=quote_minor_units,
+        )
+        if money_context is not None
+        and not historical
+        and bool(money_context.destination_country_code)
+        else None
+    )
 
     return {
         "id": "current-conversion-result",
@@ -230,6 +243,7 @@ def build_result_component(
             if settings.AI_RUNTIME_EXPLANATION_ENABLED and not same_currency
             else None
         ),
+        "budget_interpretation": budget_interpretation,
         "payment_estimate": (
             {
                 "token": trusted_snapshot_token,
@@ -386,12 +400,17 @@ def build_converter_context(
     preserve_previous_result: bool = False,
     historical_currency_suggestions: list[tuple[str, object]] | None = None,
     destination_context_component: dict[str, object] | None = None,
+    money_context: MoneyContext | None = None,
 ) -> dict[str, object]:
     return {
         "form": form,
         "source": _selection_context(form, "source"),
         "destination": _selection_context(form, "destination"),
-        "result_component": build_result_component(result, form=form) if result else None,
+        "result_component": (
+            build_result_component(result, form=form, money_context=money_context)
+            if result
+            else None
+        ),
         "conversion_error": conversion_error,
         "error_summary": _build_error_summary(form) if validation_attempted else [],
         "has_result": result is not None,

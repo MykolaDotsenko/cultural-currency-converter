@@ -433,6 +433,11 @@
       {% include "components/converter/payment_estimate.html" with payment_estimate=result_component.payment_estimate %}
     </div>
   {% endif %}
+  {% if result_component.budget_interpretation %}
+    <div id="budget-interpretation-region">
+      {% include "components/converter/budget_interpretation.html" with budget_interpretation=result_component.budget_interpretation %}
+    </div>
+  {% endif %}
   {% include "components/converter/picker_dialog.html" with side="source" role_label="source" %}
   {% include "components/converter/picker_dialog.html" with side="destination" role_label="destination" %}
 </section>

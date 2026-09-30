@@ -158,10 +158,7 @@ def interpret_budget(
         available_budget / Decimal(assumptions.duration_days) / Decimal(assumptions.travelers)
     ).quantize(quantum, rounding=ROUND_HALF_EVEN)
 
-    candidates = _eligible_price_candidates(context)
-    selected_by_category: dict[str, TypicalPriceContext] = {}
-    for price in candidates:
-        selected_by_category.setdefault(price.category, price)
+    selected_by_category = {price.category: price for price in available_budget_categories(context)}
 
     lines: list[BudgetLineEstimate] = []
     missing_categories: list[str] = []
@@ -244,6 +241,17 @@ def _available_budget(context: MoneyContext, *, basis: BudgetBasis) -> Decimal:
             "Payment-estimate budget basis requires a payment estimate on the MoneyContext."
         )
     return context.payment_estimate.estimated_destination_amount
+
+
+def available_budget_categories(
+    context: MoneyContext,
+) -> tuple[TypicalPriceContext, ...]:
+    """Return the first eligible sourced price anchor for each budget category."""
+
+    selected: dict[str, TypicalPriceContext] = {}
+    for price in _eligible_price_candidates(context):
+        selected.setdefault(price.category, price)
+    return tuple(selected.values())
 
 
 def _eligible_price_candidates(context: MoneyContext) -> tuple[TypicalPriceContext, ...]:

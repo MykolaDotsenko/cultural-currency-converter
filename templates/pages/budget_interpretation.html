@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Budget interpretation · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="A deterministic travel-budget comparison against explicit, sourced daily reference items.">
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro"
+           aria-labelledby="budget-interpretation-page-title">
+    <p class="qa-foundation-kicker">Budget interpretation</p>
+    <h1 id="budget-interpretation-page-title">A transparent reference basket, not a guessed travel budget.</h1>
+    <p class="qa-foundation-lede">
+      Start from the signed conversion, choose a duration and traveler count, then edit the
+      visible daily reference items. Missing context stays missing instead of being invented.
+    </p>
+  </section>
+  <div id="budget-interpretation-region">
+    {% include "components/converter/budget_interpretation.html" %}
+  </div>
+  <p><a class="qa-secondary-button" href="{% url 'converter' %}">Back to converter</a></p>
+{% endblock %}

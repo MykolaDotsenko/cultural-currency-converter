@@ -1,0 +1,182 @@
+{% if budget_interpretation_error %}
+  <section class="qa-inline-alert qa-inline-alert--error" role="alert">
+    <h3>{{ budget_interpretation_error.title }}</h3>
+    <p>{{ budget_interpretation_error.detail }}</p>
+  </section>
+{% elif budget_interpretation %}
+  <section class="qa-budget-interpretation"
+           aria-labelledby="budget-interpretation-title">
+    <div class="qa-budget-interpretation__heading">
+      <div>
+        <p class="qa-foundation-kicker">Budget interpretation</p>
+        <h3 id="budget-interpretation-title">Put this amount against a small daily reference basket</h3>
+        <p>
+          Compare your converted amount with sourced current price anchors for
+          {{ budget_interpretation.destination_name }}. You control the trip length, number of
+          travelers and how many reference items to include per person each day.
+        </p>
+      </div>
+      <p class="qa-budget-interpretation__reference">
+        Reference: {{ budget_interpretation.reference_amount }} {{ budget_interpretation.currency_code }}
+      </p>
+    </div>
+    {% if budget_interpretation.result %}
+      {% with result=budget_interpretation.result %}
+        <div class="qa-budget-interpretation__result" aria-live="polite">
+          <div class="qa-budget-interpretation__result-heading">
+            <div>
+              <p class="qa-foundation-kicker">Reference-basket comparison</p>
+              {% if result.complete %}
+                <p class="qa-budget-interpretation__band">{{ result.band_label }}</p>
+              {% else %}
+                <p class="qa-budget-interpretation__band">Insufficient current data</p>
+              {% endif %}
+            </div>
+            <p class="qa-budget-interpretation__daily">
+              {{ result.daily_budget_per_person }} {{ budget_interpretation.currency_code }}
+              <span>per person / day</span>
+            </p>
+          </div>
+          <dl class="qa-budget-interpretation__facts">
+            <div>
+              <dt>Available destination amount</dt>
+              <dd>
+                {{ result.available_budget }} {{ budget_interpretation.currency_code }}
+              </dd>
+            </div>
+            <div>
+              <dt>Trip assumptions</dt>
+              <dd>
+                {{ result.duration_days }} day{{ result.duration_days|pluralize }} · {{ result.travelers }} traveler{{ result.travelers|pluralize }}
+              </dd>
+            </div>
+            <div>
+              <dt>Known basket range</dt>
+              <dd>
+                {{ result.reference_low }}–{{ result.reference_high }}
+                {{ budget_interpretation.currency_code }}
+              </dd>
+            </div>
+            <div>
+              <dt>Coverage</dt>
+              <dd>
+                {% if result.complete %}
+                  All selected reference categories matched current sourced anchors.
+                {% else %}
+                  Missing: {{ result.missing_categories|join:", " }}
+                {% endif %}
+              </dd>
+            </div>
+          </dl>
+          {% if result.lines %}
+            <div class="qa-budget-interpretation__lines"
+                 aria-label="Budget reference lines">
+              {% for line in result.lines %}
+                <article class="qa-budget-interpretation__line">
+                  <div>
+                    <p class="qa-budget-interpretation__line-title">{{ line.label }}</p>
+                    <p class="qa-field__message">{{ line.units }} per person / day · {{ line.scope_label }}</p>
+                  </div>
+                  <div class="qa-budget-interpretation__line-values">
+                    <span>
+                      {{ line.daily_low }}–{{ line.daily_high }}
+                      {{ budget_interpretation.currency_code }} / person / day
+                    </span>
+                    <strong>
+                      {{ line.total_low }}–{{ line.total_high }}
+                      {{ budget_interpretation.currency_code }} total
+                    </strong>
+                  </div>
+                  <p class="qa-context-source">
+                    Observed {{ line.observed_at }} · {{ line.confidence }} confidence ·
+                    <a href="{{ line.source_url }}"
+                       rel="noopener noreferrer">{{ line.source_name }}</a>
+                  </p>
+                </article>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endwith %}
+    {% endif %}
+    <form class="qa-budget-interpretation__form"
+          method="post"
+          action="{% url 'budget_interpretation' %}"
+          hx-post="{% url 'budget_interpretation' %}"
+          hx-target="#budget-interpretation-region"
+          hx-swap="innerHTML"
+          hx-indicator="#budget-interpretation-loading">
+      {% csrf_token %}
+      <input type="hidden"
+             name="budget_context_token"
+             value="{{ budget_interpretation.token }}">
+      {% if budget_interpretation.form.non_field_errors %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ budget_interpretation.form.non_field_errors.0 }}</p>
+        </div>
+      {% endif %}
+      <div class="qa-budget-interpretation__trip-fields">
+        <label class="qa-field">
+          <span class="qa-field__label">{{ budget_interpretation.form.duration_days.label }}</span>
+          {{ budget_interpretation.form.duration_days }}
+          {% if budget_interpretation.form.duration_days.errors %}
+            <span class="qa-field__message qa-field__message--error"
+                  id="duration_days-error">{{ budget_interpretation.form.duration_days.errors.0 }}</span>
+          {% endif %}
+          <span class="qa-field__message"
+                id="duration_days-hint">Calendar days in this scenario.</span>
+        </label>
+        <label class="qa-field">
+          <span class="qa-field__label">{{ budget_interpretation.form.travelers.label }}</span>
+          {{ budget_interpretation.form.travelers }}
+          {% if budget_interpretation.form.travelers.errors %}
+            <span class="qa-field__message qa-field__message--error"
+                  id="travelers-error">{{ budget_interpretation.form.travelers.errors.0 }}</span>
+          {% endif %}
+          <span class="qa-field__message"
+                id="travelers-hint">People sharing the converted amount.</span>
+        </label>
+      </div>
+      <fieldset class="qa-budget-interpretation__basket">
+        <legend class="qa-field__label">Daily reference basket</legend>
+        <p class="qa-field__message">
+          These are explicit editable assumptions, not a claim about what every traveler spends.
+          Clear a field to leave that reference item out.
+        </p>
+        <div class="qa-budget-interpretation__category-grid">
+          {% for item in budget_interpretation.fields %}
+            <div class="qa-budget-interpretation__category">
+              <label class="qa-field__label"
+                     for="{{ item.field.id_for_label }}">{{ item.field.label }}</label>
+              {{ item.field }}
+              {% if item.field.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="{{ item.field.html_name }}-error">{{ item.field.errors.0 }}</span>
+              {% endif %}
+              <span class="qa-field__message" id="{{ item.field.html_name }}-anchor">
+                Anchor {{ item.price_low }}{% if item.price_high %}–{{ item.price_high }}{% endif %}
+                {{ item.currency_code }} · {{ item.scope_label }}
+              </span>
+              <span class="qa-context-source" id="{{ item.field.html_name }}-source">
+                Observed {{ item.observed_at }} · {{ item.confidence }} confidence ·
+                <a href="{{ item.source_url }}" rel="noopener noreferrer">{{ item.source_name }}</a>
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div class="qa-budget-interpretation__actions">
+        <span id="budget-interpretation-loading"
+              class="qa-loading-indicator htmx-indicator"
+              aria-live="polite">Interpreting budget…</span>
+        <button class="qa-secondary-button" type="submit">Interpret budget</button>
+      </div>
+    </form>
+    <p class="qa-budget-interpretation__caveat">
+      This compares only the visible reference basket with current sourced price anchors. It is
+      not a full trip-cost forecast, historical purchasing-power estimate or financial advice.
+      Accommodation, flights and unselected categories are not silently added.
+    </p>
+    <p class="qa-context-source">Local context date: {{ budget_interpretation.as_of }}.</p>
+  </section>
+{% endif %}

@@ -255,6 +255,7 @@ def converter_view(
     error = None
     historical_suggestions = []
     destination_context_component = None
+    money_context = None
     response_status = 200
     form_valid = form.is_valid() if convert_requested else False
     if form_valid:
@@ -372,6 +373,7 @@ def converter_view(
         preserve_previous_result=preserve_previous_result,
         historical_currency_suggestions=historical_suggestions,
         destination_context_component=destination_context_component,
+        money_context=money_context,
     )
     context["account_favourite_saved"] = account_favourite_saved
     context["account_recent_history_recorded"] = account_recent_history_recorded

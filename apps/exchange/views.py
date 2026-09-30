@@ -8,6 +8,7 @@ from apps.exchange.services import (
     get_rate_series,
     quote_conversion,
 )
+from apps.exchange.web.budget import budget_interpretation_view
 from apps.exchange.web.converter import converter_view
 from apps.exchange.web.explanation import conversion_explanation_view
 from apps.exchange.web.gateways import (
@@ -53,6 +54,10 @@ def historical_series(request: HttpRequest) -> HttpResponse:
 
 def payment_estimate(request: HttpRequest) -> HttpResponse:
     return payment_estimate_view(request)
+
+
+def budget_interpretation(request: HttpRequest) -> HttpResponse:
+    return budget_interpretation_view(request)
 
 
 def conversion_explanation(request: HttpRequest) -> HttpResponse:

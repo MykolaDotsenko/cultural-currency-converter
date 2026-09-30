@@ -7,6 +7,13 @@ from django import forms
 from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency, Currency
+from apps.culture.models import TypicalPriceCategory
+from apps.exchange.budget import (
+    BudgetAssumptions,
+    BudgetBasis,
+    BudgetCategoryAssumption,
+    BudgetInterpretationError,
+)
 from apps.exchange.domain import RateSeriesRangeError, normalize_currency_code
 from apps.exchange.payment_estimate import MAX_FX_MARKUP_PERCENT
 
@@ -346,6 +353,149 @@ class PaymentEstimateForm(forms.Form):
             self.add_error(field_name, exc)
             return
         cleaned[f"{field_name}_decimal"] = parsed
+
+
+_BUDGET_DEFAULT_UNITS: dict[str, Decimal] = {
+    "coffee": Decimal("1"),
+    "casual_meal": Decimal("2"),
+    "transit": Decimal("2"),
+    "groceries": Decimal("1"),
+    "other": Decimal("1"),
+}
+
+
+class BudgetInterpretationForm(forms.Form):
+    duration_days = forms.IntegerField(
+        min_value=1,
+        max_value=365,
+        initial=3,
+        label="Trip duration",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "numeric",
+                "min": "1",
+                "max": "365",
+                "step": "1",
+                "aria-describedby": "duration_days-hint",
+            }
+        ),
+    )
+    travelers = forms.IntegerField(
+        min_value=1,
+        max_value=20,
+        initial=1,
+        label="Travelers",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "numeric",
+                "min": "1",
+                "max": "20",
+                "step": "1",
+                "aria-describedby": "travelers-hint",
+            }
+        ),
+    )
+
+    def __init__(
+        self,
+        *args,
+        category_options: tuple[tuple[str, str], ...],
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        allowed_categories = {value for value, _label in TypicalPriceCategory.choices}
+        visible_labels: dict[str, str] = {}
+        for category, label in category_options:
+            if category not in allowed_categories or not re.fullmatch(r"[a-z0-9_]+", category):
+                raise ValueError("Budget category keys must be canonical identifiers.")
+            if category in visible_labels:
+                raise ValueError("Budget category options must be unique.")
+            visible_labels[category] = label
+        self.category_options = category_options
+
+        # Define every known category as an optional field, but render only the
+        # currently sourced options. This preserves a submitted category as an
+        # explicit assumption if its source row disappears between page load
+        # and POST; the domain can then return insufficient-data rather than
+        # silently shrinking the user's basket.
+        for category, generic_label in TypicalPriceCategory.choices:
+            field_name = self.units_field_name(category)
+            label = visible_labels.get(category, generic_label)
+            self.fields[field_name] = forms.DecimalField(
+                required=False,
+                min_value=Decimal("0.01"),
+                max_value=Decimal("100"),
+                max_digits=5,
+                decimal_places=2,
+                initial=(
+                    _BUDGET_DEFAULT_UNITS.get(category, Decimal("1"))
+                    if category in visible_labels
+                    else None
+                ),
+                label=f"{label} per person / day",
+                widget=forms.NumberInput(
+                    attrs={
+                        "class": "qa-text-input",
+                        "inputmode": "decimal",
+                        "min": "0.01",
+                        "max": "100",
+                        "step": "0.01",
+                        "aria-describedby": (f"{field_name}-anchor {field_name}-source"),
+                    }
+                ),
+            )
+
+    @staticmethod
+    def units_field_name(category: str) -> str:
+        return f"units_{category}"
+
+    def add_error(self, field, error):
+        super().add_error(field, error)
+        if field and field in self.fields:
+            widget = self.fields[field].widget
+            existing_description = str(widget.attrs.get("aria-describedby", "")).strip()
+            descriptions = " ".join(
+                item for item in (f"{field}-error", existing_description) if item
+            )
+            widget.attrs.update(
+                {
+                    "aria-invalid": "true",
+                    "aria-describedby": descriptions,
+                }
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors:
+            return cleaned
+
+        categories: list[BudgetCategoryAssumption] = []
+        for category, _label in TypicalPriceCategory.choices:
+            value = cleaned.get(self.units_field_name(category))
+            if value is None:
+                continue
+            categories.append(
+                BudgetCategoryAssumption(
+                    category=category,
+                    units_per_person_per_day=value,
+                )
+            )
+
+        if not categories:
+            raise forms.ValidationError("Keep at least one daily reference item.")
+
+        try:
+            cleaned["budget_assumptions"] = BudgetAssumptions(
+                duration_days=cleaned["duration_days"],
+                travelers=cleaned["travelers"],
+                categories=tuple(categories),
+                basis=BudgetBasis.REFERENCE_CONVERSION,
+            )
+        except BudgetInterpretationError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        return cleaned
 
 
 SERIES_PERIOD_CHOICES = (

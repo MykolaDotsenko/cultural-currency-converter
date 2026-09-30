@@ -10,6 +10,7 @@ from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
 from apps.culture.views import current_destination_context, money_culture_story
 from apps.exchange.views import (
+    budget_interpretation,
     conversion_explanation,
     converter,
     historical_series,
@@ -30,6 +31,7 @@ urlpatterns = [
     path("picker/options/", picker_options, name="picker_options"),
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
     path("payment/estimate/", payment_estimate, name="payment_estimate"),
+    path("budget/interpret/", budget_interpretation, name="budget_interpretation"),
     path("story/", money_culture_story, name="money_culture_story"),
     path(
         "destination/current-context/",

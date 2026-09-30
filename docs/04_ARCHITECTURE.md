@@ -93,6 +93,21 @@ The Money Context Engine is not a second datastore, rate provider or calculation
 
 `apps/exchange/budget.py` is the first pure-domain consumer of that contract. It compares an explicitly selected destination amount basis with a user/editorial daily basket built from already-sourced `TypicalPriceContext` values. It does not query providers, infer missing categories or establish a universal cost-of-living truth. Country-level interpretation excludes city-only observations; city-level interpretation may use the selected city plus visibly national fallback rows already present in the MoneyContext.
 
+### Budget interpretation web trust boundary
+
+The budget web flow does not trust editable browser fields for financial truth.
+
+A short-lived signed budget-context token carries:
+
+- the already-signed conversion snapshot;
+- original FX fetch/policy metadata needed to reconstruct the trusted conversion contract;
+- destination country and optional canonical city scope;
+- the local-context as-of date.
+
+On submit, the endpoint reconstructs the trusted conversion, rebuilds current sourced destination context for that signed scope/date, and applies only the user-visible budget assumptions. Posted fields cannot replace the conversion amount, rate, destination scope or source provenance.
+
+The token does not serialize price rows as truth. Price anchors are reloaded from the project-owned reviewed data layer so retired/unpublished or invalid context is not kept alive merely because an old browser form still exists.
+
 ## Persistence
 
 PostgreSQL is the production-oriented durable store. Local development can use SQLite.

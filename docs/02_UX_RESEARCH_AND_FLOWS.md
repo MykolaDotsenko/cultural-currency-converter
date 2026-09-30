@@ -323,3 +323,27 @@ When evidence, browser QA or user value suggests a better pattern:
 1. improve the experience;
 2. protect the new behaviour with appropriate tests;
 3. update this document if the product-level interaction meaning changed.
+
+
+## Budget interpretation flow
+
+The first shipped budget UX is a transparent reference-basket comparison layered on top of a trusted current conversion.
+
+**Conversion → Budget interpretation → Edit assumptions → Compare**
+
+The progressive surface should:
+
+- start from the signed conversion result rather than trusting a posted reference amount;
+- require a destination country and current sourced price anchors;
+- keep trip duration and traveller count explicit;
+- expose the actual daily reference items and editable units per person/day;
+- preserve city versus national scope and source/provenance for every line;
+- show available destination amount, per-person daily amount and the known basket range;
+- use neutral labels such as **below reference / within reference / above reference** rather than universal “cheap”, “expensive”, “comfortable” or financial-advice language;
+- return **insufficient data** rather than inventing a band when selected categories cannot be supported;
+- work with HTMX enhancement and as a complete no-JavaScript page.
+
+The current slice uses the reference conversion basis in the UI. The domain already supports an attached explicit Real Payment Estimate basis, but that should only become a user-facing option once the payment-assumption handoff is designed so the exact assumptions remain visible and trustworthy.
+
+Budget interpretation is not a full trip-cost forecast. Accommodation, flights and unselected categories must never be silently added.
+
