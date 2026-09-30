@@ -108,7 +108,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Help answer “Is this amount likely to be enough for this destination and duration?” using sourced local-price context and explicit assumptions.
    - Support duration and a small number of understandable spending profiles/categories without turning the product into a full itinerary planner.
    - Label outputs as estimates and keep deterministic calculations separate from AI-written explanation.
-   - **Foundation status:** deterministic domain interpretation now supports duration, traveller count, explicit category-unit assumptions, reference-vs-payment-estimate basis, city/national scope preservation, provenance-bearing line estimates and fail-closed insufficient-data semantics. User-facing presets/forms/result UX remain future work.
+   - **Current status:** deterministic domain interpretation plus the first user-facing progressive UX are implemented: signed conversion/scope handoff, duration, traveller count, explicit editable daily reference items, city/national scope preservation, provenance-bearing line estimates, neutral reference bands, fail-closed insufficient-data semantics and a no-JavaScript fallback. Richer presets, payment-estimate handoff and saved-trip persistence remain future work.
 
 12. **Saved scenarios — 89/100**
    - Evolve beyond pair-only bookmarks so a user can save a reusable travel-money scenario such as a pair, trip budget or shopping calculation.
@@ -288,7 +288,7 @@ The target is not maximum DAU. The target is strong **saved-trip reopen**, **use
 
 The first consolidation is now shipped as a shared application contract around trusted conversion output plus optional current destination context. It explicitly preserves conversion truth, fail-open enrichment semantics and available/empty/not-applicable/degraded context states.
 
-The next work is depth, not another parallel context layer: broaden city-scoped datasets, expose the budget domain through user-facing UX, then add saved-trip/scenario meaning, comparison and camera/mobile consumers on top of this same contract.
+The next work is depth, not another parallel context layer: broaden city-scoped datasets, connect the budget interpretation to saved-trip/scenario persistence, then add comparison and camera/mobile consumers on top of this same contract.
 
 Prioritize comparability, freshness, provenance and clear uncertainty over adding many shallow utility widgets.
 
