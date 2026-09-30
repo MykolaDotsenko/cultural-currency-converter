@@ -377,6 +377,7 @@ class BudgetInterpretationForm(forms.Form):
                 "min": "1",
                 "max": "365",
                 "step": "1",
+                "aria-describedby": "duration_days-hint",
             }
         ),
     )
@@ -392,6 +393,7 @@ class BudgetInterpretationForm(forms.Form):
                 "min": "1",
                 "max": "20",
                 "step": "1",
+                "aria-describedby": "travelers-hint",
             }
         ),
     )
@@ -440,6 +442,9 @@ class BudgetInterpretationForm(forms.Form):
                         "min": "0.01",
                         "max": "100",
                         "step": "0.01",
+                        "aria-describedby": (
+                            f"{field_name}-anchor {field_name}-source"
+                        ),
                     }
                 ),
             )
@@ -451,10 +456,15 @@ class BudgetInterpretationForm(forms.Form):
     def add_error(self, field, error):
         super().add_error(field, error)
         if field and field in self.fields:
-            self.fields[field].widget.attrs.update(
+            widget = self.fields[field].widget
+            existing_description = str(widget.attrs.get("aria-describedby", "")).strip()
+            descriptions = " ".join(
+                item for item in (f"{field}-error", existing_description) if item
+            )
+            widget.attrs.update(
                 {
                     "aria-invalid": "true",
-                    "aria-describedby": f"{field}-error",
+                    "aria-describedby": descriptions,
                 }
             )
 
