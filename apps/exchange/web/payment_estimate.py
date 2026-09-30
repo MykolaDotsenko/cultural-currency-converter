@@ -36,7 +36,13 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
 
     try:
         snapshot = load_trusted_conversion_snapshot_token(token)
-    except TrustedSnapshotTokenError:
+    except TrustedSnapshotTokenError as exc:
+        logger.warning(
+            "payment_estimate_snapshot_rejected",
+            extra={
+                "error_code": str(exc),
+            },
+        )
         response_status = 422
         estimate_error = {
             "title": "This payment estimate request is no longer valid.",

@@ -31,6 +31,7 @@ def _result(
     effective_date: date = date(2026, 9, 18),
     stale: bool = False,
     granularity: ObservationGranularity = ObservationGranularity.DAILY,
+    provider_keys: tuple[str, ...] = ("ecb",),
 ) -> ConversionResult:
     quote = RateQuote(
         base_currency="EUR",
@@ -40,7 +41,7 @@ def _result(
         effective_date=effective_date,
         fetched_at=datetime(2026, 9, 21, 8, tzinfo=UTC),
         provider_policy=DEFAULT_SOURCE_POLICY,
-        provider_keys=("ecb",),
+        provider_keys=provider_keys,
         historical=historical,
         observation_granularity=granularity,
     )
@@ -75,6 +76,15 @@ def test_signed_conversion_snapshot_round_trips_current_result():
     assert snapshot.requested_date is None
     assert snapshot.provider_keys == ("ecb",)
     assert snapshot.stale is False
+
+
+def test_signed_conversion_snapshot_preserves_multi_provider_attribution():
+    provider_keys = tuple(f"source-{index}" for index in range(12))
+    token = build_trusted_conversion_snapshot_token(_result(provider_keys=provider_keys))
+
+    snapshot = load_trusted_conversion_snapshot_token(token)
+
+    assert snapshot.provider_keys == tuple(sorted(provider_keys))
 
 
 def test_signed_conversion_snapshot_preserves_historical_semantics():
@@ -155,7 +165,15 @@ def test_historical_flag_cannot_disagree_with_requested_date():
         load_trusted_conversion_snapshot_token(token)
 
 
-def test_provider_attribution_is_bounded_and_validated():
+@pytest.mark.parametrize(
+    "provider_keys",
+    [
+        [123],
+        ["x" * (tokens.MAX_PROVIDER_KEY_LENGTH + 1)],
+        [f"provider-{index}" for index in range(tokens.MAX_PROVIDER_KEYS + 1)],
+    ],
+)
+def test_provider_attribution_is_bounded_and_validated(provider_keys):
     payload = {
         "v": 1,
         "input_amount": "100",
@@ -167,7 +185,7 @@ def test_provider_attribution_is_bounded_and_validated():
         "effective_date": "2026-09-18",
         "historical": False,
         "observation_granularity": "daily",
-        "provider_keys": ["../secret"],
+        "provider_keys": provider_keys,
         "stale": False,
     }
     token = signing.dumps(payload, salt=tokens._TOKEN_SALT)
