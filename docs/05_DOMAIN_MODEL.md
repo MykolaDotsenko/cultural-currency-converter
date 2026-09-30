@@ -124,6 +124,7 @@ Examples of durable invariants:
 - financial arithmetic uses Decimal semantics;
 - historical requested date and effective observation date are not silently conflated;
 - provider observations cannot be dated after the time they were fetched;
+- synthetic exact same-currency identity quotes may bridge at most one calendar-day local/UTC rollover because they are not provider observations;
 - cached/provider retrieval timestamps beyond bounded clock skew are rejected rather than treated as fresh;
 - latest/reference observations stay within the accepted window for their publication frequency;
 - user-facing future-date validation uses the configured application-local calendar date rather than a UTC rollover;

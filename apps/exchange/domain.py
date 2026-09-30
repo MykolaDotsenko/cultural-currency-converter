@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation
 from enum import StrEnum
 
@@ -184,11 +184,23 @@ class RateQuote:
             raise FxDomainError("FX rate must be a finite positive Decimal.")
         if self.fetched_at.tzinfo is None:
             raise FxDomainError("FX fetched_at must be timezone-aware.")
-        if self.effective_date > self.fetched_at.astimezone(UTC).date():
-            raise FxDomainError("FX effective date cannot be after fetch date.")
         providers = tuple(
             sorted({key.lower().strip() for key in self.provider_keys if key.strip()})
         )
+        exact_identity_quote = (
+            base == quote
+            and self.rate == Decimal("1")
+            and not providers
+            and self.provider_policy == DEFAULT_SOURCE_POLICY
+            and self.historical
+            and self.requested_date == self.effective_date
+        )
+        fetched_date = self.fetched_at.astimezone(UTC).date()
+        latest_allowed_effective_date = (
+            fetched_date + timedelta(days=1) if exact_identity_quote else fetched_date
+        )
+        if self.effective_date > latest_allowed_effective_date:
+            raise FxDomainError("FX effective date cannot be after fetch date.")
         if (
             self.provider_policy.mode is ProviderPolicyMode.PINNED
             and self.provider_policy.provider_key not in providers

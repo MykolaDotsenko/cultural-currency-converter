@@ -11,6 +11,7 @@ from apps.exchange.domain import (
     ProviderPolicyMode,
     RateQuote,
     convert_amount,
+    same_currency_quote,
 )
 
 
@@ -74,6 +75,57 @@ def test_quote_cannot_claim_observation_after_fetch_date():
             provider_policy=DEFAULT_SOURCE_POLICY,
             provider_keys=("ecb",),
             historical=False,
+        )
+
+
+def test_exact_same_currency_quote_allows_one_day_local_calendar_rollover():
+    quote_value = same_currency_quote(
+        "EUR",
+        fetched_at=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
+        requested_date=date(2026, 9, 21),
+    )
+
+    assert quote_value.rate == Decimal("1")
+    assert quote_value.effective_date == date(2026, 9, 21)
+    assert quote_value.provider_keys == ()
+
+
+def test_exact_same_currency_quote_cannot_jump_more_than_one_calendar_day():
+    with pytest.raises(FxDomainError, match="after fetch date"):
+        same_currency_quote(
+            "EUR",
+            fetched_at=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
+            requested_date=date(2026, 9, 22),
+        )
+
+
+def test_latest_same_currency_quote_does_not_get_historical_rollover_exception():
+    with pytest.raises(FxDomainError, match="after fetch date"):
+        RateQuote(
+            base_currency="EUR",
+            quote_currency="EUR",
+            rate=Decimal("1"),
+            requested_date=None,
+            effective_date=date(2026, 9, 21),
+            fetched_at=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=(),
+            historical=False,
+        )
+
+
+def test_provider_attributed_same_currency_quote_does_not_get_identity_rollover_exception():
+    with pytest.raises(FxDomainError, match="after fetch date"):
+        RateQuote(
+            base_currency="EUR",
+            quote_currency="EUR",
+            rate=Decimal("1"),
+            requested_date=date(2026, 9, 21),
+            effective_date=date(2026, 9, 21),
+            fetched_at=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=("ecb",),
+            historical=True,
         )
 
 
