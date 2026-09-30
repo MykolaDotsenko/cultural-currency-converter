@@ -181,6 +181,39 @@ def test_unrepresentable_provider_result_is_returned_as_invalid_payload(referenc
 
 
 @pytest.mark.django_db
+def test_historical_submission_uses_request_local_date_for_future_boundary(reference_data):
+    requested = date(1998, 6, 15)
+    command = ConverterSubmissionCommand(
+        amount=Decimal("100"),
+        source_country="FI",
+        source_currency="EUR",
+        destination_country="JP",
+        destination_currency="JPY",
+        historical=True,
+        requested_date=requested,
+    )
+
+    with (
+        patch(
+            "apps.exchange.application.timezone.localdate",
+            return_value=date(2026, 9, 21),
+        ),
+        patch(
+            "apps.exchange.application.quote_historical_conversion",
+        ) as historical_conversion,
+    ):
+        historical_conversion.return_value = Mock()
+        outcome = run_converter_submission(
+            command,
+            latest_gateway_factory=Mock(),
+            historical_gateway_factory=Mock(),
+        )
+
+    assert outcome.error is None
+    assert historical_conversion.call_args.kwargs["current_date"] == date(2026, 9, 21)
+
+
+@pytest.mark.django_db
 def test_historical_submission_returns_currency_era_suggestion(reference_data):
     latest_factory = Mock()
     historical = FakeHistoricalGateway()

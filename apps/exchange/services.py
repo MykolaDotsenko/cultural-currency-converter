@@ -66,9 +66,11 @@ def quote_historical_conversion(
     quote_metadata: HistoricalCurrencyMetadata | None = None,
     policy: FxSourcePolicy = DEFAULT_SOURCE_POLICY,
     now: datetime | None = None,
+    current_date: date | None = None,
 ) -> ConversionResult:
     current_time = now or datetime.now(UTC)
-    if requested_date > current_time.date():
+    validation_date = current_date or current_time.date()
+    if requested_date > validation_date:
         raise HistoricalDateError("Historical date cannot be in the future.")
 
     if base_metadata is not None:
