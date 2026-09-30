@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django.core import signing
@@ -120,7 +120,7 @@ def load_saved_scenario_draft_token(
             categories=tuple(categories),
             basis=basis,
         )
-    except (BudgetInterpretationError, TypeError, ValueError) as exc:
+    except (BudgetInterpretationError, InvalidOperation, TypeError, ValueError) as exc:
         raise SavedScenarioDraftTokenError("Saved scenario budget assumptions are invalid.") from exc
 
     if assumptions.basis is not BudgetBasis.REFERENCE_CONVERSION:
