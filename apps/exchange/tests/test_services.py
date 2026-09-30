@@ -5,6 +5,8 @@ import pytest
 
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
+    ConversionRepresentationError,
+    ConversionResult,
     FxDomainError,
     HistoricalCoverageReason,
     HistoricalCurrencyMetadata,
@@ -12,7 +14,11 @@ from apps.exchange.domain import (
     HistoricalOutOfCoverage,
     RateQuote,
 )
-from apps.exchange.services import quote_conversion, quote_historical_conversion
+from apps.exchange.services import (
+    compare_historical_to_latest,
+    quote_conversion,
+    quote_historical_conversion,
+)
 
 
 class ExplodingGateway:
@@ -264,3 +270,44 @@ def test_latest_observation_date_is_not_treated_as_terminal_coverage():
     )
 
     assert result.quote.effective_date == date(2026, 9, 18)
+
+
+
+def test_then_now_unrepresentable_rate_difference_uses_specific_error():
+    historical_quote = RateQuote(
+        base_currency="EUR",
+        quote_currency="JPY",
+        rate=Decimal("1E-50"),
+        requested_date=date(2026, 9, 18),
+        effective_date=date(2026, 9, 18),
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+        provider_policy=DEFAULT_SOURCE_POLICY,
+        provider_keys=("ecb",),
+        historical=True,
+    )
+    latest_quote = RateQuote(
+        base_currency="EUR",
+        quote_currency="JPY",
+        rate=Decimal("1E+50"),
+        requested_date=None,
+        effective_date=date(2026, 9, 20),
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+        provider_policy=DEFAULT_SOURCE_POLICY,
+        provider_keys=("ecb",),
+        historical=False,
+    )
+    historical = ConversionResult(
+        input_amount=Decimal("0"),
+        output_amount=Decimal("0"),
+        quote=historical_quote,
+        stale=False,
+    )
+    latest = ConversionResult(
+        input_amount=Decimal("0"),
+        output_amount=Decimal("0"),
+        quote=latest_quote,
+        stale=False,
+    )
+
+    with pytest.raises(ConversionRepresentationError, match="cannot be represented"):
+        compare_historical_to_latest(historical, latest)
