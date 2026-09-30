@@ -192,6 +192,8 @@ class RateQuote:
             and self.rate == Decimal("1")
             and not providers
             and self.provider_policy == DEFAULT_SOURCE_POLICY
+            and self.historical
+            and self.requested_date == self.effective_date
         )
         fetched_date = self.fetched_at.astimezone(UTC).date()
         latest_allowed_effective_date = (
