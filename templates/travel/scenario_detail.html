@@ -117,7 +117,7 @@
       {% else %}
         <p class="qa-saved-empty">No trusted starting observation is available.</p>
       {% endif %}
-      {% if latest_observation and latest_observation.pk != initial_observation.pk %}
+      {% if has_later_observation %}
         <p class="qa-context-source">
           A later re-check observation is also stored. Rate-change comparison will be surfaced in
           the dedicated re-check workflow rather than inferred here.
@@ -136,13 +136,13 @@
           </p>
         </div>
       </div>
-      {% if budget_items %}
+      {% if budget_rows %}
         <div class="qa-saved-list">
-          {% for item in budget_items %}
+          {% for row in budget_rows %}
             <article class="qa-saved-row">
               <div class="qa-saved-row__copy">
-                <h3>{{ item.category|cut:"_"|title }}</h3>
-                <p>{{ item.units_per_person_per_day|floatformat:"-2" }} per person / day</p>
+                <h3>{{ row.label }}</h3>
+                <p>{{ row.item.units_per_person_per_day|floatformat:"-2" }} per person / day</p>
               </div>
             </article>
           {% endfor %}
