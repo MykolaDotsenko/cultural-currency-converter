@@ -173,8 +173,7 @@
       </div>
     </form>
     {% if budget_interpretation.result and budget_interpretation.result.save_assumptions %}
-      <section class="qa-story-entry"
-               aria-labelledby="budget-save-plan-title">
+      <section class="qa-story-entry" aria-labelledby="budget-save-plan-title">
         <div>
           <p class="qa-foundation-kicker">Keep this plan</p>
           <h3 id="budget-save-plan-title">Save these exact assumptions for later</h3>
@@ -196,9 +195,7 @@
                    name="travelers"
                    value="{{ budget_interpretation.result.save_assumptions.travelers }}">
             {% for item in budget_interpretation.result.save_assumptions.categories %}
-              <input type="hidden"
-                     name="{{ item.field_name }}"
-                     value="{{ item.value }}">
+              <input type="hidden" name="{{ item.field_name }}" value="{{ item.value }}">
             {% endfor %}
             <button class="qa-secondary-button" type="submit">Save this plan</button>
           </form>
