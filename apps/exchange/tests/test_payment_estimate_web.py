@@ -6,6 +6,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.db import DatabaseError
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
@@ -229,6 +230,37 @@ def test_non_javascript_payment_estimate_returns_full_page(client, reference_dat
     assert b"<html" in response.content
     assert b"Reference value, with your assumptions" in response.content
     assert b"17450 JPY" in response.content
+
+
+@pytest.mark.django_db
+def test_payment_estimate_metadata_database_failure_is_local_and_recoverable(
+    client, reference_data, caplog
+):
+    with (
+        patch(
+            "apps.exchange.web.payment_estimate.Currency.objects.in_bulk",
+            side_effect=DatabaseError("database unavailable"),
+        ),
+        caplog.at_level("WARNING", logger="cultural_currency.exchange"),
+    ):
+        response = client.post(
+            reverse("payment_estimate"),
+            {
+                "payment_estimate_token": _signed_snapshot(),
+                "fx_markup_percent": "2",
+                "source_fixed_fee": "1",
+                "destination_fixed_fee": "0",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 503
+    assert b"Payment estimate is temporarily unavailable" in response.content
+    assert b"reference conversion remains valid" in response.content
+    assert any(
+        record.msg == "Payment estimate currency metadata lookup failed"
+        for record in caplog.records
+    )
 
 
 @pytest.mark.django_db
