@@ -288,9 +288,21 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     ambiguousEstimateResponse.status() === 422,
     `current-converter: ambiguous payment estimate returned ${ambiguousEstimateResponse.status()} instead of 422`,
   );
-  await page
-    .getByText("This amount is ambiguous. Enter it without thousands separators.")
-    .waitFor();
+  const ambiguousEstimateBody = await ambiguousEstimateResponse.text();
+  assert(
+    ambiguousEstimateBody.includes(
+      "This amount is ambiguous. Enter it without thousands separators.",
+    ),
+    `current-converter: ambiguous payment-estimate response omitted parser error; body=${ambiguousEstimateBody.slice(0, 800)}`,
+  );
+  const ambiguousFeeError = page.locator("#source_fixed_fee-error");
+  await ambiguousFeeError.waitFor();
+  assert(
+    (await ambiguousFeeError.textContent())?.includes(
+      "This amount is ambiguous. Enter it without thousands separators.",
+    ),
+    "current-converter: ambiguous payment-estimate error did not render into the target region",
+  );
   assert(
     await page.locator("[data-previous-result-note]").isHidden(),
     "current-converter: payment-estimate validation incorrectly marked the conversion as failed",
