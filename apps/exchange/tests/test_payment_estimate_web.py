@@ -164,7 +164,7 @@ def test_invalid_assumptions_return_bound_form_without_estimate(client, referenc
         {
             "payment_estimate_token": _signed_snapshot(),
             "fx_markup_percent": "26",
-            "source_fixed_fee": "1.001",
+            "source_fixed_fee": "1.0001",
             "destination_fixed_fee": "0",
         },
         HTTP_HX_REQUEST="true",
