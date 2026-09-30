@@ -300,9 +300,9 @@ class PaymentEstimateForm(forms.Form):
         self.source_minor_units = source_minor_units
         self.destination_minor_units = destination_minor_units
         self.fields["source_fixed_fee"].label = f"Fixed fee in {source_currency_code}"
-        self.fields["destination_fixed_fee"].label = (
-            f"Fixed local fee in {destination_currency_code}"
-        )
+        self.fields[
+            "destination_fixed_fee"
+        ].label = f"Fixed local fee in {destination_currency_code}"
 
     def add_error(self, field, error):
         super().add_error(field, error)
