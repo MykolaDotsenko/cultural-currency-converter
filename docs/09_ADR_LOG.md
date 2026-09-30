@@ -122,6 +122,8 @@ React Native/Expo is a current candidate, not a permanently pinned roadmap commi
 
 **Why:** mobile ecosystem versions and best practices change faster than the product roadmap.
 
+**Product trigger:** mobile becomes active when point-of-use value is ready to reuse safely—specifically a stable external/mobile API, the Money Context Engine, and explicit offline/stale-rate semantics. Mobile is strategically important for in-trip use, but that does not justify prematurely replacing the server-rendered web architecture.
+
 **Revisit when:** mobile work becomes active; benchmark the then-current stable options.
 
 ## ADR-013 — Shared cache for deployed coordination
