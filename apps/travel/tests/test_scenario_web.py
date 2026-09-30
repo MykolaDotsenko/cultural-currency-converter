@@ -209,6 +209,55 @@ def test_prepare_and_create_saved_trip_is_complete_no_javascript_flow(
 
 
 @pytest.mark.django_db
+def test_prepare_saved_scenario_rejects_tampered_budget_context(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("prepare_saved_scenario"),
+        {
+            "budget_context_token": "tampered",
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+
+    assert response.status_code == 422
+    assert b"could not be prepared" in response.content
+    assert not SavedScenario.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db
+def test_create_saved_scenario_rejects_invalid_travel_date_order(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+    client.force_login(user)
+    prepared = client.post(reverse("prepare_saved_scenario"), _prepare_payload())
+    draft_token = _extract_draft_token(prepared.content)
+
+    response = client.post(
+        reverse("create_saved_scenario"),
+        {
+            "scenario_draft_token": draft_token,
+            "kind": "trip",
+            "title": "Bad dates",
+            "travel_start_date": "2027-04-16",
+            "travel_end_date": "2027-04-12",
+        },
+    )
+
+    assert response.status_code == 422
+    assert b"End date cannot be before the start date" in response.content
+    assert not SavedScenario.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db
 def test_create_saved_scenario_rejects_tampered_draft_without_writing(
     client,
     scenario_reference_data,
@@ -289,12 +338,19 @@ def test_saved_state_lists_only_current_users_plans(client, scenario_reference_d
         },
     )
 
-    scenario = SavedScenario.objects.get(user=owner)
-    scenario.pk = None
-    scenario.user = other
-    scenario.title = "Other private plan"
-    scenario.save()
+    client.force_login(other)
+    prepared = client.post(reverse("prepare_saved_scenario"), _prepare_payload())
+    other_draft_token = _extract_draft_token(prepared.content)
+    client.post(
+        reverse("create_saved_scenario"),
+        {
+            "scenario_draft_token": other_draft_token,
+            "kind": "trip",
+            "title": "Other private plan",
+        },
+    )
 
+    client.force_login(owner)
     response = client.get(reverse("saved_state"))
 
     assert response.status_code == 200
