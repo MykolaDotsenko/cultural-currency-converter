@@ -253,6 +253,10 @@ When a user reopens a saved scenario, the product can surface:
 - whether the saved budget interpretation changed under the same explicit assumptions;
 - destination-pack freshness and whether an offline refresh is useful.
 
+The shipped account scenario detail supports an explicit reference-rate re-check. It reuses the exact saved source amount/currency pair, appends a new immutable observation only when the provider observation is distinct, and compares the latest stored reference with the original saved observation. The copy uses neutral **more / less / unchanged** language for the same source amount and never frames the movement as a recommendation to exchange money.
+
+Provider failure must leave the saved scenario and its original observations unchanged. Repeated checks of the same effective provider observation should not create duplicate history rows.
+
 Optional pre-trip reminders may invite the user to re-check a saved scenario close to its travel date. Reminder delivery must be opt-in, easy to disable and separate from rate-alert/trading-style messaging.
 
 ### During travel
