@@ -18,7 +18,6 @@
         Reference: {{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}
       </p>
     </div>
-
     {% if payment_estimate.estimated_amount %}
       <div class="qa-payment-estimate__result" aria-live="polite">
         <div>
@@ -31,15 +30,21 @@
         <dl class="qa-payment-estimate__facts">
           <div>
             <dt>Reference value</dt>
-            <dd>{{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}</dd>
+            <dd>
+              {{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}
+            </dd>
           </div>
           <div>
             <dt>Difference from reference</dt>
-            <dd>−{{ payment_estimate.difference_amount }} {{ payment_estimate.destination_currency }}</dd>
+            <dd>
+              −{{ payment_estimate.difference_amount }} {{ payment_estimate.destination_currency }}
+            </dd>
           </div>
           <div>
             <dt>FX markup assumption</dt>
-            <dd>{{ payment_estimate.fx_markup_percent }}%</dd>
+            <dd>
+              {{ payment_estimate.fx_markup_percent }}%
+            </dd>
           </div>
           <div>
             <dt>Fixed-fee assumptions</dt>
@@ -55,7 +60,6 @@
         </p>
       </div>
     {% endif %}
-
     <form class="qa-payment-estimate__form"
           method="post"
           action="{% url 'payment_estimate' %}"
@@ -77,7 +81,8 @@
           <span class="qa-field__label">{{ payment_estimate.form.fx_markup_percent.label }}</span>
           {{ payment_estimate.form.fx_markup_percent }}
           {% if payment_estimate.form.fx_markup_percent.errors %}
-            <span class="qa-field__message qa-field__message--error" id="fx_markup_percent-error">{{ payment_estimate.form.fx_markup_percent.errors.0 }}</span>
+            <span class="qa-field__message qa-field__message--error"
+                  id="fx_markup_percent-error">{{ payment_estimate.form.fx_markup_percent.errors.0 }}</span>
           {% else %}
             <span class="qa-field__message">Percent added to the source-currency cost. Use 0 if unknown or not applicable.</span>
           {% endif %}
@@ -86,7 +91,8 @@
           <span class="qa-field__label">{{ payment_estimate.form.source_fixed_fee.label }}</span>
           {{ payment_estimate.form.source_fixed_fee }}
           {% if payment_estimate.form.source_fixed_fee.errors %}
-            <span class="qa-field__message qa-field__message--error" id="source_fixed_fee-error">{{ payment_estimate.form.source_fixed_fee.errors.0 }}</span>
+            <span class="qa-field__message qa-field__message--error"
+                  id="source_fixed_fee-error">{{ payment_estimate.form.source_fixed_fee.errors.0 }}</span>
           {% else %}
             <span class="qa-field__message">A fixed fee taken from your {{ payment_estimate.source_currency }} budget before conversion.</span>
           {% endif %}
@@ -95,7 +101,8 @@
           <span class="qa-field__label">{{ payment_estimate.form.destination_fixed_fee.label }}</span>
           {{ payment_estimate.form.destination_fixed_fee }}
           {% if payment_estimate.form.destination_fixed_fee.errors %}
-            <span class="qa-field__message qa-field__message--error" id="destination_fixed_fee-error">{{ payment_estimate.form.destination_fixed_fee.errors.0 }}</span>
+            <span class="qa-field__message qa-field__message--error"
+                  id="destination_fixed_fee-error">{{ payment_estimate.form.destination_fixed_fee.errors.0 }}</span>
           {% else %}
             <span class="qa-field__message">A known local fee, such as an explicit ATM fee, deducted after conversion.</span>
           {% endif %}
