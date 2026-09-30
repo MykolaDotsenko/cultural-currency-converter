@@ -99,20 +99,31 @@ def test_historical_future_date_is_rejected_before_gateway():
 
 def test_historical_local_today_can_be_ahead_of_utc_date():
     requested = date(2026, 9, 21)
+    quote = RateQuote(
+        base_currency="EUR",
+        quote_currency="JPY",
+        rate=Decimal("174.5"),
+        requested_date=requested,
+        effective_date=requested,
+        fetched_at=datetime(2026, 9, 21, 8, tzinfo=UTC),
+        provider_policy=DEFAULT_SOURCE_POLICY,
+        provider_keys=("ecb",),
+        historical=True,
+    )
     result = quote_historical_conversion(
         amount=Decimal("10"),
         base_currency="EUR",
-        quote_currency="EUR",
-        quote_minor_units=2,
+        quote_currency="JPY",
+        quote_minor_units=0,
         requested_date=requested,
-        gateway=HistoricalExplodingGateway(),
+        gateway=HistoricalGateway(quote),
         now=datetime(2026, 9, 20, 21, 30, tzinfo=UTC),
         current_date=date(2026, 9, 21),
     )
 
     assert result.quote.requested_date == requested
     assert result.quote.effective_date == requested
-    assert result.output_amount == Decimal("10.00")
+    assert result.output_amount == Decimal("1745")
 
 
 def test_historical_date_after_explicit_local_today_is_rejected():
