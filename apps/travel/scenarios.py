@@ -201,10 +201,14 @@ def _validate_country_currency(
 ) -> None:
     if country is None:
         return
-    is_valid = CountryCurrency.objects.current().filter(
-        country=country,
-        currency=currency,
-    ).exists()
+    is_valid = (
+        CountryCurrency.objects.current()
+        .filter(
+            country=country,
+            currency=currency,
+        )
+        .exists()
+    )
     if not is_valid:
         raise SavedScenarioError(
             f"{currency.code} is not the current {field_name} currency context for {country.iso2}."
