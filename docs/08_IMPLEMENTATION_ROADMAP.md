@@ -114,19 +114,20 @@ The following additional user-facing capabilities also clear the current **60/10
    - Evolve beyond pair-only bookmarks so a user can save a reusable travel-money scenario such as a trip budget or shopping calculation.
    - Design the scenario model so existing FavouritePair and RecentConversion data can coexist or migrate safely rather than creating duplicate persistence concepts.
    - Keep ownership, browser-local/account sync and privacy semantics explicit.
-   - **Current status:** normalized account-owned SavedScenario persistence is implemented with typed trip/budget/shopping kinds, canonical destination city scope, normalized budget assumptions and immutable initial/re-check FX observations. The first user-facing budget flow now supports explicit account save, listing in Saved & recent, owner-scoped detail/reopen, converter return and deletion. Anonymous local scenarios, account/local sync, shopping save UX and live re-check remain future work.
+   - **Current status:** normalized account-owned SavedScenario persistence is implemented with typed trip/budget/shopping kinds, canonical destination city scope, normalized budget assumptions and immutable initial/re-check FX observations. The first user-facing budget flow supports explicit account save, listing in Saved & recent, owner-scoped detail/reopen, converter return, deletion and explicit live reference-rate re-check. Anonymous local scenarios, account/local sync and shopping save UX remain future work.
 
 13. **Saved trip / budget detail — 85/100**
    - Give a saved travel-money scenario a focused detail page with current local value, typical costs, money tips, relevant conversion history and remaining budget where the user has entered spending.
    - During an active trip, surface simple spent / remaining / approximate-per-day values without becoming a general-purpose expense tracker.
    - Keep scope intentionally narrower than a full trip planner or expense-management product.
    - Reuse destination context, history and scenario data rather than duplicating them into a separate content system.
-   - **Current slice:** authenticated budget scenarios now have a focused detail page showing destination, duration/travellers, normalized basket assumptions and the immutable saved FX observation, plus explicit converter return and delete actions. Live local-context refresh, observation comparison and remaining-spend tracking are still future work.
+   - **Current slice:** authenticated budget scenarios now have a focused detail page showing destination, duration/travellers, normalized basket assumptions and immutable saved/latest FX observations, plus explicit reference-rate re-check, neutral since-saved comparison, converter return and delete actions. Live local-context refresh and remaining-spend tracking are still future work.
 
 14. **Rate changed since last visit — 84/100**
    - When a user reopens a saved pair/scenario, show how the current reference rate differs from the last relevant stored observation.
    - Preserve effective-date/provider semantics and avoid implying investment significance.
    - Treat the comparison as a return-usefulness feature, not as a trading signal.
+   - **Current slice:** saved budget scenarios support an owner-scoped POST re-check against the latest available reference rate. Distinct observations append immutably; duplicate provider observations are deduplicated; the detail page compares the latest stored output/rate with the original saved observation using neutral more/less/unchanged language. Provider failure leaves existing scenario history untouched.
 
 15. **Destination comparison — 83/100**
    - Let a user compare what the same source amount roughly means across two destinations.
