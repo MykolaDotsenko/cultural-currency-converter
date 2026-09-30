@@ -92,6 +92,67 @@ After the premium visual pass, implement the strongest remaining concepts from t
 
 Implementation order inside this queue can change when dependencies overlap. Prefer extending existing domain models, saved-state boundaries, historical flows and media/provenance systems over creating parallel feature-specific architecture.
 
+### Second expansion wave from the broader product specification
+
+The following additional user-facing capabilities also clear the current **60/100 usefulness + distinctiveness threshold**. They should follow or interleave with the queue above when dependencies make that more efficient.
+
+10. **Real Payment Estimate — 94/100**
+   - Explain the gap between a reference market rate and what a user may actually experience when paying by card or withdrawing cash.
+   - Model only defensible inputs/ranges such as user-supplied bank/card markup, known fixed fees or clearly labelled scenario assumptions.
+   - Never present guessed bank, ATM, DCC or merchant fees as known facts; preserve the existing trust/provenance boundary.
+
+11. **Budget interpretation — 91/100**
+   - Help answer “Is this amount likely to be enough for this destination and duration?” using sourced local-price context and explicit assumptions.
+   - Support duration and a small number of understandable spending profiles/categories without turning the product into a full itinerary planner.
+   - Label outputs as estimates and keep deterministic calculations separate from AI-written explanation.
+
+12. **Saved scenarios — 89/100**
+   - Evolve beyond pair-only bookmarks so a user can save a reusable travel-money scenario such as a pair, trip budget or shopping calculation.
+   - Design the scenario model so existing FavouritePair and RecentConversion data can coexist or migrate safely rather than creating duplicate persistence concepts.
+   - Keep ownership, browser-local/account sync and privacy semantics explicit.
+
+13. **Saved trip / budget detail — 85/100**
+   - Give a saved travel-money scenario a focused detail page with current local value, typical costs, money tips, relevant conversion history and remaining budget where the user has entered spending.
+   - Keep scope intentionally narrower than a full trip planner or expense-management product.
+   - Reuse destination context, history and scenario data rather than duplicating them into a separate content system.
+
+14. **Rate changed since last visit — 84/100**
+   - When a user reopens a saved pair/scenario, show how the current reference rate differs from the last relevant stored observation.
+   - Preserve effective-date/provider semantics and avoid implying investment significance.
+   - Treat the comparison as a return-usefulness feature, not as a trading signal.
+
+15. **Destination comparison — 83/100**
+   - Let a user compare what the same source amount roughly means across two destinations.
+   - Compare sourced everyday-value, payment-context and budget assumptions side by side while keeping currency/country identity distinct.
+   - Avoid flattening country-wide estimates into false precision; city/scope differences must remain visible.
+
+16. **Product modes: Quick / Travel / Budget / Shopping — 80/100**
+   - Use one shared conversion/domain engine and expose progressively richer workflows rather than building four separate products.
+   - Quick stays closest to the current converter; Travel adds destination money context; Budget adds duration/spending assumptions; Shopping adds purchase-cost inputs.
+   - Do not force a mode choice before a user can perform the primary conversion.
+
+17. **Shopping calculation — 76/100**
+   - Support a foreign-currency purchase scenario with item price plus optional shipping and explicit user-supplied fees.
+   - Separate deterministic arithmetic from uncertain duties/taxes/issuer costs and label unknowns clearly.
+   - Save/reopen the calculation through the shared scenario model when that model exists.
+
+18. **Rate alerts — 74/100**
+   - Allow an opted-in user to watch a saved pair/scenario and receive a notification when a clearly defined rate-change condition is met.
+   - Make thresholds, cadence and disable/delete controls explicit.
+   - Keep alerts informational and avoid trading/investment framing.
+
+19. **Shareable conversion / travel-money cards — 68/100**
+   - Create a compact share surface from trusted conversion and destination-context data.
+   - Include effective-date/source context when a shared number could otherwise look current forever.
+   - Keep social/OG presentation downstream of the canonical product data rather than introducing a second calculation path.
+
+20. **Personalized trip/scenario covers — 62/100**
+   - Allow an optional decorative cover for a saved scenario when it adds delight without affecting factual meaning.
+   - Prefer reviewed/sourced destination media first; if generated imagery is ever allowed, keep it explicitly synthetic and within the managed-media review boundary.
+   - The feature must never block saving or reopening a scenario.
+
+These scores are product-prioritization signals, not implementation guarantees. Before starting each item, validate the underlying data quality, legal/licensing implications, privacy impact and maintenance cost.
+
 ## Later candidate: stable external/mobile API
 
 A versioned API is useful when a native client or external consumer becomes active.
@@ -104,9 +165,9 @@ A native client should reuse backend/domain meaning rather than duplicate web bu
 
 Choose the current stable mobile stack when implementation starts.
 
-## Later candidate: trips and budgets
+## Later candidate: deeper trip/budget workflows
 
-Trip/budget workflows may become valuable after the core converter/context experience demonstrates repeat use.
+After the scoped budget interpretation and saved-scenario work above has real usage evidence, consider deeper trip/budget capabilities. Keep this boundary narrower than itinerary planning or a general-purpose expense tracker unless user evidence justifies expanding the product.
 
 ## Research: historical purchasing power
 
