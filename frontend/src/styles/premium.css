@@ -455,6 +455,128 @@ h3 {
   font-weight: 600;
 }
 
+/* Currency history: one quiet, sourced editorial timeline. */
+.qa-currency-explore-entry__actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--qa-space-3);
+}
+
+.qa-currency-history-surface {
+  gap: clamp(1.75rem, 4vw, 3rem);
+  margin-block-start: clamp(2rem, 5vw, 3.5rem);
+  padding: clamp(1.5rem, 4vw, 2.75rem) 0;
+  border: 0;
+  border-block: 1px solid var(--qa-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.qa-currency-history__header {
+  max-width: 52rem;
+}
+
+.qa-currency-history__header h2 {
+  margin-block-start: var(--qa-space-2);
+  font-size: clamp(2rem, 4.5vw, 3.6rem);
+  font-weight: 470;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.qa-currency-history__header p:not(.qa-foundation-kicker) {
+  margin-block-start: var(--qa-space-4);
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.qa-currency-history__context-note {
+  padding: var(--qa-space-5) 0;
+  border: 0;
+  border-block: 1px solid var(--qa-hairline);
+  background: transparent;
+}
+
+.qa-currency-history__context-note p:last-child {
+  max-width: 58rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.qa-currency-history__section-heading {
+  margin-block-end: var(--qa-space-5);
+}
+
+.qa-currency-history__section-heading h3 {
+  margin-block-start: var(--qa-space-2);
+  font-size: clamp(1.3rem, 2.6vw, 1.8rem);
+  font-weight: 520;
+  letter-spacing: -0.035em;
+}
+
+.qa-currency-history__item {
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: var(--qa-space-4);
+  padding-block-end: var(--qa-space-6);
+}
+
+.qa-currency-history__item::before {
+  inset-inline-start: 0.4rem;
+  background: var(--qa-hairline);
+}
+
+.qa-currency-history__marker {
+  inline-size: 0.8rem;
+  block-size: 0.8rem;
+  border-color: var(--color-canvas);
+  background: var(--qa-accent-metal);
+  box-shadow: 0 0 0 1px var(--qa-hairline);
+}
+
+.qa-currency-history__item.is-active .qa-currency-history__marker {
+  background: var(--color-brand);
+  box-shadow: 0 0 0 1px var(--color-brand);
+}
+
+.qa-currency-history__item article {
+  max-width: 58rem;
+  gap: var(--qa-space-2);
+}
+
+.qa-currency-history__item h4 {
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 570;
+  letter-spacing: -0.025em;
+}
+
+.qa-currency-history__item article > p:not(.qa-currency-history__eyebrow):not(.qa-currency-history__scope) {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.68;
+}
+
+.qa-currency-history__eyebrow {
+  color: var(--qa-accent-metal);
+  font-size: 0.7rem;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.qa-currency-history__scope,
+.qa-currency-history__disclaimer {
+  color: var(--color-tertiary);
+  font-size: 0.72rem;
+  line-height: 1.58;
+}
+
+.qa-currency-history__disclaimer {
+  max-width: 58rem;
+  padding-block-start: var(--qa-space-5);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
 /* Editorial context: dividers instead of card soup. */
 .qa-destination-context {
   gap: clamp(1.75rem, 4vw, 3rem);
