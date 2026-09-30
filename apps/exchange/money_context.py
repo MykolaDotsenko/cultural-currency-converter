@@ -4,7 +4,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
-from decimal import DecimalException
+from decimal import Decimal, DecimalException
 from enum import StrEnum
 
 from django.db import DatabaseError
@@ -42,7 +42,22 @@ class MoneyContext:
 
     def __post_init__(self) -> None:
         country_code = self.destination_country_code.upper().strip()
+        if country_code and (
+            len(country_code) != 2 or not country_code.isascii() or not country_code.isalpha()
+        ):
+            raise ValueError("Money context destination country code must be two ASCII letters.")
         object.__setattr__(self, "destination_country_code", country_code)
+
+        if self.destination_context is not None:
+            if self.destination_context.country_code != country_code:
+                raise ValueError("Money context destination country does not match enrichment.")
+            if self.destination_context.as_of != self.as_of:
+                raise ValueError("Money context date does not match destination enrichment.")
+            if any(
+                item.currency_code != self.conversion.quote.quote_currency
+                for item in self.destination_context.prices
+            ):
+                raise ValueError("Money context price currency does not match conversion quote.")
 
         if self.destination_state is MoneyContextState.AVAILABLE:
             if self.destination_context is None or not self.destination_context.has_content:
@@ -56,7 +71,7 @@ class MoneyContext:
             )
 
     @property
-    def converted_amount(self):
+    def converted_amount(self) -> Decimal:
         return self.conversion.output_amount
 
     @property
@@ -155,10 +170,27 @@ def build_money_context(
         if destination_context is not None and destination_context.has_content
         else MoneyContextState.EMPTY
     )
-    return MoneyContext(
-        conversion=conversion,
-        destination_country_code=country_code,
-        as_of=selected_date,
-        destination_context=destination_context,
-        destination_state=state,
-    )
+    try:
+        return MoneyContext(
+            conversion=conversion,
+            destination_country_code=country_code,
+            as_of=selected_date,
+            destination_context=destination_context,
+            destination_state=state,
+        )
+    except ValueError as exc:
+        logger.warning(
+            "money_context_destination_contract_mismatch",
+            extra={
+                "destination_country": country_code,
+                "quote_currency": conversion.quote.quote_currency,
+                "error_code": exc.__class__.__name__,
+            },
+        )
+        return MoneyContext(
+            conversion=conversion,
+            destination_country_code=country_code,
+            as_of=selected_date,
+            destination_context=None,
+            destination_state=MoneyContextState.DEGRADED,
+        )
