@@ -83,13 +83,9 @@ class MoneyContext:
 
         if self.payment_estimate is not None:
             if not self.can_estimate_payment:
-                raise ValueError(
-                    "Payment estimate is not valid for this money-context conversion."
-                )
+                raise ValueError("Payment estimate is not valid for this money-context conversion.")
             if self.payment_estimate.source_budget != self.conversion.input_amount:
-                raise ValueError(
-                    "Payment estimate source budget must match the conversion input."
-                )
+                raise ValueError("Payment estimate source budget must match the conversion input.")
             if (
                 self.payment_estimate.reference_destination_amount
                 != self.conversion.output_amount
