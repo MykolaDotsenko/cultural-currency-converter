@@ -1553,6 +1553,11 @@ h3 {
   color: var(--color-ink);
 }
 
+.qa-budget-interpretation .qa-context-source a {
+  color: var(--color-ink);
+  text-decoration-color: color-mix(in srgb, var(--color-ink) 45%, transparent);
+}
+
 .qa-budget-interpretation__category .qa-context-source {
   margin-block-start: var(--qa-space-2);
 }
