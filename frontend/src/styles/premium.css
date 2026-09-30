@@ -1383,7 +1383,7 @@ h3 {
 .qa-budget-interpretation__heading > div > p:last-child {
   max-width: 42rem;
   margin-block-start: var(--qa-space-4);
-  color: var(--color-muted);
+  color: var(--color-ink);
   line-height: 1.65;
 }
 
@@ -1391,7 +1391,7 @@ h3 {
 .qa-budget-interpretation__daily {
   flex: 0 0 auto;
   margin: 0;
-  color: var(--color-muted);
+  color: var(--color-ink);
   font-size: var(--text-body-sm);
   font-variant-numeric: tabular-nums;
   text-align: end;
@@ -1407,7 +1407,7 @@ h3 {
 .qa-budget-interpretation__daily span {
   display: block;
   margin-block-start: var(--qa-space-2);
-  color: var(--color-muted);
+  color: var(--color-ink);
   font-size: var(--text-body-sm);
   font-weight: 500;
   letter-spacing: normal;
@@ -1451,7 +1451,7 @@ h3 {
 }
 
 .qa-budget-interpretation__facts dt {
-  color: var(--color-muted);
+  color: var(--color-ink);
   font-size: var(--text-body-sm);
 }
 
@@ -1534,6 +1534,13 @@ h3 {
   background: color-mix(in srgb, var(--color-canvas) 97%, var(--color-ink) 3%);
 }
 
+.qa-budget-interpretation__trip-fields .qa-field__label,
+.qa-budget-interpretation__basket > .qa-field__message,
+.qa-budget-interpretation__category .qa-field__label,
+.qa-budget-interpretation__category .qa-field__message {
+  color: var(--color-ink);
+}
+
 .qa-budget-interpretation__category .qa-context-source {
   margin-block-start: var(--qa-space-2);
 }
@@ -1547,7 +1554,7 @@ h3 {
 .qa-budget-interpretation__caveat {
   max-width: 52rem;
   margin: 0;
-  color: var(--color-muted);
+  color: var(--color-ink);
   font-size: var(--text-body-sm);
   line-height: 1.6;
 }
