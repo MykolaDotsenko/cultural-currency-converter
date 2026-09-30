@@ -116,11 +116,7 @@ def load_trusted_conversion_snapshot_token(
             character.isalnum() or character in _PROVIDER_KEY_PUNCTUATION
             for character in normalized
         )
-        if (
-            not normalized
-            or len(normalized) > MAX_PROVIDER_KEY_LENGTH
-            or not valid_characters
-        ):
+        if not normalized or len(normalized) > MAX_PROVIDER_KEY_LENGTH or not valid_characters:
             raise TrustedSnapshotTokenError(
                 "Conversion snapshot token provider attribution is invalid."
             )
