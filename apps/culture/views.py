@@ -10,11 +10,15 @@ from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
 from apps.countries.models import Country, Currency
-from apps.culture.forms import CurrentDestinationContextForm, StoryRequestForm
+from apps.culture.forms import (
+    CurrencyHistoryRequestForm,
+    CurrentDestinationContextForm,
+    StoryRequestForm,
+)
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import build_destination_context
-from apps.culture.story import compose_story
+from apps.culture.story import compose_currency_history, compose_story
 from apps.media.models import MediaRole
 from apps.media.presentation import select_media_for_display
 
@@ -79,6 +83,54 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
     }
     fragment = bool(request.htmx)
     template = "components/culture/story.html" if fragment else "pages/money_culture_story.html"
+    response = render(request, template, context, status=response_status)
+    patch_vary_headers(response, ["HX-Request"])
+    return response
+
+
+@require_GET
+def currency_history(request: HttpRequest) -> HttpResponse:
+    form = CurrencyHistoryRequestForm(request.GET)
+    history = None
+    history_error = None
+    response_status = 200
+
+    if not form.is_valid():
+        response_status = 400
+        history_error = {
+            "title": "This currency history request is not valid.",
+            "detail": "Run the conversion again, then open currency history.",
+        }
+    else:
+        history_request = form.to_currency_history_request()
+        try:
+            history = compose_currency_history(history_request)
+        except DatabaseError:
+            logger.exception(
+                "Currency history composition failed",
+                extra={
+                    "culture.status": "unavailable",
+                    "culture.country": history_request.country_code,
+                    "culture.currency": history_request.currency_code,
+                    "culture.historical": history_request.historical,
+                    "culture.selected_date": history_request.selected_date.isoformat(),
+                },
+            )
+            history_error = {
+                "title": "Currency history is temporarily unavailable.",
+                "detail": "The conversion remains valid. Try the timeline again later.",
+            }
+
+    context = {
+        "currency_history": history,
+        "currency_history_error": history_error,
+    }
+    fragment = bool(request.htmx)
+    template = (
+        "components/culture/currency_history.html"
+        if fragment
+        else "pages/currency_history.html"
+    )
     response = render(request, template, context, status=response_status)
     patch_vary_headers(response, ["HX-Request"])
     return response
