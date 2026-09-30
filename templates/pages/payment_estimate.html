@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Payment estimate · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Scenario estimate showing how explicit FX markup or fixed fees may change a reference conversion.">
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro" aria-labelledby="payment-estimate-page-title">
+    <p class="qa-foundation-kicker">Payment estimate</p>
+    <h1 id="payment-estimate-page-title">Reference value, with your assumptions.</h1>
+    <p class="qa-foundation-lede">
+      This calculation starts from a signed reference conversion and applies only the markup
+      and fixed fees you explicitly enter. It does not infer provider fees.
+    </p>
+  </section>
+  <div id="payment-estimate-region">
+    {% include "components/converter/payment_estimate.html" %}
+  </div>
+  <p><a class="qa-secondary-button" href="{% url 'converter' %}">Back to converter</a></p>
+{% endblock %}
