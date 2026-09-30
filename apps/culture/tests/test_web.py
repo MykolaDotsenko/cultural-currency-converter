@@ -215,7 +215,7 @@ def test_invalid_current_destination_context_query_is_400_without_composition(
 def test_current_destination_context_failure_is_local_and_htmx_visible(client, reference_data):
     with patch(
         "apps.culture.views.build_destination_context",
-        side_effect=RuntimeError("context unavailable"),
+        side_effect=DatabaseError("context unavailable"),
     ):
         response = client.get(
             reverse("current_destination_context"),
@@ -226,6 +226,22 @@ def test_current_destination_context_failure_is_local_and_htmx_visible(client, r
     assert response.status_code == 200
     assert b"temporarily unavailable" in response.content
     assert b"The historical conversion remains valid" in response.content
+
+
+@pytest.mark.django_db
+def test_current_destination_context_programming_error_is_not_silenced(client, reference_data):
+    with (
+        patch(
+            "apps.culture.views.build_destination_context",
+            side_effect=RuntimeError("programming bug"),
+        ),
+        pytest.raises(RuntimeError, match="programming bug"),
+    ):
+        client.get(
+            reverse("current_destination_context"),
+            {"country": "JP", "currency": "JPY", "amount": "17450"},
+            HTTP_HX_REQUEST="true",
+        )
 
 
 @pytest.mark.django_db
@@ -398,7 +414,7 @@ def test_composer_failure_degrades_to_story_only_error_not_conversion_failure(
     client,
     reference_data,
 ):
-    with patch("apps.culture.views.compose_story", side_effect=RuntimeError("boom")):
+    with patch("apps.culture.views.compose_story", side_effect=DatabaseError("boom")):
         response = client.get(
             reverse("money_culture_story"),
             _story_query(),
@@ -408,3 +424,16 @@ def test_composer_failure_degrades_to_story_only_error_not_conversion_failure(
     assert response.status_code == 200
     assert b"temporarily unavailable" in response.content
     assert b"The conversion remains valid" in response.content
+
+
+@pytest.mark.django_db
+def test_story_composer_programming_error_is_not_silenced(client, reference_data):
+    with (
+        patch("apps.culture.views.compose_story", side_effect=RuntimeError("programming bug")),
+        pytest.raises(RuntimeError, match="programming bug"),
+    ):
+        client.get(
+            reverse("money_culture_story"),
+            _story_query(),
+            HTTP_HX_REQUEST="true",
+        )
