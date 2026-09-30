@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal, DecimalException
 from enum import StrEnum
@@ -13,6 +13,11 @@ from django.utils import timezone
 from apps.culture.services import DestinationContext, PaymentContext, TypicalPriceContext
 from apps.culture.services import build_destination_context as build_destination_context_default
 from apps.exchange.domain import ConversionResult
+from apps.exchange.payment_estimate import (
+    PaymentEstimate,
+    PaymentEstimateAssumptions,
+    estimate_conversion_payment_value,
+)
 
 logger = logging.getLogger("cultural_currency.exchange")
 
@@ -48,6 +53,7 @@ class MoneyContext:
     as_of: date
     destination_context: DestinationContext | None
     destination_state: MoneyContextState
+    payment_estimate: PaymentEstimate | None = None
 
     def __post_init__(self) -> None:
         country_code = _normalize_country_code(self.destination_country_code)
@@ -74,6 +80,23 @@ class MoneyContext:
             raise ValueError(
                 "Not-applicable or degraded money context cannot carry destination content."
             )
+
+        if self.payment_estimate is not None:
+            if not self.can_estimate_payment:
+                raise ValueError(
+                    "Payment estimate is not valid for this money-context conversion."
+                )
+            if self.payment_estimate.source_budget != self.conversion.input_amount:
+                raise ValueError(
+                    "Payment estimate source budget must match the conversion input."
+                )
+            if (
+                self.payment_estimate.reference_destination_amount
+                != self.conversion.output_amount
+            ):
+                raise ValueError(
+                    "Payment estimate reference amount must match the conversion output."
+                )
 
     @property
     def converted_amount(self) -> Decimal:
@@ -199,3 +222,19 @@ def build_money_context(
             destination_context=None,
             destination_state=MoneyContextState.DEGRADED,
         )
+
+
+def apply_payment_assumptions(
+    context: MoneyContext,
+    *,
+    assumptions: PaymentEstimateAssumptions,
+    destination_minor_units: int,
+) -> MoneyContext:
+    """Return a new MoneyContext with a deterministic payment scenario attached."""
+
+    estimate = estimate_conversion_payment_value(
+        conversion=context.conversion,
+        assumptions=assumptions,
+        destination_minor_units=destination_minor_units,
+    )
+    return replace(context, payment_estimate=estimate)
