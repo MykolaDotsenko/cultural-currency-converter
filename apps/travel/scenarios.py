@@ -18,7 +18,6 @@ from apps.travel.models import (
     SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
-    SavedScenarioObservationKind,
 )
 
 MAX_ACCOUNT_SCENARIOS = 50
