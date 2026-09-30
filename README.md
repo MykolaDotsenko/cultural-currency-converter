@@ -29,8 +29,9 @@ Those boundaries are more important to this project than adding another conversi
 
 - current and historical FX conversion;
 - visible source/effective-date meaning;
-- bilateral country/currency context;
-- historical charts and Then & Now comparison;
+- bilateral country/currency context with smart current/historical picker filtering;
+- historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now comparison;
+- explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
 - sourced everyday-value and payment context;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
