@@ -99,6 +99,7 @@ The following additional user-facing capabilities also clear the current **60/10
 10. **Real Payment Estimate — 94/100**
    - Explain the gap between a reference market rate and what a user may actually experience when paying by card or withdrawing cash.
    - Model only defensible inputs/ranges such as user-supplied bank/card markup, known fixed fees or clearly labelled scenario assumptions.
+   - Optionally allow a signed-in user to save explicit fee assumptions/profile defaults for reuse, with clear ownership/edit/delete controls; never infer issuer fees from unrelated behaviour.
    - Never present guessed bank, ATM, DCC or merchant fees as known facts; preserve the existing trust/provenance boundary.
 
 11. **Budget interpretation — 91/100**
@@ -219,6 +220,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
 30. **Offline destination packs — 82/100**
    - For future mobile/offline use, allow selected destination money context to remain useful with limited connectivity.
    - Define freshness/expiry for rates versus slower-moving payment/cultural content; never present stale FX as current.
+   - A last-known FX observation may be useful offline only when its provider/effective timestamp and stale/offline status are explicit; it must never masquerade as a live rate.
    - Keep offline scope small enough to remain maintainable and privacy-conscious.
 
 31. **Lightweight personalization — 79/100**
@@ -238,6 +240,23 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
 
 Items already represented elsewhere—destination comparison, trip dashboard/detail, saved trips, alerts, share cards and payment profiles—remain part of their existing roadmap entries rather than being duplicated here.
 
+### Fifth expansion wave from the market assessment
+
+The market assessment adds one genuinely new user-facing capability above the **60/100 usefulness + distinctiveness threshold**; the other strongest recommendations reinforce existing roadmap items rather than creating duplicates.
+
+34. **Destination mode — 91/100**
+   - Let the user start with “I’m in / I’m going to” a country or city and receive the relevant local currency plus scoped money context without first constructing a currency pair.
+   - Manual destination selection is the baseline; device-location assistance, if ever added, must be optional and privacy-preserving.
+   - Reuse country/currency temporal logic, city-level context, payment guidance, My Places and saved-trip flows rather than introducing a parallel destination data model.
+
+### Strategic product foundation: Money Context Engine
+
+Treat the existing everyday-value capability as a reusable product engine, not merely one post-conversion card.
+
+The engine should serve converter, destination comparison, budget interpretation, trip/scenario detail, camera input and future mobile/offline experiences from the same scoped/provenance-aware context model.
+
+Prioritize depth, comparability, freshness and clear uncertainty over adding many shallow utility widgets.
+
 ## Later candidate: stable external/mobile API
 
 A versioned API is useful when a native client or external consumer becomes active.
@@ -246,9 +265,11 @@ Before implementation, re-evaluate framework/schema/authentication/offline choic
 
 ## Later candidate: native mobile
 
+Mobile is a strategically important point-of-use surface for this product: users may need money context at checkout, in cafés/shops, on public transport or before using an ATM. It should become an active product priority once the Money Context Engine, API contract and offline/staleness semantics are stable enough to reuse safely.
+
 A native client should reuse backend/domain meaning rather than duplicate web business rules.
 
-Choose the current stable mobile stack when implementation starts.
+Choose the current stable mobile stack when implementation starts; do not rewrite the web architecture merely to anticipate mobile.
 
 ## Later candidate: deeper trip/budget workflows
 
