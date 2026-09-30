@@ -304,6 +304,16 @@ class PaymentEstimateForm(forms.Form):
             f"Fixed local fee in {destination_currency_code}"
         )
 
+    def add_error(self, field, error):
+        super().add_error(field, error)
+        if field and field in self.fields:
+            self.fields[field].widget.attrs.update(
+                {
+                    "aria-invalid": "true",
+                    "aria-describedby": f"{field}-error",
+                }
+            )
+
     def clean(self):
         cleaned = super().clean()
         self._clean_fee(
