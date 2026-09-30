@@ -84,7 +84,10 @@ def test_malformed_or_wrong_pair_payload_is_rejected(payload):
         )
 
 
-@pytest.mark.parametrize("rate", [Decimal("1E+101"), Decimal("1E-101"), Decimal("1" * 65)])
+@pytest.mark.parametrize(
+    "rate",
+    [Decimal("1E+101"), Decimal("1E-101"), Decimal("1" * 65)],
+)
 def test_rate_payload_rejects_unbounded_numeric_representation(rate):
     with pytest.raises(FxProviderInvalidPayload, match="representation limits"):
         parse_rate_payload(
