@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 
 from django.contrib.auth import get_user_model
-from django.db import close_old_connections
+from django.db import IntegrityError, close_old_connections, transaction
 from django.test import TestCase, TransactionTestCase, override_settings, skipUnlessDBFeature
 from django.urls import reverse
 
@@ -66,6 +66,38 @@ class FavouriteSyncWebTests(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["error"]["code"], "authentication_required")
         self.assertEqual(FavouritePair.objects.count(), 0)
+
+    def test_database_rejects_duplicate_pair_identity_for_all_country_shapes(self):
+        country_shapes = (
+            (None, None),
+            (self.fi, None),
+            (None, self.jp),
+            (self.fi, self.jp),
+        )
+
+        for source_country, destination_country in country_shapes:
+            with self.subTest(
+                source_country=source_country.iso2 if source_country else None,
+                destination_country=destination_country.iso2 if destination_country else None,
+            ):
+                FavouritePair.objects.create(
+                    user=self.user,
+                    source_currency=self.eur,
+                    destination_currency=self.jpy,
+                    source_country=source_country,
+                    destination_country=destination_country,
+                )
+
+                with self.assertRaises(IntegrityError), transaction.atomic():
+                    FavouritePair.objects.create(
+                        user=self.user,
+                        source_currency=self.eur,
+                        destination_currency=self.jpy,
+                        source_country=source_country,
+                        destination_country=destination_country,
+                    )
+
+                FavouritePair.objects.filter(user=self.user).delete()
 
     def test_sync_unions_and_deduplicates_pair_identity(self):
         self.client.force_login(self.user)
