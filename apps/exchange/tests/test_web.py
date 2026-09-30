@@ -1076,6 +1076,87 @@ def test_historical_series_latest_comparison_failure_is_non_fatal(client, refere
 
 
 @pytest.mark.django_db
+@pytest.mark.django_db
+def test_historical_series_unrepresentable_latest_comparison_is_non_fatal(
+    client, reference_data
+):
+    with (
+        patch(
+            "apps.exchange.views.build_historical_series_gateway",
+            return_value=FakeSeriesGateway(),
+        ),
+        patch(
+            "apps.exchange.views.build_latest_quote_gateway",
+            return_value=UnrepresentableGateway(),
+        ),
+    ):
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "2026-09-18",
+                "period": "1y",
+                "amount": "100.00",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b"cannot be represented at display precision" in response.content
+    assert b"Historical rate trend" in response.content
+
+
+@pytest.mark.django_db
+def test_historical_series_unrepresentable_selected_rate_is_non_fatal(
+    client, reference_data
+):
+    class UnrepresentableSeriesGateway(FakeSeriesGateway):
+        def get(self, base, quote, start_date, end_date, grouping, policy, *, now):
+            self.calls.append((base, quote, start_date, end_date, grouping, policy, now))
+            return (
+                RateSeries(
+                    base_currency=base,
+                    quote_currency=quote,
+                    start_date=start_date,
+                    end_date=end_date,
+                    grouping=grouping,
+                    points=(
+                        RateSeriesPoint(start_date, Decimal("170.25"), ("ecb",)),
+                        RateSeriesPoint(end_date, Decimal("1E+50"), ("ecb",)),
+                    ),
+                    fetched_at=datetime(2026, 9, 20, 8, tzinfo=UTC),
+                    provider_policy=policy,
+                    observation_granularity=ObservationGranularity.DAILY,
+                ),
+                False,
+            )
+
+    with (
+        patch(
+            "apps.exchange.views.build_historical_series_gateway",
+            return_value=UnrepresentableSeriesGateway(),
+        ),
+        patch("apps.exchange.views.build_latest_quote_gateway") as latest_factory,
+    ):
+        response = client.get(
+            reverse("historical_series"),
+            {
+                "base": "EUR",
+                "quote": "JPY",
+                "selected_date": "2026-09-18",
+                "period": "1y",
+                "amount": "100.00",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b"selected reference rate" in response.content
+    assert b"cannot be represented at display precision" in response.content
+    assert b"Historical rate trend" in response.content
+    latest_factory.assert_not_called()
+
+
+@pytest.mark.django_db
 def test_historical_series_invalid_comparison_amount_keeps_trend_valid(client, reference_data):
     with (
         patch(
