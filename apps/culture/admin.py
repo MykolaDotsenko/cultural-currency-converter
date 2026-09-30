@@ -121,6 +121,7 @@ class TypicalPriceAdmin(admin.ModelAdmin):
     list_display = (
         "label",
         "country",
+        "city_ref",
         "city",
         "category",
         "amount_low",
@@ -132,6 +133,13 @@ class TypicalPriceAdmin(admin.ModelAdmin):
         "is_published",
     )
     list_filter = ("is_published", "source_class", "confidence", "category", "country")
-    search_fields = ("label", "country__name", "city", "source_name")
-    list_select_related = ("country", "currency")
+    search_fields = (
+        "label",
+        "country__name",
+        "city",
+        "city_ref__name",
+        "city_ref__slug",
+        "source_name",
+    )
+    list_select_related = ("country", "currency", "city_ref")
     ordering = ("display_order", "country__name", "city", "label")
