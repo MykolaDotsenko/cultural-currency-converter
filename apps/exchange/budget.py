@@ -167,13 +167,13 @@ def interpret_budget(
     missing_categories: list[str] = []
 
     for category_assumption in assumptions.categories:
-        price = selected_by_category.get(category_assumption.category)
-        if price is None:
+        selected_price = selected_by_category.get(category_assumption.category)
+        if selected_price is None:
             missing_categories.append(category_assumption.category)
             continue
         lines.append(
             _estimate_line(
-                price,
+                selected_price,
                 category_assumption=category_assumption,
                 duration_days=assumptions.duration_days,
                 travelers=assumptions.travelers,
