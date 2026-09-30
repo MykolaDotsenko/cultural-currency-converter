@@ -31,6 +31,7 @@ def _result(
     effective_date: date = date(2026, 9, 18),
     stale: bool = False,
     granularity: ObservationGranularity = ObservationGranularity.DAILY,
+    provider_keys: tuple[str, ...] = ("ecb",),
 ) -> ConversionResult:
     quote = RateQuote(
         base_currency="EUR",
@@ -40,7 +41,7 @@ def _result(
         effective_date=effective_date,
         fetched_at=datetime(2026, 9, 21, 8, tzinfo=UTC),
         provider_policy=DEFAULT_SOURCE_POLICY,
-        provider_keys=("ecb",),
+        provider_keys=provider_keys,
         historical=historical,
         observation_granularity=granularity,
     )
@@ -75,6 +76,15 @@ def test_signed_conversion_snapshot_round_trips_current_result():
     assert snapshot.requested_date is None
     assert snapshot.provider_keys == ("ecb",)
     assert snapshot.stale is False
+
+
+def test_signed_conversion_snapshot_preserves_multi_provider_attribution():
+    provider_keys = tuple(f"source-{index}" for index in range(12))
+    token = build_trusted_conversion_snapshot_token(_result(provider_keys=provider_keys))
+
+    snapshot = load_trusted_conversion_snapshot_token(token)
+
+    assert snapshot.provider_keys == provider_keys
 
 
 def test_signed_conversion_snapshot_preserves_historical_semantics():
