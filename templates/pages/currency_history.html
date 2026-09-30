@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Currency history · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Sourced country currency eras and reviewed monetary milestones.">
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro" aria-labelledby="currency-history-page-title">
+    <p class="qa-foundation-kicker">Currency history</p>
+    <h1 id="currency-history-page-title">Follow a currency through its recorded era.</h1>
+    <p class="qa-foundation-lede">
+      A concise sourced timeline of country/currency relationships and reviewed monetary
+      transitions. Historical FX and historical purchasing power remain separate questions.
+    </p>
+  </section>
+  {% include "components/culture/currency_history.html" %}
+  <p><a class="qa-secondary-button" href="{% url 'converter' %}">Back to converter</a></p>
+{% endblock %}
