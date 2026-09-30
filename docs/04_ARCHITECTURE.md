@@ -115,6 +115,10 @@ Use `Decimal` for money/rate arithmetic and keep source/effective-date semantics
 
 Same-currency conversion can bypass unnecessary provider work while preserving clear result semantics.
 
+A successful conversion can be serialized into a short-lived signed **trusted conversion snapshot** for downstream progressive features. Consumers must derive financial inputs from that server-signed snapshot rather than trusting hidden/form-posted copies of the rate or result. Runtime AI explanation and Real Payment Estimate share this neutral exchange-layer boundary; neither owns or recalculates the original FX truth.
+
+Real Payment Estimate is deterministic financial scenario arithmetic over explicit assumptions. It may model user-entered FX markup and fixed fees, but it must not infer bank/card/ATM/DCC/merchant fees. A failure in this optional surface must not invalidate the already successful conversion.
+
 ## AI boundary
 
 AI is optional enrichment. It receives bounded trusted packets and does not establish FX rates, historical observations or published factual truth.
