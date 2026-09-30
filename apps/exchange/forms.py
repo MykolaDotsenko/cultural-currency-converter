@@ -269,7 +269,7 @@ class HistoricalSeriesForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        today = today
+        today = timezone.localdate()
 
         for field_name in ("base", "quote"):
             raw_value = cleaned.get(field_name)
