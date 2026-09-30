@@ -108,16 +108,17 @@ The following additional user-facing capabilities also clear the current **60/10
    - Help answer “Is this amount likely to be enough for this destination and duration?” using sourced local-price context and explicit assumptions.
    - Support duration and a small number of understandable spending profiles/categories without turning the product into a full itinerary planner.
    - Label outputs as estimates and keep deterministic calculations separate from AI-written explanation.
-   - **Current status:** deterministic domain interpretation plus the first user-facing progressive UX are implemented: signed conversion/scope handoff, duration, traveller count, explicit editable daily reference items, city/national scope preservation, provenance-bearing line estimates, neutral reference bands, fail-closed insufficient-data semantics and a no-JavaScript fallback. Richer presets, payment-estimate handoff and saved-trip persistence remain future work.
+   - **Current status:** deterministic domain interpretation plus the first user-facing progressive UX are implemented: signed conversion/scope handoff, duration, traveller count, explicit editable daily reference items, city/national scope preservation, provenance-bearing line estimates, neutral reference bands, fail-closed insufficient-data semantics and a no-JavaScript fallback. A signed-in user can now hand a completed reference-basket plan into SavedScenario persistence without trusting editable amount/rate fields. Richer presets and payment-estimate handoff remain future work.
 
 12. **Saved scenarios — 89/100**
    - Evolve beyond pair-only bookmarks so a user can save a reusable travel-money scenario such as a trip budget or shopping calculation.
    - Design the scenario model so existing FavouritePair and RecentConversion data can coexist or migrate safely rather than creating duplicate persistence concepts.
    - Keep ownership, browser-local/account sync and privacy semantics explicit.
-   - **Foundation status:** normalized account-owned SavedScenario persistence is implemented with typed trip/budget/shopping kinds, canonical destination city scope, normalized budget assumptions and immutable initial/re-check FX observations. User-facing save/reopen/delete UX, anonymous local scenarios and account/local sync remain future work.
+   - **Current status:** normalized account-owned SavedScenario persistence plus the first user-facing save/reopen/delete workflow are implemented. Budget interpretation can hand off the signed conversion/destination scope and explicit assumptions into a signed save draft; users can name the plan, optionally add dates, reopen it from Saved & recent, inspect the immutable starting FX observation and delete it. Anonymous local scenarios, account/local sync, shopping-scenario UX and live re-check comparison remain future work.
 
 13. **Saved trip / budget detail — 85/100**
    - Give a saved travel-money scenario a focused detail page with current local value, typical costs, money tips, relevant conversion history and remaining budget where the user has entered spending.
+   - **Current slice:** owner-scoped plan detail now shows destination scope, duration/travellers/dates, explicit saved daily assumptions and the immutable starting FX observation, with a safe “Open in converter” action. Refreshed local-value/payment context, re-check comparison and remaining-budget tracking are still future work.
    - During an active trip, surface simple spent / remaining / approximate-per-day values without becoming a general-purpose expense tracker.
    - Keep scope intentionally narrower than a full trip planner or expense-management product.
    - Reuse destination context, history and scenario data rather than duplicating them into a separate content system.
