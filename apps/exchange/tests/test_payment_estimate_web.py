@@ -10,8 +10,8 @@ from django.db import DatabaseError
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
-from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
+from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
 
 class FakeGateway:
