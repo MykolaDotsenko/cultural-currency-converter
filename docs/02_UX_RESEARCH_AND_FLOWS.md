@@ -184,20 +184,68 @@ History should support useful re-entry, not only archival viewing. Where the req
 
 Do not expose actions that cannot preserve the original rate/date/source semantics.
 
-## Re-check and pre-trip return flow
+## Returning-user home
 
-Saved scenarios should eventually support a deliberate return loop:
+For a new or anonymous user, the primary entry can remain converter-first. For a returning user with an upcoming saved trip, the home surface should prioritize continuity.
 
-**Plan → Save → Re-check → Travel**
+A useful returning-user summary can show:
+
+- upcoming destination and dates;
+- saved budget and approximate daily amount;
+- latest reference conversion and change since the last saved observation;
+- destination-context/offline-pack freshness;
+- concise quick actions such as **Scan price**, **Check budget**, **Money tips** and **Open trip**.
+
+Do not turn this into a dense travel dashboard. The purpose is to remove repeated setup and surface the next useful action.
+
+## Trip-cycle retention flow
+
+Saved scenarios should support a deliberate lifecycle rather than ending at a bookmark:
+
+**Plan → Save → Re-check → Travel → Use → Finish → Next trip**
+
+### Before travel
 
 When a user reopens a saved scenario, the product can surface:
 
 - the latest reference observation;
 - the change from the last relevant saved observation;
 - refreshed local-value/payment context;
-- whether the saved budget interpretation changed under the same explicit assumptions.
+- whether the saved budget interpretation changed under the same explicit assumptions;
+- destination-pack freshness and whether an offline refresh is useful.
 
 Optional pre-trip reminders may invite the user to re-check a saved scenario close to its travel date. Reminder delivery must be opt-in, easy to disable and separate from rate-alert/trading-style messaging.
+
+### During travel
+
+The saved trip should become a fast point-of-use surface rather than forcing the user back through setup. Useful actions include:
+
+- convert a price immediately;
+- scan a menu, receipt, shelf price or ATM screen;
+- confirm the extracted amount/currency before any financial calculation;
+- optionally add a confirmed expense amount to the active trip;
+- see a simple remaining budget and approximate amount-per-day remaining;
+- open destination payment/ATM/DCC guidance;
+- use explicitly stale-labelled offline context when connectivity is limited.
+
+The budget view should remain intentionally lightweight. It is not a general bookkeeping or expense-management product.
+
+### After travel
+
+The product may preserve reusable preferences such as home currency, language, travel style and explicit fee assumptions when the user has chosen to save them. Starting the next trip should reuse these defaults without silently copying destination-specific spending history or building a sensitive travel profile.
+
+### Scenario-based notifications
+
+Notifications should be tied to a saved scenario or upcoming trip, not generic market noise.
+
+Prefer messages such as:
+
+- the saved trip budget now converts to a materially different local amount;
+- the trip starts soon and destination money context should be re-checked;
+- an offline destination pack is old enough to refresh before travel.
+
+Avoid messages that encourage timing the FX market or imply that a rate move is a recommendation to exchange money.
+
 
 ## Accessibility
 
