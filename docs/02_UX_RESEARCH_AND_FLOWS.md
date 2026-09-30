@@ -347,3 +347,20 @@ The current slice uses the reference conversion basis in the UI. The domain alre
 
 Budget interpretation is not a full trip-cost forecast. Accommodation, flights and unselected categories must never be silently added.
 
+### Saved budget handoff
+
+After a successful budget interpretation, a signed-in user may explicitly save that planning state.
+
+The save handoff must preserve these boundaries:
+
+- the trusted conversion and destination scope come from the signed budget-context token;
+- only the explicit duration, traveller count and selected daily basket assumptions are persisted;
+- saving does not silently copy browser-only favourites or recent history;
+- the save action does not require a second live local-price lookup after the interpretation has already been produced;
+- the saved detail page shows the stored assumptions and immutable FX observation as saved, rather than silently refreshing them;
+- **Re-run conversion** is an explicit action and future **Re-check** must append a new observation rather than overwrite the original;
+- owner scoping applies to view and delete operations;
+- anonymous users get an opt-in sign-in affordance rather than silent account persistence.
+
+The current saved-budget detail is intentionally narrow. Current local-value refresh, rate-change comparison, remaining-spend tracking and trip-day workflows belong to later scenario iterations.
+
