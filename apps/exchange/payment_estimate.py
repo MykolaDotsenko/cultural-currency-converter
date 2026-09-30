@@ -60,9 +60,7 @@ def estimate_payment_value(
     _validate_non_negative_decimal(destination_fixed_fee, label="Destination fixed fee")
 
     if fx_markup_percent > MAX_FX_MARKUP_PERCENT:
-        raise PaymentEstimateError(
-            f"FX markup cannot exceed {MAX_FX_MARKUP_PERCENT}%."
-        )
+        raise PaymentEstimateError(f"FX markup cannot exceed {MAX_FX_MARKUP_PERCENT}%.")
     if source_fixed_fee > source_budget:
         raise PaymentEstimateError("Source fixed fee cannot exceed the source budget.")
     if destination_fixed_fee > reference_destination_amount:
