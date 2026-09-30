@@ -300,9 +300,11 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     `current-converter: payment estimate returned ${validEstimateResponse.status()} instead of 200`,
   );
   await page.getByText("Estimated destination value", { exact: true }).waitFor();
-  await page.getByText("This is a scenario estimate, not a bank/card/ATM quote.", {
-    exact: false,
-  }).waitFor();
+  await page
+    .getByText("This is a scenario estimate, not a bank/card/ATM quote.", {
+      exact: false,
+    })
+    .waitFor();
   await assertAxe(page, "current-converter/payment-estimate");
 
   await page.evaluate((key) => localStorage.removeItem(key), LOCAL_STATE_KEY);
