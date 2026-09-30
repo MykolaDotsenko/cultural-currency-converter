@@ -165,6 +165,42 @@ def build_result_component(
         "amount": format(result.output_amount, "f"),
     }
 
+    currency_histories: list[dict[str, str]] = []
+    seen_history_contexts: set[tuple[str, str]] = set()
+    history_sides = (
+        (
+            "source",
+            source_country_code,
+            source_country,
+            result.quote.base_currency,
+        ),
+        (
+            "destination",
+            destination_country_code,
+            destination_country,
+            result.quote.quote_currency,
+        ),
+    )
+    for side, country_code, country, currency_code in history_sides:
+        identity = (country_code, currency_code)
+        if not country_code or identity in seen_history_contexts:
+            continue
+        seen_history_contexts.add(identity)
+        history_params = {
+            "country": country_code,
+            "currency": currency_code,
+            "selected_date": story_date.isoformat(),
+            "historical": "1" if historical else "0",
+        }
+        currency_histories.append(
+            {
+                "side": side,
+                "country_name": country.name if country else country_code,
+                "currency_code": currency_code,
+                "href": f"{reverse('currency_history')}?{urlencode(history_params)}",
+            }
+        )
+
     return {
         "id": "current-conversion-result",
         "input_amount": input_text,
@@ -191,6 +227,7 @@ def build_result_component(
             ),
             "effective_date": result.quote.effective_date.isoformat(),
         },
+        "currency_histories": tuple(currency_histories),
         "money_culture_story": {
             "href": f"{reverse('money_culture_story')}?{urlencode(story_params)}",
             "historical": historical,
