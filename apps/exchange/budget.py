@@ -47,10 +47,7 @@ class BudgetCategoryAssumption:
             raise BudgetInterpretationError("Budget category cannot be empty.")
         if not isinstance(self.units_per_person_per_day, Decimal):
             raise BudgetInterpretationError("Budget category units must be a Decimal.")
-        if (
-            not self.units_per_person_per_day.is_finite()
-            or self.units_per_person_per_day <= 0
-        ):
+        if not self.units_per_person_per_day.is_finite() or self.units_per_person_per_day <= 0:
             raise BudgetInterpretationError(
                 "Budget category units must be a finite positive Decimal."
             )
