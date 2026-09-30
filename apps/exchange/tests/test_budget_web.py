@@ -5,6 +5,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
@@ -18,6 +19,8 @@ from apps.culture.services import DestinationContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
+
+User = get_user_model()
 
 
 class FakeGateway:
@@ -174,6 +177,55 @@ def test_budget_interpretation_uses_signed_conversion_and_explicit_basket(
     assert b"26000" in response.content
     assert b"999999999" not in response.content
     assert b"not a full trip-cost forecast" in response.content
+
+
+@pytest.mark.django_db
+def test_budget_interpretation_offers_account_save_handoff_after_result(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(username="planner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "5",
+            "travelers": "2",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+    )
+
+    assert response.status_code == 200
+    assert b"Save these exact assumptions for later" in response.content
+    assert reverse("prepare_saved_scenario").encode() in response.content
+    assert b'name="duration_days" value="5"' in response.content
+    assert b'name="travelers" value="2"' in response.content
+    assert b'name="units_coffee" value="1"' in response.content
+    assert b'name="units_casual_meal" value="2"' in response.content
+
+
+@pytest.mark.django_db
+def test_budget_interpretation_does_not_render_account_save_form_for_anonymous_user(
+    client,
+    reference_data,
+):
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+    )
+
+    assert response.status_code == 200
+    assert b"Sign in to save plans" in response.content
+    assert reverse("prepare_saved_scenario").encode() not in response.content
 
 
 @pytest.mark.django_db
