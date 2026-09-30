@@ -10,9 +10,9 @@ from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 
 from apps.countries.models import Currency
-from apps.exchange.snapshot_tokens import (
-    ConversionSnapshotTokenError,
-    load_conversion_snapshot_token,
+from apps.exchange.trusted_snapshot import (
+    TrustedSnapshotTokenError,
+    load_trusted_conversion_snapshot_token,
 )
 from apps.exchange.forms import PaymentEstimateForm
 from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
@@ -35,8 +35,8 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     response_status = 200
 
     try:
-        snapshot = load_conversion_snapshot_token(token)
-    except ConversionSnapshotTokenError:
+        snapshot = load_trusted_conversion_snapshot_token(token)
+    except TrustedSnapshotTokenError:
         response_status = 422
         estimate_error = {
             "title": "This payment estimate request is no longer valid.",
