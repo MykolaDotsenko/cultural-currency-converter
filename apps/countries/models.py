@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -25,7 +26,7 @@ class Country(models.Model):
     class Meta:
         ordering = ("name", "iso2")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.iso2 = self.iso2.upper()
         self.iso3 = self.iso3.upper()
         super().save(*args, **kwargs)
@@ -35,13 +36,13 @@ class Country(models.Model):
 
 
 class CurrencyQuerySet(models.QuerySet):
-    def active_on(self, selected_date: date):
+    def active_on(self, selected_date: date) -> CurrencyQuerySet:
         return self.filter(
             Q(active_from__isnull=True) | Q(active_from__lte=selected_date),
             Q(active_to__isnull=True) | Q(active_to__gte=selected_date),
         )
 
-    def covered_on(self, selected_date: date):
+    def covered_on(self, selected_date: date) -> CurrencyQuerySet:
         return self.filter(
             Q(coverage_from__isnull=True) | Q(coverage_from__lte=selected_date)
         ).filter(
@@ -84,7 +85,7 @@ class Currency(models.Model):
             ),
         ]
 
-    def clean(self):
+    def clean(self) -> None:
         if self.active_from and self.active_to and self.active_to < self.active_from:
             raise ValidationError({"active_to": "Currency active_to cannot precede active_from."})
         if self.coverage_from and self.coverage_to and self.coverage_to < self.coverage_from:
@@ -92,7 +93,7 @@ class Currency(models.Model):
                 {"coverage_to": "Currency coverage_to cannot precede coverage_from."}
             )
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         self.code = self.code.upper()
         super().save(*args, **kwargs)
 
@@ -101,7 +102,7 @@ class Currency(models.Model):
 
 
 class CountryCurrencyQuerySet(models.QuerySet):
-    def current(self, as_of: date | None = None):
+    def current(self, as_of: date | None = None) -> CountryCurrencyQuerySet:
         selected_date = as_of or timezone.localdate()
         return self.filter(
             country__is_active=True,
@@ -109,13 +110,13 @@ class CountryCurrencyQuerySet(models.QuerySet):
             valid_to__isnull=True,
         ).filter(Q(valid_from__isnull=True) | Q(valid_from__lte=selected_date))
 
-    def on_date(self, selected_date: date):
+    def on_date(self, selected_date: date) -> CountryCurrencyQuerySet:
         return self.filter(
             Q(valid_from__isnull=True) | Q(valid_from__lte=selected_date),
             Q(valid_to__isnull=True) | Q(valid_to__gte=selected_date),
         )
 
-    def primary(self):
+    def primary(self) -> CountryCurrencyQuerySet:
         return self.filter(is_primary=True)
 
 
@@ -181,12 +182,12 @@ class CountryCurrency(models.Model):
                 }
             )
 
-    def clean(self):
+    def clean(self) -> None:
         if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
             raise ValidationError({"valid_to": "valid_to cannot precede valid_from."})
         self._validate_primary_period_overlap()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         if self.country_id is None:
             self.clean()
             return super().save(*args, **kwargs)
