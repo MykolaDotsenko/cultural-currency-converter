@@ -2,7 +2,7 @@
 {% block title %}Saved & recent · Cultural Currency Converter{% endblock %}
 {% block head_meta %}
   <meta name="description"
-        content="Review account-saved currency pairs and recent conversion history.">
+        content="Review saved travel-money scenarios, currency pairs and recent conversion history.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
@@ -14,8 +14,9 @@
     <h1 id="saved-page-title">Saved &amp; recent</h1>
     {% if user.is_authenticated %}
       <p class="qa-foundation-lede">
-        Saved pairs belong to your account. Cross-device recent history is separate and stays off
-        until you explicitly enable it; browser-only history is never uploaded automatically.
+        Saved scenarios and pairs belong to your account. Cross-device recent history is separate
+        and stays off until you explicitly enable it; browser-only history is never uploaded
+        automatically.
       </p>
     {% else %}
       <p class="qa-foundation-lede">
@@ -37,8 +38,8 @@
     <noscript>
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
-          Account-saved pairs and account recent history remain available. JavaScript is required
-          only to read browser-only recent history on this device.
+          Account-saved scenarios, pairs and account recent history remain available. JavaScript is
+          required only to read browser-only recent history on this device.
         {% else %}
           JavaScript is required to read browser-local saved pairs and recent history. The converter
           still works without JavaScript.
@@ -323,9 +324,10 @@
     {% endif %}
     <p class="qa-saved-state__privacy">
       {% if user.is_authenticated %}
-        Browser-only history is never uploaded automatically. Turning account history off stops
-        future server recording but keeps existing rows until you remove or clear them. Deleting
-        your account removes all account-owned favourites and recent history.
+        Browser-only history is never uploaded automatically. Saved scenarios are created only by
+        an explicit account action. Turning account history off stops future recent-history
+        recording but keeps existing rows until you remove or clear them. Deleting your account
+        removes account-owned scenarios, favourites and recent history.
       {% else %}
         Clearing browser site data also removes these items. Sign in only if you want saved pairs
         to sync across devices.
