@@ -952,6 +952,16 @@ async function assertForcedColors(page, surface) {
   await assertNoHorizontalOverflow(page, `${surface}/forced-colors`);
 }
 
+async function prepareScreenshotState(page) {
+  await page.emulateMedia({ forcedColors: "none", reducedMotion: "no-preference" });
+  await page.evaluate(() => {
+    document.documentElement.style.removeProperty("font-size");
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  });
+  await waitForStableLayout(page);
+}
+
 async function assertTextExpansion(page, surface) {
   await page.emulateMedia({ forcedColors: "none", reducedMotion: "reduce" });
   await page.evaluate(() => {
@@ -1287,6 +1297,7 @@ try {
         initial: initialPerformanceEvidence,
       };
 
+      await prepareScreenshotState(page);
       await page.screenshot({
         path: resolve(OUTPUT_DIR, `${surface.name}-${viewport.name}.png`),
         fullPage: true,
