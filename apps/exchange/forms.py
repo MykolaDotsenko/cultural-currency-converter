@@ -7,6 +7,12 @@ from django import forms
 from django.utils import timezone
 
 from apps.countries.models import Country, CountryCurrency, Currency
+from apps.exchange.budget import (
+    BudgetAssumptions,
+    BudgetBasis,
+    BudgetCategoryAssumption,
+    BudgetInterpretationError,
+)
 from apps.exchange.domain import RateSeriesRangeError, normalize_currency_code
 from apps.exchange.payment_estimate import MAX_FX_MARKUP_PERCENT
 
@@ -346,6 +352,125 @@ class PaymentEstimateForm(forms.Form):
             self.add_error(field_name, exc)
             return
         cleaned[f"{field_name}_decimal"] = parsed
+
+
+_BUDGET_DEFAULT_UNITS: dict[str, Decimal] = {
+    "coffee": Decimal("1"),
+    "casual_meal": Decimal("2"),
+    "transit": Decimal("2"),
+    "groceries": Decimal("1"),
+    "other": Decimal("1"),
+}
+
+
+class BudgetInterpretationForm(forms.Form):
+    duration_days = forms.IntegerField(
+        min_value=1,
+        max_value=365,
+        initial=3,
+        label="Trip duration",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "numeric",
+                "min": "1",
+                "max": "365",
+                "step": "1",
+            }
+        ),
+    )
+    travelers = forms.IntegerField(
+        min_value=1,
+        max_value=20,
+        initial=1,
+        label="Travelers",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "numeric",
+                "min": "1",
+                "max": "20",
+                "step": "1",
+            }
+        ),
+    )
+
+    def __init__(
+        self,
+        *args,
+        category_options: tuple[tuple[str, str], ...],
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.category_options = category_options
+
+        for category, label in category_options:
+            if not re.fullmatch(r"[a-z0-9_]+", category):
+                raise ValueError("Budget category keys must be canonical identifiers.")
+            field_name = self.units_field_name(category)
+            self.fields[field_name] = forms.DecimalField(
+                required=False,
+                min_value=Decimal("0.01"),
+                max_value=Decimal("100"),
+                max_digits=5,
+                decimal_places=2,
+                initial=_BUDGET_DEFAULT_UNITS.get(category, Decimal("1")),
+                label=f"{label} per person / day",
+                widget=forms.NumberInput(
+                    attrs={
+                        "class": "qa-text-input",
+                        "inputmode": "decimal",
+                        "min": "0.01",
+                        "max": "100",
+                        "step": "0.25",
+                    }
+                ),
+            )
+
+    @staticmethod
+    def units_field_name(category: str) -> str:
+        return f"units_{category}"
+
+    def add_error(self, field, error):
+        super().add_error(field, error)
+        if field and field in self.fields:
+            self.fields[field].widget.attrs.update(
+                {
+                    "aria-invalid": "true",
+                    "aria-describedby": f"{field}-error",
+                }
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors:
+            return cleaned
+
+        categories: list[BudgetCategoryAssumption] = []
+        for category, _label in self.category_options:
+            value = cleaned.get(self.units_field_name(category))
+            if value is None:
+                continue
+            categories.append(
+                BudgetCategoryAssumption(
+                    category=category,
+                    units_per_person_per_day=value,
+                )
+            )
+
+        if not categories:
+            raise forms.ValidationError("Keep at least one daily reference item.")
+
+        try:
+            cleaned["budget_assumptions"] = BudgetAssumptions(
+                duration_days=cleaned["duration_days"],
+                travelers=cleaned["travelers"],
+                categories=tuple(categories),
+                basis=BudgetBasis.REFERENCE_CONVERSION,
+            )
+        except BudgetInterpretationError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        return cleaned
 
 
 SERIES_PERIOD_CHOICES = (
