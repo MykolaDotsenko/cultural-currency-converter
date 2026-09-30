@@ -277,6 +277,13 @@ class TypicalPrice(models.Model):
         related_name="typical_prices",
     )
     city = models.CharField(max_length=120, blank=True)
+    city_ref = models.ForeignKey(
+        "countries.City",
+        on_delete=models.PROTECT,
+        related_name="typical_prices",
+        null=True,
+        blank=True,
+    )
     category = models.CharField(max_length=24, choices=TypicalPriceCategory.choices)
     label = models.CharField(max_length=160)
     amount_low = models.DecimalField(max_digits=12, decimal_places=2)
@@ -324,6 +331,12 @@ class TypicalPrice(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        if self.city_ref_id is not None and self.country_id is not None:
+            city_country_id = self.city_ref.country_id
+            if city_country_id != self.country_id:
+                raise ValidationError(
+                    {"city_ref": "Typical-price city must belong to the selected country."}
+                )
         if self.amount_low is not None and self.amount_low <= 0:
             raise ValidationError({"amount_low": "Typical price must be positive."})
         if (
@@ -345,6 +358,8 @@ class TypicalPrice(models.Model):
 
     @property
     def scope_label(self) -> str:
+        if self.city_ref_id is not None:
+            return self.city_ref.name
         return self.city or f"{self.country.name} · national estimate"
 
     def __str__(self) -> str:
