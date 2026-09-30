@@ -14,8 +14,8 @@
     <h1 id="saved-page-title">Saved &amp; recent</h1>
     {% if user.is_authenticated %}
       <p class="qa-foundation-lede">
-        Saved pairs belong to your account. Cross-device recent history is separate and stays off
-        until you explicitly enable it; browser-only history is never uploaded automatically.
+        Saved plans and pairs belong to your account. Cross-device recent history is separate and
+        stays off until you explicitly enable it; browser-only history is never uploaded automatically.
       </p>
     {% else %}
       <p class="qa-foundation-lede">
@@ -45,6 +45,79 @@
         {% endif %}
       </p>
     </noscript>
+    {% if user.is_authenticated %}
+      <section class="qa-saved-section" aria-labelledby="saved-plans-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Planning</p>
+            <h2 id="saved-plans-title">Saved plans</h2>
+            <p>
+              Plans keep your amount, destination scope and explicit assumptions together with an
+              immutable starting FX observation. Current local-price context is not frozen forever.
+            </p>
+          </div>
+        </div>
+        {% if account_scenario_rows %}
+          <div class="qa-saved-list" data-account-scenarios-list>
+            {% for row in account_scenario_rows %}
+              {% with scenario=row.scenario %}
+                <article class="qa-saved-row" data-account-scenario-id="{{ scenario.pk }}">
+                  <div class="qa-saved-row__copy">
+                    <p class="qa-foundation-kicker">{{ scenario.get_kind_display }}</p>
+                    <h3>
+                      {% if scenario.title %}
+                        {{ scenario.title }}
+                      {% elif scenario.destination_city %}
+                        {{ scenario.destination_city.name }} plan
+                      {% elif scenario.destination_country %}
+                        {{ scenario.destination_country.name }} plan
+                      {% else %}
+                        Saved plan
+                      {% endif %}
+                    </h3>
+                    <p>
+                      {{ scenario.source_amount|floatformat:"-12" }}
+                      {{ scenario.source_currency.code }}
+                      →
+                      {{ scenario.destination_currency.code }}
+                      {% if scenario.destination_city %}
+                        · {{ scenario.destination_city.name }}
+                      {% elif scenario.destination_country %}
+                        · {{ scenario.destination_country.name }}
+                      {% endif %}
+                    </p>
+                    <p class="qa-saved-row__meta">
+                      {% if scenario.duration_days %}
+                        {{ scenario.duration_days }} day{{ scenario.duration_days|pluralize }}
+                        · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
+                        ·
+                      {% endif %}
+                      Updated {{ scenario.updated_at|date:"j M Y, H:i" }}
+                    </p>
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    <a class="qa-secondary-button"
+                       href="{{ row.detail_url }}"
+                       aria-label="Open saved plan: {% if scenario.title %}{{ scenario.title }}{% else %}{{ scenario.get_kind_display }}{% endif %}">Open plan</a>
+                    <form method="post"
+                          action="{% url 'delete_saved_scenario' scenario.pk %}">
+                      {% csrf_token %}
+                      <button class="qa-secondary-button"
+                              type="submit"
+                              aria-label="Remove saved plan: {% if scenario.title %}{{ scenario.title }}{% else %}{{ scenario.get_kind_display }}{% endif %}">Remove</button>
+                    </form>
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">
+            No saved plans yet. Interpret a current destination budget, then choose Save this plan.
+          </p>
+        {% endif %}
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="saved-pairs-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -256,8 +329,9 @@
     <p class="qa-saved-state__privacy">
       {% if user.is_authenticated %}
         Browser-only history is never uploaded automatically. Turning account history off stops
-        future server recording but keeps existing rows until you remove or clear them. Deleting
-        your account removes all account-owned favourites and recent history.
+        future server recording but keeps existing rows until you remove or clear them. Saved plans
+        are account-owned planning data. Deleting your account removes plans, favourites and recent
+        history owned by that account.
       {% else %}
         Clearing browser site data also removes these items. Sign in only if you want saved pairs
         to sync across devices.
