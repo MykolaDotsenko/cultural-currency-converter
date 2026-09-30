@@ -49,6 +49,21 @@ A time series represents normalized FX observations for a pair and interval.
 
 Chart presentation should not invent observations or imply trading-quality market data.
 
+## PaymentEstimate
+
+A payment estimate is a deterministic scenario derived from an already trusted **current cross-currency conversion** plus explicit user assumptions.
+
+Its financial meaning includes:
+
+- the original fixed source-currency budget;
+- the trusted reference destination amount and rate;
+- optional user-entered FX markup;
+- an optional fixed fee in the source currency;
+- an optional fixed fee in the destination currency;
+- currency-aware rounding for the estimated destination value.
+
+It is not a provider quote. The product does not infer issuer, bank, card, ATM, DCC or merchant fees, and historical FX must not be presented as evidence of historical payment fees.
+
 ## CulturalProfile / destination context
 
 Curated current destination guidance such as:
@@ -133,6 +148,7 @@ Examples of durable invariants:
 - user-owned data is ownership scoped;
 - account recent history requires explicit opt-in;
 - sourced factual enrichment keeps provenance;
+- payment estimates use only explicit assumptions over a signed trusted current conversion snapshot and never turn guessed provider fees into facts;
 - optional enrichment cannot invalidate a valid conversion.
 
 These invariants deserve tests. Other implementation details can evolve more freely.
