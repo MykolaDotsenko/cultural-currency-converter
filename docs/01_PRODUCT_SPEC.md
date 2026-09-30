@@ -24,6 +24,28 @@ The working product formula is:
 
 **Rate + Real Cost + Local Buying Power + Local Money Behavior + Cultural Context**
 
+### Money Context Engine
+
+The defensible product layer is not the exchange-rate calculation itself. It is the **Money Context Engine** that turns a trusted amount into practical meaning for a specific place.
+
+Its core question is:
+
+**What does this money mean here?**
+
+The engine should combine, when defensible:
+
+- reference FX and effective-date/source semantics;
+- sourced everyday-value anchors;
+- city/country scope;
+- payment behaviour and relevant warnings;
+- explicit fee assumptions for real-payment estimates;
+- historical/cultural context;
+- confidence, freshness and provenance.
+
+“What this buys” should therefore be treated as a first-class product capability rather than decorative post-conversion content. The interface can stay simple, but the underlying context model should be reusable by converter, comparison, budget, trip, camera and mobile/offline flows.
+
+The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
+
 - **Rate** — a trustworthy reference FX observation with source/effective-date semantics.
 - **Real Cost** — a clearly labelled estimate of card/ATM/exchange outcomes only when inputs or assumptions are defensible.
 - **Local Buying Power** — sourced examples that translate an amount into everyday meaning.
@@ -59,6 +81,12 @@ Use this as the stable brand-level line in repository/product identity surfaces 
 ### Primary market-facing hero
 
 **Convert money. Understand local value. Travel smarter.** — **96/100**
+
+Alternative core value-proposition line:
+
+**Convert money. Understand what it means there.** — **96/100**
+
+Use this when the product needs to foreground its strongest differentiation: translating an amount into local meaning rather than merely displaying an exchange result.
 
 Use this when the first job is to communicate practical travel value quickly. It preserves the product's local-value proposition while making the traveller benefit explicit.
 
@@ -264,6 +292,24 @@ Useful candidate measures include:
 - D1 / D7 / D30 return where lawful and proportionate.
 
 Measurement must not silently turn sensitive travel/financial context into broad behavioural tracking. Collect only what is needed to evaluate product usefulness, document retention, and respect user/account privacy boundaries.
+
+## Market strategy and monetization guardrails
+
+The main product risks are not only technical. The product should explicitly watch:
+
+- **distribution** — a good converter does not automatically acquire users;
+- **retention** — currency conversion is naturally episodic unless saved trips, re-checks, comparison and discovery create a reason to return;
+- **monetization** — basic conversion alone is a weak recurring-subscription proposition;
+- **defensibility** — FX, payment tips and simple local-price cards can be copied, so data quality, scope/provenance, context composition and user workflows matter more than feature count.
+
+Initial monetization should remain a hypothesis, not a requirement for the core product.
+
+A plausible future freemium boundary is:
+
+- **Free:** conversion, core local context, basic culture/history and limited saved state;
+- **Travel Pro candidate:** offline destination packs, camera-assisted price understanding, deeper trip/budget workflows, multiple saved trips/comparisons and user-configured payment-fee profiles.
+
+Affiliate or partner revenue may be explored only when it does not bias factual guidance or weaken trust. Commercial relationships must never determine which rate, payment warning or local-money recommendation is presented as factual truth.
 
 ## Non-goals
 
