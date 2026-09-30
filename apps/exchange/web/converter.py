@@ -296,12 +296,14 @@ def converter_view(
             result = submission.conversion
             if result is None:
                 raise RuntimeError("Successful converter submission returned no conversion.")
-            if submission.destination_context is not None:
-                destination_media = select_destination_media(
-                    submission.destination_context.country_code
-                )
+            money_context = submission.money_context
+            destination_context = (
+                money_context.destination_context if money_context is not None else None
+            )
+            if destination_context is not None:
+                destination_media = select_destination_media(destination_context.country_code)
                 destination_context_component = build_destination_context_component(
-                    submission.destination_context,
+                    destination_context,
                     historical=False,
                     hero_image=destination_media.hero,
                     everyday_value_image=destination_media.everyday_value,
