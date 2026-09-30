@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.utils import timezone
 
-from apps.countries.models import Country, Currency
+from apps.countries.models import City, Country, Currency
 from apps.culture.models import (
     CulturalProfile,
     StoryDatePrecision,
@@ -132,6 +132,11 @@ _TOKYO_METRO_FARE_SOURCE = "https://www.tokyometro.jp/lang_en/ticket/types/regul
 def seed_demo_destination_context() -> tuple[int, int]:
     japan = Country.objects.get(iso2="JP")
     jpy = Currency.objects.get(code="JPY")
+    tokyo, _tokyo_created = City.objects.update_or_create(
+        country=japan,
+        slug="tokyo",
+        defaults={"name": "Tokyo", "is_active": True},
+    )
     verified_at = timezone.now()
     observation_date = date(2026, 9, 21)
 
@@ -225,6 +230,7 @@ def seed_demo_destination_context() -> tuple[int, int]:
                 "amount_low": spec["amount_low"],
                 "amount_high": spec["amount_high"],
                 "currency": jpy,
+                "city_ref": tokyo if spec["city"] == "Tokyo" else None,
                 "source_name": spec["source_name"],
                 "source_url": spec["source_url"],
                 "verified_at": verified_at,
