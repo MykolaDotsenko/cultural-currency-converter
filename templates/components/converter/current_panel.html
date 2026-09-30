@@ -315,19 +315,36 @@
           </div>
         {% endif %}
         {% if result_component.money_culture_story %}
-          <section class="qa-story-entry" aria-labelledby="money-culture-entry-title">
+          <section class="qa-story-entry qa-currency-explore-entry"
+                   aria-labelledby="currency-stories-entry-title">
             <div>
-              <p class="qa-foundation-kicker">Money &amp; culture</p>
-              <h3 id="money-culture-entry-title">Explore the story behind these currencies</h3>
-              <p>Open sourced currency-era and historical context without changing the conversion.</p>
+              <p class="qa-foundation-kicker">Currency stories</p>
+              <h3 id="currency-stories-entry-title">Explore the history behind these currencies</h3>
+              <p>
+                Follow one country’s recorded currency eras, or open the combined sourced money
+                story. These views do not change the conversion.
+              </p>
             </div>
-            <a class="qa-secondary-button"
-               href="{{ result_component.money_culture_story.href }}"
-               hx-get="{{ result_component.money_culture_story.href }}"
-               hx-target="#money-culture-story-slot"
-               hx-swap="innerHTML"
-               hx-sync="#money-culture-story-slot:replace">Explore money &amp; culture</a>
+            <div class="qa-currency-explore-entry__actions">
+              {% for history in result_component.currency_histories %}
+                <a class="qa-secondary-button"
+                   href="{{ history.href }}"
+                   hx-get="{{ history.href }}"
+                   hx-target="#currency-history-slot"
+                   hx-swap="innerHTML"
+                   hx-sync="#currency-history-slot:replace">
+                  {{ history.country_name }} · {{ history.currency_code }} history
+                </a>
+              {% endfor %}
+              <a class="qa-secondary-button"
+                 href="{{ result_component.money_culture_story.href }}"
+                 hx-get="{{ result_component.money_culture_story.href }}"
+                 hx-target="#money-culture-story-slot"
+                 hx-swap="innerHTML"
+                 hx-sync="#money-culture-story-slot:replace">Explore money &amp; culture</a>
+            </div>
           </section>
+          <div id="currency-history-slot" aria-live="polite"></div>
           <div id="money-culture-story-slot"></div>
         {% endif %}
         {% if result_component.historical_trend %}
