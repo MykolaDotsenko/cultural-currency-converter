@@ -17,6 +17,11 @@ from apps.travel.models import SavedScenario, SavedScenarioKind
 User = get_user_model()
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def scenario_reference_data(db):
     eur = Currency.objects.create(code="EUR", name="Euro", minor_units=2)
@@ -126,7 +131,6 @@ def test_signed_in_user_can_save_budget_without_second_live_price_lookup(
 
 @pytest.mark.django_db
 def test_blank_title_gets_destination_aware_default(client, scenario_reference_data):
-    scenario_reference_data
     user = User.objects.create_user(username="owner", password="StrongPass-482!")
     client.force_login(user)
 
@@ -147,7 +151,6 @@ def test_blank_title_gets_destination_aware_default(client, scenario_reference_d
 
 @pytest.mark.django_db
 def test_budget_save_requires_authentication(client, scenario_reference_data):
-    scenario_reference_data
 
     response = client.post(
         reverse("save_budget_scenario"),
@@ -166,7 +169,6 @@ def test_budget_save_requires_authentication(client, scenario_reference_data):
 
 @pytest.mark.django_db
 def test_tampered_budget_snapshot_is_rejected(client, scenario_reference_data):
-    scenario_reference_data
     user = User.objects.create_user(username="owner", password="StrongPass-482!")
     client.force_login(user)
     token = _budget_token()
@@ -188,7 +190,6 @@ def test_tampered_budget_snapshot_is_rejected(client, scenario_reference_data):
 
 @pytest.mark.django_db
 def test_invalid_budget_assumptions_are_not_saved(client, scenario_reference_data):
-    scenario_reference_data
     user = User.objects.create_user(username="owner", password="StrongPass-482!")
     client.force_login(user)
 
@@ -236,7 +237,6 @@ def test_saved_scenario_detail_renders_explicit_budget_and_converter_return(
     client,
     scenario_reference_data,
 ):
-    scenario_reference_data
     user = User.objects.create_user(username="owner", password="StrongPass-482!")
     client.force_login(user)
     client.post(
