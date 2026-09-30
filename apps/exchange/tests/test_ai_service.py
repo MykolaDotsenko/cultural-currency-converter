@@ -17,7 +17,7 @@ from apps.exchange.ai.service import (
     RuntimeExplanationService,
     build_runtime_explanation_service,
 )
-from apps.exchange.ai.tokens import TrustedConversionSnapshot
+from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 from apps.exchange.domain import ObservationGranularity
 from apps.exchange.models import RuntimeExplanationCache
 from integrations.gemini.errors import AIProviderUnavailable
