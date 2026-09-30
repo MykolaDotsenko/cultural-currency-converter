@@ -128,10 +128,18 @@ document.addEventListener("htmx:beforeSwap", (event) => {
       xhr: XMLHttpRequest;
       shouldSwap: boolean;
       isError: boolean;
+      target?: Element;
     }>
   ).detail;
 
   if (![422, 502, 503].includes(detail.xhr.status)) return;
+
+  // Validation/degraded fragments are intentionally renderable. Only converter
+  // failures should mark the previous conversion as preserved; other progressive
+  // surfaces (for example payment estimates) have their own error UI.
+  detail.shouldSwap = true;
+  detail.isError = false;
+  if (detail.target?.id !== "converter-panel") return;
 
   const note = document
     .getElementById("conversion-result-region")
@@ -143,9 +151,6 @@ document.addEventListener("htmx:beforeSwap", (event) => {
         ? "Previous result — fix the changed inputs to update it."
         : "Previous result — the new rate could not be loaded.";
   }
-
-  detail.shouldSwap = true;
-  detail.isError = false;
 });
 
 document.addEventListener("DOMContentLoaded", enhanceCurrentConverterBehavior);
