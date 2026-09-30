@@ -110,6 +110,53 @@ def _story_query(**overrides):
     return query
 
 
+def _currency_history_query(**overrides):
+    query = {
+        "country": "FI",
+        "currency": "EUR",
+        "selected_date": "2026-09-21",
+        "historical": "0",
+    }
+    query.update(overrides)
+    return query
+
+
+def _seed_finland_currency_history(reference_data):
+    fi, _jp, eur, _jpy = reference_data
+    fim = Currency.objects.create(
+        code="FIM",
+        name="Finnish markka",
+        symbol="mk",
+        is_active=False,
+        active_to=date(2001, 12, 31),
+    )
+    CountryCurrency.objects.create(
+        country=fi,
+        currency=fim,
+        is_primary=True,
+        valid_to=date(2001, 12, 31),
+        source="https://example.org/finland-markka",
+    )
+    moment = StoryMoment.objects.create(
+        category=StoryMomentCategory.CASH_CHANGEOVER,
+        title="Euro cash arrived in Finland",
+        summary="A reviewed sourced transition into euro cash.",
+        start_date=date(2002, 1, 1),
+        end_date=date(2002, 2, 28),
+        date_precision=StoryDatePrecision.RANGE,
+        source_kind=StorySourceKind.OFFICIAL,
+        source_name="European Commission",
+        source_url="https://example.org/euro-changeover",
+        verified_at=timezone.now(),
+        status=StoryMomentStatus.NEEDS_REVIEW,
+    )
+    moment.countries.add(fi)
+    moment.currencies.add(eur)
+    approve_story_moment(moment)
+    publish_story_moment(moment)
+    return fim, moment
+
+
 @pytest.mark.django_db
 def test_converter_exposes_progressive_story_entry_without_calling_story_service(
     client,
@@ -124,14 +171,107 @@ def test_converter_exposes_progressive_story_entry_without_calling_story_service
     }
     with (
         patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()),
-        patch("apps.culture.views.compose_story") as composer,
+        patch("apps.culture.views.compose_story") as story_composer,
+        patch("apps.culture.views.compose_currency_history") as history_composer,
     ):
         response = client.post(reverse("converter"), payload, HTTP_HX_REQUEST="true")
 
     assert response.status_code == 200
     assert b"Explore money &amp; culture" in response.content
     assert b"/story/?" in response.content
+    assert b"/currency/history/?" in response.content
+    assert b"EUR history" in response.content
+    assert b"JPY history" in response.content
+    story_composer.assert_not_called()
+    history_composer.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_htmx_currency_history_returns_sourced_previous_currency_timeline(
+    client,
+    reference_data,
+):
+    _seed_finland_currency_history(reference_data)
+
+    response = client.get(
+        reverse("currency_history"),
+        _currency_history_query(),
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    assert b"<html" not in response.content
+    assert b"Recorded relationships" in response.content
+    assert b"Finnish markka" in response.content
+    assert b"Euro cash arrived in Finland" in response.content
+    assert b"historical purchasing-power" in response.content
+    assert "HX-Request" in response.get("Vary", "")
+
+
+@pytest.mark.django_db
+def test_no_javascript_currency_history_returns_full_page(client, reference_data):
+    _seed_finland_currency_history(reference_data)
+
+    response = client.get(reverse("currency_history"), _currency_history_query())
+
+    assert response.status_code == 200
+    assert b"<html" in response.content
+    assert b"Follow a currency through its recorded era" in response.content
+    assert b"Back to converter" in response.content
+
+
+@pytest.mark.django_db
+def test_historical_currency_history_explains_explicit_currency_mismatch(
+    client,
+    reference_data,
+):
+    _seed_finland_currency_history(reference_data)
+
+    response = client.get(
+        reverse("currency_history"),
+        _currency_history_query(
+            selected_date="1998-06-15",
+            historical="1",
+        ),
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    assert b"Selected-date context" in response.content
+    assert b"Finnish markka" in response.content
+    assert b"Your explicit EUR FX selection is unchanged" in response.content
+    assert b"Euro cash arrived in Finland" not in response.content
+
+
+@pytest.mark.django_db
+def test_invalid_currency_history_query_is_400_without_composition(client, reference_data):
+    with patch("apps.culture.views.compose_currency_history") as composer:
+        response = client.get(
+            reverse("currency_history"),
+            _currency_history_query(country="ZZ"),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 400
+    assert b"not valid" in response.content
     composer.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_currency_history_database_failure_is_local_and_visible(client, reference_data):
+    with patch(
+        "apps.culture.views.compose_currency_history",
+        side_effect=DatabaseError("history unavailable"),
+    ):
+        response = client.get(
+            reverse("currency_history"),
+            _currency_history_query(),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"temporarily unavailable" in response.content
+    assert b"The conversion remains valid" in response.content
 
 
 @pytest.mark.django_db
