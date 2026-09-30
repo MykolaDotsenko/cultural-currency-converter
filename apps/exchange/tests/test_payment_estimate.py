@@ -78,7 +78,7 @@ def test_assumptions_are_bounded(field, value, message):
 
 
 def test_negative_assumptions_are_rejected():
-    with pytest.raises(PaymentEstimateError, match="FX markup.*non-negative"):
+    with pytest.raises(PaymentEstimateError, match=r"FX markup.*non-negative"):
         estimate_payment_value(
             source_budget=Decimal("100"),
             reference_destination_amount=Decimal("17450"),
