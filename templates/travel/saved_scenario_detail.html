@@ -100,8 +100,7 @@
             and never overwrites the reference you originally saved.
           </p>
         </div>
-        <form method="post"
-              action="{% url 'recheck_saved_scenario' scenario.pk %}">
+        <form method="post" action="{% url 'recheck_saved_scenario' scenario.pk %}">
           {% csrf_token %}
           <button class="qa-secondary-button" type="submit">Re-check reference rate</button>
         </form>
