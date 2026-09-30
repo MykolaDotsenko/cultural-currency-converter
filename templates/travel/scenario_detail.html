@@ -10,8 +10,7 @@
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
 {% endblock %}
 {% block content %}
-  <section class="qa-foundation-intro"
-           aria-labelledby="saved-plan-page-title">
+  <section class="qa-foundation-intro" aria-labelledby="saved-plan-page-title">
     <p class="qa-foundation-kicker">{{ scenario.get_kind_display }} · saved plan</p>
     <h1 id="saved-plan-page-title">
       {% if scenario.title %}{{ scenario.title }}{% else %}{{ scenario.get_kind_display }}{% endif %}
@@ -21,7 +20,6 @@
       saved. It does not silently replace them with a new rate.
     </p>
   </section>
-
   <div class="qa-saved-state">
     <section class="qa-saved-section" aria-labelledby="saved-plan-summary-title">
       <div class="qa-saved-section__heading">
@@ -46,7 +44,6 @@
           <a class="qa-secondary-button" href="{{ converter_url }}">Open in converter</a>
         </div>
       </div>
-
       <dl class="qa-budget-interpretation__facts">
         <div>
           <dt>Duration</dt>
@@ -60,7 +57,9 @@
         </div>
         <div>
           <dt>Travelers</dt>
-          <dd>{{ scenario.travelers }}</dd>
+          <dd>
+            {{ scenario.travelers }}
+          </dd>
         </div>
         <div>
           <dt>Travel dates</dt>
@@ -78,7 +77,9 @@
         </div>
         <div>
           <dt>Last updated</dt>
-          <dd>{{ scenario.updated_at|date:"j M Y, H:i" }}</dd>
+          <dd>
+            {{ scenario.updated_at|date:"j M Y, H:i" }}
+          </dd>
         </div>
       </dl>
     </section>
@@ -88,9 +89,7 @@
         <div>
           <p class="qa-foundation-kicker">Stored reference</p>
           <h2 id="saved-plan-reference-title">Starting FX observation</h2>
-          <p>
-            This is evidence of what the plan used when it was saved, not a live quote.
-          </p>
+          <p>This is evidence of what the plan used when it was saved, not a live quote.</p>
         </div>
       </div>
       {% if initial_observation %}
@@ -109,7 +108,7 @@
               {% if initial_observation.provider_keys %}
                 Source: {{ initial_observation.provider_keys|join:", " }} ·
               {% endif %}
-              {% if initial_observation.stale %}stored as stale · {% endif %}
+              {% if initial_observation.stale %}stored as stale ·{% endif %}
               recorded {{ initial_observation.recorded_at|date:"j M Y, H:i" }}
             </p>
           </div>
@@ -163,7 +162,8 @@
         <a class="qa-secondary-button" href="{{ converter_url }}">Open in converter</a>
         <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
           {% csrf_token %}
-          <button class="qa-secondary-button qa-destructive-button" type="submit">Remove plan</button>
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="submit">Remove plan</button>
         </form>
       </div>
     </section>
