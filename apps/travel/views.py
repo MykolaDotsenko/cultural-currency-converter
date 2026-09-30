@@ -9,6 +9,7 @@ from django.db.models import OuterRef, Subquery
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
@@ -134,6 +135,7 @@ def _scenario_rows(user) -> list[dict[str, object]]:
     ]
 
 
+@never_cache
 @require_GET
 def saved_state(request: HttpRequest) -> HttpResponse:
     return render(
