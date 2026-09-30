@@ -159,6 +159,25 @@ def test_payment_estimate_rejects_tampered_token_before_calculation(client, refe
 
 
 @pytest.mark.django_db
+def test_ambiguous_source_fee_returns_bound_form_with_parser_message(client, reference_data):
+    response = client.post(
+        reverse("payment_estimate"),
+        {
+            "payment_estimate_token": _signed_snapshot(),
+            "fx_markup_percent": "2",
+            "source_fixed_fee": "1.001",
+            "destination_fixed_fee": "0",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 422
+    assert b"This amount is ambiguous. Enter it without thousands separators." in response.content
+    assert b'id="source_fixed_fee-error"' in response.content
+    assert b"Estimated destination value" not in response.content
+
+
+@pytest.mark.django_db
 def test_invalid_assumptions_return_bound_form_without_estimate(client, reference_data):
     response = client.post(
         reverse("payment_estimate"),
