@@ -357,10 +357,17 @@ def create_saved_scenario_view(request: HttpRequest) -> HttpResponse:
     return redirect("saved_scenario_detail", scenario_id=scenario.pk)
 
 
+def _decimal_url_text(value) -> str:
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
+
 def _scenario_converter_url(scenario: SavedScenario) -> str:
     params = {
         "convert": "1",
-        "amount": format(scenario.source_amount, "f"),
+        "amount": _decimal_url_text(scenario.source_amount),
         "source_currency": scenario.source_currency.code,
         "destination_currency": scenario.destination_currency.code,
     }
