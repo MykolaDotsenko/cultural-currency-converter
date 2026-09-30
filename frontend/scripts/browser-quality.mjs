@@ -278,7 +278,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   // Use a value that passes native HTML constraints but fails our currency-
   // precision validation so the progressive 422 response is exercised.
   await page.locator("#id_fx_markup_percent").fill("2");
-  await page.locator("#id_source_fixed_fee").fill("1.001");
+  await page.locator("#id_source_fixed_fee").fill("1.0001");
   await page.locator("#id_destination_fixed_fee").fill("0");
   const invalidEstimate = waitForPaymentEstimate();
   await page.getByRole("button", { name: "Calculate estimate" }).click();
