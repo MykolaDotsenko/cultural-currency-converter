@@ -7,20 +7,16 @@ import pytest
 from django.core import signing
 
 from apps.exchange import trusted_snapshot as tokens
-from apps.exchange.ai.tokens import (
-    build_conversion_explanation_token,
-    load_conversion_explanation_token,
-)
-from apps.exchange.trusted_snapshot import (
-    TrustedSnapshotTokenError,
-    build_trusted_conversion_snapshot_token,
-    load_trusted_conversion_snapshot_token,
-)
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
     ConversionResult,
     ObservationGranularity,
     RateQuote,
+)
+from apps.exchange.trusted_snapshot import (
+    TrustedSnapshotTokenError,
+    build_trusted_conversion_snapshot_token,
+    load_trusted_conversion_snapshot_token,
 )
 
 
