@@ -17,6 +17,12 @@ from apps.exchange.views import (
     payment_estimate,
     picker_options,
 )
+from apps.travel.scenario_views import (
+    create_saved_scenario_view,
+    delete_saved_scenario,
+    prepare_saved_scenario,
+    saved_scenario_detail,
+)
 from apps.travel.views import (
     clear_favourites,
     clear_recent_conversions,
@@ -40,6 +46,26 @@ urlpatterns = [
     ),
     path("historical/series/", historical_series, name="historical_series"),
     path("saved/", saved_state, name="saved_state"),
+    path(
+        "saved/scenarios/prepare/",
+        prepare_saved_scenario,
+        name="prepare_saved_scenario",
+    ),
+    path(
+        "saved/scenarios/create/",
+        create_saved_scenario_view,
+        name="create_saved_scenario",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/",
+        saved_scenario_detail,
+        name="saved_scenario_detail",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/delete/",
+        delete_saved_scenario,
+        name="delete_saved_scenario",
+    ),
     path("saved/favourites/sync/", sync_favourites, name="sync_favourites"),
     path(
         "saved/favourites/<int:favourite_id>/delete/",
