@@ -10,6 +10,101 @@ Cultural Currency Converter helps a traveller answer three connected questions:
 
 The conversion is the primary task. Context and culture should make the conversion more useful, not turn the product into an encyclopedia.
 
+## Messaging and tagline hierarchy
+
+The product should keep one recognizable brand voice while adapting the message to the surface. Messaging should emphasize useful travel-money context rather than making unsupported claims about executable rates, exact fees or guaranteed savings.
+
+### Canonical brand tagline
+
+**Convert money. Understand local value. Discover culture.**
+
+Use this as the stable brand-level line in repository/product identity surfaces unless there is a deliberate brand decision to replace it.
+
+### Primary market-facing hero
+
+**Convert money. Understand local value. Travel smarter.** — **96/100**
+
+Use this when the first job is to communicate practical travel value quickly. It preserves the product's local-value proposition while making the traveller benefit explicit.
+
+Recommended supporting line:
+
+**More than exchange rates — understand what your money means there.** — **95/100**
+
+This is the strongest explanatory hero/subheadline because it states the product gap directly without implying that reference FX equals an executable bank/card rate.
+
+### Product-positioning line
+
+**A smarter currency converter for travelers.** — **93/100**
+
+Use for concise product descriptions, directory/App-Store-style copy and portfolio summaries. Follow it with concrete capability copy rather than leaving “smarter” undefined.
+
+### Utility / practical campaign lines
+
+Approved high-value alternatives:
+
+- **See what your money is really worth there.** — **95/100**
+- **Know the rate. Know the place. Know your budget.** — **91/100**
+- **Understand what your budget means abroad.** — **90/100**
+- **Currency conversion with real-world context.** — **90/100**
+- **Convert with context.** — **90/100**
+- **See more than the rate.** — **92/100**
+- **Let your money make sense wherever you go.** — **89/100**
+- **Convert instantly. Plan confidently.** — **88/100**
+- **A better way to understand money abroad.** — **88/100**
+- **Make smarter spending decisions abroad.** — **86/100**
+- **Understand the cost before you go.** — **87/100**
+- **Convert fast. Understand more.** — **85/100**
+- **Travel with clarity, not guesswork.** — **85/100**
+
+These are campaign/section lines, not separate product promises. Use the one that matches the surrounding feature rather than rotating slogans arbitrarily.
+
+### Emotional / cultural campaign lines
+
+Approved when a surface intentionally emphasizes the cultural layer:
+
+- **See the rate. Feel the country. Spend smarter.** — **88/100**
+- **Convert money. Discover culture. Go with confidence.** — **87/100**
+- **Travel beyond the exchange rate.** — **86/100**
+- **Understand the rate. Discover the place.** — **84/100**
+- **From currency to culture.** — **82/100**
+- **Explore the world through money and meaning.** — **80/100**
+- **See the rate. Feel the country.** — **82/100**
+
+These should not replace practical rate/source/date information on conversion surfaces.
+
+### Short product / App-style lines
+
+Useful compact options:
+
+- **Local value, instantly.** — **82/100**
+- **Your money, in local context.** — **88/100**
+- **Your travel money assistant.** — **87/100**
+- **See the value behind the currency.** — **84/100**
+- **Beyond the exchange rate.** — **86/100**
+- **Where exchange meets understanding.** — **79/100**
+- **Beyond exchange.** — **74/100**
+- **Money meets culture.** — **76/100**
+- **Travel smarter.** — **72/100**
+
+Prefer the more specific options when the product name/logo is not already visible.
+
+### Messaging cautions
+
+Avoid or qualify copy that can overstate financial precision.
+
+- **“Real rates. Real value. Real travel context.”** should not be a primary promise because “real rates” can sound like an executable or guaranteed bank/card rate. Prefer **“Reference rates. Local value. Travel context.”** when trust semantics matter.
+- Avoid implying exact card, ATM, merchant or DCC outcomes unless they come from explicit user inputs or authoritative data.
+- Avoid generic “smart” or “AI-powered” language without immediately showing the practical capability it refers to.
+- Keep culture as a meaningful differentiator, but do not let cultural copy obscure the primary travel-money task.
+
+### Recommended banner composition
+
+**Headline:** Convert money. Understand local value. Travel smarter.
+
+**Subheadline:** See reference exchange rates, local buying power, money tips and cultural context in one clear travel-money experience.
+
+The subheadline deliberately says **reference exchange rates**, not “real exchange rates”, to remain aligned with the product trust model.
+
 ## Core experience
 
 The intended loop is:
