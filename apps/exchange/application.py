@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from apps.countries.models import Currency
 from apps.countries.services import HistoricalCurrencySuggestion, historical_currency_suggestion
+from apps.culture.services import DestinationContext
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
 from apps.exchange.domain import (
     ConversionRepresentationError,
@@ -62,7 +63,7 @@ class ConverterSubmissionResult:
         return self.money_context.conversion if self.money_context is not None else None
 
     @property
-    def destination_context(self):
+    def destination_context(self) -> DestinationContext | None:
         return self.money_context.destination if self.money_context is not None else None
 
 
