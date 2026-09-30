@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ scenario.title|default:scenario.get_kind_display }} · Saved scenario{% endblock %}
 {% block head_meta %}
+  <meta name="robots" content="noindex">
   <meta name="description"
         content="Review a saved Cultural Currency Converter budget scenario and its trusted reference observation.">
 {% endblock %}
