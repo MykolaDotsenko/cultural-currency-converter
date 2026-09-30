@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.utils.formats import date_format
 
 from apps.exchange.budget import (
+    BudgetAssumptions,
     BudgetBand,
     BudgetInterpretation,
     BudgetInterpretationState,
@@ -91,8 +92,24 @@ def build_budget_component(
 
     result_component = None
     if interpretation is not None:
+        assumptions = form.cleaned_data.get("budget_assumptions") if form is not None else None
+        save_assumptions = None
+        if isinstance(assumptions, BudgetAssumptions):
+            save_assumptions = {
+                "duration_days": assumptions.duration_days,
+                "travelers": assumptions.travelers,
+                "categories": tuple(
+                    {
+                        "field_name": BudgetInterpretationForm.units_field_name(item.category),
+                        "value": _decimal_text(item.units_per_person_per_day),
+                    }
+                    for item in assumptions.categories
+                ),
+            }
+
         result_component = {
             "complete": interpretation.state is BudgetInterpretationState.COMPLETE,
+            "save_assumptions": save_assumptions,
             "band_label": _band_label(interpretation.band),
             "available_budget": _money_text(
                 interpretation.available_destination_budget,
