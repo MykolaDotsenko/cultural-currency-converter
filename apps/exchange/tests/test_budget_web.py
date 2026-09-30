@@ -4,10 +4,10 @@ import re
 from decimal import Decimal
 from unittest.mock import patch
 
-import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+import pytest
 
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.culture.models import (
@@ -227,7 +227,8 @@ def test_anonymous_budget_interpretation_keeps_save_opt_in(
 
     assert response.status_code == 200
     assert b"Sign in to save" in response.content
-    assert b"not uploaded automatically" in response.content
+    assert b"browser-only favourites and recent history are not" in response.content
+    assert b"uploaded automatically" in response.content
     assert b'action="/saved/scenarios/budget/create/"' not in response.content
 
 
