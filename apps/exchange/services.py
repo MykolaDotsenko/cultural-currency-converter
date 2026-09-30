@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import UTC, date, datetime
-from decimal import ROUND_HALF_EVEN, Decimal
+from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation
 
 from apps.exchange.cache import HistoricalQuoteGateway, HistoricalSeriesGateway, LatestQuoteGateway
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
+    ConversionRepresentationError,
     ConversionResult,
     FxDomainError,
     FxSourcePolicy,
@@ -164,9 +165,14 @@ def compare_historical_to_latest(
 ) -> ThenNowComparison:
     if historical.quote.rate <= 0:
         raise FxDomainError("Historical comparison rate must be positive.")
-    percent = (
-        (latest.quote.rate - historical.quote.rate) / historical.quote.rate * Decimal("100")
-    ).quantize(Decimal("0.1"), rounding=ROUND_HALF_EVEN)
+    try:
+        percent = (
+            (latest.quote.rate - historical.quote.rate) / historical.quote.rate * Decimal("100")
+        ).quantize(Decimal("0.1"), rounding=ROUND_HALF_EVEN)
+    except InvalidOperation as exc:
+        raise ConversionRepresentationError(
+            "Then & now rate difference cannot be represented at display precision."
+        ) from exc
     return ThenNowComparison(
         historical=historical,
         latest=latest,
