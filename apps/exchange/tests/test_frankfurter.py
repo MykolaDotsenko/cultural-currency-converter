@@ -84,6 +84,24 @@ def test_malformed_or_wrong_pair_payload_is_rejected(payload):
         )
 
 
+@pytest.mark.parametrize("rate", [Decimal("1E+101"), Decimal("1E-101"), Decimal("1" * 65)])
+def test_rate_payload_rejects_unbounded_numeric_representation(rate):
+    with pytest.raises(FxProviderInvalidPayload, match="representation limits"):
+        parse_rate_payload(
+            {
+                "date": "2026-09-18",
+                "base": "EUR",
+                "quote": "JPY",
+                "rate": rate,
+            },
+            expected_base="EUR",
+            expected_quote="JPY",
+            requested_date=None,
+            policy=DEFAULT_SOURCE_POLICY,
+            fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+        )
+
+
 def test_future_dated_latest_observation_is_rejected():
     with pytest.raises(FxProviderInvalidPayload, match="after fetch date"):
         parse_rate_payload(
@@ -394,6 +412,28 @@ def test_series_payload_sorts_observations_and_preserves_missing_dates():
         Decimal("179.8"),
         Decimal("181.2"),
     ]
+
+
+def test_series_payload_rejects_unbounded_numeric_representation():
+    with pytest.raises(FxProviderInvalidPayload, match="representation limits"):
+        parse_series_payload(
+            [
+                {
+                    "date": "2026-01-02",
+                    "base": "EUR",
+                    "quote": "JPY",
+                    "rate": Decimal("1E+500000"),
+                    "providers": ["ECB"],
+                }
+            ],
+            expected_base="EUR",
+            expected_quote="JPY",
+            start_date=date(2026, 1, 1),
+            end_date=date(2026, 1, 7),
+            grouping=RateSeriesGrouping.DAILY,
+            policy=DEFAULT_SOURCE_POLICY,
+            fetched_at=datetime(2026, 1, 8, tzinfo=UTC),
+        )
 
 
 def test_series_payload_rejects_duplicate_observation_date():
