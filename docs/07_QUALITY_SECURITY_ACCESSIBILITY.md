@@ -42,14 +42,6 @@ Browser QA uses Playwright and axe. Chromium carries the broadest gate; Firefox/
 
 Use browser tests for high-value interaction behaviour, not every CSS detail.
 
-## Current known QA debt
-
-The Real Payment Estimate domain/web implementation is covered by Python tests, and the latest PR evidence passed Python, PostgreSQL and frontend quality lanes. The browser lanes are not currently green.
-
-The failing browser-quality assertion uses the source-fee value `1.001` and waits for the “at most 2 decimal places” message. The shared amount parser intentionally classifies that input as an ambiguous three-digit fractional/grouping form first, so Chromium, Firefox and WebKit time out waiting for text that the application does not emit.
-
-Treat browser QA as **not green** until the test input/expectation is aligned with the parser semantics and the required Chromium lane passes again. Do not weaken the parser merely to satisfy the stale browser expectation.
-
 ## Testing priorities
 
 Prefer tests that protect:
