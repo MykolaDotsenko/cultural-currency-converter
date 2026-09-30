@@ -2,6 +2,34 @@
   <section class="qa-inline-alert qa-inline-alert--error" role="alert">
     <h3>{{ payment_estimate_error.title }}</h3>
     <p>{{ payment_estimate_error.detail }}</p>
+    {% if payment_estimate_retry %}
+      <form method="post"
+            action="{% url 'payment_estimate' %}"
+            hx-post="{% url 'payment_estimate' %}"
+            hx-target="#payment-estimate-region"
+            hx-swap="innerHTML"
+            hx-indicator="#payment-estimate-retry-loading">
+        {% csrf_token %}
+        <input type="hidden"
+               name="payment_estimate_token"
+               value="{{ payment_estimate_retry.token }}">
+        <input type="hidden"
+               name="fx_markup_percent"
+               value="{{ payment_estimate_retry.fx_markup_percent }}">
+        <input type="hidden"
+               name="source_fixed_fee"
+               value="{{ payment_estimate_retry.source_fixed_fee }}">
+        <input type="hidden"
+               name="destination_fixed_fee"
+               value="{{ payment_estimate_retry.destination_fixed_fee }}">
+        <div class="qa-payment-estimate__actions">
+          <span id="payment-estimate-retry-loading"
+                class="qa-loading-indicator htmx-indicator"
+                aria-live="polite">Retrying estimate…</span>
+          <button class="qa-secondary-button" type="submit">Retry payment estimate</button>
+        </div>
+      </form>
+    {% endif %}
   </section>
 {% elif payment_estimate %}
   <section class="qa-payment-estimate" aria-labelledby="payment-estimate-title">
@@ -37,7 +65,7 @@
           <div>
             <dt>Difference from reference</dt>
             <dd>
-              −{{ payment_estimate.difference_amount }} {{ payment_estimate.destination_currency }}
+              {{ payment_estimate.difference_prefix }}{{ payment_estimate.difference_amount }} {{ payment_estimate.destination_currency }}
             </dd>
           </div>
           <div>
