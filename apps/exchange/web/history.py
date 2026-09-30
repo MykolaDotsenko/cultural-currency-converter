@@ -13,6 +13,7 @@ from django.views.decorators.http import require_GET
 
 from apps.countries.models import Currency
 from apps.exchange.domain import (
+    ConversionRepresentationError,
     ConversionResult,
     HistoricalObservationUnavailable,
     HistoricalOutOfCoverage,
@@ -111,13 +112,22 @@ def _build_then_now_enrichment(
         historical=True,
         observation_granularity=series_result.series.observation_granularity,
     )
-    historical = ConversionResult(
-        input_amount=historical_amount,
-        output_amount=convert_amount(
+    try:
+        historical_output = convert_amount(
             historical_amount,
             historical_quote,
             minor_units=quote_currency.minor_units,
-        ),
+        )
+    except ConversionRepresentationError:
+        return (
+            None,
+            "Then & Now comparison is unavailable because the selected reference rate "
+            "cannot be represented safely. The historical trend remains valid.",
+        )
+
+    historical = ConversionResult(
+        input_amount=historical_amount,
+        output_amount=historical_output,
         quote=historical_quote,
         stale=series_result.stale,
     )
@@ -152,8 +162,21 @@ def _build_then_now_enrichment(
             "Latest reference comparison is temporarily unavailable. "
             "The historical trend remains valid.",
         )
+    except ConversionRepresentationError:
+        return (
+            None,
+            "Then & Now comparison is unavailable because the latest reference amount "
+            "cannot be represented safely. The historical trend remains valid.",
+        )
 
-    comparison = compare_historical_to_latest_fn(historical, latest)
+    try:
+        comparison = compare_historical_to_latest_fn(historical, latest)
+    except ConversionRepresentationError:
+        return (
+            None,
+            "Then & Now comparison is unavailable because the rate difference "
+            "cannot be represented safely. The historical trend remains valid.",
+        )
     return (
         build_then_now_component(
             comparison,
