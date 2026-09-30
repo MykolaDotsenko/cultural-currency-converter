@@ -209,5 +209,5 @@ This asset is historical evidence/supporting context for a JPY observation insid
 | P02 | source selected | 2026-09-29 | Wikimedia Commons / Quercus acuta | managed-media curated manifest | sourced candidate | Tokyo ramen-style image selected; no capture-city or price claim inferred. |
 | P03 | source selected | 2026-09-29 | Wikimedia Commons / Real Estate Japan / Scott Kouchi | managed-media curated manifest | sourced candidate | Suica vending-machine payment interaction selected; no city or payment-prevalence claim inferred. |
 | P04 | source selected | 2026-09-29 | Wikimedia Commons / MaedaAkihiko | managed-media curated manifest | sourced candidate | Tokyo Metro passenger-information detail selected; exact capture location and display text are not promoted into product claims. |
-| P05 | — | — | — | — | planned | — |
-| P06 | — | — | — | — | planned | — |
+| P05 | v01 | 2026-09-30 | OpenAI-generated Tokyo visual + reviewed UI composition | `docs/assets/country-interface-concepts/jp/desktop/jp-interface-desktop-v01.webp` | ✅ trial-approved | 16:10 desktop concept; 100 EUR → 17,400 JPY is explicitly illustrative/non-live; one restrained Tokyo visual area. |
+| P06 | v01 | 2026-09-30 | OpenAI-generated Tokyo visual + reviewed UI composition | `docs/assets/country-interface-concepts/jp/mobile/jp-interface-mobile-v01.webp` | ✅ trial-approved | 9:16 mobile concept; single-column hierarchy, dominant JPY result, one Tokyo image block, illustrative/non-live amount. |
