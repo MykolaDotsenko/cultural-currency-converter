@@ -279,26 +279,33 @@
         {% if result_component.ai_explanation %}
           <div class="qa-ai-explanation-entry">
             <div>
-              <p class="qa-foundation-kicker">Optional explanation</p>
-              <h3>Want the reference conversion in plain language?</h3>
+              <p class="qa-foundation-kicker">Optional AI</p>
+              <h3>Useful next questions</h3>
               <p>
-                Gemini receives only the signed public conversion facts shown here. It cannot
-                change the rate or browse for additional facts.
+                Choose a bounded question about the signed conversion facts shown here. Gemini
+                cannot change the rate, browse for missing facts or answer an arbitrary prompt.
               </p>
             </div>
             <input type="hidden"
                    name="explanation_token"
                    value="{{ result_component.ai_explanation.token }}">
-            <button class="qa-secondary-button"
-                    type="submit"
-                    formaction="{% url 'conversion_explanation' %}"
-                    formmethod="post"
-                    hx-post="{% url 'conversion_explanation' %}"
-                    hx-include="closest form"
-                    hx-target="#conversion-explanation-region"
-                    hx-swap="innerHTML"
-                    hx-sync="#conversion-explanation-region:replace"
-                    hx-indicator="#explanation-loading">Explain this</button>
+            <div class="qa-result-actions"
+                 aria-label="Suggested explanation questions">
+              {% for prompt in result_component.ai_explanation.prompts %}
+                <button class="qa-secondary-button"
+                        type="submit"
+                        name="prompt_id"
+                        value="{{ prompt.id }}"
+                        formaction="{% url 'conversion_explanation' %}"
+                        formmethod="post"
+                        hx-post="{% url 'conversion_explanation' %}"
+                        hx-include="closest form"
+                        hx-target="#conversion-explanation-region"
+                        hx-swap="innerHTML"
+                        hx-sync="#conversion-explanation-region:replace"
+                        hx-indicator="#explanation-loading">{{ prompt.label }}</button>
+              {% endfor %}
+            </div>
           </div>
           <div id="conversion-explanation-region"
                class="qa-ai-explanation-region"

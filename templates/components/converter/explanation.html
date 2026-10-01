@@ -11,6 +11,9 @@
       <p class="qa-foundation-kicker">
         {% if explanation.result.generated %}AI explanation{% else %}Built-in explanation{% endif %}
       </p>
+      {% if explanation.question %}
+        <p class="qa-field__message">{{ explanation.question }}</p>
+      {% endif %}
       <h3 id="conversion-explanation-title">{{ explanation.result.headline }}</h3>
     </div>
     <ul class="qa-ai-explanation__bullets">

@@ -43,7 +43,7 @@ Those boundaries are more important to this project than adding another conversi
 - provider-free Explore discovery over reviewed country/canonical-city money context with canonical converter handoff and no destination ranking;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
-- optional Gemini explanation with deterministic fallback;
+- optional Gemini explanation with deterministic fallback and server-approved contextual quick prompts grounded in the signed conversion snapshot;
 - browser-local anonymous favourites and recent conversions;
 - signed-in favourite ownership and opt-in cross-device history.
 

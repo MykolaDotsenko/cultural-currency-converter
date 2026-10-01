@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import pytest
 
+from apps.exchange.ai.intents import ExplanationIntent
 from apps.exchange.ai.packets import build_explanation_packet
 from apps.exchange.ai.validation import ExplanationValidationError, validate_provider_payload
 from apps.exchange.domain import ObservationGranularity
@@ -138,3 +139,32 @@ def test_packet_hash_is_canonical_and_contains_only_public_conversion_facts(pack
     assert "ECB" in encoded
     assert "email" not in encoded.casefold()
     assert "location" not in encoded.casefold()
+
+
+def test_selected_question_requires_its_grounding_facts(packet):
+    focused = build_explanation_packet(
+        TrustedConversionSnapshot(
+            input_amount=Decimal("100.00"),
+            output_amount=Decimal("17450"),
+            base_currency="EUR",
+            quote_currency="JPY",
+            rate=Decimal("174.50"),
+            requested_date=None,
+            effective_date=date(2026, 9, 18),
+            historical=False,
+            observation_granularity=ObservationGranularity.DAILY,
+            provider_keys=("ecb",),
+            stale=False,
+        ),
+        intent=ExplanationIntent.PAYMENT_DIFFERENCE,
+    )
+    payload = _valid_payload()
+    payload["bullets"] = [
+        {
+            "text": "100 EUR is approximately 17450 JPY.",
+            "supporting_fact_ids": ["conversion"],
+        }
+    ]
+
+    with pytest.raises(ExplanationValidationError, match="required facts"):
+        validate_provider_payload(payload, packet=focused)

@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
+from apps.exchange.ai.intents import available_explanation_intents
 from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
@@ -239,6 +240,17 @@ def build_result_component(
             {
                 "token": trusted_snapshot_token,
                 "label": "Optional AI explanation",
+                "prompts": tuple(
+                    {
+                        "id": spec.intent.value,
+                        "label": spec.label,
+                        "question": spec.question,
+                    }
+                    for spec in available_explanation_intents(
+                        historical=historical,
+                        stale=result.stale,
+                    )
+                ),
             }
             if settings.AI_RUNTIME_EXPLANATION_ENABLED and not same_currency
             else None

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 from apps.exchange.ai.contracts import ExplanationPacket, GroundedFact
+from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
 from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 
-PACKET_VERSION = "exchange-conversion:v1"
+PACKET_VERSION = "exchange-conversion:v2"
 
 
 def build_explanation_packet(
     snapshot: TrustedConversionSnapshot,
     *,
+    intent: ExplanationIntent = ExplanationIntent.OVERVIEW,
     locale: str = "en",
 ) -> ExplanationPacket:
+    intent_spec = explanation_intent_spec(intent)
     facts: list[GroundedFact] = [
         GroundedFact(
             id="conversion",
@@ -102,6 +105,10 @@ def build_explanation_packet(
     return ExplanationPacket(
         packet_version=PACKET_VERSION,
         locale=locale,
+        intent_id=intent_spec.intent.value,
+        intent_question=intent_spec.question,
+        focus_instruction=intent_spec.focus_instruction,
+        required_fact_ids=intent_spec.required_fact_ids,
         facts=tuple(facts),
         allowed_currencies=(snapshot.base_currency, snapshot.quote_currency),
         allowed_uppercase_tokens=tuple(key.upper() for key in snapshot.provider_keys),

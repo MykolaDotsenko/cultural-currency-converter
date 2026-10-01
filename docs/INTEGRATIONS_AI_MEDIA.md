@@ -187,6 +187,8 @@ AI must not invent rates, price anchors, payment prevalence, fees, historical ob
 
 For quick prompts and insight panels, prefer bounded structured output over open-ended prose. A response should be able to map to predictable UI fields such as `short_answer`, `key_factors`, `watch_out_for` and `next_step`.
 
+The first quick-prompt slice is conversion-snapshot-only. The UI never accepts an arbitrary chatbot prompt: it posts a server-defined `prompt_id`, the endpoint re-validates whether that intent is available for the signed snapshot, and the selected intent becomes part of the canonical packet hash/cache identity. Each intent declares required grounded fact IDs, and provider output is rejected if its bullets fail to cite those facts. This keeps rate meaning, reference-vs-payment limitations, historical-date meaning and stale-cache explanations bounded by deterministic application facts. Destination, budget, cash and comparison questions must not appear until their trusted structured facts are explicitly added to the packet.
+
 A model failure, timeout or validation failure must leave the deterministic result and sourced context intact.
 
 The configured provider/model is an implementation choice and may change after quality, latency, cost and reliability evaluation.
