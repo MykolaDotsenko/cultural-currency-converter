@@ -89,7 +89,6 @@ def test_destination_context_seed_is_sourced_and_idempotent():
     assert "created=0, existing=4" in second.getvalue()
 
 
-
 @pytest.mark.django_db
 def test_curated_city_wave_one_has_deep_canonical_core_coverage():
     call_command("seed_reference_data", stdout=StringIO())
@@ -111,9 +110,7 @@ def test_curated_city_wave_one_has_deep_canonical_core_coverage():
 
         prices = TypicalPrice.objects.filter(city_ref=city, is_published=True)
         assert prices.count() == 4
-        assert set(prices.values_list("category", flat=True)) == set(
-            CITY_COVERAGE_CORE_CATEGORIES
-        )
+        assert set(prices.values_list("category", flat=True)) == set(CITY_COVERAGE_CORE_CATEGORIES)
         assert set(prices.values_list("currency__code", flat=True)) == {currency_code}
         assert set(prices.values_list("city", flat=True)) == {city_name}
         assert all(price.source_url.startswith("https://") for price in prices)
@@ -154,15 +151,11 @@ def test_curated_city_wave_one_preserves_source_trust_classes():
     assert set(transit.values_list("source_class", flat=True)) == {
         TypicalPriceSourceClass.AUTHORITATIVE
     }
-    assert set(transit.values_list("confidence", flat=True)) == {
-        TypicalPriceConfidence.HIGH
-    }
+    assert set(transit.values_list("confidence", flat=True)) == {TypicalPriceConfidence.HIGH}
     assert set(contextual.values_list("source_class", flat=True)) == {
         TypicalPriceSourceClass.APPROXIMATE_CONTEXTUAL
     }
-    assert set(contextual.values_list("confidence", flat=True)) == {
-        TypicalPriceConfidence.MEDIUM
-    }
+    assert set(contextual.values_list("confidence", flat=True)) == {TypicalPriceConfidence.MEDIUM}
 
 
 @pytest.mark.django_db
