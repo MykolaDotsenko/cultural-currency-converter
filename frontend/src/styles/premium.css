@@ -1819,3 +1819,405 @@ h3 {
     border-color: CanvasText;
   }
 }
+
+/* Destination comparison: same source budget, two independently trusted contexts. */
+.qa-destination-comparison-intro {
+  max-width: 62rem;
+  margin-block-end: clamp(2rem, 5vw, 3.75rem);
+}
+
+.qa-destination-comparison,
+.qa-destination-comparison__results {
+  max-width: 78rem;
+}
+
+.qa-destination-comparison__instrument {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  border: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-surface) 98%, var(--color-canvas)),
+    color-mix(in srgb, var(--color-surface) 94%, var(--color-canvas))
+  );
+  box-shadow: var(--qa-shadow-premium);
+}
+
+.qa-destination-comparison__instrument::before {
+  position: absolute;
+  inset: 0 0 auto;
+  block-size: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--qa-accent-metal) 30%, transparent) 36%,
+    color-mix(in srgb, var(--color-brand) 18%, transparent) 72%,
+    transparent
+  );
+  content: "";
+}
+
+.qa-destination-comparison__heading {
+  max-width: 48rem;
+  margin-block-end: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.qa-destination-comparison__heading h2,
+.qa-destination-comparison__results-heading h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 470;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.qa-destination-comparison__heading > p:not(.qa-foundation-kicker),
+.qa-destination-comparison__results-heading > p {
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+
+.qa-destination-comparison__form {
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 2.1rem);
+}
+
+.qa-destination-comparison__money,
+.qa-destination-comparison__trip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.65fr);
+  gap: var(--qa-space-5);
+}
+
+.qa-destination-comparison__destinations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison__destinations > .qa-field {
+  padding: var(--qa-space-5) clamp(1rem, 3vw, 2rem);
+}
+
+.qa-destination-comparison__destinations > .qa-field:first-child {
+  padding-inline-start: 0;
+}
+
+.qa-destination-comparison__destinations > .qa-field + .qa-field {
+  padding-inline-end: 0;
+  border-inline-start: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison__basket {
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--qa-space-5) 0 0;
+  border: 0;
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison__basket > .qa-field__message {
+  max-width: 48rem;
+  margin-block: var(--qa-space-2) var(--qa-space-5);
+}
+
+.qa-destination-comparison__basket-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--qa-space-5);
+}
+
+.qa-destination-comparison__action {
+  display: flex;
+  align-items: center;
+  gap: var(--qa-space-5);
+}
+
+.qa-destination-comparison__action p {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--color-tertiary);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.qa-destination-comparison__results {
+  margin-block-start: clamp(3rem, 7vw, 6rem);
+}
+
+.qa-destination-comparison__results-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.55fr);
+  align-items: end;
+  gap: var(--qa-space-6);
+  padding-block-end: var(--qa-space-6);
+  border-block-end: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison__results-heading > p {
+  margin: 0;
+}
+
+.qa-destination-comparison__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block-end: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison-side {
+  min-width: 0;
+  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.25rem, 4vw, 3rem);
+}
+
+.qa-destination-comparison-side:first-child {
+  padding-inline-start: 0;
+}
+
+.qa-destination-comparison-side + .qa-destination-comparison-side {
+  padding-inline-end: 0;
+  border-inline-start: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison-side__heading,
+.qa-destination-comparison-side__budget-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--qa-space-5);
+}
+
+.qa-destination-comparison-side__heading h3 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.qa-destination-comparison-side__amount,
+.qa-destination-comparison-side__daily {
+  margin: 0;
+  color: var(--color-ink);
+  text-align: end;
+  white-space: nowrap;
+}
+
+.qa-destination-comparison-side__amount {
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.qa-destination-comparison-side__amount span,
+.qa-destination-comparison-side__daily span {
+  display: block;
+  color: var(--color-tertiary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.qa-destination-comparison-side__rate,
+.qa-destination-comparison-side__facts {
+  display: grid;
+  margin: var(--qa-space-6) 0 0;
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison-side__rate > div,
+.qa-destination-comparison-side__facts > div {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 0.75fr) minmax(0, 1.25fr);
+  gap: var(--qa-space-4);
+  padding-block: var(--qa-space-3);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison-side__rate > div:first-child,
+.qa-destination-comparison-side__facts > div:first-child {
+  border-block-start: 0;
+}
+
+.qa-destination-comparison-side__rate dt,
+.qa-destination-comparison-side__facts dt {
+  color: var(--color-tertiary);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.qa-destination-comparison-side__rate dd,
+.qa-destination-comparison-side__facts dd {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.qa-destination-comparison-side__budget,
+.qa-destination-comparison-side__payment {
+  margin-block-start: var(--qa-space-7);
+}
+
+.qa-destination-comparison-side__band {
+  margin: var(--qa-space-1) 0 0;
+  color: var(--color-ink);
+  font-size: 1.08rem;
+  font-weight: 650;
+}
+
+.qa-destination-comparison-side__daily {
+  color: var(--color-muted);
+  font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.qa-destination-comparison-side__lines {
+  display: grid;
+  margin-block-start: var(--qa-space-5);
+}
+
+.qa-destination-comparison-side__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--qa-space-2) var(--qa-space-4);
+  padding-block: var(--qa-space-4);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison-side__line > div:first-child {
+  display: grid;
+  gap: var(--qa-space-1);
+}
+
+.qa-destination-comparison-side__line span {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.qa-destination-comparison-side__line-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: end;
+}
+
+.qa-destination-comparison-side__line .qa-context-source {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.qa-destination-comparison-side__payment {
+  padding-block-start: var(--qa-space-5);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-destination-comparison-side__payment > p:not(.qa-foundation-kicker, .qa-context-source) {
+  color: var(--color-muted);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.qa-destination-comparison__caveat {
+  display: flex;
+  gap: var(--qa-space-4);
+  padding-block: var(--qa-space-5);
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.qa-destination-comparison__caveat strong {
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+
+@media (max-width: 56rem) {
+  .qa-destination-comparison__results-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-destination-comparison__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-destination-comparison-side,
+  .qa-destination-comparison-side:first-child,
+  .qa-destination-comparison-side + .qa-destination-comparison-side {
+    padding-inline: 0;
+  }
+
+  .qa-destination-comparison-side + .qa-destination-comparison-side {
+    border-block-start: 1px solid var(--qa-hairline);
+    border-inline-start: 0;
+  }
+}
+
+@media (max-width: 44rem) {
+  .qa-destination-comparison__money,
+  .qa-destination-comparison__trip,
+  .qa-destination-comparison__destinations,
+  .qa-destination-comparison__basket-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-destination-comparison__destinations > .qa-field,
+  .qa-destination-comparison__destinations > .qa-field:first-child,
+  .qa-destination-comparison__destinations > .qa-field + .qa-field {
+    padding-inline: 0;
+  }
+
+  .qa-destination-comparison__destinations > .qa-field + .qa-field {
+    border-block-start: 1px solid var(--qa-hairline);
+    border-inline-start: 0;
+  }
+
+  .qa-destination-comparison__action,
+  .qa-destination-comparison__caveat,
+  .qa-destination-comparison-side__heading,
+  .qa-destination-comparison-side__budget-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qa-destination-comparison__action .qa-primary-button {
+    width: 100%;
+  }
+
+  .qa-destination-comparison-side__amount,
+  .qa-destination-comparison-side__daily {
+    text-align: start;
+  }
+
+  .qa-destination-comparison-side__rate > div,
+  .qa-destination-comparison-side__facts > div,
+  .qa-destination-comparison-side__line {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-destination-comparison-side__line-value {
+    text-align: start;
+  }
+
+  .qa-destination-comparison__caveat strong {
+    white-space: normal;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-destination-comparison__instrument,
+  .qa-destination-comparison__destinations,
+  .qa-destination-comparison__basket,
+  .qa-destination-comparison__results-heading,
+  .qa-destination-comparison__grid,
+  .qa-destination-comparison-side + .qa-destination-comparison-side,
+  .qa-destination-comparison-side__rate,
+  .qa-destination-comparison-side__facts,
+  .qa-destination-comparison-side__line,
+  .qa-destination-comparison-side__payment {
+    border-color: CanvasText;
+  }
+}
