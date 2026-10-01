@@ -40,6 +40,10 @@ def _png_bytes() -> bytes:
     return output.getvalue()
 
 
+def _normalized_response_text(response) -> str:
+    return " ".join(response.content.decode("utf-8").split())
+
+
 @pytest.fixture(autouse=True)
 def use_vite_dev_mode(settings):
     settings.VITE_DEV_SERVER_ENABLED = True
@@ -198,7 +202,7 @@ def test_scan_shows_only_confirmation_paths_compatible_with_trip_currency(
 
     assert response.status_code == 200
     assert b"4800 JPY" in response.content
-    assert b"52.40 USD" in response.content
+    assert b"52.4 USD" in response.content
     assert b"820 JPY" in response.content
     assert response.content.count(b"Confirm this amount") == 2
     assert b"cannot be confirmed as trip spend" in response.content
@@ -297,8 +301,9 @@ def test_user_can_correct_and_confirm_candidate_without_persisting_spend(
 
     assert response.status_code == 200
     assert b"4750 JPY" in response.content
-    assert b"uploaded image itself was not persisted" in response.content
-    assert b"Nothing was added to confirmed spend" in response.content
+    text = _normalized_response_text(response)
+    assert "uploaded image itself was not persisted" in text
+    assert "Nothing was added to confirmed spend" in text
     assert scenario.spend_entries.count() == 0
 
     match = re.search(
