@@ -40,7 +40,12 @@
     <p class="qa-ai-explanation__meta">
       {{ explanation.result.source_label }}.
       {% if not explanation.result.generated %}
-        Live AI is unavailable; the conversion itself is unchanged. Choose the same question again to retry.
+        Live AI is unavailable; the conversion itself is unchanged.
+        {% if is_htmx_fragment %}
+          Choose the same question again to retry.
+        {% else %}
+          Return to the converter and choose the same question again to retry.
+        {% endif %}
       {% elif explanation.cache_status == "persistent_hit" %}
         Reused from the validated explanation cache.
       {% endif %}
