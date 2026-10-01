@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from enum import StrEnum
 
 
@@ -58,24 +58,32 @@ def calculate_trip_budget_summary(
     ):
         raise ValueError("Trip end date cannot precede the start date.")
 
-    remaining = max(reference_budget - confirmed_spend, Decimal("0"))
-    over_reference = max(confirmed_spend - reference_budget, Decimal("0"))
+    with localcontext() as context:
+        context.prec = max(
+            64,
+            len(reference_budget.as_tuple().digits) + 16,
+            len(confirmed_spend.as_tuple().digits) + 16,
+        )
+        remaining = max(reference_budget - confirmed_spend, Decimal("0"))
+        over_reference = max(confirmed_spend - reference_budget, Decimal("0"))
 
-    day_basis: TripBudgetDayBasis | None = None
-    days: int | None = None
+        day_basis: TripBudgetDayBasis | None = None
+        days: int | None = None
 
-    if travel_start_date is not None and travel_end_date is not None:
-        if as_of <= travel_end_date:
-            period_start = max(as_of, travel_start_date)
-            days = (travel_end_date - period_start).days + 1
-            day_basis = TripBudgetDayBasis.SCHEDULE
-    elif duration_days is not None and (travel_start_date is None or as_of < travel_start_date):
-        days = duration_days
-        day_basis = TripBudgetDayBasis.PLAN
+        if travel_start_date is not None and travel_end_date is not None:
+            if as_of <= travel_end_date:
+                period_start = max(as_of, travel_start_date)
+                days = (travel_end_date - period_start).days + 1
+                day_basis = TripBudgetDayBasis.SCHEDULE
+        elif duration_days is not None and (
+            travel_start_date is None or as_of < travel_start_date
+        ):
+            days = duration_days
+            day_basis = TripBudgetDayBasis.PLAN
 
-    remaining_per_day = None
-    if days is not None and days > 0:
-        remaining_per_day = remaining / Decimal(days)
+        remaining_per_day = None
+        if days is not None and days > 0:
+            remaining_per_day = remaining / Decimal(days)
 
     return TripBudgetSummary(
         reference_budget=reference_budget,
