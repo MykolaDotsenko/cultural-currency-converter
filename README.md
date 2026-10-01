@@ -33,6 +33,7 @@ Those boundaries are more important to this project than adding another conversi
 - historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now comparison;
 - explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
 - sourced everyday-value and payment context;
+- deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions;
 - side-by-side destination comparison for one source budget across two explicit country/canonical-city scopes, preserving each side's rate source/date, local-price provenance and payment context without ranking destinations;
