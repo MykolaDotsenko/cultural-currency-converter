@@ -15,6 +15,7 @@ The web product already includes:
 - explicit-assumption Real Payment Estimate for current non-identity conversions;
 - destination payment/everyday-value context;
 - destination-first country/city planning that resolves into the canonical converter and preserves canonical city scope;
+- side-by-side destination comparison across two explicit current scopes using one shared assumption set and canonical Money Context composition;
 - deterministic culture/story content;
 - managed raster media with provenance/review;
 - optional AI explanation with deterministic fallback;
@@ -135,7 +136,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Let a user compare what the same source amount roughly means across two destinations.
    - Compare sourced everyday-value, payment-context and budget assumptions side by side while keeping currency/country identity distinct.
    - Avoid flattening country-wide estimates into false precision; city/scope differences must remain visible.
-   - **Current foundation:** a deterministic comparison domain now requires the same source amount/currency on both sides, reuses one MoneyContext and one shared reference-budget assumption set per destination, preserves city/national scope and payment guidance, reports partial coverage without inventing missing categories, and intentionally exposes no winner/ranking or cross-currency price ratio. User-facing comparison entry, two-destination quote orchestration and presentation remain future work.
+   - **Current production slice:** the deterministic comparison domain is exposed through a provider-free entry page and explicit POST orchestration. The user supplies one source amount/currency, two country/canonical-city destinations and one shared duration/traveller/reference-basket assumption set. Each side is quoted through the canonical converter/MoneyContext path and retains effective date/provider/stale semantics, city/national scope, price provenance and payment context. Partial coverage remains visible; no winner/ranking, direct cross-currency price ratio, PPP claim or generic cost-of-living index is produced. Saved comparisons and Explore-level discovery remain future work.
 
 16. **Product modes: Quick / Travel / Budget / Shopping — 80/100**
    - Use one shared conversion/domain engine and expose progressively richer workflows rather than building four separate products.
@@ -280,7 +281,7 @@ Retention work should follow the dependency order of the product, not engagement
 
 **P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs → Returning-user trip home. Camera confirmation and persistence remain separate explicit actions, and confirmed amounts now enter the existing idempotent spend contract rather than a parallel Camera ledger.
 
-**P2:** Scenario-based notifications → mobile quick actions/widget → destination comparison → Explore.
+**P2:** Scenario-based notifications → mobile quick actions/widget → saved-comparison continuity → Explore. The first destination-comparison web slice is already shipped.
 
 The target is not maximum DAU. The target is strong **saved-trip reopen**, **uses per active travel day**, and **return for the next trip**.
 
