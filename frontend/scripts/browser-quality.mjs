@@ -1043,6 +1043,101 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
       exact: true,
     })
     .waitFor();
+
+  // Exercise the account-owned trip-continuity loop end to end. The saved
+  // scenario must use the same converter/budget contracts and confirmed spend
+  // must remain an explicit destination-currency action.
+  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await page.locator("#id_amount").fill("600");
+
+  const conversionResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" && new URL(response.url()).pathname === "/",
+  );
+  await page.locator(".qa-primary-button").click();
+  const conversionResponse = await conversionResponsePromise;
+  assert(
+    conversionResponse.status() === 200,
+    `trip-budget/e2e: conversion returned ${conversionResponse.status()}`,
+  );
+
+  const budgetForm = page.locator(".qa-budget-interpretation__form");
+  await budgetForm.waitFor();
+  await budgetForm.locator("#id_duration_days").fill("5");
+  await budgetForm.locator("#id_travelers").fill("1");
+
+  const budgetResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await budgetForm.getByRole("button", { name: "Interpret budget" }).click();
+  const budgetResponse = await budgetResponsePromise;
+  assert(
+    budgetResponse.status() === 200,
+    `trip-budget/e2e: budget interpretation returned ${budgetResponse.status()}`,
+  );
+
+  const saveForm = page.locator(".qa-budget-interpretation__save-form");
+  await saveForm.waitFor();
+  await saveForm.locator('input[name="title"]').fill("QA Tokyo budget");
+  const saveScenarioResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/saved/scenarios/budget/create/",
+  );
+  await saveForm.getByRole("button", { name: "Save budget" }).click();
+  const saveScenarioResponse = await saveScenarioResponsePromise;
+  assert(
+    saveScenarioResponse.status() === 302,
+    `trip-budget/e2e: save scenario returned ${saveScenarioResponse.status()} instead of 302`,
+  );
+  const saveLocation = saveScenarioResponse.headers().location ?? "";
+  if (!/^\/saved\/scenarios\/\d+\/$/.test(saveLocation)) {
+    if (saveLocation) {
+      await page.waitForURL((url) => url.pathname === new URL(saveLocation, BASE_URL).pathname);
+    } else {
+      await page.waitForLoadState("domcontentloaded");
+    }
+    const flashMessages = await page.locator('.qa-flash-message, [role="alert"]').allTextContents();
+    assert(
+      false,
+      `trip-budget/e2e: save scenario redirected to ${saveLocation || "(missing location)"}; messages=${flashMessages.join(" | ")}`,
+    );
+  }
+  await page.waitForURL((url) => /^\/saved\/scenarios\/\d+\/$/.test(url.pathname));
+
+  await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+  await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
+  const baselineSummary = await page
+    .locator('[aria-labelledby="scenario-trip-budget-title"]')
+    .innerText();
+  assert(
+    baselineSummary.includes("Confirmed spend 0 JPY"),
+    `trip-budget/e2e: new saved budget did not start at zero confirmed spend: ${baselineSummary}`,
+  );
+
+  await page.locator("#id_spend_amount").fill("4700");
+  await Promise.all([
+    page.waitForURL((url) => /^\/saved\/scenarios\/\d+\/$/.test(url.pathname)),
+    page.getByRole("button", { name: "Add spend" }).click(),
+  ]);
+  await page.getByText("Confirmed spend added to this saved budget.", { exact: true }).waitFor();
+
+  const updatedSummary = await page
+    .locator('[aria-labelledby="scenario-trip-budget-title"]')
+    .innerText();
+  assert(
+    updatedSummary.includes("Confirmed spend 4700 JPY"),
+    `trip-budget/e2e: confirmed spend did not update the saved budget: ${updatedSummary}`,
+  );
+  assert(
+    !updatedSummary.includes("Confirmed spend 0 JPY"),
+    "trip-budget/e2e: stale zero-spend state remained after confirmation",
+  );
+  await page.getByRole("button", { name: "Remove entry" }).waitFor();
+  await assertNoHorizontalOverflow(page, "trip-budget/e2e");
+  await assertAxe(page, "trip-budget/e2e");
 }
 
 async function assertReducedMotion(page, surface) {

@@ -339,6 +339,65 @@ class SavedScenarioBudgetItem(models.Model):
         return f"{self.scenario_id}: {self.category} x {self.units_per_person_per_day}"
 
 
+class SavedScenarioSpendSource(models.TextChoices):
+    MANUAL = "manual", "Manual entry"
+    CAMERA = "camera", "Camera-confirmed"
+
+
+class SavedScenarioSpendEntry(models.Model):
+    """Confirmed destination-currency spend attached to one saved budget scenario.
+
+    Entries are intentionally minimal and immutable after creation. Corrections
+    are explicit delete-and-add operations; no merchant, receipt image or free-
+    text purchase description is retained by this model.
+    """
+
+    scenario = models.ForeignKey(
+        SavedScenario,
+        on_delete=models.CASCADE,
+        related_name="spend_entries",
+    )
+    submission_key = models.UUIDField(editable=False)
+    amount = models.DecimalField(max_digits=40, decimal_places=12)
+    source = models.CharField(
+        max_length=16,
+        choices=SavedScenarioSpendSource.choices,
+        default=SavedScenarioSpendSource.MANUAL,
+    )
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-recorded_at", "-id")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(amount__gt=0, amount__lte=1000000000),
+                name="scenario_spend_amount_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(source__in=SavedScenarioSpendSource.values),
+                name="scenario_spend_source_valid",
+            ),
+            models.UniqueConstraint(
+                fields=("scenario", "submission_key"),
+                name="unique_scenario_spend_submission",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("scenario", "-recorded_at"),
+                name="travel_scenario_spend_idx",
+            )
+        ]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.pk is not None:
+            raise ValidationError("Saved scenario spend entries are immutable.")
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.scenario_id}: {self.amount} [{self.source}]"
+
+
 class SavedScenarioObservationKind(models.TextChoices):
     INITIAL = "initial", "Initial save"
     RECHECK = "recheck", "Re-check"
@@ -383,6 +442,11 @@ class SavedScenarioObservation(models.Model):
             models.CheckConstraint(
                 condition=Q(rate__gt=0),
                 name="scenario_observation_rate_positive",
+            ),
+            models.UniqueConstraint(
+                fields=("scenario",),
+                condition=Q(kind=SavedScenarioObservationKind.INITIAL),
+                name="unique_scenario_initial_observation",
             ),
         ]
         indexes = [

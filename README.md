@@ -35,7 +35,7 @@ Those boundaries are more important to this project than adding another conversi
 - sourced everyday-value and payment context;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions;
-- account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness and reopen/delete flow;
+- account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness, confirmed-spend tracking and deterministic remaining-budget meaning;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
 - optional Gemini explanation with deterministic fallback;

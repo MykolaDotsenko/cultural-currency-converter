@@ -7,14 +7,18 @@ from typing import Any
 
 from django.core import signing
 
-from apps.exchange.domain import ConversionResult, ObservationGranularity, normalize_currency_code
+from apps.exchange.domain import (
+    ConversionResult,
+    FxDomainError,
+    ObservationGranularity,
+    normalize_currency_code,
+    normalize_provider_keys,
+)
 
 # Keep the original runtime-explanation salt so snapshots created before this
 # boundary was generalized remain valid for their normal short lifetime.
 _TOKEN_SALT = "exchange.runtime-explanation:v1"
 TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60
-MAX_PROVIDER_KEYS = 128
-MAX_PROVIDER_KEY_LENGTH = 80
 
 
 class TrustedSnapshotTokenError(ValueError):
@@ -99,24 +103,16 @@ def load_trusted_conversion_snapshot_token(
         )
     if requested_date is not None and effective_date > requested_date:
         raise TrustedSnapshotTokenError("Conversion snapshot token observation date is invalid.")
-    if not isinstance(raw_provider_keys, list) or len(raw_provider_keys) > MAX_PROVIDER_KEYS:
+    if not isinstance(raw_provider_keys, list):
         raise TrustedSnapshotTokenError(
             "Conversion snapshot token provider attribution is invalid."
         )
-
-    provider_keys: list[str] = []
-    for value in raw_provider_keys:
-        if not isinstance(value, str):
-            raise TrustedSnapshotTokenError(
-                "Conversion snapshot token provider attribution is invalid."
-            )
-        normalized = value.strip().lower()
-        if not normalized or len(normalized) > MAX_PROVIDER_KEY_LENGTH:
-            raise TrustedSnapshotTokenError(
-                "Conversion snapshot token provider attribution is invalid."
-            )
-        if normalized not in provider_keys:
-            provider_keys.append(normalized)
+    try:
+        provider_keys = normalize_provider_keys(raw_provider_keys)
+    except FxDomainError as exc:
+        raise TrustedSnapshotTokenError(
+            "Conversion snapshot token provider attribution is invalid."
+        ) from exc
 
     return TrustedConversionSnapshot(
         input_amount=input_amount,
@@ -128,7 +124,7 @@ def load_trusted_conversion_snapshot_token(
         effective_date=effective_date,
         historical=historical,
         observation_granularity=granularity,
-        provider_keys=tuple(sorted(provider_keys)),
+        provider_keys=provider_keys,
         stale=stale,
     )
 

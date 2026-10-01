@@ -13,6 +13,8 @@ from apps.exchange.ai.tokens import (
 )
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
+    MAX_PROVIDER_KEY_LENGTH,
+    MAX_PROVIDER_KEYS,
     ConversionResult,
     ObservationGranularity,
     RateQuote,
@@ -169,8 +171,8 @@ def test_historical_flag_cannot_disagree_with_requested_date():
     "provider_keys",
     [
         [123],
-        ["x" * (tokens.MAX_PROVIDER_KEY_LENGTH + 1)],
-        [f"provider-{index}" for index in range(tokens.MAX_PROVIDER_KEYS + 1)],
+        ["x" * (MAX_PROVIDER_KEY_LENGTH + 1)],
+        [f"provider-{index}" for index in range(MAX_PROVIDER_KEYS + 1)],
     ],
 )
 def test_provider_attribution_is_bounded_and_validated(provider_keys):

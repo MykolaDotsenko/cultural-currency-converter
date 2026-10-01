@@ -100,6 +100,110 @@
         </div>
       </section>
     {% endif %}
+    {% if trip_budget %}
+      <section class="qa-saved-section" aria-labelledby="scenario-trip-budget-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Confirmed spend</p>
+            <h2 id="scenario-trip-budget-title">Trip budget remaining</h2>
+            <p>
+              This is a lightweight reference budget in {{ scenario.destination_currency.code }}.
+              It subtracts only amounts you explicitly confirm and keeps the original saved FX
+              observation as the baseline.
+            </p>
+          </div>
+        </div>
+        <div class="qa-saved-list">
+          <article class="qa-saved-row">
+            <div class="qa-saved-row__copy">
+              {% if trip_budget.is_over_reference %}
+                <h3>
+                  {{ trip_budget.over_reference }} {{ scenario.destination_currency.code }}
+                  over the saved reference
+                </h3>
+                <p>
+                  Confirmed spend {{ trip_budget.confirmed_spend }}
+                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
+                </p>
+              {% else %}
+                <h3>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</h3>
+                <p>
+                  Confirmed spend {{ trip_budget.confirmed_spend }}
+                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
+                </p>
+              {% endif %}
+              {% if trip_budget.has_remaining_per_day %}
+                <p class="qa-saved-row__meta">
+                  About {{ trip_budget.remaining_per_day }}
+                  {{ scenario.destination_currency.code }} {{ trip_budget.day_label }}
+                  · {{ trip_budget.days }} day{{ trip_budget.days|pluralize }}
+                </p>
+              {% elif trip_schedule and trip_schedule.state == "ended" %}
+                <p class="qa-saved-row__meta">
+                  The saved travel window has ended, so no remaining-per-day figure is inferred.
+                </p>
+              {% endif %}
+            </div>
+          </article>
+        </div>
+        <form method="post"
+              action="{% url 'add_saved_scenario_spend' scenario.pk %}"
+              class="qa-saved-row qa-saved-spend-form"
+              novalidate>
+          {% csrf_token %}
+          {{ spend_form.submission_key }}
+          <div class="qa-saved-row__copy">
+            <h3>Add confirmed spend</h3>
+            <div class="qa-field{% if spend_form.amount.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ spend_form.amount.id_for_label }}">{{ spend_form.amount.label }}</label>
+              {{ spend_form.amount }}
+              {% if spend_form.amount.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="spend_amount-error">{{ spend_form.amount.errors.0 }}</p>
+              {% else %}
+                <p class="qa-field__message">
+                  Amount only. No merchant, receipt image or purchase description is stored here.
+                </p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="qa-saved-row__actions">
+            <button class="qa-secondary-button" type="submit">Add spend</button>
+          </div>
+        </form>
+        {% if spend_entries %}
+          <div class="qa-saved-list" aria-label="Confirmed spend entries">
+            {% for entry in spend_entries %}
+              <article class="qa-saved-row">
+                <div class="qa-saved-row__copy">
+                  <h3>{{ entry.amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}</h3>
+                  <p class="qa-saved-row__meta">
+                    {{ entry.get_source_display }} · recorded {{ entry.recorded_at|date:"j M Y, H:i" }}
+                  </p>
+                </div>
+                <div class="qa-saved-row__actions">
+                  <form method="post"
+                        action="{% url 'delete_saved_scenario_spend' scenario.pk entry.pk %}">
+                    {% csrf_token %}
+                    <button class="qa-secondary-button qa-destructive-button"
+                            type="submit">Remove entry</button>
+                  </form>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">No confirmed spend has been added yet.</p>
+        {% endif %}
+        <p class="qa-saved-state__privacy">
+          Re-checking the FX rate never changes this remaining-budget baseline. This is a planning
+          reference, not a bank balance or general expense ledger.
+        </p>
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="scenario-budget-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -204,7 +308,8 @@
     </section>
     <p class="qa-saved-state__privacy">
       Saved scenarios are account-owned and are not populated from browser-only history. Removing
-      this scenario also removes its stored assumptions and immutable observations from your account.
+      this scenario also removes its stored assumptions, confirmed spend entries and immutable
+      observations from your account.
     </p>
   </div>
 {% endblock %}

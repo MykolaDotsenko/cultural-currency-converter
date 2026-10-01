@@ -3,8 +3,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any, Protocol
+from uuid import UUID, uuid4
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -12,18 +13,25 @@ from django.db import transaction
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
-from apps.exchange.domain import ConversionResult
+from apps.exchange.domain import (
+    MAX_PROVIDER_KEYS,
+    ConversionResult,
+    FxDomainError,
+    normalize_provider_keys,
+)
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
+    SavedScenarioSpendEntry,
+    SavedScenarioSpendSource,
 )
 
 MAX_ACCOUNT_SCENARIOS = 50
 MAX_SCENARIO_OBSERVATIONS = 100
-MAX_PROVIDER_KEYS = 8
-MAX_PROVIDER_KEY_LENGTH = 80
+MAX_SCENARIO_SPEND_ENTRIES = 100
+MAX_SCENARIO_SPEND_AMOUNT = Decimal("1000000000")
 
 
 class SavedScenarioError(ValueError):
@@ -138,6 +146,69 @@ def create_saved_scenario(
         )
 
     return scenario
+
+
+def record_scenario_spend(
+    scenario: SavedScenario,
+    *,
+    amount: Decimal,
+    source: str | None = None,
+    submission_key: UUID | None = None,
+) -> SavedScenarioSpendEntry:
+    """Persist one confirmed destination-currency spend entry.
+
+    Spend entries intentionally contain only amount/source/timestamp. Receipt
+    media, merchant identity and free-text purchase details are out of scope.
+    """
+
+    if not isinstance(amount, Decimal) or not amount.is_finite() or amount <= 0:
+        raise SavedScenarioError("Confirmed spend must be a finite amount greater than zero.")
+    if amount > MAX_SCENARIO_SPEND_AMOUNT:
+        raise SavedScenarioError("Confirmed spend must be no greater than 1,000,000,000.")
+    normalized_source = source or "manual"
+    if normalized_source not in SavedScenarioSpendSource.values:
+        raise SavedScenarioError("Confirmed spend source is invalid.")
+    normalized_submission_key = submission_key or uuid4()
+
+    with transaction.atomic():
+        locked = (
+            SavedScenario.objects.select_for_update()
+            .select_related("destination_currency")
+            .get(pk=scenario.pk)
+        )
+        if locked.kind != SavedScenarioKind.BUDGET:
+            raise SavedScenarioError("Confirmed spend requires a saved budget scenario.")
+
+        existing = locked.spend_entries.filter(submission_key=normalized_submission_key).first()
+        if existing is not None:
+            if existing.amount != amount or existing.source != normalized_source:
+                raise SavedScenarioError(
+                    "Confirmed spend submission key is already bound to a different entry."
+                )
+            return existing
+
+        _validate_spend_amount(
+            amount,
+            minor_units=locked.destination_currency.minor_units,
+        )
+        if locked.spend_entries.count() >= MAX_SCENARIO_SPEND_ENTRIES:
+            raise SavedScenarioError(
+                f"A saved scenario may store at most {MAX_SCENARIO_SPEND_ENTRIES} spend entries."
+            )
+
+        entry = SavedScenarioSpendEntry(
+            scenario=locked,
+            submission_key=normalized_submission_key,
+            amount=amount,
+            source=normalized_source,
+        )
+        try:
+            entry.full_clean()
+        except ValidationError as exc:
+            raise SavedScenarioError(_validation_message(exc)) from exc
+        entry.save()
+        locked.save(update_fields=("updated_at",))
+        return entry
 
 
 def record_scenario_recheck(
@@ -255,6 +326,28 @@ def _validate_city(city: City | None, country: Country | None) -> None:
         raise SavedScenarioError("Destination city must be active when a scenario is created.")
 
 
+def _validate_spend_amount(amount: Decimal, *, minor_units: int) -> None:
+    if not 0 <= minor_units <= 6:
+        raise SavedScenarioError("Destination currency minor-unit metadata is unsupported.")
+
+    quantum = Decimal(1).scaleb(-minor_units)
+    try:
+        with localcontext() as context:
+            context.prec = max(64, len(amount.as_tuple().digits) + minor_units + 8)
+            normalized = amount.quantize(quantum)
+    except InvalidOperation as exc:
+        raise SavedScenarioError(
+            "Confirmed spend cannot be represented in the destination currency."
+        ) from exc
+
+    if normalized != amount:
+        place_label = "decimal place" if minor_units == 1 else "decimal places"
+        raise SavedScenarioError(
+            f"Confirmed spend supports at most {minor_units} {place_label} "
+            "for the destination currency."
+        )
+
+
 def _validate_budget_categories(items: Iterable[BudgetCategoryAssumption]) -> None:
     materialized = tuple(items)
     if len(materialized) > 8:
@@ -267,15 +360,10 @@ def _validate_budget_categories(items: Iterable[BudgetCategoryAssumption]) -> No
 def _provider_keys(values: tuple[str, ...]) -> list[str]:
     if len(values) > MAX_PROVIDER_KEYS:
         raise SavedScenarioError("Conversion provider attribution is too large to persist.")
-    normalized: list[str] = []
-    for value in values:
-        if not isinstance(value, str):
-            raise SavedScenarioError("Conversion provider attribution is invalid.")
-        key = value.strip()
-        if not key or len(key) > MAX_PROVIDER_KEY_LENGTH:
-            raise SavedScenarioError("Conversion provider attribution is invalid.")
-        normalized.append(key)
-    return normalized
+    try:
+        return list(normalize_provider_keys(values))
+    except FxDomainError as exc:
+        raise SavedScenarioError("Conversion provider attribution is invalid.") from exc
 
 
 def _validation_message(exc: ValidationError) -> str:
