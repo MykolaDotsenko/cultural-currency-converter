@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
-from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.urls import reverse
