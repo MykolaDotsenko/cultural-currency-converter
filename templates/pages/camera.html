@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}Camera price check · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Upload a travel-money price image, review the extracted amount and currency, then continue through the trusted converter.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan by destination</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-camera-intro"
+           aria-labelledby="camera-page-title">
+    <p class="qa-foundation-kicker">Camera · explicit confirmation</p>
+    <h1 id="camera-page-title">Point. Review. Then convert.</h1>
+    <p class="qa-foundation-lede">
+      Use a menu, receipt, shelf price or ATM screen to suggest one amount. The image is processed
+      ephemerally and is not saved by this app. Nothing becomes financial truth until you confirm
+      the amount and currency.
+    </p>
+  </section>
+
+  <section class="qa-camera"
+           aria-labelledby="camera-upload-title">
+    <div class="qa-camera__instrument">
+      {% if extraction_state == "unavailable" %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="status">
+          <h2>Camera extraction is unavailable right now.</h2>
+          <p>
+            No conversion was attempted and the uploaded image was not saved. You can enter the
+            amount directly in the converter instead.
+          </p>
+          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+        </div>
+      {% elif extraction_state == "ambiguous" %}
+        <div class="qa-inline-alert" role="status">
+          <h2>We found more than one plausible amount.</h2>
+          <p>
+            Crop or retake the image so one price is clearly in focus. We do not guess which amount
+            you intended.
+          </p>
+        </div>
+      {% elif extraction_state == "no_price" %}
+        <div class="qa-inline-alert" role="status">
+          <h2>No usable price was found.</h2>
+          <p>
+            Try a closer image with one amount clearly visible, or enter the amount directly in the
+            converter.
+          </p>
+        </div>
+      {% endif %}
+
+      {% if camera_available %}
+        <div class="qa-camera__heading">
+          <p class="qa-foundation-kicker">Ephemeral image input</p>
+          <h2 id="camera-upload-title">Choose one focused price.</h2>
+        </div>
+        {% if upload_form.errors %}
+          <div class="qa-inline-alert qa-inline-alert--error"
+               id="camera-upload-errors"
+               role="alert"
+               tabindex="-1">
+            <h3>Check the image details</h3>
+            <ul class="qa-error-summary">
+              {% for field in upload_form %}
+                {% for error in field.errors %}
+                  <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in upload_form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+        <form method="post"
+              action="{% url 'camera_capture' %}"
+              enctype="multipart/form-data"
+              class="qa-camera__upload-form">
+          {% csrf_token %}
+          <div class="qa-field{% if upload_form.image.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label" for="{{ upload_form.image.id_for_label }}">
+              Photo or screenshot
+            </label>
+            {{ upload_form.image }}
+            {% if upload_form.image.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="camera_image-error">{{ upload_form.image.errors.0 }}</p>
+            {% else %}
+              <p class="qa-field__message">
+                JPEG, PNG or WebP · maximum 6 MB. Raw image bytes are not stored by the app.
+              </p>
+            {% endif %}
+          </div>
+          <div class="qa-field{% if upload_form.target_currency.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ upload_form.target_currency.id_for_label }}">Convert to</label>
+            {{ upload_form.target_currency }}
+            {% if upload_form.target_currency.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="camera_target_currency-error">{{ upload_form.target_currency.errors.0 }}</p>
+            {% else %}
+              <p class="qa-field__message">Choose the currency you want to understand the price in.</p>
+            {% endif %}
+          </div>
+          <div class="qa-camera__action">
+            <button class="qa-primary-button" type="submit">Extract one price</button>
+            <p>
+              Extraction only proposes an amount. It does not calculate a rate, add spend or save
+              the image.
+            </p>
+          </div>
+        </form>
+      {% elif not confirm_form %}
+        <div class="qa-inline-alert" role="status">
+          <h2>Camera mode is not enabled in this environment.</h2>
+          <p>The trusted converter remains fully available without camera processing.</p>
+          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="qa-camera__principles" aria-label="Camera trust model">
+      <p class="qa-foundation-kicker">Trust boundaries</p>
+      <dl>
+        <div>
+          <dt>Image retention</dt>
+          <dd>Raw uploads are not written to the database or managed-media storage.</dd>
+        </div>
+        <div>
+          <dt>Extraction</dt>
+          <dd>One suggested amount only. Ambiguous images fail closed instead of guessing.</dd>
+        </div>
+        <div>
+          <dt>Conversion</dt>
+          <dd>Your confirmed fields go through the same Decimal and FX rules as manual input.</dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+
+  {% if confirm_form %}
+    <section class="qa-camera-confirm"
+             aria-labelledby="camera-confirm-title">
+      <div class="qa-camera-confirm__heading">
+        <p class="qa-foundation-kicker">Human confirmation required</p>
+        <h2 id="camera-confirm-title">Review the extracted price.</h2>
+        {% if camera_candidate %}
+          <p>
+            Extraction confidence: <strong>{{ camera_candidate.confidence.value }}</strong>.
+            Suggested type: {{ camera_candidate.kind.value }}.
+          </p>
+        {% else %}
+          <p>Correct the amount or currency if the extraction does not match the image.</p>
+        {% endif %}
+      </div>
+
+      {% if confirm_form.errors %}
+        <div class="qa-inline-alert qa-inline-alert--error"
+             id="camera-confirm-errors"
+             role="alert"
+             tabindex="-1">
+          <h3>Check the confirmed details</h3>
+          <ul class="qa-error-summary">
+            {% for field in confirm_form %}
+              {% for error in field.errors %}
+                <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in confirm_form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form method="post"
+            action="{% url 'camera_confirm' %}"
+            class="qa-camera-confirm__form">
+        {% csrf_token %}
+        {{ confirm_form.extraction_token }}
+        <div class="qa-camera-confirm__fields">
+          <div class="qa-field{% if confirm_form.amount.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label" for="{{ confirm_form.amount.id_for_label }}">Amount</label>
+            {{ confirm_form.amount }}
+            {% if confirm_form.amount.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="camera_confirm_amount-error">{{ confirm_form.amount.errors.0 }}</p>
+            {% else %}
+              <p class="qa-field__message">Edit this value if the camera suggestion is wrong.</p>
+            {% endif %}
+          </div>
+          <div class="qa-field{% if confirm_form.source_currency.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ confirm_form.source_currency.id_for_label }}">Price currency</label>
+            {{ confirm_form.source_currency }}
+            {% if confirm_form.source_currency.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="camera_confirm_source_currency-error">{{ confirm_form.source_currency.errors.0 }}</p>
+            {% else %}
+              <p class="qa-field__message">Confirm the currency shown or implied by the image.</p>
+            {% endif %}
+          </div>
+          <div class="qa-field{% if confirm_form.target_currency.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ confirm_form.target_currency.id_for_label }}">Convert to</label>
+            {{ confirm_form.target_currency }}
+            {% if confirm_form.target_currency.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="camera_confirm_target_currency-error">{{ confirm_form.target_currency.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="qa-camera-confirm__action">
+          <button class="qa-primary-button" type="submit">Confirm and convert</button>
+          <p>
+            Confirmation opens the canonical converter. The camera result itself is not an exchange
+            rate and is not saved as spend.
+          </p>
+        </div>
+      </form>
+    </section>
+  {% endif %}
+{% endblock %}
