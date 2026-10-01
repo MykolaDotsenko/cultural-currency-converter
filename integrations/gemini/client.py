@@ -54,11 +54,65 @@ class GeminiStructuredClient:
         response_json_schema: Mapping[str, Any],
         max_output_tokens: int = 700,
     ) -> StructuredGeneration:
-        if not model.strip():
-            raise AIConfigurationError("Gemini model is required.")
-        if not system_instruction.strip() or not contents.strip():
+        if not contents.strip():
             raise AIConfigurationError(
                 "Gemini structured generation requires instructions and content."
+            )
+        return self._generate_json(
+            model=model,
+            system_instruction=system_instruction,
+            contents=contents,
+            response_json_schema=response_json_schema,
+            max_output_tokens=max_output_tokens,
+        )
+
+    def generate_json_with_image(
+        self,
+        *,
+        model: str,
+        system_instruction: str,
+        contents: str,
+        image_bytes: bytes,
+        image_mime_type: str,
+        response_json_schema: Mapping[str, Any],
+        max_output_tokens: int = 350,
+    ) -> StructuredGeneration:
+        if not contents.strip() or not image_bytes:
+            raise AIConfigurationError(
+                "Gemini multimodal generation requires instructions, text and image bytes."
+            )
+        if image_mime_type not in {"image/jpeg", "image/png", "image/webp"}:
+            raise AIConfigurationError("Gemini camera input uses an unsupported image MIME type.")
+
+        multimodal_contents = types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(text=contents),
+                types.Part.from_bytes(data=image_bytes, mime_type=image_mime_type),
+            ],
+        )
+        return self._generate_json(
+            model=model,
+            system_instruction=system_instruction,
+            contents=multimodal_contents,
+            response_json_schema=response_json_schema,
+            max_output_tokens=max_output_tokens,
+        )
+
+    def _generate_json(
+        self,
+        *,
+        model: str,
+        system_instruction: str,
+        contents: Any,
+        response_json_schema: Mapping[str, Any],
+        max_output_tokens: int,
+    ) -> StructuredGeneration:
+        if not model.strip():
+            raise AIConfigurationError("Gemini model is required.")
+        if not system_instruction.strip():
+            raise AIConfigurationError(
+                "Gemini structured generation requires a system instruction."
             )
 
         for attempt in range(1, self._max_attempts + 1):
@@ -70,7 +124,7 @@ class GeminiStructuredClient:
                         system_instruction=system_instruction,
                         response_mime_type="application/json",
                         response_json_schema=dict(response_json_schema),
-                        temperature=0.2,
+                        temperature=0.0,
                         max_output_tokens=max_output_tokens,
                     ),
                 )
