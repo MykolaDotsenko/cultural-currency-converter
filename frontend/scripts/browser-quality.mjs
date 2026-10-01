@@ -493,7 +493,8 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await identitySummary.waitFor();
   const identitySummaryText = await identitySummary.innerText();
   assert(
-    identitySummaryText.includes("At a glance") &&
+    (await identitySummary.getAttribute("data-summary-kind")) === "identity" &&
+      identitySummaryText.includes("At a glance") &&
       identitySummaryText.includes("No exchange-rate lookup is needed") &&
       identitySummaryText.includes("exact 1:1"),
     "current-converter: deterministic smart summary is missing from identity conversion",
