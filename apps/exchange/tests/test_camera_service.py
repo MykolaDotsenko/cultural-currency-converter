@@ -56,7 +56,7 @@ def _result() -> CameraExtraction:
     )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_camera_service_sanitizes_before_provider_and_returns_no_raw_media():
     extractor = FakeExtractor(_result())
     service = CameraExtractionService(enabled=True, extractor=extractor)
@@ -76,7 +76,7 @@ def test_camera_service_sanitizes_before_provider_and_returns_no_raw_media():
     assert not hasattr(delivery, "raw_image")
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_camera_service_does_not_process_media_when_feature_is_disabled():
     extractor = FakeExtractor(_result())
     service = CameraExtractionService(enabled=False, extractor=extractor)
@@ -91,7 +91,7 @@ def test_camera_service_does_not_process_media_when_feature_is_disabled():
     assert extractor.calls == []
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_camera_service_preserves_no_amount_as_user_correctable_result():
     extractor = FakeExtractor(CameraNoAmountFound("No monetary amounts were found in this image."))
     service = CameraExtractionService(enabled=True, extractor=extractor)
@@ -104,7 +104,7 @@ def test_camera_service_preserves_no_amount_as_user_correctable_result():
         )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_camera_service_normalizes_provider_failure_without_logging_media():
     extractor = FakeExtractor(AIProviderUnavailable("down"))
     service = CameraExtractionService(enabled=True, extractor=extractor)
@@ -117,7 +117,7 @@ def test_camera_service_normalizes_provider_failure_without_logging_media():
         )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_live_camera_provider_call_is_forbidden_inside_database_transaction():
     extractor = FakeExtractor(_result())
     service = CameraExtractionService(enabled=True, extractor=extractor)
