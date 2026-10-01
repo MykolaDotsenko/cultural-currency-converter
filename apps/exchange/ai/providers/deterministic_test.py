@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from apps.exchange.ai.contracts import ExplanationPacket, GroundedFact, ProviderExplanation
+from integrations.gemini.errors import AIProviderTimeout
 from integrations.gemini.models import ProviderUsage
 
 
@@ -8,6 +9,9 @@ class DeterministicTestExplanationDrafter:
     """Offline runtime-AI drafter for browser/release-quality tests only."""
 
     def draft(self, packet: ExplanationPacket) -> ProviderExplanation:
+        if packet.intent_id == "payment_difference":
+            raise AIProviderTimeout("Deterministic browser fixture timeout.")
+
         facts = {fact.id: fact for fact in packet.facts}
         required = [
             facts[fact_id]
