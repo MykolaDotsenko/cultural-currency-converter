@@ -12,6 +12,11 @@ from apps.culture.services import DestinationContext
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 class DestinationModeGateway:
     def get(self, base, quote, policy, *, now):
         return (
