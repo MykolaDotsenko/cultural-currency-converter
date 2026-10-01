@@ -1087,6 +1087,8 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   const saveForm = page.locator(".qa-budget-interpretation__save-form");
   await saveForm.waitFor();
   await saveForm.locator('input[name="title"]').fill("QA Tokyo budget");
+  await saveForm.locator('input[name="travel_start_date"]').fill("2099-04-12");
+  await saveForm.locator('input[name="travel_end_date"]').fill("2099-04-18");
   const saveScenarioResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
@@ -1144,6 +1146,26 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByRole("button", { name: "Remove entry" }).waitFor();
   await assertNoHorizontalOverflow(page, "trip-budget/e2e");
   await assertAxe(page, "trip-budget/e2e");
+
+  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  const returningTrip = page.locator(".qa-returning-trip-home");
+  await returningTrip.waitFor();
+  await returningTrip.getByRole("heading", { name: "QA Tokyo budget", level: 2 }).waitFor();
+  const returningTripText = await returningTrip.innerText();
+  assert(
+    returningTripText.includes("Upcoming trip"),
+    `returning-trip/e2e: saved future trip was not promoted on clean home: ${returningTripText}`,
+  );
+  assert(
+    returningTripText.includes("100000 JPY remaining"),
+    `returning-trip/e2e: saved confirmed spend was not reflected on home: ${returningTripText}`,
+  );
+  assert(
+    returningTripText.includes("does not refresh the FX rate automatically"),
+    "returning-trip/e2e: home continuity omitted the no-auto-refresh trust boundary",
+  );
+  await assertNoHorizontalOverflow(page, "returning-trip/e2e");
+  await assertAxe(page, "returning-trip/e2e");
 }
 
 async function assertReducedMotion(page, surface) {
