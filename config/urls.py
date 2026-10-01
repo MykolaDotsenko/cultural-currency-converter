@@ -19,7 +19,9 @@ from apps.exchange.views import (
     picker_options,
 )
 from apps.travel.scenario_web import (
+    add_saved_scenario_spend,
     delete_saved_scenario,
+    delete_saved_scenario_spend,
     recheck_saved_scenario,
     save_budget_scenario,
     saved_scenario_detail,
@@ -62,6 +64,16 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/recheck/",
         recheck_saved_scenario,
         name="recheck_saved_scenario",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/spend/add/",
+        add_saved_scenario_spend,
+        name="add_saved_scenario_spend",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/spend/<int:entry_id>/delete/",
+        delete_saved_scenario_spend,
+        name="delete_saved_scenario_spend",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/delete/",
