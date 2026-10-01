@@ -38,6 +38,16 @@
         account/card identifiers, addresses or surrounding receipt text.
       </p>
     </section>
+    {% if handoff_error %}
+      <section class="qa-saved-section"
+               role="alert"
+               aria-labelledby="camera-handoff-error-title">
+        <p class="qa-foundation-kicker">Not added</p>
+        <h2 id="camera-handoff-error-title">Camera-confirmed spend was not saved</h2>
+        <p>{{ handoff_error }}</p>
+        <p>No spend entry was created by this request. Scan and confirm again when ready.</p>
+      </section>
+    {% endif %}
     {% if provider_unavailable %}
       <section class="qa-saved-section"
                role="status"
