@@ -13,12 +13,8 @@ _EURO_FINLAND_SOURCE = (
 _EURO_GERMANY_SOURCE = (
     "https://economy-finance.ec.europa.eu/euro/eu-countries-and-euro/germany-and-euro_en"
 )
-_SWEDISH_KRONA_SOURCE = (
-    "https://www.riksbank.se/en-gb/payments--cash/what-is-money/"
-)
-_DANISH_KRONE_SOURCE = (
-    "https://www.nationalbanken.dk/en/what-we-do/stable-prices-monetary-policy-and-the-danish-economy/exchange-rates"
-)
+_SWEDISH_KRONA_SOURCE = "https://www.riksbank.se/en-gb/payments--cash/what-is-money/"
+_DANISH_KRONE_SOURCE = "https://www.nationalbanken.dk/en/what-we-do/stable-prices-monetary-policy-and-the-danish-economy/exchange-rates"
 _NORWEGIAN_KRONE_SOURCE = "https://www.norges-bank.no/en/topics/Statistics/exchange_rates/"
 
 
