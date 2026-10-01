@@ -5,10 +5,12 @@ import re
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import DatabaseError
 from django.urls import reverse
 from PIL import Image
 
@@ -18,8 +20,10 @@ from apps.exchange.camera import (
     CameraCandidateKind,
     CameraConfidence,
     CameraExtraction,
+    CameraTokenError,
     load_confirmed_camera_amount_token,
     make_camera_candidate_token,
+    make_confirmed_camera_amount_token,
 )
 from apps.exchange.camera_service import (
     CameraFeatureDisabled,
@@ -28,7 +32,7 @@ from apps.exchange.camera_service import (
 )
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.travel.camera_forms import camera_scope_for_scenario
-from apps.travel.models import SavedScenarioKind
+from apps.travel.models import SavedScenarioKind, SavedScenarioSpendSource
 from apps.travel.scenarios import SavedScenarioSpec, create_saved_scenario
 
 User = get_user_model()
@@ -305,6 +309,8 @@ def test_user_can_correct_and_confirm_candidate_without_persisting_spend(
     text = _normalized_response_text(response)
     assert "uploaded image itself was not persisted" in text
     assert "Nothing was added to confirmed spend" in text
+    assert "Add to trip budget" in text
+    assert reverse("add_camera_confirmed_spend", args=(scenario.pk,)) in text
     assert scenario.spend_entries.count() == 0
 
     match = re.search(
@@ -367,3 +373,229 @@ def test_tampered_camera_candidate_cannot_be_confirmed(client, camera_scenario):
     assert response.status_code == 422
     assert b"Camera candidate token is invalid." in response.content
     assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_explicit_camera_handoff_adds_camera_spend_and_updates_remaining_budget(
+    client,
+    camera_scenario,
+):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+    token = make_confirmed_camera_amount_token(
+        scope=camera_scope_for_scenario(scenario.pk),
+        amount=Decimal("4750"),
+        currency_code="JPY",
+    )
+    submission_key = uuid4()
+
+    with patch("apps.travel.camera_web.build_camera_extraction_service") as provider_factory:
+        response = client.post(
+            reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+            {
+                "confirmed_camera_token": token,
+                "submission_key": str(submission_key),
+            },
+        )
+
+    assert response.status_code == 302
+    assert response.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+    provider_factory.assert_not_called()
+    entry = scenario.spend_entries.get()
+    assert entry.amount == Decimal("4750")
+    assert entry.source == SavedScenarioSpendSource.CAMERA
+    assert entry.submission_key == submission_key
+
+    detail = client.get(response.url)
+    text = _normalized_response_text(detail)
+    assert "99950 JPY remaining" in text
+    assert "Confirmed spend 4750 JPY" in text
+
+
+@pytest.mark.django_db
+def test_camera_handoff_replay_is_idempotent(client, camera_scenario):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+    token = make_confirmed_camera_amount_token(
+        scope=camera_scope_for_scenario(scenario.pk),
+        amount=Decimal("4750"),
+        currency_code="JPY",
+    )
+    submission_key = uuid4()
+    payload = {
+        "confirmed_camera_token": token,
+        "submission_key": str(submission_key),
+    }
+    url = reverse("add_camera_confirmed_spend", args=(scenario.pk,))
+
+    first = client.post(url, payload)
+    replay = client.post(url, payload)
+
+    assert first.status_code == 302
+    assert replay.status_code == 302
+    assert scenario.spend_entries.count() == 1
+    entry = scenario.spend_entries.get()
+    assert entry.source == SavedScenarioSpendSource.CAMERA
+    assert entry.submission_key == submission_key
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("token_factory", "message"),
+    [
+        (
+            lambda scenario: make_confirmed_camera_amount_token(
+                scope=camera_scope_for_scenario(scenario.pk),
+                amount=Decimal("4750"),
+                currency_code="USD",
+            ),
+            "uses USD",
+        ),
+        (
+            lambda scenario: make_confirmed_camera_amount_token(
+                scope="saved-scenario:999999",
+                amount=Decimal("4750"),
+                currency_code="JPY",
+            ),
+            "does not belong",
+        ),
+    ],
+)
+def test_camera_handoff_rejects_currency_or_scope_mismatch(
+    client,
+    camera_scenario,
+    token_factory,
+    message,
+):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+
+    response = client.post(
+        reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+        {
+            "confirmed_camera_token": token_factory(scenario),
+            "submission_key": str(uuid4()),
+        },
+    )
+
+    assert response.status_code == 422
+    assert message in _normalized_response_text(response)
+    assert b"Camera-confirmed spend was not saved" in response.content
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_tampered_camera_handoff_token_never_persists_spend(client, camera_scenario):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+    token = make_confirmed_camera_amount_token(
+        scope=camera_scope_for_scenario(scenario.pk),
+        amount=Decimal("4750"),
+        currency_code="JPY",
+    )
+
+    response = client.post(
+        reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+        {
+            "confirmed_camera_token": token + "tampered",
+            "submission_key": str(uuid4()),
+        },
+    )
+
+    assert response.status_code == 422
+    assert b"Confirmed camera amount token is invalid." in response.content
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_expired_camera_handoff_token_never_persists_spend(client, camera_scenario):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+
+    with patch(
+        "apps.travel.camera_forms.load_confirmed_camera_amount_token",
+        side_effect=CameraTokenError("Confirmed camera amount has expired. Scan the image again."),
+    ):
+        response = client.post(
+            reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+            {
+                "confirmed_camera_token": "signed-but-expired",
+                "submission_key": str(uuid4()),
+            },
+        )
+
+    assert response.status_code == 422
+    assert b"has expired" in response.content
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_camera_handoff_is_owner_scoped_before_token_validation(client, camera_scenario):
+    _owner, scenario = camera_scenario
+    other = User.objects.create_user(username="camera-handoff-other", password="StrongPass-482!")
+    client.force_login(other)
+
+    with patch("apps.travel.camera_forms.load_confirmed_camera_amount_token") as token_loader:
+        response = client.post(
+            reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+            {
+                "confirmed_camera_token": "not-even-validated",
+                "submission_key": str(uuid4()),
+            },
+        )
+
+    assert response.status_code == 404
+    token_loader.assert_not_called()
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_camera_handoff_reuses_trip_spend_domain_bounds(client, camera_scenario):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+    token = make_confirmed_camera_amount_token(
+        scope=camera_scope_for_scenario(scenario.pk),
+        amount=Decimal("1000000001"),
+        currency_code="JPY",
+    )
+
+    response = client.post(
+        reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+        {
+            "confirmed_camera_token": token,
+            "submission_key": str(uuid4()),
+        },
+    )
+
+    assert response.status_code == 422
+    assert b"no greater than 1,000,000,000" in response.content
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_camera_handoff_database_failure_preserves_saved_budget(client, camera_scenario):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+    token = make_confirmed_camera_amount_token(
+        scope=camera_scope_for_scenario(scenario.pk),
+        amount=Decimal("4750"),
+        currency_code="JPY",
+    )
+
+    with patch(
+        "apps.travel.camera_web.record_scenario_spend",
+        side_effect=DatabaseError("database unavailable"),
+    ):
+        response = client.post(
+            reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+            {
+                "confirmed_camera_token": token,
+                "submission_key": str(uuid4()),
+            },
+        )
+
+    assert response.status_code == 503
+    assert b"temporarily unavailable" in response.content
+    assert b"saved budget was not changed" in response.content
+    assert scenario.spend_entries.count() == 0
+
