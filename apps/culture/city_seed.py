@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
-
-from django.utils import timezone
 
 from apps.countries.models import City, Country, Currency
 from apps.culture.models import (
@@ -16,6 +14,7 @@ from apps.culture.models import (
 from apps.culture.price_quality import TypicalPriceUnit
 
 _WAVE_ONE_OBSERVED_AT = date(2026, 10, 1)
+_WAVE_ONE_VERIFIED_AT = datetime(2026, 10, 1, 12, 0, tzinfo=UTC)
 _CITY_CONTEXT_SOURCE_CLASS = TypicalPriceSourceClass.APPROXIMATE_CONTEXTUAL
 _CITY_CONTEXT_CONFIDENCE = TypicalPriceConfidence.MEDIUM
 
@@ -41,7 +40,6 @@ class _CitySpec:
     currency_code: str
     slug: str
     name: str
-    contextual_source_url: str
     prices: tuple[_PriceSpec, ...]
 
 
@@ -168,7 +166,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
         currency_code="EUR",
         slug="helsinki",
         name="Helsinki",
-        contextual_source_url=_HELSINKI_SOURCE,
         prices=_city_prices(
             city_name="Helsinki",
             source_url=_HELSINKI_SOURCE,
@@ -196,7 +193,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
         currency_code="EUR",
         slug="turku",
         name="Turku",
-        contextual_source_url=_TURKU_SOURCE,
         prices=_city_prices(
             city_name="Turku",
             source_url=_TURKU_SOURCE,
@@ -222,7 +218,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
         currency_code="SEK",
         slug="stockholm",
         name="Stockholm",
-        contextual_source_url=_STOCKHOLM_SOURCE,
         prices=_city_prices(
             city_name="Stockholm",
             source_url=_STOCKHOLM_SOURCE,
@@ -247,7 +242,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
         currency_code="DKK",
         slug="copenhagen",
         name="Copenhagen",
-        contextual_source_url=_COPENHAGEN_SOURCE,
         prices=_city_prices(
             city_name="Copenhagen",
             source_url=_COPENHAGEN_SOURCE,
@@ -272,7 +266,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
         currency_code="NOK",
         slug="oslo",
         name="Oslo",
-        contextual_source_url=_OSLO_SOURCE,
         prices=_city_prices(
             city_name="Oslo",
             source_url=_OSLO_SOURCE,
@@ -300,7 +293,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
         currency_code="EUR",
         slug="berlin",
         name="Berlin",
-        contextual_source_url=_BERLIN_SOURCE,
         prices=_city_prices(
             city_name="Berlin",
             source_url=_BERLIN_SOURCE,
@@ -326,7 +318,6 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
 def seed_curated_city_prices_wave1() -> tuple[int, int]:
     """Seed reviewed city-scoped price anchors without bypassing TypicalPrice contracts."""
 
-    verified_at = timezone.now()
     created = existing = 0
 
     for city_spec in _WAVE_ONE_CITIES:
@@ -363,7 +354,7 @@ def seed_curated_city_prices_wave1() -> tuple[int, int]:
             row.currency = currency
             row.source_name = price_spec.source_name
             row.source_url = price_spec.source_url
-            row.verified_at = verified_at
+            row.verified_at = _WAVE_ONE_VERIFIED_AT
             row.source_class = price_spec.source_class
             row.confidence = price_spec.confidence
             row.notes = price_spec.notes
