@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
-from typing import Any, Mapping
+from typing import Any, Mapping, Protocol
 from warnings import catch_warnings, simplefilter
 
 from django.core import signing
@@ -94,6 +94,15 @@ class CameraExtraction:
             raise CameraExtractionError("Camera extraction returned too many amount candidates.")
         if not self.provider_model.strip():
             raise CameraExtractionError("Camera extraction provider model is missing.")
+
+
+class CameraAmountExtractor(Protocol):
+    def extract(
+        self,
+        image: SanitizedCameraImage,
+        *,
+        expected_currency: str,
+    ) -> CameraExtraction: ...
 
 
 @dataclass(frozen=True, slots=True)
