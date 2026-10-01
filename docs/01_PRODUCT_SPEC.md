@@ -58,7 +58,9 @@ The Camera flow is an explicit, opt-in extraction/confirmation boundary for save
 
 After confirmation, the user may explicitly choose **Add to trip budget**. That POST consumes the scenario-scoped signed token as the sole amount/currency source, uses the token’s signed unique confirmation id as the idempotency key and writes through the existing minimal `SavedScenarioSpendEntry` contract with source `camera`. Replaying the same confirmation cannot double-count spend, while a separate confirmation of the same amount remains a distinct user action. The raw image, provider prose, merchant identity and receipt text remain unpersisted.
 
-Future offline/mobile and deeper returning-user work should extend the same trusted contracts rather than create parallel calculations or duplicate destination-context semantics.
+Saved budget scenarios can now export a first **Offline Destination Pack** as a self-contained HTML snapshot. The pack never performs a live FX call: it labels the newest already-stored scenario observation with provider/effective-date/fetch semantics, keeps Trip Budget Remaining anchored to the immutable initial observation, and captures currently reviewed destination price/payment context with source/freshness metadata at download time. The file contains no scripts or remote styling, does not auto-refresh, and explicitly says that offline FX is stored reference data rather than a live executable rate.
+
+Future mobile/PWA delivery and deeper returning-user work should reuse this versioned snapshot meaning rather than create parallel offline calculations or silently cache live pages.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 
@@ -263,7 +265,9 @@ The web product currently supports:
 - optional AI explanation;
 - anonymous local favourites/recent conversions;
 - account-owned favourites;
-- separately opt-in account recent history.
+- separately opt-in account recent history;
+- account-owned saved budget scenarios with explicit Trip Budget Remaining and Camera-confirmed spend;
+- self-contained offline destination-pack export with stored-FX freshness and sourced destination context.
 
 Current Real Payment Estimate does not persist a reusable fee profile and does not estimate historical card/ATM/merchant costs. Those remain future work.
 
