@@ -14,7 +14,14 @@ from apps.exchange.forms import DestinationModeForm
 def destination_mode_view(request: HttpRequest) -> HttpResponse:
     """Resolve a destination-first plan into the canonical converter."""
 
-    form = DestinationModeForm(request.POST if request.method == "POST" else None)
+    initial = None
+    if request.method == "GET":
+        destination_token = str(request.GET.get("destination") or "").strip()
+        initial = {"destination": destination_token} if destination_token else None
+    form = DestinationModeForm(
+        request.POST if request.method == "POST" else None,
+        initial=initial,
+    )
     if request.method == "POST" and form.is_valid():
         cleaned = form.cleaned_data
         params = {

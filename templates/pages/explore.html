@@ -77,8 +77,14 @@
                   {% endif %}
                 </div>
                 <div class="qa-saved-row__actions">
-                  <a class="qa-primary-button"
-                     href="{{ card.converter_url }}">Open {{ destination.scope_label }}</a>
+                  {% if card.profile_url %}
+                    <a class="qa-primary-button"
+                       href="{{ card.profile_url }}">View {{ destination.city_name }} money profile</a>
+                    <a class="qa-secondary-button" href="{{ card.converter_url }}">Convert</a>
+                  {% else %}
+                    <a class="qa-primary-button"
+                       href="{{ card.converter_url }}">Open {{ destination.scope_label }}</a>
+                  {% endif %}
                 </div>
               </article>
             {% endwith %}

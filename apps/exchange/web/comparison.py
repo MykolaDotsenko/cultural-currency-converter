@@ -50,7 +50,14 @@ def destination_comparison_view(
 ) -> HttpResponse:
     """Compare one source budget across two explicit current destination scopes."""
 
-    form = DestinationComparisonForm(request.POST if request.method == "POST" else None)
+    initial = None
+    if request.method == "GET":
+        left_destination = str(request.GET.get("left_destination") or "").strip()
+        initial = {"left_destination": left_destination} if left_destination else None
+    form = DestinationComparisonForm(
+        request.POST if request.method == "POST" else None,
+        initial=initial,
+    )
     comparison_component = None
     comparison_error = None
     status = 200
