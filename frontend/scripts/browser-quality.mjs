@@ -1099,7 +1099,9 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     } else {
       await page.waitForLoadState("domcontentloaded");
     }
-    const flashMessages = await page.locator('.qa-message, [role="alert"]').allTextContents();
+    const flashMessages = await page
+      .locator('.qa-flash-message, [role="alert"]')
+      .allTextContents();
     assert(
       false,
       `trip-budget/e2e: save scenario redirected to ${saveLocation || "(missing location)"}; messages=${flashMessages.join(" | ")}`,
