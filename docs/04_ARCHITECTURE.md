@@ -95,6 +95,8 @@ Destination mode is deliberately an entry adapter, not a second conversion engin
 
 `apps/exchange/budget.py` is the first pure-domain consumer of that contract. It compares an explicitly selected destination amount basis with a user/editorial daily basket built from already-sourced `TypicalPriceContext` values. It does not query providers, infer missing categories or establish a universal cost-of-living truth. Country-level interpretation excludes city-only observations; city-level interpretation may use the selected city plus visibly national fallback rows already present in the MoneyContext.
 
+`apps/exchange/comparison.py` composes two current MoneyContext values only when they share the same source amount/currency and use different destination scopes. It applies one shared reference-budget assumption set to both sides, preserves each destination's local currency/scope/provenance and intentionally exposes no winner/ranking primitive. A later web adapter may obtain the two trusted conversions and render them side by side, but it must not create an independent comparison-rate calculation path.
+
 ### Budget interpretation web trust boundary
 
 The budget web flow does not trust editable browser fields for financial truth.
