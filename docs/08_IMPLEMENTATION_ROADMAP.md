@@ -258,6 +258,7 @@ The retention strategy adds three non-duplicative capabilities that strengthen t
    - Let an active saved trip keep a deliberately simple starting budget, confirmed spend, remaining amount and approximate remaining-per-day value.
    - Accept manual additions and, later, confirmed camera-extracted expenses; never auto-bookkeep ambiguous OCR results.
    - Keep this narrower than expense management: no accounting categories, reconciliation or ledger complexity unless later evidence justifies expansion.
+   - **Current slice:** account-owned saved budget scenarios can record/remove minimal immutable confirmed-spend entries in the destination currency. Remaining/over-reference arithmetic is anchored to the immutable initial saved FX output, not later re-check rates; per-day meaning uses explicit saved duration/date semantics and fails closed when the remaining travel window cannot be known. Merchant/receipt/free-text purchase data is not stored. Camera confirmation remains future work.
 
 36. **Returning-user trip home — 89/100**
    - For users with an upcoming trip, replace repetitive setup with a compact continuity surface showing destination, dates, budget, rate change, context freshness and the next useful action.
@@ -275,7 +276,7 @@ Retention work should follow the dependency order of the product, not engagement
 
 **P0 foundation sequence:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode. First production slices now exist through Destination Mode.
 
-**P1 next:** Camera → Add confirmed expense to trip → Trip Budget Remaining → Offline destination packs → Returning-user trip home.
+**P1 dependency sequence:** Trip Budget Remaining foundation → Camera extraction/confirmation → Camera-confirmed spend handoff → Offline destination packs → Returning-user trip home. The remaining-budget foundation ships first so Camera reuses a trusted spend contract instead of inventing parallel persistence.
 
 **P2:** Scenario-based notifications → mobile quick actions/widget → destination comparison → Explore.
 
