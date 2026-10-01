@@ -489,9 +489,13 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     resultText.includes("Exact same-currency rate"),
     "current-converter: same-currency provenance is missing",
   );
+  const identitySummary = page.locator("#current-conversion-result .qa-result-summary");
+  await identitySummary.waitFor();
+  const identitySummaryText = await identitySummary.innerText();
   assert(
-    resultText.includes("At a glance") &&
-      resultText.includes("No exchange-rate lookup is needed because both sides use JPY"),
+    identitySummaryText.includes("At a glance") &&
+      identitySummaryText.includes("No exchange-rate lookup is needed") &&
+      identitySummaryText.includes("exact 1:1"),
     "current-converter: deterministic smart summary is missing from identity conversion",
   );
   assert(
@@ -637,8 +641,12 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     historicalText.includes("Observation date"),
     "current-converter: historical observation date is missing",
   );
+  const historicalSummary = historicalResult.locator(".qa-result-summary");
+  await historicalSummary.waitFor();
   assert(
-    historicalText.includes("does not describe historical purchasing power"),
+    (await historicalSummary.innerText()).includes(
+      "does not describe historical purchasing power",
+    ),
     "current-converter: historical smart summary lost its purchasing-power boundary",
   );
   const historicalUrl = new URL(page.url());
