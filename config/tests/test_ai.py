@@ -12,10 +12,24 @@ def test_ai_config_defaults_to_disabled_without_secret():
     assert config.provider == "google"
     assert config.text_model == "gemini-3.1-flash-lite"
     assert config.runtime_explanation_enabled is False
+    assert config.camera_extraction_enabled is False
     assert config.gemini_api_key == ""
     assert config.fallback_mode == "deterministic"
     assert config.timeout_seconds == 5
     assert config.max_attempts == 2
+
+
+def test_camera_extraction_requires_key_only_when_enabled():
+    with pytest.raises(ConfigurationError, match="GEMINI_API_KEY"):
+        load_ai_config({"AI_CAMERA_EXTRACTION_ENABLED": "true"})
+
+    config = load_ai_config(
+        {
+            "AI_CAMERA_EXTRACTION_ENABLED": "true",
+            "GEMINI_API_KEY": "server-secret",
+        }
+    )
+    assert config.has_live_camera_extraction is True
 
 
 def test_ai_runtime_feature_requires_key_only_when_enabled():
@@ -40,6 +54,7 @@ def test_ai_runtime_feature_requires_key_only_when_enabled():
         ("AI_EDITORIAL_GENERATION_ENABLED", "true", "EDITORIAL"),
         ("AI_IMAGE_GENERATION_ENABLED", "true", "IMAGE"),
         ("AI_RUNTIME_EXPLANATION_ENABLED", "maybe", "boolean"),
+        ("AI_CAMERA_EXTRACTION_ENABLED", "maybe", "boolean"),
     ],
 )
 def test_ai_config_rejects_unpromoted_or_unsafe_runtime_configuration(name, value, message):
