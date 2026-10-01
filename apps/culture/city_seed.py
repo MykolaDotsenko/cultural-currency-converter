@@ -355,9 +355,7 @@ _WAVE_TWO_CITIES: tuple[_CitySpec, ...] = (
                 low="1.28",
                 high="2.57",
                 source_name="Public Transport Council Singapore",
-                source_url=(
-                    "https://www.ptc.gov.sg/fares/public-transport-fares-and-passes/"
-                ),
+                source_url=("https://www.ptc.gov.sg/fares/public-transport-fares-and-passes/"),
                 notes=(
                     "Adult card fare range across the published distance bands for MRT/LRT; "
                     "official fare table reviewed 2026-10-01."
@@ -496,4 +494,3 @@ def seed_curated_city_prices_wave2() -> tuple[int, int]:
         observed_at=_WAVE_TWO_OBSERVED_AT,
         verified_at=_WAVE_TWO_VERIFIED_AT,
     )
-
