@@ -369,7 +369,7 @@ async function assertAiExplanationReliability(page) {
     `current-converter/ai: generated explanation returned ${rateResponse.status()}`,
   );
   await region.getByText("AI explanation", { exact: true }).waitFor();
-  const generatedText = await region.innerText();
+  const generatedText = (await region.textContent()) ?? "";
   assert(
     generatedText.includes("What does this reference rate mean?") &&
       generatedText.includes("What matters most") &&
