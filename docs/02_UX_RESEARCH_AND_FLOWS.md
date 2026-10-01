@@ -257,7 +257,9 @@ The shipped account scenario detail supports an explicit reference-rate re-check
 
 Provider failure must leave the saved scenario and its original observations unchanged. Repeated checks of the same effective provider observation should not create duplicate history rows.
 
-Optional pre-trip reminders may invite the user to re-check a saved scenario close to its travel date. Reminder delivery must be opt-in, easy to disable and separate from rate-alert/trading-style messaging.
+The shipped save flow can optionally store a travel start/end date. Saved scenario detail derives a deterministic **upcoming / active / started-without-end / ended** readiness state from those explicit dates. A saved end date requires a start date at form, domain and database boundaries. Timing metadata must never imply a hidden itinerary, auto-refresh or notification subscription.
+
+Optional pre-trip reminders may later invite the user to re-check a saved scenario close to its travel date. Reminder delivery must be explicit opt-in, easy to disable and separate from rate-alert/trading-style messaging.
 
 ### During travel
 

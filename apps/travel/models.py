@@ -258,9 +258,11 @@ class SavedScenario(models.Model):
                 name="scenario_travelers_range",
             ),
             models.CheckConstraint(
-                condition=Q(travel_start_date__isnull=True)
-                | Q(travel_end_date__isnull=True)
-                | Q(travel_end_date__gte=models.F("travel_start_date")),
+                condition=Q(travel_end_date__isnull=True)
+                | (
+                    Q(travel_start_date__isnull=False)
+                    & Q(travel_end_date__gte=models.F("travel_start_date"))
+                ),
                 name="scenario_travel_dates_ordered",
             ),
             models.CheckConstraint(
@@ -285,6 +287,10 @@ class SavedScenario(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        if self.travel_end_date and not self.travel_start_date:
+            raise ValidationError(
+                {"travel_start_date": "Travel start date is required when an end date is set."}
+            )
         if (
             self.travel_start_date
             and self.travel_end_date

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -10,6 +11,7 @@ from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
@@ -25,6 +27,7 @@ from apps.exchange.forms import BudgetInterpretationForm
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.web.gateways import build_latest_quote_gateway
+from apps.travel.forms import SavedScenarioPlanningForm
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioKind,
@@ -34,6 +37,7 @@ from apps.travel.scenario_comparison import (
     ScenarioRateDirection,
     compare_scenario_observations,
 )
+from apps.travel.scenario_schedule import TripScheduleState, evaluate_trip_schedule
 from apps.travel.scenarios import (
     SavedScenarioError,
     SavedScenarioSpec,
@@ -110,6 +114,74 @@ def _scenario_rate_comparison_component(
     }
 
 
+def _scenario_schedule_component(
+    scenario: SavedScenario,
+    *,
+    as_of: date,
+) -> dict[str, object] | None:
+    try:
+        schedule = evaluate_trip_schedule(
+            start_date=scenario.travel_start_date,
+            end_date=scenario.travel_end_date,
+            as_of=as_of,
+        )
+    except ValueError:
+        logger.warning(
+            "saved_scenario_schedule_invalid",
+            extra={"scenario_id": scenario.pk},
+        )
+        return None
+
+    if schedule.state is TripScheduleState.UNSCHEDULED:
+        return None
+
+    if schedule.state is TripScheduleState.UPCOMING:
+        days = schedule.days_until_start or 0
+        headline = "Starts tomorrow" if days == 1 else f"Starts in {days} days"
+        if days <= 7:
+            detail = (
+                "Departure is close. A reference-rate re-check can update the comparison "
+                "without changing your original saved baseline."
+            )
+        elif days <= 30:
+            detail = (
+                "This trip is coming up. Re-check the reference rate whenever you want a "
+                "new comparison against the original saved observation."
+            )
+        else:
+            detail = (
+                "The travel window is saved. Nothing refreshes automatically; the original "
+                "FX observation remains your baseline until you choose to re-check."
+            )
+    elif schedule.state is TripScheduleState.ACTIVE:
+        headline = "Travel window is active"
+        detail = (
+            "Use this plan as a reference during the saved travel window. Rate re-checks stay "
+            "explicit and never overwrite the original observation."
+        )
+    elif schedule.state is TripScheduleState.STARTED:
+        headline = "Trip start date reached"
+        detail = (
+            "No end date was saved, so the product does not assume whether travel is still active."
+        )
+    else:
+        headline = "Travel window ended"
+        detail = (
+            "This scenario remains available as a planning record. Rates and local-price context "
+            "are not silently refreshed after the trip."
+        )
+
+    return {
+        "state": schedule.state,
+        "headline": headline,
+        "detail": detail,
+        "start_date": schedule.start_date,
+        "end_date": schedule.end_date,
+        "days_until_start": schedule.days_until_start,
+        "days_since_end": schedule.days_since_end,
+    }
+
+
 def _scenario_default_title(
     *,
     destination_country: Country,
@@ -176,7 +248,16 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     if not isinstance(assumptions, BudgetAssumptions):
         raise RuntimeError("Valid budget scenario form returned no BudgetAssumptions.")
 
-    raw_title = str(request.POST.get("title", "")).strip()
+    planning_form = SavedScenarioPlanningForm(request.POST)
+    if not planning_form.is_valid():
+        first_error = next(
+            (str(message) for errors in planning_form.errors.values() for message in errors),
+            "The saved trip details are invalid.",
+        )
+        messages.error(request, f"Could not save trip timing: {first_error}")
+        return redirect("converter")
+
+    raw_title = str(planning_form.cleaned_data.get("title") or "")
     title = raw_title or _scenario_default_title(
         destination_country=destination_country,
         destination_city=destination_city,
@@ -193,6 +274,8 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         source_amount=snapshot.conversion.input_amount,
         duration_days=assumptions.duration_days,
         travelers=assumptions.travelers,
+        travel_start_date=planning_form.cleaned_data.get("travel_start_date"),
+        travel_end_date=planning_form.cleaned_data.get("travel_end_date"),
         budget_categories=assumptions.categories,
     )
 
@@ -250,6 +333,10 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
         initial_observation=initial_observation,
         latest_observation=latest_observation,
     )
+    trip_schedule = _scenario_schedule_component(
+        scenario,
+        as_of=timezone.localdate(),
+    )
 
     return render(
         request,
@@ -260,6 +347,7 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
             "initial_observation": initial_observation,
             "latest_observation": latest_observation,
             "rate_comparison": rate_comparison,
+            "trip_schedule": trip_schedule,
             "converter_url": _scenario_converter_url(scenario),
         },
     )
