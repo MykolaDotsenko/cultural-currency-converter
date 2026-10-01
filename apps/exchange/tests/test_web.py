@@ -7,7 +7,7 @@ from django.db import DatabaseError, connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
     HistoricalObservationUnavailable,
@@ -240,6 +240,24 @@ def test_htmx_conversion_returns_fragment_and_pushes_bookmarkable_url(client, re
     assert b"Frankfurter" in response.content
     assert response["HX-Push-Url"].startswith("/?convert=1&")
     assert "HX-Request" in response.get("Vary", "")
+    assert len(gateway.calls) == 1
+
+
+@pytest.mark.django_db
+def test_city_scoped_conversion_pushes_city_into_bookmarkable_url(client, reference_data):
+    _fi, jp, _eur, _jpy, _fim = reference_data
+    City.objects.create(country=jp, slug="tokyo", name="Tokyo")
+    gateway = FakeGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(
+            reverse("converter"),
+            payload(destination_city_slug="tokyo"),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert "destination_city_slug=tokyo" in response["HX-Push-Url"]
     assert len(gateway.calls) == 1
 
 
