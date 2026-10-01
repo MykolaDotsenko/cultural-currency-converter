@@ -145,8 +145,7 @@ def camera_scan_saved_scenario(
                 "candidate": candidate,
                 "form": form,
                 "currency_matches": currency_matches,
-                "display_currency": candidate.currency_code
-                or scenario.destination_currency.code,
+                "display_currency": candidate.currency_code or scenario.destination_currency.code,
             }
         )
 
