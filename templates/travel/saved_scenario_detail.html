@@ -58,12 +58,48 @@
               {% else %}
                 No duration saved
               {% endif %}
+              {% if scenario.travel_start_date %}
+                · starts {{ scenario.travel_start_date|date:"j M Y" }}
+                {% if scenario.travel_end_date %}· ends {{ scenario.travel_end_date|date:"j M Y" }}{% endif %}
+              {% endif %}
               · saved {{ scenario.created_at|date:"j M Y, H:i" }}
             </p>
           </div>
         </article>
       </div>
     </section>
+    {% if trip_schedule %}
+      <section class="qa-saved-section" aria-labelledby="scenario-readiness-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Trip timing</p>
+            <h2 id="scenario-readiness-title">{{ trip_schedule.headline }}</h2>
+            <p>{{ trip_schedule.detail }}</p>
+          </div>
+        </div>
+        <div class="qa-saved-list">
+          <article class="qa-saved-row">
+            <div class="qa-saved-row__copy">
+              <h3>
+                {{ trip_schedule.start_date|date:"j M Y" }}
+                {% if trip_schedule.end_date %}→ {{ trip_schedule.end_date|date:"j M Y" }}{% endif %}
+              </h3>
+              <p class="qa-saved-row__meta">
+                {% if trip_schedule.state == "upcoming" %}
+                  Planning anchor · {{ trip_schedule.days_until_start }} day{{ trip_schedule.days_until_start|pluralize }} until start
+                {% elif trip_schedule.state == "active" %}
+                  Saved travel window is currently active
+                {% elif trip_schedule.state == "started" %}
+                  Start date saved · no end date stored
+                {% elif trip_schedule.state == "ended" %}
+                  Saved travel window ended {{ trip_schedule.days_since_end }} day{{ trip_schedule.days_since_end|pluralize }} ago
+                {% endif %}
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="scenario-budget-title">
       <div class="qa-saved-section__heading">
         <div>
