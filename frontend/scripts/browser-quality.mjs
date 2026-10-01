@@ -493,7 +493,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await identitySummary.waitFor();
   const identitySummaryText = await identitySummary.innerText();
   const identitySummaryKind = await identitySummary.getAttribute("data-summary-kind");
-  const identitySummaryKicker = await identitySummary.locator(".qa-foundation-kicker").textContent();
+  const identitySummaryKicker = await identitySummary
+    .locator(".qa-foundation-kicker")
+    .textContent();
   assert(
     identitySummaryKind === "identity" &&
       identitySummaryKicker?.trim() === "At a glance" &&
