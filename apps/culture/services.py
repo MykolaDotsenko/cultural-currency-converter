@@ -193,8 +193,6 @@ def currency_era_links(
     )
 
 
-
-
 @dataclass(frozen=True, slots=True)
 class PurchaseEquivalent:
     minimum_count: Decimal
