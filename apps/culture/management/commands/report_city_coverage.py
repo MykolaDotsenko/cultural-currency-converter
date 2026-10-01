@@ -48,16 +48,14 @@ class Command(BaseCommand):
 
         for report in reports:
             self.stdout.write(
-                (
-                    f"{report.country_code}/{report.city_slug} · {report.city_name} · "
-                    f"currency={report.currency_code or 'NONE'} · "
-                    f"supported={report.total_supported_categories} · "
-                    f"fresh={self._categories(report.fresh_categories)} · "
-                    f"stale={self._categories(report.stale_categories)} · "
-                    f"fallback={self._categories(report.national_fallback_categories)} · "
-                    f"provenance_gaps={self._categories(report.provenance_gap_categories)} · "
-                    f"score={report.coverage_score}/100"
-                )
+                f"{report.country_code}/{report.city_slug} · {report.city_name} · "
+                f"currency={report.currency_code or 'NONE'} · "
+                f"supported={report.total_supported_categories} · "
+                f"fresh={self._categories(report.fresh_categories)} · "
+                f"stale={self._categories(report.stale_categories)} · "
+                f"fallback={self._categories(report.national_fallback_categories)} · "
+                f"provenance_gaps={self._categories(report.provenance_gap_categories)} · "
+                f"score={report.coverage_score}/100"
             )
             self.stdout.write(f"  {report.summary}")
 
