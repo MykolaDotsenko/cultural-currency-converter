@@ -14,6 +14,7 @@ from apps.exchange.ai.contracts import (
     ExplanationDrafter,
     ExplanationResult,
 )
+from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
 from apps.exchange.ai.packets import build_explanation_packet
 from apps.exchange.ai.prompts import PROMPT_VERSION, SCHEMA_VERSION
 from apps.exchange.ai.providers.gemini import GeminiExplanationDrafter
@@ -59,9 +60,10 @@ class RuntimeExplanationService:
         self,
         snapshot: TrustedConversionSnapshot,
         *,
+        intent: ExplanationIntent = ExplanationIntent.OVERVIEW,
         locale: str = "en",
     ) -> ExplanationDelivery:
-        packet = build_explanation_packet(snapshot, locale=locale)
+        packet = build_explanation_packet(snapshot, intent=intent, locale=locale)
         cache_key = _persistent_cache_key(
             packet_hash=packet.packet_hash,
             model=self.model,
@@ -106,6 +108,7 @@ class RuntimeExplanationService:
         if not self.enabled or self._drafter is None:
             return _fallback_delivery(
                 snapshot,
+                intent=intent,
                 packet_hash=packet.packet_hash,
                 reason="AI explanation is disabled.",
             )
@@ -114,6 +117,7 @@ class RuntimeExplanationService:
         if _safe_cache_get(cooldown_key):
             return _fallback_delivery(
                 snapshot,
+                intent=intent,
                 packet_hash=packet.packet_hash,
                 reason="Live AI is temporarily cooling down.",
             )
@@ -123,6 +127,7 @@ class RuntimeExplanationService:
         if lock_acquired is False:
             return _fallback_delivery(
                 snapshot,
+                intent=intent,
                 packet_hash=packet.packet_hash,
                 reason="An identical explanation is already being generated.",
             )
@@ -350,66 +355,130 @@ def _persistent_cache_key(*, packet_hash: str, model: str, locale: str) -> str:
 def _fallback_delivery(
     snapshot: TrustedConversionSnapshot,
     *,
+    intent: ExplanationIntent,
     packet_hash: str,
     reason: str,
 ) -> ExplanationDelivery:
-    bullet_specs: list[tuple[str, tuple[str, ...]]] = [
-        (
+    spec = explanation_intent_spec(intent)
+    if intent is ExplanationIntent.RATE_MEANING:
+        headline = "What this reference rate means"
+        bullet_specs = [
             (
-                f"{format(snapshot.input_amount, 'f')} {snapshot.base_currency} is approximately "
-                f"{format(snapshot.output_amount, 'f')} {snapshot.quote_currency} at the displayed "
-                "reference observation."
+                (
+                    f"The displayed reference rate is 1 {snapshot.base_currency} = "
+                    f"{format(snapshot.rate, 'f')} {snapshot.quote_currency}."
+                ),
+                ("rate",),
             ),
-            ("conversion",),
-        ),
-        (
             (
-                f"The displayed reference rate is 1 {snapshot.base_currency} = "
-                f"{format(snapshot.rate, 'f')} {snapshot.quote_currency}."
+                f"The effective observation date is {snapshot.effective_date.isoformat()}.",
+                ("effective_date",),
             ),
-            ("rate",),
-        ),
-    ]
-
-    if snapshot.historical and snapshot.requested_date is not None:
-        if snapshot.requested_date == snapshot.effective_date:
+        ]
+    elif intent is ExplanationIntent.PAYMENT_DIFFERENCE:
+        headline = "Why a bank or card result can differ"
+        bullet_specs = [
+            (
+                (
+                    "The displayed exchange rate is a reference observation. A payment provider "
+                    "may use a different rate or add fees."
+                ),
+                ("reference_scope",),
+            )
+        ]
+    elif intent is ExplanationIntent.HISTORICAL_CONTEXT:
+        headline = "What this historical reference represents"
+        bullet_specs = [
+            (
+                "This is a historical reference observation, not a current market quote.",
+                ("historical_status",),
+            ),
+            (
+                f"The accepted observation date is {snapshot.effective_date.isoformat()}.",
+                ("effective_date",),
+            ),
+        ]
+        if snapshot.requested_date is not None:
             bullet_specs.append(
                 (
-                    f"The historical observation date is {snapshot.effective_date.isoformat()}.",
-                    ("effective_date", "historical_status"),
+                    f"The requested historical date is {snapshot.requested_date.isoformat()}.",
+                    ("requested_date",),
                 )
             )
-        else:
-            bullet_specs.append(
-                (
-                    (
-                        f"You requested {snapshot.requested_date.isoformat()}; the accepted "
-                        f"observation is {snapshot.effective_date.isoformat()}."
-                    ),
-                    ("requested_date", "effective_date"),
-                )
-            )
-    elif snapshot.stale:
-        bullet_specs.append(
+    elif intent is ExplanationIntent.STALE_REFERENCE:
+        headline = "Why this reference is marked cached"
+        bullet_specs = [
             (
                 (
                     "The displayed result is a labelled cached reference because a fresh provider "
                     "response was unavailable."
                 ),
                 ("stale_status",),
-            )
-        )
-    else:
-        bullet_specs.append(
+            ),
             (
-                f"The effective observation date is {snapshot.effective_date.isoformat()}.",
+                f"The cached observation is effective {snapshot.effective_date.isoformat()}.",
                 ("effective_date",),
+            ),
+        ]
+    else:
+        headline = "What this reference conversion means"
+        bullet_specs = [
+            (
+                (
+                    f"{format(snapshot.input_amount, 'f')} {snapshot.base_currency} is approximately "
+                    f"{format(snapshot.output_amount, 'f')} {snapshot.quote_currency} at the displayed "
+                    "reference observation."
+                ),
+                ("conversion",),
+            ),
+            (
+                (
+                    f"The displayed reference rate is 1 {snapshot.base_currency} = "
+                    f"{format(snapshot.rate, 'f')} {snapshot.quote_currency}."
+                ),
+                ("rate",),
+            ),
+        ]
+
+        if snapshot.historical and snapshot.requested_date is not None:
+            if snapshot.requested_date == snapshot.effective_date:
+                bullet_specs.append(
+                    (
+                        f"The historical observation date is {snapshot.effective_date.isoformat()}.",
+                        ("effective_date", "historical_status"),
+                    )
+                )
+            else:
+                bullet_specs.append(
+                    (
+                        (
+                            f"You requested {snapshot.requested_date.isoformat()}; the accepted "
+                            f"observation is {snapshot.effective_date.isoformat()}."
+                        ),
+                        ("requested_date", "effective_date"),
+                    )
+                )
+        elif snapshot.stale:
+            bullet_specs.append(
+                (
+                    (
+                        "The displayed result is a labelled cached reference because a fresh provider "
+                        "response was unavailable."
+                    ),
+                    ("stale_status",),
+                )
             )
-        )
+        else:
+            bullet_specs.append(
+                (
+                    f"The effective observation date is {snapshot.effective_date.isoformat()}.",
+                    ("effective_date",),
+                )
+            )
 
     return ExplanationDelivery(
         result=ExplanationResult(
-            headline="What this reference conversion means",
+            headline=headline,
             bullets=tuple(
                 ExplanationBullet(text=text, supporting_fact_ids=fact_ids)
                 for text, fact_ids in bullet_specs
@@ -420,7 +489,7 @@ def _fallback_delivery(
             ),
             generated=False,
             source_label="Built-in explanation",
-            fallback_reason=reason,
+            fallback_reason=reason or spec.question,
         ),
         cache_status="deterministic_fallback",
         packet_hash=packet_hash,
