@@ -144,12 +144,42 @@
             <p class="eyebrow">Money use</p>
             <h2 id="payment-title">Payment context</h2>
             {% with payment=pack.destination_context.payment %}
-              {% if payment.summary %}<div class="row"><h3>Overview</h3><p>{{ payment.summary }}</p></div>{% endif %}
-              {% if payment.payment_customs %}<div class="row"><h3>Payment customs</h3><p>{{ payment.payment_customs }}</p></div>{% endif %}
-              {% if payment.cash_usage %}<div class="row"><h3>Cash</h3><p>{{ payment.cash_usage }}</p></div>{% endif %}
-              {% if payment.tipping %}<div class="row"><h3>Tipping</h3><p>{{ payment.tipping }}</p></div>{% endif %}
-              {% if payment.atm_notes %}<div class="row"><h3>ATM</h3><p>{{ payment.atm_notes }}</p></div>{% endif %}
-              {% if payment.dcc_warning %}<div class="row"><h3>DCC</h3><p>{{ payment.dcc_warning }}</p></div>{% endif %}
+              {% if payment.summary %}
+                <div class="row">
+                  <h3>Overview</h3>
+                  <p>{{ payment.summary }}</p>
+                </div>
+              {% endif %}
+              {% if payment.payment_customs %}
+                <div class="row">
+                  <h3>Payment customs</h3>
+                  <p>{{ payment.payment_customs }}</p>
+                </div>
+              {% endif %}
+              {% if payment.cash_usage %}
+                <div class="row">
+                  <h3>Cash</h3>
+                  <p>{{ payment.cash_usage }}</p>
+                </div>
+              {% endif %}
+              {% if payment.tipping %}
+                <div class="row">
+                  <h3>Tipping</h3>
+                  <p>{{ payment.tipping }}</p>
+                </div>
+              {% endif %}
+              {% if payment.atm_notes %}
+                <div class="row">
+                  <h3>ATM</h3>
+                  <p>{{ payment.atm_notes }}</p>
+                </div>
+              {% endif %}
+              {% if payment.dcc_warning %}
+                <div class="row">
+                  <h3>DCC</h3>
+                  <p>{{ payment.dcc_warning }}</p>
+                </div>
+              {% endif %}
               <p class="source">
                 Verified {{ payment.verified_at|date:"j M Y" }} · source:
                 <a href="{{ payment.source_url }}"
