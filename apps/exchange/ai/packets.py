@@ -4,7 +4,7 @@ from apps.exchange.ai.contracts import ExplanationPacket, GroundedFact
 from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
 from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 
-PACKET_VERSION = "exchange-conversion:v1"
+PACKET_VERSION = "exchange-conversion:v2"
 
 
 def build_explanation_packet(
