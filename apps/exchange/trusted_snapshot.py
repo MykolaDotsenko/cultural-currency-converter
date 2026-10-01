@@ -7,15 +7,18 @@ from typing import Any
 
 from django.core import signing
 
-from apps.exchange.domain import ConversionResult, ObservationGranularity, normalize_currency_code
+from apps.exchange.domain import (
+    MAX_PROVIDER_KEY_LENGTH,
+    MAX_PROVIDER_KEYS,
+    ConversionResult,
+    ObservationGranularity,
+    normalize_currency_code,
+)
 
 # Keep the original runtime-explanation salt so snapshots created before this
 # boundary was generalized remain valid for their normal short lifetime.
 _TOKEN_SALT = "exchange.runtime-explanation:v1"
 TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60
-MAX_PROVIDER_KEYS = 128
-MAX_PROVIDER_KEY_LENGTH = 80
-
 
 class TrustedSnapshotTokenError(ValueError):
     pass
