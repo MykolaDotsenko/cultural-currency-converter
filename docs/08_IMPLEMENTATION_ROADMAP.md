@@ -14,6 +14,7 @@ The web product already includes:
 - smart country/currency filtering across current, shared and historical relationships;
 - explicit-assumption Real Payment Estimate for current non-identity conversions;
 - destination payment/everyday-value context;
+- destination-first country/city planning that resolves into the canonical converter and preserves canonical city scope;
 - deterministic culture/story content;
 - managed raster media with provenance/review;
 - optional AI explanation with deterministic fallback;
@@ -34,6 +35,7 @@ The following previously planned items are now part of the current product basel
 - **#10 Real Payment Estimate — shipped first production slice.** Current non-identity conversions can apply explicit FX markup plus source/destination fixed-fee assumptions through a signed trusted conversion snapshot. Reusable saved fee profiles remain future work.
 - **#23 Historical quick ranges and anchor values — shipped.** The historical-series UI supports 1Y / 5Y / 10Y / custom ranges with selected/minimum/maximum/last observations, provider/stale context and Then & Now where available.
 - **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope now travels through the same contract instead of using a parallel path. This is the foundation for budget, comparison, trip, camera and mobile/offline work; those higher-level workflows are not shipped yet.
+- **#34 Destination mode — shipped first production slice.** Manual country/canonical-city selection resolves the current primary local currency, preserves explicit city scope where available and redirects into the canonical converter. The destination entry surface makes no FX-provider call and uses no device location.
 
 ## Now: premium visual pass
 
@@ -248,15 +250,6 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
 
 Items already represented elsewhere—destination comparison, trip dashboard/detail, saved trips, alerts, share cards and payment profiles—remain part of their existing roadmap entries rather than being duplicated here.
 
-### Fifth expansion wave from the market assessment
-
-The market assessment adds one genuinely new user-facing capability above the **60/100 usefulness + distinctiveness threshold**; the other strongest recommendations reinforce existing roadmap items rather than creating duplicates.
-
-34. **Destination mode — 91/100**
-   - Let the user start with “I’m in / I’m going to” a country or city and receive the relevant local currency plus scoped money context without first constructing a currency pair.
-   - Manual destination selection is the baseline; device-location assistance, if ever added, must be optional and privacy-preserving.
-   - Reuse country/currency temporal logic, city-level context, payment guidance, My Places and saved-trip flows rather than introducing a parallel destination data model.
-
 ### Sixth expansion wave: retention and trip continuity
 
 The retention strategy adds three non-duplicative capabilities that strengthen the natural travel lifecycle instead of manufacturing generic daily engagement.
@@ -280,9 +273,9 @@ The retention strategy adds three non-duplicative capabilities that strengthen t
 
 Retention work should follow the dependency order of the product, not engagement-fashion conventions.
 
-**P0:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode.
+**P0 foundation sequence:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode. First production slices now exist through Destination Mode.
 
-**P1:** Camera → Add confirmed expense to trip → Trip Budget Remaining → Offline destination packs → Returning-user trip home.
+**P1 next:** Camera → Add confirmed expense to trip → Trip Budget Remaining → Offline destination packs → Returning-user trip home.
 
 **P2:** Scenario-based notifications → mobile quick actions/widget → destination comparison → Explore.
 
