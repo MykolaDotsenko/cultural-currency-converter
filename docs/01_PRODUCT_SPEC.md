@@ -64,7 +64,9 @@ Saved budget scenarios can now export a first **Offline Destination Pack** as a 
 
 The first **Returning-user Trip Home** slice now brings saved-trip continuity back to the clean converter home for authenticated users. It selects one relevant active/started/upcoming account-owned trip, shows stored trip-budget meaning and stored since-saved FX change when available, surfaces reviewed local-context freshness, and offers direct next actions. It performs no live FX request, never displaces a conversion deep link or explicitly loaded pair, and remains absent for anonymous/new users and ended/unscheduled scenarios.
 
-Future mobile/PWA delivery should reuse the same saved-observation, trip-budget and versioned offline-snapshot meaning rather than create parallel calculations or silently cache live pages.
+The first **Explore** slice is a provider-free discovery surface over already-reviewed current money context. It reuses the canonical current primary currency, canonical city identity and DestinationContext freshness/provenance rules instead of introducing a second destination-data model. Country cards may be supported by reviewed national price anchors and/or payment guidance; city cards require explicit canonical city price evidence and do not appear merely because national fallback exists. Explore is alphabetical and descriptive: it does not request live FX, call AI, rank destinations, infer purchasing power or manufacture missing price/payment claims. Opening a destination hands the scope back to the canonical converter.
+
+Future mobile/PWA delivery should reuse the same saved-observation, trip-budget, destination-context and versioned offline-snapshot meaning rather than create parallel calculations or silently cache live pages.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 
