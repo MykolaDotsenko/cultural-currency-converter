@@ -132,6 +132,11 @@ def test_converter_never_builds_ai_service_before_explicit_explain_click(client,
     assert b"What does this rate mean?" in response.content
     assert b"Why might my bank or card differ?" in response.content
     assert b'name="prompt_id"' in response.content
+    assert b'data-ai-explanation-trigger' in response.content
+    assert b'aria-controls="conversion-explanation-region"' in response.content
+    assert b'hx-disabled-elt="this"' in response.content
+    assert b'aria-busy="false"' in response.content
+    assert b'role="status"' in response.content
     assert b"answer an arbitrary prompt" in response.content
     assert _extract_token(response.content)
     ai_factory.assert_not_called()
@@ -229,6 +234,8 @@ def test_explicit_htmx_explain_uses_signed_snapshot_and_ignores_arbitrary_prompt
     assert b"What matters most" in response.content
     assert b"Watch out for" in response.content
     assert b"Next step" in response.content
+    assert b'data-ai-explanation-focus' in response.content
+    assert b'tabindex="-1"' in response.content
     assert len(service.snapshots) == 1
     snapshot = service.snapshots[0]
     assert snapshot.base_currency == "EUR"
@@ -316,6 +323,7 @@ def test_non_javascript_explanation_post_returns_full_page(client, reference_dat
     assert b"<html" in response.content
     assert b"Reference conversion, in plain language" in response.content
     assert b"Back to converter" in response.content
+    assert b"Return to the converter" not in response.content
 
 
 @pytest.mark.django_db
@@ -343,6 +351,7 @@ def test_provider_fallback_is_explicit_but_conversion_truth_is_unchanged(client,
     assert response.status_code == 200
     assert b"Built-in explanation" in response.content
     assert b"Live AI is unavailable" in response.content
+    assert b"Choose the same question again to retry" in response.content
 
 
 @pytest.mark.django_db
