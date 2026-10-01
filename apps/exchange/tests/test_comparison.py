@@ -203,6 +203,9 @@ def test_complete_comparison_preserves_each_destination_scope_and_local_currency
     assert result.left.destination_city_slug == "tokyo"
     assert result.left.currency_code == "JPY"
     assert result.left.converted_amount == Decimal("3000")
+    assert result.left.destination_state is MoneyContextState.AVAILABLE
+    assert result.left.conversion.quote.effective_date == date(2026, 10, 1)
+    assert result.left.conversion.quote.provider_keys == ("ecb",)
     assert result.left.budget.state is BudgetInterpretationState.COMPLETE
     assert all(line.scope is BudgetScope.CITY for line in result.left.budget.lines)
 
@@ -210,6 +213,8 @@ def test_complete_comparison_preserves_each_destination_scope_and_local_currency
     assert result.right.destination_city_slug == ""
     assert result.right.currency_code == "NOK"
     assert result.right.converted_amount == Decimal("1200.00")
+    assert result.right.destination_state is MoneyContextState.AVAILABLE
+    assert result.right.conversion.quote.effective_date == date(2026, 10, 1)
     assert result.right.budget.state is BudgetInterpretationState.COMPLETE
     assert all(line.scope is BudgetScope.NATIONAL for line in result.right.budget.lines)
     assert result.left.payment_guidance is not None
@@ -330,6 +335,36 @@ def test_comparison_rejects_identical_destination_scope():
             assumptions=_assumptions(),
             left_minor_units=0,
             right_minor_units=0,
+        )
+
+
+def test_same_destination_scope_is_rejected_even_if_currency_differs():
+    left = _context(
+        country_code="JP",
+        country_name="Japan",
+        currency_code="JPY",
+        output_amount=Decimal("3000"),
+        minor_units=0,
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+    right = _context(
+        country_code="JP",
+        country_name="Japan",
+        currency_code="NOK",
+        output_amount=Decimal("1200"),
+        minor_units=2,
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+
+    with pytest.raises(DestinationComparisonError, match="different destination"):
+        compare_destinations(
+            left,
+            right,
+            assumptions=_assumptions(),
+            left_minor_units=0,
+            right_minor_units=2,
         )
 
 
