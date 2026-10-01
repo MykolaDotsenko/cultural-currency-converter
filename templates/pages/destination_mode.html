@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Plan by destination · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Start with a destination and let Cultural Currency Converter resolve the current local currency before opening the trusted converter.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-destination-mode-intro"
+           aria-labelledby="destination-mode-title">
+    <p class="qa-foundation-kicker">Destination mode</p>
+    <h1 id="destination-mode-title">Start with the place.</h1>
+    <p class="qa-foundation-lede">
+      Tell us what money you have and where you are going. We resolve the current primary local
+      currency, then continue through the same trusted converter, rate source and Money Context
+      Engine.
+    </p>
+  </section>
+
+  <section class="qa-destination-mode" aria-labelledby="destination-mode-form-title">
+    <div class="qa-destination-mode__instrument">
+      <div class="qa-destination-mode__heading">
+        <p class="qa-foundation-kicker">Plan a reference conversion</p>
+        <h2 id="destination-mode-form-title">What does my money mean there?</h2>
+      </div>
+
+      {% if form.errors %}
+        <div class="qa-inline-alert qa-inline-alert--error"
+             id="destination-mode-errors"
+             role="alert"
+             tabindex="-1">
+          <h3>Check these details</h3>
+          <ul class="qa-error-summary">
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if reference_data_ready %}
+        <form method="post"
+              action="{% url 'destination_mode' %}"
+              class="qa-destination-mode__form">
+          {% csrf_token %}
+          <div class="qa-destination-mode__money">
+            <div class="qa-field{% if form.amount.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ form.amount.id_for_label }}">Amount</label>
+              {{ form.amount }}
+              {% if form.amount.errors %}
+                <p class="qa-field__message qa-field__message--error" id="amount-error">
+                  {{ form.amount.errors.0 }}
+                </p>
+              {% else %}
+                <p class="qa-field__message">Use a decimal point or comma. No thousands separator.</p>
+              {% endif %}
+            </div>
+            <div class="qa-field{% if form.source_currency.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ form.source_currency.id_for_label }}">
+                Your currency
+              </label>
+              {{ form.source_currency }}
+              {% if form.source_currency.errors %}
+                <p class="qa-field__message qa-field__message--error" id="source_currency-error">
+                  {{ form.source_currency.errors.0 }}
+                </p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="qa-field qa-destination-mode__destination{% if form.destination.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label" for="{{ form.destination.id_for_label }}">
+              Where are you going?
+            </label>
+            {{ form.destination }}
+            {% if form.destination.errors %}
+              <p class="qa-field__message qa-field__message--error" id="destination-error">
+                {{ form.destination.errors.0 }}
+              </p>
+            {% else %}
+              <p class="qa-field__message">
+                Choose a city when available for city-scoped local-value context, or choose the
+                country for national context.
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="qa-destination-mode__action">
+            <button class="qa-primary-button" type="submit">Open destination conversion</button>
+            <p>
+              No rate is requested on this page. The next screen uses the canonical converter and
+              shows the provider and effective date.
+            </p>
+          </div>
+        </form>
+      {% else %}
+        <div class="qa-inline-alert" role="status">
+          <h3>Destination reference data is unavailable.</h3>
+          <p>The converter remains available, but destination-first planning cannot resolve a local currency yet.</p>
+          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="qa-destination-mode__principles" aria-label="Destination mode trust model">
+      <p class="qa-foundation-kicker">Same engine, less setup</p>
+      <dl>
+        <div>
+          <dt>Currency</dt>
+          <dd>Resolved from the current primary country-currency relationship.</dd>
+        </div>
+        <div>
+          <dt>City context</dt>
+          <dd>Applied only when a canonical city is explicitly selected.</dd>
+        </div>
+        <div>
+          <dt>Rate trust</dt>
+          <dd>Provider, effective date, stale state and payment caveats stay unchanged.</dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+{% endblock %}
