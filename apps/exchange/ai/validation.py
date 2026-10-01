@@ -97,11 +97,7 @@ def validate_provider_payload(
     )
 
     insights = (short_answer, *key_factors, watch_out_for, next_step)
-    cited_fact_ids = {
-        fact_id
-        for insight in insights
-        for fact_id in insight.supporting_fact_ids
-    }
+    cited_fact_ids = {fact_id for insight in insights for fact_id in insight.supporting_fact_ids}
     missing_required = set(packet.required_fact_ids) - cited_fact_ids
     if missing_required:
         raise ExplanationValidationError(
@@ -142,9 +138,7 @@ def _validated_insight(
     known_fact_ids = packet.fact_ids
     for fact_id in raw_ids:
         if not isinstance(fact_id, str) or fact_id not in known_fact_ids:
-            raise ExplanationValidationError(
-                f"Explanation {field} references an unknown fact ID."
-            )
+            raise ExplanationValidationError(f"Explanation {field} references an unknown fact ID.")
         if fact_id not in fact_ids:
             fact_ids.append(fact_id)
 
