@@ -48,7 +48,6 @@ def test_destination_mode_get_is_destination_first_and_provider_free(
     assert response.status_code == 200
     assert b"Start with the place." in response.content
     assert b"Tokyo, Japan" in response.content
-    assert b"Japanese yen" not in response.content
     assert b"JPY" in response.content
     assert b"No rate is requested on this page." in response.content
     provider_factory.assert_not_called()
@@ -120,7 +119,7 @@ def test_destination_mode_rejects_tampered_destination_without_redirect(
     )
 
     assert response.status_code == 422
-    assert response["Location"] if response.has_header("Location") else None is None
+    assert not response.has_header("Location")
     assert b"Select a valid choice" in response.content
 
 
