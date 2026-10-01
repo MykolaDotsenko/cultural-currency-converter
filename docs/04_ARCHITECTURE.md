@@ -128,7 +128,7 @@ Camera extraction is a separate sensitive-input boundary and does not bypass Mon
 - confirmation itself never writes spend;
 - a separate explicit POST consumes the short-lived scenario-scoped confirmed token and routes it through the existing idempotent `SavedScenarioSpendEntry` service with source=`camera`;
 - the signed token is the sole amount/currency source for that handoff; an editable browser amount cannot override it;
-- the spend idempotency key is deterministically derived from the exact confirmed token, so replaying the same handoff cannot double-count the trip budget.
+- the confirmed token carries a signed unique confirmation id that becomes the spend idempotency key, so replaying the same handoff cannot double-count the trip budget while another explicit confirmation remains independent.
 
 This keeps OCR/model uncertainty upstream of deterministic financial persistence and keeps Camera persistence inside the same spend contract as manual confirmation.
 
