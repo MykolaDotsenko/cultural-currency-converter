@@ -76,6 +76,8 @@ jobs:
         if: matrix.python-version == '3.13'
         run: >-
           mypy
+          apps/culture/price_quality.py
+          apps/culture/city_health.py
           apps/exchange/domain.py
           apps/exchange/budget.py
           apps/exchange/camera.py
