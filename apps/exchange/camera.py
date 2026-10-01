@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import io
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
-from typing import Any, Mapping, Protocol
+from typing import Any, Protocol
 from warnings import catch_warnings, simplefilter
 
 from django.core import signing
