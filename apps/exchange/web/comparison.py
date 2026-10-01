@@ -10,7 +10,10 @@ from django.views.decorators.http import require_http_methods
 
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.cache import LatestQuoteGateway
-from apps.exchange.comparison import DestinationComparisonError, compare_destinations
+from apps.exchange.comparison import (
+    DestinationComparisonError,
+    compare_destinations,
+)
 from apps.exchange.comparison_presentation import build_destination_comparison_component
 from apps.exchange.forms import DestinationComparisonForm
 
