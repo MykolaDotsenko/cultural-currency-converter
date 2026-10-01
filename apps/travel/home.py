@@ -64,7 +64,9 @@ class ReturningTripHome:
     @property
     def destination_label(self) -> str:
         if self.scenario.destination_city is not None:
-            return f"{self.scenario.destination_city.name}, {self.scenario.destination_country.name}"
+            return (
+                f"{self.scenario.destination_city.name}, {self.scenario.destination_country.name}"
+            )
         if self.scenario.destination_country is not None:
             return self.scenario.destination_country.name
         return self.scenario.destination_currency.code
@@ -261,7 +263,9 @@ def _current_destination_context(
             quote_currency=scenario.destination_currency.code,
             as_of=as_of,
             price_limit=3,
-            city_slug=scenario.destination_city.slug if scenario.destination_city is not None else "",
+            city_slug=scenario.destination_city.slug
+            if scenario.destination_city is not None
+            else "",
         )
     except (DatabaseError, DecimalException, ValueError) as exc:
         logger.warning(
