@@ -16,6 +16,14 @@ _EURO_GERMANY_SOURCE = (
 _SWEDISH_KRONA_SOURCE = "https://www.riksbank.se/en-gb/payments--cash/what-is-money/"
 _DANISH_KRONE_SOURCE = "https://www.nationalbanken.dk/en/what-we-do/stable-prices-monetary-policy-and-the-danish-economy/exchange-rates"
 _NORWEGIAN_KRONE_SOURCE = "https://www.norges-bank.no/en/topics/Statistics/exchange_rates/"
+_SINGAPORE_DOLLAR_SOURCE = (
+    "https://www.mas.gov.sg/monetary-policy/Singapores-Monetary-Policy-Framework"
+)
+_CANADIAN_DOLLAR_SOURCE = "https://www.bankofcanada.ca/2026/02/what-is-money/"
+_NEW_ZEALAND_DOLLAR_SOURCE = (
+    "https://www.rbnz.govt.nz/en/statistics/series/reserve-bank/"
+    "bank-notes-in-the-hands-of-the-public"
+)
 
 
 class Command(BaseCommand):
@@ -31,6 +39,9 @@ class Command(BaseCommand):
             "DK": ("DNK", "Denmark"),
             "NO": ("NOR", "Norway"),
             "DE": ("DEU", "Germany"),
+            "SG": ("SGP", "Singapore"),
+            "CA": ("CAN", "Canada"),
+            "NZ": ("NZL", "New Zealand"),
         }
         currencies = {
             "EUR": ("Euro", "€", 2, True, None, None),
@@ -39,6 +50,9 @@ class Command(BaseCommand):
             "SEK": ("Swedish krona", "kr", 2, True, None, None),
             "DKK": ("Danish krone", "kr", 2, True, None, None),
             "NOK": ("Norwegian krone", "kr", 2, True, None, None),
+            "SGD": ("Singapore dollar", "S$", 2, True, None, None),
+            "CAD": ("Canadian dollar", "$", 2, True, None, None),
+            "NZD": ("New Zealand dollar", "$", 2, True, None, None),
             "FIM": ("Finnish markka", "mk", 2, False, None, date(2001, 12, 31)),
         }
 
@@ -96,6 +110,9 @@ class Command(BaseCommand):
             ("DK", "DKK", True, None, None, "current_primary", _DANISH_KRONE_SOURCE),
             ("NO", "NOK", True, None, None, "current_primary", _NORWEGIAN_KRONE_SOURCE),
             ("DE", "EUR", True, None, None, "current_primary", _EURO_GERMANY_SOURCE),
+            ("SG", "SGD", True, None, None, "current_primary", _SINGAPORE_DOLLAR_SOURCE),
+            ("CA", "CAD", True, None, None, "current_primary", _CANADIAN_DOLLAR_SOURCE),
+            ("NZ", "NZD", True, None, None, "current_primary", _NEW_ZEALAND_DOLLAR_SOURCE),
         ]
         for iso2, code, primary, valid_from, valid_to, role, source in relationships:
             CountryCurrency.objects.update_or_create(

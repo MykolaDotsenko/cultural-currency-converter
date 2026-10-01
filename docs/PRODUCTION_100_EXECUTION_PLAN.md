@@ -297,6 +297,8 @@ Expand to high-value Asia/Oceania/North America destinations with the same quali
 
 No city ships simply to increase destination count.
 
+**Current production slice:** the second reviewed wave adds Tokyo, Singapore, Toronto and Auckland after source-quality review rather than filling a geographic quota. Singapore, Toronto and Auckland each seed four direct city-scoped core anchors; Tokyo reuses the already-reviewed authoritative Tokyo Metro fare and adds city-specific coffee, casual-meal and fixed grocery-basket anchors. All four cities therefore reach 4/4 direct fresh core coverage with current primary currencies, HTTPS provenance and no national fallback. Everyday-price rows remain explicitly approximate/contextual with medium confidence, while transit rows remain authoritative/high-confidence and cite the relevant public transport authority. The wave adds SGD, CAD and NZD reference relationships from central-bank sources and continues to validate every new city-price row through the existing #188 quality contract. Sydney is intentionally not included in this slice because the reviewed official fare source did not provide a sufficiently stable machine-verifiable fare table for an authoritative seeded anchor.
+
 ## PR #192 — City Money Profile UX
 
 Create a coherent city money profile using existing canonical context:

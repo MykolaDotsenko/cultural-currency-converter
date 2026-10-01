@@ -64,7 +64,10 @@ def test_destination_context_seed_is_sourced_and_idempotent():
     call_command("seed_destination_context", stdout=second)
 
     profile = CulturalProfile.objects.get(country__iso2="JP")
-    prices = TypicalPrice.objects.filter(country__iso2="JP").order_by("display_order")
+    prices = TypicalPrice.objects.filter(
+        country__iso2="JP",
+        observed_at=date(2026, 9, 21),
+    ).order_by("display_order")
 
     assert profile.is_published is True
     assert profile.source_name == "Japan National Tourism Organization (JNTO)"
@@ -237,3 +240,149 @@ def test_destination_context_seed_reports_city_wave_idempotency():
 
     assert "City price wave 1 is ready: created=24, existing=0." in first.getvalue()
     assert "City price wave 1 is ready: created=0, existing=24." in second.getvalue()
+
+
+@pytest.mark.django_db
+def test_curated_city_wave_two_has_deep_canonical_core_coverage():
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+    expected = {
+        ("JP", "tokyo"): ("Tokyo", "JPY"),
+        ("SG", "singapore"): ("Singapore", "SGD"),
+        ("CA", "toronto"): ("Toronto", "CAD"),
+        ("NZ", "auckland"): ("Auckland", "NZD"),
+    }
+
+    for (country_code, city_slug), (city_name, currency_code) in expected.items():
+        city = City.objects.get(country__iso2=country_code, slug=city_slug)
+        assert city.name == city_name
+        assert city.is_active is True
+
+        prices = TypicalPrice.objects.filter(city_ref=city, is_published=True)
+        assert prices.count() == 4
+        assert set(prices.values_list("category", flat=True)) == set(CITY_COVERAGE_CORE_CATEGORIES)
+        assert set(prices.values_list("currency__code", flat=True)) == {currency_code}
+        assert set(prices.values_list("city", flat=True)) == {city_name}
+        assert all(price.source_url.startswith("https://") for price in prices)
+        assert all(price.verified_at is not None for price in prices)
+        assert all(price.amount_low > 0 for price in prices)
+
+        report = build_city_coverage_health(
+            as_of=date(2026, 10, 1),
+            country_code=country_code,
+            city_slug=city_slug,
+        )
+        assert len(report) == 1
+        assert report[0].fresh_categories == CITY_COVERAGE_CORE_CATEGORIES
+        assert report[0].stale_categories == ()
+        assert report[0].national_fallback_categories == ()
+        assert report[0].provenance_gap_categories == ()
+        assert report[0].coverage_score == 100
+
+    tokyo_transit = TypicalPrice.objects.get(
+        city_ref__country__iso2="JP",
+        city_ref__slug="tokyo",
+        category=TypicalPriceCategory.TRANSIT,
+    )
+    assert tokyo_transit.source_name == "Tokyo Metro"
+    assert tokyo_transit.observed_at == date(2026, 9, 21)
+
+
+@pytest.mark.django_db
+def test_curated_city_wave_two_preserves_source_trust_classes():
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+    wave_prices = TypicalPrice.objects.filter(
+        city_ref__country__iso2__in={"JP", "SG", "CA", "NZ"},
+        city_ref__slug__in={"tokyo", "singapore", "toronto", "auckland"},
+        is_published=True,
+    )
+    assert wave_prices.count() == 16
+
+    transit = wave_prices.filter(category=TypicalPriceCategory.TRANSIT)
+    contextual = wave_prices.exclude(category=TypicalPriceCategory.TRANSIT)
+
+    assert transit.count() == 4
+    assert contextual.count() == 12
+    assert set(transit.values_list("source_class", flat=True)) == {
+        TypicalPriceSourceClass.AUTHORITATIVE
+    }
+    assert set(transit.values_list("confidence", flat=True)) == {TypicalPriceConfidence.HIGH}
+    assert set(contextual.values_list("source_class", flat=True)) == {
+        TypicalPriceSourceClass.APPROXIMATE_CONTEXTUAL
+    }
+    assert set(contextual.values_list("confidence", flat=True)) == {TypicalPriceConfidence.MEDIUM}
+
+
+@pytest.mark.django_db
+def test_curated_city_wave_two_keeps_reviewed_price_ranges_stable():
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+    expected_ranges = {
+        ("JP", "tokyo", TypicalPriceCategory.COFFEE): ("261.24", "900.00"),
+        ("JP", "tokyo", TypicalPriceCategory.CASUAL_MEAL): ("800.00", "2000.00"),
+        ("JP", "tokyo", TypicalPriceCategory.TRANSIT): ("180.00", "330.00"),
+        ("JP", "tokyo", TypicalPriceCategory.GROCERIES): ("1280.00", "2248.00"),
+        ("SG", "singapore", TypicalPriceCategory.COFFEE): ("4.23", "8.00"),
+        ("SG", "singapore", TypicalPriceCategory.CASUAL_MEAL): ("7.00", "25.00"),
+        ("SG", "singapore", TypicalPriceCategory.TRANSIT): ("1.28", "2.57"),
+        ("SG", "singapore", TypicalPriceCategory.GROCERIES): ("8.46", "24.00"),
+        ("CA", "toronto", TypicalPriceCategory.COFFEE): ("3.00", "8.00"),
+        ("CA", "toronto", TypicalPriceCategory.CASUAL_MEAL): ("16.00", "39.00"),
+        ("CA", "toronto", TypicalPriceCategory.TRANSIT): ("3.30", "3.35"),
+        ("CA", "toronto", TypicalPriceCategory.GROCERIES): ("9.57", "25.99"),
+        ("NZ", "auckland", TypicalPriceCategory.COFFEE): ("5.08", "8.00"),
+        ("NZ", "auckland", TypicalPriceCategory.CASUAL_MEAL): ("20.00", "40.00"),
+        ("NZ", "auckland", TypicalPriceCategory.TRANSIT): ("3.00", None),
+        ("NZ", "auckland", TypicalPriceCategory.GROCERIES): ("13.94", "26.20"),
+    }
+
+    actual = {}
+    for price in TypicalPrice.objects.filter(
+        city_ref__isnull=False,
+        city_ref__country__iso2__in={"JP", "SG", "CA", "NZ"},
+        city_ref__slug__in={"tokyo", "singapore", "toronto", "auckland"},
+    ).select_related("country", "city_ref"):
+        actual[(price.country.iso2, price.city_ref.slug, price.category)] = (
+            format(price.amount_low, ".2f"),
+            format(price.amount_high, ".2f") if price.amount_high is not None else None,
+        )
+
+    assert actual == expected_ranges
+
+
+@pytest.mark.django_db
+def test_curated_city_wave_two_flows_through_destination_context_without_fallback():
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+    context = build_destination_context(
+        country_code="SG",
+        city_slug="singapore",
+        converted_amount=Decimal("100.00"),
+        quote_currency="SGD",
+        as_of=date(2026, 10, 1),
+        price_limit=4,
+    )
+
+    assert context is not None
+    assert context.city_slug == "singapore"
+    assert context.city_name == "Singapore"
+    assert tuple(price.category for price in context.prices) == CITY_COVERAGE_CORE_CATEGORIES
+    assert all(price.city_slug == "singapore" for price in context.prices)
+
+
+@pytest.mark.django_db
+def test_destination_context_seed_reports_city_wave_two_idempotency():
+    call_command("seed_reference_data", stdout=StringIO())
+
+    first = StringIO()
+    call_command("seed_destination_context", stdout=first)
+    second = StringIO()
+    call_command("seed_destination_context", stdout=second)
+
+    assert "City price wave 2 is ready: created=15, existing=0." in first.getvalue()
+    assert "City price wave 2 is ready: created=0, existing=15." in second.getvalue()
