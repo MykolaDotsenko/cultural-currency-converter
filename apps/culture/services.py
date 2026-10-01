@@ -232,6 +232,14 @@ class TypicalPriceContext:
     city_slug: str = ""
 
     @property
+    def is_city_scope(self) -> bool:
+        return bool(self.city_slug)
+
+    @property
+    def is_national_fallback(self) -> bool:
+        return not self.is_city_scope
+
+    @property
     def scope_label(self) -> str:
         return self.city or f"{self.country_name} · national estimate"
 
@@ -353,6 +361,10 @@ def build_destination_context(
             verified_at__isnull=False,
             observed_at__gte=cutoff,
             observed_at__lte=selected_date,
+        )
+        .filter(
+            Q(city_ref__isnull=True, city="")
+            | Q(city_ref__country=country, city_ref__is_active=True)
         )
         .exclude(source_name="")
         .exclude(source_url="")
