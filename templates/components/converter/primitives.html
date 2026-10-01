@@ -152,6 +152,21 @@
         <span class="qa-result__currency">{{ component.output_currency }}</span>
       </p>
     </div>
+    {% if component.smart_summary %}
+      <div class="qa-result-summary qa-result-summary--{{ component.smart_summary.kind }}"
+           aria-label="Result summary">
+        <p class="qa-foundation-kicker">At a glance</p>
+        <p class="qa-result-summary__text">{{ component.smart_summary.text }}</p>
+        {% if component.smart_summary.evidence_label %}
+          <p class="qa-result-summary__evidence">
+            {{ component.smart_summary.evidence_label }}
+            {% if component.smart_summary.evidence_url %}
+              · <a href="{{ component.smart_summary.evidence_url }}">Source</a>
+            {% endif %}
+          </p>
+        {% endif %}
+      </div>
+    {% endif %}
     {% with component=component.rate_meta %}
       {% include "components/converter/primitives.html#rate-meta" %}
     {% endwith %}
