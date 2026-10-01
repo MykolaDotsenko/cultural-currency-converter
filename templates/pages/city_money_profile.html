@@ -14,7 +14,8 @@
 {% endblock %}
 {% block content %}
   {% if city_profile_error %}
-    <section class="qa-foundation-intro" aria-labelledby="city-profile-error-title">
+    <section class="qa-foundation-intro"
+             aria-labelledby="city-profile-error-title">
       <p class="qa-foundation-kicker">City money profile</p>
       <h1 id="city-profile-error-title">{{ city_profile_error.title }}</h1>
       <p class="qa-foundation-lede">{{ city_profile_error.detail }}</p>
@@ -33,13 +34,13 @@
         calculate a cost-of-living score or rank this city against another place.
       </p>
       <div class="qa-saved-row__actions" aria-label="City money profile actions">
-        <a class="qa-primary-button" href="{{ city_profile.converter_url }}">Convert for {{ city_profile.city_name }}</a>
+        <a class="qa-primary-button"
+           href="{{ city_profile.converter_url }}">Convert for {{ city_profile.city_name }}</a>
         <a class="qa-secondary-button" href="{{ city_profile.budget_url }}">Build a budget</a>
         <a class="qa-secondary-button" href="{{ city_profile.compare_url }}">Compare this city</a>
         <a class="qa-secondary-button" href="{{ city_profile.saved_url }}">Saved plans</a>
       </div>
     </section>
-
     <section class="qa-saved-state" aria-labelledby="city-profile-evidence-title">
       <div class="qa-saved-section">
         <div class="qa-saved-section__heading">
@@ -78,7 +79,6 @@
           </p>
         {% endif %}
       </div>
-
       <div class="qa-saved-section" aria-labelledby="city-profile-payment-title">
         <div class="qa-saved-section__heading">
           <div>
@@ -92,7 +92,9 @@
             {% for row in city_profile.payment.rows %}
               <div>
                 <dt>{{ row.label }}</dt>
-                <dd>{{ row.text }}</dd>
+                <dd>
+                  {{ row.text }}
+                </dd>
               </div>
             {% endfor %}
           </dl>
@@ -107,7 +109,6 @@
           </p>
         {% endif %}
       </div>
-
       <div class="qa-saved-section" aria-labelledby="city-profile-next-title">
         <div class="qa-saved-section__heading">
           <div>
