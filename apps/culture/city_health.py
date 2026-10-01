@@ -14,10 +14,10 @@ from apps.culture.price_quality import (
 )
 
 CITY_COVERAGE_CORE_CATEGORIES: tuple[str, ...] = (
-    TypicalPriceCategory.COFFEE,
-    TypicalPriceCategory.CASUAL_MEAL,
-    TypicalPriceCategory.TRANSIT,
-    TypicalPriceCategory.GROCERIES,
+    "coffee",
+    "casual_meal",
+    "transit",
+    "groceries",
 )
 _FRESH_CITY_POINTS = 25
 _NATIONAL_FALLBACK_POINTS = 15
