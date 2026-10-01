@@ -130,9 +130,8 @@
                 <h3>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</h3>
                 <p>
                   Confirmed spend {{ trip_budget.confirmed_spend }}
-                  {{ scenario.destination_currency.code }} of the saved
-                  {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}
-                  reference budget.
+                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
                 </p>
               {% endif %}
               {% if trip_budget.has_remaining_per_day %}
