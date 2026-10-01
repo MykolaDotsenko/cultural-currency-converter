@@ -19,8 +19,6 @@ from apps.culture.models import (
     TypicalPriceSourceClass,
 )
 from apps.culture.price_quality import TypicalPriceUnit
-
-)
 from apps.culture.services import approve_story_moment, publish_story_moment
 
 _FINLAND_EURO_SOURCE = (
