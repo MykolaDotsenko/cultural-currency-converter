@@ -45,20 +45,24 @@
                   <h3>{{ destination.scope_label }}</h3>
                   <p>
                     {% if destination.city_price_anchor_count %}
-                      {{ destination.city_price_anchor_count }} city price anchor{{ destination.city_price_anchor_count|pluralize }}
+                      {{ destination.city_price_anchor_count }} city price anchor{{ destination.city_price_anchor_count|pluralize }} shown
                     {% endif %}
                     {% if destination.city_price_anchor_count and destination.national_price_anchor_count %}·{% endif %}
                     {% if destination.national_price_anchor_count %}
-                      {{ destination.national_price_anchor_count }} national price anchor{{ destination.national_price_anchor_count|pluralize }}
+                      {{ destination.national_price_anchor_count }} national price anchor{{ destination.national_price_anchor_count|pluralize }} shown
                     {% endif %}
                     {% if destination.payment_available %}
                       {% if destination.city_price_anchor_count or destination.national_price_anchor_count %}·{% endif %}
-                      reviewed payment guidance
+                      {% if destination.is_city_scope %}
+                        reviewed country payment guidance
+                      {% else %}
+                        reviewed payment guidance
+                      {% endif %}
                     {% endif %}
                   </p>
                   <p class="qa-saved-row__meta">
                     {% if destination.latest_price_observed_at %}
-                      Price evidence observed through {{ destination.latest_price_observed_at|date:"j M Y" }}
+                      Shown price evidence observed through {{ destination.latest_price_observed_at|date:"j M Y" }}
                     {% endif %}
                     {% if destination.latest_price_observed_at and destination.payment_verified_at %}·{% endif %}
                     {% if destination.payment_verified_at %}
