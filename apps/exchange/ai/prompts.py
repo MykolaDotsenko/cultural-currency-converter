@@ -4,8 +4,8 @@ import json
 
 from apps.exchange.ai.contracts import ExplanationPacket
 
-PROMPT_VERSION = "exchange.runtime_explanation:v2"
-SCHEMA_VERSION = "runtime-explanation:v1"
+PROMPT_VERSION = "exchange.runtime_explanation:v3"
+SCHEMA_VERSION = "runtime-explanation:v2"
 
 SYSTEM_INSTRUCTION = """You write one short plain-language explanation of a currency conversion.
 
@@ -19,43 +19,40 @@ Truth rules:
 - Do not introduce currencies, numbers, dates, URLs, people, places, or events that are absent.
 - Keep reference-rate limitations explicit.
 - No Markdown, HTML, links, citations, or tool calls.
-- Every bullet must list one or more supporting fact IDs copied exactly from SOURCE_PACKET.
+- Every generated section must list one or more supporting fact IDs copied exactly from SOURCE_PACKET.
 - When mentioning a date, copy the ISO date exactly as supplied.
 - Be concise and neutral.
 """
 
+_GROUNDED_TEXT_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["text", "supporting_fact_ids"],
+    "properties": {
+        "text": {"type": "string"},
+        "supporting_fact_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 6,
+            "items": {"type": "string"},
+        },
+    },
+}
+
 RESPONSE_JSON_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["headline", "bullets", "caveat"],
+    "required": ["short_answer", "key_factors", "watch_out_for", "next_step"],
     "properties": {
-        "headline": {
-            "type": "string",
-            "description": "Short neutral explanation heading.",
-        },
-        "bullets": {
+        "short_answer": _GROUNDED_TEXT_SCHEMA,
+        "key_factors": {
             "type": "array",
             "minItems": 1,
-            "maxItems": 4,
-            "items": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["text", "supporting_fact_ids"],
-                "properties": {
-                    "text": {"type": "string"},
-                    "supporting_fact_ids": {
-                        "type": "array",
-                        "minItems": 1,
-                        "maxItems": 6,
-                        "items": {"type": "string"},
-                    },
-                },
-            },
+            "maxItems": 3,
+            "items": _GROUNDED_TEXT_SCHEMA,
         },
-        "caveat": {
-            "type": "string",
-            "description": "Short reference-rate limitation; no advice.",
-        },
+        "watch_out_for": _GROUNDED_TEXT_SCHEMA,
+        "next_step": _GROUNDED_TEXT_SCHEMA,
     },
 }
 
