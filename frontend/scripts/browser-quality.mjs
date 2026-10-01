@@ -76,24 +76,21 @@ function assert(condition, message) {
   }
 }
 
-function consumeExpectedTransportFailureConsoleErrors(consoleErrors, startIndex) {
+function consumeExpectedConsoleErrors(
+  consoleErrors,
+  startIndex,
+  { label, expected, requireEvidence = false },
+) {
   const newErrors = consoleErrors.slice(startIndex);
-  const expected = [
-    "htmx:afterRequest",
-    "htmx:sendAbort",
-    "htmx:sendError",
-    "Failed to load resource: net::ERR_FAILED",
-  ];
-  assert(
-    newErrors.length > 0,
-    "current-converter/ai: intentional transport failure emitted no browser error evidence",
-  );
+  if (requireEvidence) {
+    assert(newErrors.length > 0, `${label}: expected browser error evidence was not emitted`);
+  }
   const unexpected = newErrors.filter(
     (message) => !expected.some((fragment) => message.includes(fragment)),
   );
   assert(
     unexpected.length === 0,
-    `current-converter/ai: intentional transport failure emitted unexpected console errors: ${unexpected.join(" | ")}`,
+    `${label}: unexpected console errors: ${unexpected.join(" | ")}`,
   );
   consoleErrors.splice(startIndex, newErrors.length);
 }
@@ -295,8 +292,10 @@ async function assertAiExplanationReliability(page, consoleErrors) {
 
   const viewport = page.viewportSize();
   const exerciseCancellation = BROWSER_SCOPE === "full" && viewport?.width === 1440;
+  let cancellationConsoleStart = null;
 
   if (exerciseCancellation) {
+    cancellationConsoleStart = consoleErrors.length;
     await ratePrompt.click();
     await page.waitForFunction(
       () =>
@@ -376,6 +375,10 @@ async function assertAiExplanationReliability(page, consoleErrors) {
       (await region.innerText()).includes("Why might my bank or card show a different result?"),
       "current-converter/ai: superseded request overwrote the replacement fallback",
     );
+    consumeExpectedConsoleErrors(consoleErrors, cancellationConsoleStart ?? consoleErrors.length, {
+      label: "current-converter/ai cancellation",
+      expected: ["htmx:afterRequest", "htmx:sendAbort"],
+    });
   }
 
   await ratePrompt.focus();
@@ -459,7 +462,16 @@ async function assertAiExplanationReliability(page, consoleErrors) {
       "current-converter/ai: retry did not clear the transport failure message",
     );
     await page.waitForTimeout(50);
-    consumeExpectedTransportFailureConsoleErrors(consoleErrors, consoleErrorStart);
+    consumeExpectedConsoleErrors(consoleErrors, consoleErrorStart, {
+      label: "current-converter/ai intentional transport failure",
+      expected: [
+        "htmx:afterRequest",
+        "htmx:sendAbort",
+        "htmx:sendError",
+        "Failed to load resource: net::ERR_FAILED",
+      ],
+      requireEvidence: true,
+    });
   }
 
   await assertAxe(page, "current-converter/ai-explanation");
