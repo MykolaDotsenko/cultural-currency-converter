@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
+    <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
     <title>{{ pack.destination_label }} · Offline money pack</title>
@@ -136,7 +137,7 @@
                 </p>
                 <p class="source">
                   Observed {{ item.observed_at|date:"j M Y" }} · confidence {{ item.confidence }}
-                  · source: <a href="{{ item.source_url }}">{{ item.source_name }}</a>
+                  · source: <a href="{{ item.source_url }}" rel="noreferrer noopener">{{ item.source_name }}</a>
                 </p>
               </article>
             {% endfor %}
@@ -156,7 +157,7 @@
               {% if payment.dcc_warning %}<div class="row"><h3>DCC</h3><p>{{ payment.dcc_warning }}</p></div>{% endif %}
               <p class="source">
                 Verified {{ payment.verified_at|date:"j M Y" }} · source:
-                <a href="{{ payment.source_url }}">{{ payment.source_name }}</a>
+                <a href="{{ payment.source_url }}" rel="noreferrer noopener">{{ payment.source_name }}</a>
               </p>
             {% endwith %}
           </section>
