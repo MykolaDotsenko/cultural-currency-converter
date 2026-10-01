@@ -32,16 +32,21 @@
           </p>
         </div>
       </div>
-      <input type="hidden"
-             name="confirmed_camera_token"
-             value="{{ confirmed_camera_token }}">
-      <div class="qa-saved-row__actions">
-        <a class="qa-primary-button"
-           href="{% url 'saved_scenario_detail' scenario.pk %}">Return to saved trip</a>
-      </div>
+      <form method="post"
+            action="{% url 'add_confirmed_camera_spend' scenario.pk %}"
+            class="qa-saved-row__actions">
+        {% csrf_token %}
+        <input type="hidden"
+               name="confirmed_camera_token"
+               value="{{ confirmed_camera_token }}">
+        <button class="qa-primary-button" type="submit">Add to trip budget</button>
+        <a class="qa-secondary-button"
+           href="{% url 'saved_scenario_detail' scenario.pk %}">Return without adding</a>
+      </form>
     </section>
     <p class="qa-saved-state__privacy">
-      Nothing was added to confirmed spend in this extraction step.
+      Nothing is added until you choose <strong>Add to trip budget</strong>. The handoff stores only
+      the confirmed amount, destination currency, Camera confirmation source and timestamp.
     </p>
   </div>
 {% endblock %}
