@@ -8,6 +8,8 @@ from typing import Any
 from django.core import signing
 
 from apps.exchange.domain import (
+    MAX_PROVIDER_KEY_LENGTH,
+    MAX_PROVIDER_KEYS,
     ConversionResult,
     FxDomainError,
     ObservationGranularity,
