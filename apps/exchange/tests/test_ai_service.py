@@ -50,12 +50,11 @@ def snapshot():
 
 def _payload():
     return {
-        "headline": "Reference conversion explained",
-        "bullets": [
-            {
-                "text": "100 EUR is approximately 17450 JPY.",
-                "supporting_fact_ids": ["conversion"],
-            },
+        "short_answer": {
+            "text": "100 EUR is approximately 17450 JPY.",
+            "supporting_fact_ids": ["conversion"],
+        },
+        "key_factors": [
             {
                 "text": "The displayed rate is 1 EUR = 174.5 JPY and attribution includes ECB.",
                 "supporting_fact_ids": ["rate", "provider"],
@@ -65,10 +64,17 @@ def _payload():
                 "supporting_fact_ids": ["effective_date"],
             },
         ],
-        "caveat": (
-            "Reference exchange rates are informational; payment providers may use different "
-            "rates or add fees."
-        ),
+        "watch_out_for": {
+            "text": (
+                "Reference exchange rates are informational; payment providers may use different "
+                "rates or add fees."
+            ),
+            "supporting_fact_ids": ["reference_scope"],
+        },
+        "next_step": {
+            "text": "Use this reference observation as a comparison point for any provider quote.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
     }
 
 
@@ -174,7 +180,7 @@ def test_provider_failure_returns_deterministic_fallback_sets_cooldown_and_logs(
 @pytest.mark.django_db(transaction=True)
 def test_schema_valid_but_semantically_invalid_output_falls_back(snapshot):
     payload = _payload()
-    payload["bullets"][0]["supporting_fact_ids"] = ["invented_fact"]
+    payload["short_answer"]["supporting_fact_ids"] = ["invented_fact"]
     drafter = FakeDrafter(payload=payload)
     service = RuntimeExplanationService(
         enabled=True,
@@ -215,14 +221,19 @@ def test_corrupt_persistent_cache_is_deleted_before_live_generation(snapshot):
     service.explain(snapshot)
     stored = RuntimeExplanationCache.objects.get()
     stored.result = {
-        "headline": "Bad",
-        "bullets": [
-            {
-                "text": "100 USD is better.",
-                "supporting_fact_ids": ["conversion"],
-            }
-        ],
-        "caveat": "Bad cache.",
+        "short_answer": {
+            "text": "100 USD is better.",
+            "supporting_fact_ids": ["conversion"],
+        },
+        "key_factors": [],
+        "watch_out_for": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
+        "next_step": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
     }
     stored.save(update_fields=("result",))
 
@@ -386,14 +397,19 @@ def test_invalid_persistent_cache_cleanup_failure_still_regenerates(snapshot, ca
     seed_service.explain(snapshot)
     stored = RuntimeExplanationCache.objects.get()
     stored.result = {
-        "headline": "Bad",
-        "bullets": [
-            {
-                "text": "100 USD is better.",
-                "supporting_fact_ids": ["conversion"],
-            }
-        ],
-        "caveat": "Bad cache.",
+        "short_answer": {
+            "text": "100 USD is better.",
+            "supporting_fact_ids": ["conversion"],
+        },
+        "key_factors": [],
+        "watch_out_for": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
+        "next_step": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
     }
     stored.save(update_fields=("result",))
 
