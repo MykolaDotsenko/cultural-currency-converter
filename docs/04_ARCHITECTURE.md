@@ -132,6 +132,24 @@ Camera extraction is a separate sensitive-input boundary and does not bypass Mon
 
 This keeps OCR/model uncertainty upstream of deterministic financial persistence and keeps Camera persistence inside the same spend contract as manual confirmation.
 
+### Offline destination pack boundary
+
+`apps/travel/offline_pack.py` defines the first versioned offline snapshot contract for saved budget scenarios.
+
+The offline pack is generated on demand and is not another live financial engine:
+
+- it never calls an FX provider;
+- the newest already-stored scenario observation is exported as a **stored reference** with provider/effective-date/fetch/stale semantics;
+- Trip Budget Remaining is still calculated from the immutable initial scenario observation, so a later FX re-check cannot move the spending baseline;
+- reviewed destination prices/payment guidance are re-read from the canonical provenance-aware data layer at download time;
+- destination-context failure degrades locally and does not remove the saved FX/budget sections;
+- the HTML export is self-contained, script-free and has no remote stylesheet/image dependency;
+- the pack carries an explicit format version, generation time and context as-of date;
+- opening the file offline performs no refresh and must never make the stored FX observation look live;
+- the server does not persist a second copy of the generated pack.
+
+This is a portable first offline surface, not a service-worker/PWA cache strategy. Future mobile/PWA clients should reuse the same snapshot semantics and freshness rules rather than cache arbitrary live pages.
+
 ### Saved trip budget continuity
 
 Trip Budget Remaining is a persistence/domain consumer, not a second financial engine.
