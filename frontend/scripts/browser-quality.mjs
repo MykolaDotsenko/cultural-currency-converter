@@ -27,6 +27,7 @@ const SURFACES = [
   { name: "current-converter", path: "/" },
   { name: "destination-mode", path: "/destination/" },
   { name: "destination-comparison", path: "/compare/" },
+  { name: "explore", path: "/explore/" },
   { name: "saved-state", path: "/saved/" },
   { name: "account-login", path: "/accounts/login/" },
   { name: "account-signup", path: "/accounts/signup/" },
@@ -1500,7 +1501,7 @@ const activeSurfaces =
   BROWSER_SCOPE === "full"
     ? SURFACES
     : SURFACES.filter((surface) =>
-        ["current-converter", "destination-comparison", "saved-state", "rate-series"].includes(
+        ["current-converter", "destination-comparison", "explore", "saved-state", "rate-series"].includes(
           surface.name,
         ),
       );
