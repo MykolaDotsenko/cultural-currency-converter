@@ -12,7 +12,7 @@ from django.db import transaction
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
-from apps.exchange.domain import ConversionResult
+from apps.exchange.domain import MAX_PROVIDER_KEY_LENGTH, MAX_PROVIDER_KEYS, ConversionResult
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetItem,
@@ -26,8 +26,6 @@ MAX_ACCOUNT_SCENARIOS = 50
 MAX_SCENARIO_OBSERVATIONS = 100
 MAX_SCENARIO_SPEND_ENTRIES = 100
 MAX_SCENARIO_SPEND_AMOUNT = Decimal("1000000000")
-MAX_PROVIDER_KEYS = 8
-MAX_PROVIDER_KEY_LENGTH = 80
 
 
 class SavedScenarioError(ValueError):
