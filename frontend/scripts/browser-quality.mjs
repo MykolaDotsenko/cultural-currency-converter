@@ -291,7 +291,10 @@ async function assertAiExplanationReliability(page) {
       !(await paymentPrompt.isDisabled()),
       "current-converter/ai: replacement prompt was incorrectly disabled",
     );
-    assert(await loading.isVisible(), "current-converter/ai: loading indicator did not become visible");
+    assert(
+      await loading.isVisible(),
+      "current-converter/ai: loading indicator did not become visible",
+    );
 
     const paymentResponsePromise = waitForExplanation("payment_difference");
     await paymentPrompt.click();
