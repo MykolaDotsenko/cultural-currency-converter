@@ -119,6 +119,32 @@ def test_city_health_classifies_runtime_usable_and_maintenance_gap_categories(ci
 
 
 @pytest.mark.django_db
+def test_stale_and_provenance_gaps_are_reported_independently(city_health_data):
+    japan, jpy, _eur, tokyo, _osaka = city_health_data
+    as_of = date(2026, 10, 1)
+    _price(
+        country=japan,
+        currency=jpy,
+        category=TypicalPriceCategory.COFFEE,
+        label="Stale broken-source coffee",
+        observed_at=as_of - PRICE_CONTEXT_MAX_AGE - timedelta(days=1),
+        city=tokyo,
+        source_url="https://user:secret@example.org/coffee",
+    )
+
+    report = build_city_coverage_health(
+        as_of=as_of,
+        country_code="JP",
+        city_slug="tokyo",
+    )[0]
+
+    assert report.stale_categories == (TypicalPriceCategory.COFFEE,)
+    assert report.provenance_gap_categories == (TypicalPriceCategory.COFFEE,)
+    assert report.total_supported_categories == 0
+    assert report.coverage_score == 0
+
+
+@pytest.mark.django_db
 def test_fresh_city_category_suppresses_same_category_national_fallback(city_health_data):
     japan, jpy, _eur, tokyo, _osaka = city_health_data
     as_of = date(2026, 10, 1)
