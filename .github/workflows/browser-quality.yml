@@ -21,6 +21,7 @@ on:
     paths:
       - "frontend/**"
       - "templates/**"
+      - "apps/accounts/**"
       - "apps/common/**"
       - "apps/countries/**"
       - "apps/culture/**"
