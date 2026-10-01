@@ -8,7 +8,11 @@ from django.utils import timezone
 
 from apps.countries.models import City, CountryCurrency
 from apps.culture.models import CulturalProfile, TypicalPrice
-from apps.culture.services import PRICE_CONTEXT_MAX_AGE, DestinationContext, build_destination_context
+from apps.culture.services import (
+    PRICE_CONTEXT_MAX_AGE,
+    DestinationContext,
+    build_destination_context,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,11 +139,15 @@ def build_explore_destinations(
         for _country_id, city_ref_id, _legacy_city in fresh_price_scopes
         if city_ref_id is not None
     }
-    candidate_country_ids = national_country_ids | profile_country_ids | {
-        country_id
-        for country_id, city_ref_id, _legacy_city in fresh_price_scopes
-        if city_ref_id is not None
-    }
+    candidate_country_ids = (
+        national_country_ids
+        | profile_country_ids
+        | {
+            country_id
+            for country_id, city_ref_id, _legacy_city in fresh_price_scopes
+            if city_ref_id is not None
+        }
+    )
     if not candidate_country_ids:
         return ()
 
