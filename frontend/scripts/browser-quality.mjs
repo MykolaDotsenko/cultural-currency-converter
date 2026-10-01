@@ -490,6 +490,11 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     "current-converter: same-currency provenance is missing",
   );
   assert(
+    resultText.includes("At a glance") &&
+      resultText.includes("No exchange-rate lookup is needed because both sides use JPY"),
+    "current-converter: deterministic smart summary is missing from identity conversion",
+  );
+  assert(
     new URL(page.url()).searchParams.get("convert") === "1",
     "current-converter: successful HTMX conversion did not push a bookmarkable URL",
   );
@@ -631,6 +636,10 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   assert(
     historicalText.includes("Observation date"),
     "current-converter: historical observation date is missing",
+  );
+  assert(
+    historicalText.includes("does not describe historical purchasing power"),
+    "current-converter: historical smart summary lost its purchasing-power boundary",
   );
   const historicalUrl = new URL(page.url());
   assert(
