@@ -80,6 +80,7 @@ def test_rate_quote_normalizes_provider_attribution():
         tuple(f"source-{index}" for index in range(MAX_PROVIDER_KEYS + 1)),
         ("x" * (MAX_PROVIDER_KEY_LENGTH + 1),),
         (123,),
+        "ecb",
     ],
 )
 def test_rate_quote_rejects_unbounded_or_invalid_provider_attribution(provider_keys):
