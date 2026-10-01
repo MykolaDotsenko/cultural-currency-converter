@@ -40,7 +40,6 @@ class SavedScenarioPlanningForm(forms.Form):
         return cleaned
 
 
-
 class SavedScenarioSpendForm(forms.Form):
     """Minimal confirmed-spend entry in the scenario destination currency."""
 
