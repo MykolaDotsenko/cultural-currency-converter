@@ -197,6 +197,27 @@ Current UX rules:
 
 Future work may add My Places, returning-user shortcuts or optional coarse location assistance. Any location assistance must remain opt-in and must never silently persist travel history.
 
+## Destination comparison
+
+The first user-facing destination-comparison slice is a deliberate side-by-side planning flow, not a ranking surface.
+
+The current flow is:
+
+**one source amount/currency → two explicit destinations → one shared trip/basket assumption set → two trusted MoneyContext results**
+
+Current UX rules:
+
+- GET is provider-free; FX observations are requested only after explicit comparison submit;
+- both sides use the same source amount/currency, duration, traveller count and editable daily reference basket;
+- country and canonical-city scopes remain visible and are never flattened together;
+- each side keeps its own quote currency, effective date, provider attribution, stale state, local-price provenance and payment context;
+- partial source-data coverage keeps known lines visible and names missing categories rather than estimating them;
+- the interface does not calculate a “winner”, “cheaper destination”, direct cross-currency item ratio, PPP value or investment-style recommendation;
+- provider failure on either side produces a neutral unavailable state rather than a one-sided result that could look complete;
+- no result requires JavaScript, and narrow-screen layouts stack the two destinations while preserving semantic order.
+
+The comparison is meant to answer **“what does the same explicit travel-money scenario look like in each place?”**, not **“which place is objectively cheaper?”**.
+
 ## Discovery / Explore experience
 
 A future Explore surface can make the product useful even when the user is not performing an immediate conversion.
