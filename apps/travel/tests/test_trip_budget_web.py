@@ -20,6 +20,10 @@ from apps.travel.scenarios import (
 User = get_user_model()
 
 
+def _normalized_response_text(response) -> str:
+    return " ".join(response.content.decode("utf-8").split())
+
+
 @pytest.fixture(autouse=True)
 def use_vite_dev_mode(settings):
     settings.VITE_DEV_SERVER_ENABLED = True
@@ -92,12 +96,13 @@ def test_saved_budget_detail_shows_original_reference_and_zero_confirmed_spend(
     response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
 
     assert response.status_code == 200
-    assert b"Trip budget remaining" in response.content
-    assert b"104700 JPY remaining" in response.content
-    assert b"Confirmed spend 0 JPY" in response.content
-    assert b"About 20940 JPY per planned day" in response.content
-    assert b"No confirmed spend has been added yet." in response.content
-    assert b"No merchant, receipt image or purchase description is stored here." in response.content
+    text = _normalized_response_text(response)
+    assert "Trip budget remaining" in text
+    assert "104700 JPY remaining" in text
+    assert "Confirmed spend 0 JPY" in text
+    assert "About 20940 JPY per planned day" in text
+    assert "No confirmed spend has been added yet." in text
+    assert "No merchant, receipt image or purchase description is stored here." in text
 
 
 @pytest.mark.django_db
@@ -119,9 +124,10 @@ def test_owner_can_add_confirmed_spend_and_remaining_uses_original_baseline(
     assert entry.amount == Decimal("4700.000000000000")
 
     detail = client.get(response.url)
-    assert b"100000 JPY remaining" in detail.content
-    assert b"Confirmed spend 4700 JPY" in detail.content
-    assert b"About 20000 JPY per planned day" in detail.content
+    text = _normalized_response_text(detail)
+    assert "100000 JPY remaining" in text
+    assert "Confirmed spend 4700 JPY" in text
+    assert "About 20000 JPY per planned day" in text
 
 
 @pytest.mark.django_db
@@ -171,12 +177,11 @@ def test_rate_recheck_never_moves_trip_budget_reference_baseline(client, trip_bu
     response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
 
     assert response.status_code == 200
-    assert b"100000 JPY remaining" in response.content
-    assert b"saved reference budget 104700 JPY" in response.content
-    assert b"120000 JPY" in response.content
-    assert (
-        b"Re-checking the FX rate never changes this remaining-budget baseline." in response.content
-    )
+    text = _normalized_response_text(response)
+    assert "100000 JPY remaining" in text
+    assert "saved reference budget 104700 JPY" in text
+    assert "120000 JPY" in text
+    assert "Re-checking the FX rate never changes this remaining-budget baseline." in text
 
 
 @pytest.mark.django_db
