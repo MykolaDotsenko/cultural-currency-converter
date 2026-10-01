@@ -136,7 +136,14 @@ def test_converter_never_builds_ai_service_before_explicit_explain_click(client,
     assert b'aria-controls="conversion-explanation-region"' in response.content
     assert b'hx-disabled-elt="this"' in response.content
     assert b'aria-busy="false"' in response.content
+    assert b'id="explanation-loading"' in response.content
+    assert b'id="explanation-client-status"' in response.content
+    assert b'id="explanation-announcer"' in response.content
     assert b'role="status"' in response.content
+    assert b'aria-live="polite"' in response.content
+    assert response.content.index(b'id="explanation-announcer"') < response.content.index(
+        b'id="conversion-explanation-region"'
+    )
     assert b"answer an arbitrary prompt" in response.content
     assert _extract_token(response.content)
     ai_factory.assert_not_called()
