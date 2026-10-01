@@ -153,12 +153,12 @@
       </p>
     </div>
     {% if component.smart_summary %}
-      <div class="qa-result-summary qa-result-summary--{{ component.smart_summary.kind }}"
+      <div class="qa-context-freshness-note qa-result-summary qa-result-summary--{{ component.smart_summary.kind }}"
            aria-label="Result summary">
         <p class="qa-foundation-kicker">At a glance</p>
         <p class="qa-result-summary__text">{{ component.smart_summary.text }}</p>
         {% if component.smart_summary.evidence_label %}
-          <p class="qa-result-summary__evidence">
+          <p class="qa-result-update-note qa-result-summary__evidence">
             {{ component.smart_summary.evidence_label }}
             {% if component.smart_summary.evidence_url %}
               · <a href="{{ component.smart_summary.evidence_url }}">Source</a>
