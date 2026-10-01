@@ -148,7 +148,7 @@ def record_scenario_spend(
     scenario: SavedScenario,
     *,
     amount: Decimal,
-    source: SavedScenarioSpendSource = SavedScenarioSpendSource.MANUAL,
+    source: str | None = None,
 ) -> SavedScenarioSpendEntry:
     """Persist one confirmed destination-currency spend entry.
 
@@ -160,7 +160,8 @@ def record_scenario_spend(
         raise SavedScenarioError("Confirmed spend must be a finite amount greater than zero.")
     if amount > MAX_SCENARIO_SPEND_AMOUNT:
         raise SavedScenarioError("Confirmed spend must be no greater than 1,000,000,000.")
-    if not isinstance(source, SavedScenarioSpendSource):
+    normalized_source = source or "manual"
+    if normalized_source not in SavedScenarioSpendSource.values:
         raise SavedScenarioError("Confirmed spend source is invalid.")
 
     with transaction.atomic():
@@ -183,7 +184,7 @@ def record_scenario_spend(
         entry = SavedScenarioSpendEntry(
             scenario=locked,
             amount=amount,
-            source=source,
+            source=normalized_source,
         )
         try:
             entry.full_clean()
