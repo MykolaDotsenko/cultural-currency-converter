@@ -5,6 +5,7 @@ from datetime import date
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import DatabaseError, transaction
@@ -327,6 +328,10 @@ def _scenario_detail_context(
         "spend_entries": spend_entries,
         "spend_form": spend_form,
         "converter_url": _scenario_converter_url(scenario),
+        "camera_extraction_available": (
+            scenario.kind == SavedScenarioKind.BUDGET
+            and bool(settings.AI_CAMERA_EXTRACTION_ENABLED)
+        ),
     }
 
 
