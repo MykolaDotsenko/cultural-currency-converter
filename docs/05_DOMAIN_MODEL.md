@@ -229,7 +229,7 @@ Camera input has no durable database model in the first slice.
 
 A provider response may contain at most six candidates. Empty output is a distinct “no amount found” state; malformed provider data is not accepted as a valid extraction.
 
-A signed camera candidate token binds one normalized candidate to a narrow scenario scope for a short time. User confirmation may correct the amount but cannot silently reinterpret an explicit conflicting currency. The resulting confirmed-camera token contains only scope, amount and currency code. It is not a spend record and carries no image, merchant, receipt text, account/card field or provider prose.
+A signed camera candidate token binds one normalized candidate to a narrow scenario scope for a short time. User confirmation may correct the amount but cannot silently reinterpret an explicit conflicting currency. The resulting confirmed-camera token contains scope, amount, currency code and a signed unique confirmation id. It is not a spend record and carries no image, merchant, receipt text, account/card field or provider prose. The confirmation id becomes the spend idempotency key only if the user performs the later explicit **Add to trip budget** action.
 
 ### SavedScenarioSpendEntry
 
@@ -239,7 +239,7 @@ Current identity is deliberately narrow:
 
 - parent saved budget scenario;
 - positive amount representable in the scenario destination currency's minor units;
-- confirmation source (`manual` today, `camera` reserved for future user-confirmed camera input);
+- confirmation source (`manual` or explicitly user-confirmed `camera`);
 - opaque submission idempotency key;
 - recorded timestamp.
 
@@ -255,6 +255,23 @@ The first account-facing budget save flow persists only normalized scenario assu
 
 Scenario read/delete operations are always owner-scoped. Anonymous browser-local scenario persistence is a separate future privacy surface and must not be inferred from account persistence.
 
+
+## OfflineDestinationPack
+
+`OfflineDestinationPack` is derived, versioned export state rather than a database table.
+
+The first format contains:
+
+- scenario/destination identity and optional saved travel timing;
+- the newest already-stored FX observation as a stored reference;
+- Trip Budget Remaining derived from the immutable initial observation plus confirmed spend;
+- destination-context availability state;
+- reviewed local-price/payment context captured from the canonical data layer at generation time;
+- explicit pack generation time and context as-of date.
+
+The pack is intentionally regenerated rather than persisted server-side. It cannot refresh while offline and therefore never calls itself “current” merely because the original observation was fresh when saved. Local destination-context failure is represented as `degraded`, while saved FX/budget state remains exportable.
+
+The first HTML representation contains no executable script, remote stylesheet or managed-media dependency. Provenance links remain ordinary links and naturally require connectivity if the user chooses to open them.
 
 ## Account preferences
 
