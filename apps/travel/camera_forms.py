@@ -163,4 +163,3 @@ class CameraSpendHandoffForm(forms.Form):
 
         cleaned["confirmed_snapshot"] = snapshot
         return cleaned
-
