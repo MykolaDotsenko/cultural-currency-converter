@@ -513,6 +513,8 @@ def test_confirmed_spend_rejects_non_budget_scenario_and_invalid_amount(referenc
         record_scenario_spend(scenario, amount=Decimal("0"))
     with pytest.raises(SavedScenarioError, match="greater than zero"):
         record_scenario_spend(scenario, amount=Decimal("NaN"))
+    with pytest.raises(SavedScenarioError, match="no greater than 1,000,000,000"):
+        record_scenario_spend(scenario, amount=Decimal("1000000000.01"))
 
 
 @pytest.mark.django_db
@@ -589,4 +591,10 @@ def test_database_rejects_non_positive_confirmed_spend(reference_data):
         SavedScenarioSpendEntry.objects.create(
             scenario=scenario,
             amount=Decimal("0"),
+        )
+
+    with pytest.raises(IntegrityError):
+        SavedScenarioSpendEntry.objects.create(
+            scenario=scenario,
+            amount=Decimal("1000000001"),
         )
