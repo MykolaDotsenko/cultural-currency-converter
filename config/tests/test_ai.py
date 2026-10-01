@@ -12,6 +12,7 @@ def test_ai_config_defaults_to_disabled_without_secret():
     assert config.provider == "google"
     assert config.text_model == "gemini-3.1-flash-lite"
     assert config.runtime_explanation_enabled is False
+    assert config.runtime_test_fixture_enabled is False
     assert config.camera_extraction_enabled is False
     assert config.gemini_api_key == ""
     assert config.fallback_mode == "deterministic"
@@ -30,6 +31,42 @@ def test_ai_runtime_feature_requires_key_only_when_enabled():
         }
     )
     assert config.has_live_runtime_explanation is True
+
+
+def test_runtime_test_fixture_is_test_only_and_does_not_require_gemini_key():
+    config = load_ai_config(
+        {
+            "APP_ENV": "test",
+            "AI_RUNTIME_EXPLANATION_ENABLED": "true",
+            "AI_RUNTIME_TEST_FIXTURE_ENABLED": "true",
+        }
+    )
+
+    assert config.runtime_explanation_enabled is True
+    assert config.runtime_test_fixture_enabled is True
+    assert config.gemini_api_key == ""
+    assert config.has_live_runtime_explanation is False
+
+
+def test_runtime_test_fixture_is_rejected_outside_test_environment():
+    with pytest.raises(ConfigurationError, match="allowed only when APP_ENV=test"):
+        load_ai_config(
+            {
+                "APP_ENV": "production",
+                "AI_RUNTIME_EXPLANATION_ENABLED": "true",
+                "AI_RUNTIME_TEST_FIXTURE_ENABLED": "true",
+            }
+        )
+
+
+def test_runtime_test_fixture_requires_runtime_feature_flag():
+    with pytest.raises(ConfigurationError, match="requires AI_RUNTIME_EXPLANATION_ENABLED"):
+        load_ai_config(
+            {
+                "APP_ENV": "test",
+                "AI_RUNTIME_TEST_FIXTURE_ENABLED": "true",
+            }
+        )
 
 
 def test_camera_extraction_has_separate_opt_in_and_requires_server_key():
