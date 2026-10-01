@@ -191,21 +191,32 @@ A model failure, timeout or validation failure must leave the deterministic resu
 
 The configured provider/model is an implementation choice and may change after quality, latency, cost and reliability evaluation.
 
-## Future multimodal inputs
+## Multimodal inputs
 
-Camera or voice features are future capabilities, not current runtime requirements.
+Camera amount extraction has a first opt-in runtime slice for saved budget scenarios. Voice remains a future capability.
 
-If introduced, a camera flow may help interpret user-supplied menus, receipts, shelf prices or ATM screens. A voice flow may make trip/budget questions easier during travel. Both require stricter privacy boundaries than ordinary destination context:
+The Camera boundary is intentionally stricter than ordinary destination context:
 
-- explicit user action before capture/upload;
-- minimize retained raw image/audio;
-- extract only the fields needed for the requested task;
-- do not treat OCR/model interpretation as authoritative when the source is ambiguous;
-- never infer bank/account secrets from screenshots;
-- allow the user to correct extracted amounts/currencies before financial calculations;
-- keep deterministic conversion/payment math outside the model.
+- explicit user action is required before capture/upload;
+- runtime enablement is separate from text explanation through `AI_CAMERA_EXTRACTION_ENABLED`;
+- accepted uploads are JPEG/PNG/WebP up to 8 MiB and a bounded decoded pixel count;
+- the application decodes, applies EXIF orientation, downsizes when needed and re-encodes the image as an in-memory JPEG before provider access, stripping original metadata;
+- raw uploads and normalized images are not stored in the database/media library;
+- the current external processor is the configured server-side Gemini client; browser code never receives the API key;
+- the provider schema requests only amount, currency code, candidate kind and confidence, with at most six candidates;
+- merchant names, people, addresses, account/card identifiers, phone numbers and surrounding receipt/menu text are explicitly outside the extraction contract;
+- an explicit provider currency conflict cannot be confirmed as spend in a scenario using another currency;
+- the user may correct the amount before confirmation;
+- confirmation creates only a short-lived signed scenario-scoped token and performs no spend write in this slice;
+- deterministic conversion/payment/budget math remains outside the model.
 
-Prefer on-device or ephemeral processing when practical, and document any external provider that receives user-supplied media.
+Provider failure, safety blocking, timeout or invalid structured output must leave the saved scenario untouched. No live multimodal provider call is allowed inside a database transaction.
+
+A later Camera-confirmed spend handoff may consume the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It must not persist raw media or create a parallel receipt ledger.
+
+Voice, if introduced later, requires an equivalent explicit capture/minimized-retention contract.
+
+Prefer on-device extraction when it can meet the same accuracy and trust requirements with less external data transfer.
 
 ## Generated imagery
 
