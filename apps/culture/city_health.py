@@ -6,7 +6,7 @@ from datetime import date
 from django.utils import timezone
 
 from apps.countries.models import City, CountryCurrency
-from apps.culture.models import TypicalPrice, TypicalPriceCategory
+from apps.culture.models import TypicalPrice
 from apps.culture.price_quality import (
     TypicalPriceQualityCode,
     TypicalPriceQualityInput,
