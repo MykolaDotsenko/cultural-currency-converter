@@ -64,7 +64,10 @@ def test_destination_context_seed_is_sourced_and_idempotent():
     call_command("seed_destination_context", stdout=second)
 
     profile = CulturalProfile.objects.get(country__iso2="JP")
-    prices = TypicalPrice.objects.filter(country__iso2="JP").order_by("display_order")
+    prices = TypicalPrice.objects.filter(
+        country__iso2="JP",
+        observed_at=date(2026, 9, 21),
+    ).order_by("display_order")
 
     assert profile.is_published is True
     assert profile.source_name == "Japan National Tourism Organization (JNTO)"
