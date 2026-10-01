@@ -257,7 +257,7 @@ After the user confirms or corrects an extracted amount:
 4. the server reloads and verifies the short-lived scenario-scoped signed confirmation token;
 5. the signed token—not an editable amount field—is the authoritative handoff value;
 6. the existing idempotent saved-scenario spend service records only amount, source and timestamp;
-7. replaying the exact same confirmed token must not double-count spend.
+7. the token carries a signed unique confirmation id used as the spend idempotency key, so replaying the same confirmation cannot double-count spend while a separate confirmation remains distinct.
 
 A user can always return without adding the amount. The source image, receipt text and merchant identity remain outside saved-trip persistence.
 
