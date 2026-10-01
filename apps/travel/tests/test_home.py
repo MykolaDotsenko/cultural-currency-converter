@@ -161,6 +161,7 @@ def test_active_trip_wins_over_upcoming_and_uses_saved_money_state(home_referenc
     assert home.trip_budget.remaining == Decimal("100000")
     assert home.trip_budget.days == 5
     assert home.trip_budget.remaining_per_day == Decimal("20000")
+    assert home.budget_day_label == "per remaining trip day"
     assert home.rate_comparison is not None
     assert home.rate_change_phrase == "3300 JPY more than the saved baseline"
     assert home.camera_url.endswith(f"/saved/scenarios/{active.pk}/camera/")
@@ -202,6 +203,7 @@ def test_nearest_upcoming_trip_is_selected(home_reference_data):
     assert home.schedule.state is TripScheduleState.UPCOMING
     assert home.schedule.days_until_start == 7
     assert home.primary_action_label == "Re-check trip"
+    assert home.budget_day_label == "per trip day"
 
 
 @pytest.mark.django_db
