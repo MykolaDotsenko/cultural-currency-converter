@@ -22,7 +22,6 @@ from apps.culture.models import (
 from apps.culture.services import build_destination_context
 
 
-
 @pytest.mark.django_db
 def test_story_seed_requires_reference_data_first():
     with pytest.raises(CommandError, match="seed_reference_data"):
