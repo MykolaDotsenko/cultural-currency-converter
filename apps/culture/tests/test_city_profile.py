@@ -21,6 +21,14 @@ from apps.culture.models import (
 )
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    # Python-only CI deliberately does not build frontend assets. This mirrors
+    # the existing Explore view-test harness while browser CI exercises the
+    # production Vite bundle separately.
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def seeded_city_context(db):
     call_command("seed_reference_data", stdout=StringIO())
