@@ -516,6 +516,30 @@ def test_confirmed_spend_rejects_non_budget_scenario_and_invalid_amount(referenc
 
 
 @pytest.mark.django_db
+def test_confirmed_spend_enforces_destination_currency_minor_units(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-precision-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+
+    with pytest.raises(SavedScenarioError, match="at most 0 decimal places"):
+        record_scenario_spend(scenario, amount=Decimal("12.5"))
+
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
 def test_confirmed_spend_limit_is_enforced_without_deleting_existing_entries(
     reference_data,
     monkeypatch,
