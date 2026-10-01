@@ -10,7 +10,10 @@ from django.views.decorators.http import require_http_methods
 
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.cache import LatestQuoteGateway
-from apps.exchange.comparison import DestinationComparisonError, compare_destinations
+from apps.exchange.comparison import (
+    DestinationComparisonError,
+    compare_destinations,
+)
 from apps.exchange.comparison_presentation import build_destination_comparison_component
 from apps.exchange.forms import DestinationComparisonForm
 
@@ -59,7 +62,10 @@ def destination_comparison_view(
         else:
             cleaned = form.cleaned_data
             shared_gateway = latest_gateway_factory()
-            shared_gateway_factory = lambda: shared_gateway
+
+            def shared_gateway_factory() -> LatestQuoteGateway:
+                return shared_gateway
+
             context_as_of = timezone.localdate()
 
             left_submission = run_converter_submission(
