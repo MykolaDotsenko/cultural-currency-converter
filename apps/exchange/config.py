@@ -29,7 +29,6 @@ class FxRuntimeConfig:
         )
 
 
-
 def _parse_test_fixture_enabled(values: Mapping[str, str]) -> bool:
     raw = values.get("FX_TEST_FIXTURE_ENABLED", "").strip().lower()
     if not raw:
