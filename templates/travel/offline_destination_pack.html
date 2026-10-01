@@ -135,7 +135,7 @@
                   · {{ item.scope_label }}
                 </p>
                 <p class="source">
-                  Observed {{ item.observed_at|date:"j M Y" }} · {{ item.get_confidence_display|default:item.confidence }}
+                  Observed {{ item.observed_at|date:"j M Y" }} · confidence {{ item.confidence }}
                   · source: <a href="{{ item.source_url }}">{{ item.source_name }}</a>
                 </p>
               </article>
