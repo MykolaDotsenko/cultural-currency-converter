@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from apps.exchange.ai.contracts import ExplanationPacket, GroundedFact, ProviderExplanation
 from integrations.gemini.errors import AIProviderTimeout
 from integrations.gemini.models import ProviderUsage
@@ -9,6 +11,9 @@ class DeterministicTestExplanationDrafter:
     """Offline runtime-AI drafter for browser/release-quality tests only."""
 
     def draft(self, packet: ExplanationPacket) -> ProviderExplanation:
+        if packet.intent_id == "rate_meaning":
+            # Keep browser-quality loading/cancellation states observable without external I/O.
+            time.sleep(0.2)
         if packet.intent_id == "payment_difference":
             raise AIProviderTimeout("Deterministic browser fixture timeout.")
 
