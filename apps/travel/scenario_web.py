@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -17,17 +19,29 @@ from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
     load_budget_context_snapshot_token,
 )
+from apps.exchange.config import FxConfigurationError
+from apps.exchange.domain import FxDomainError
 from apps.exchange.forms import BudgetInterpretationForm
+from apps.exchange.providers.base import FxProviderError
+from apps.exchange.services import quote_conversion
+from apps.exchange.web.gateways import build_latest_quote_gateway
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioKind,
     SavedScenarioObservationKind,
 )
+from apps.travel.scenario_comparison import (
+    ScenarioRateDirection,
+    compare_scenario_observations,
+)
 from apps.travel.scenarios import (
     SavedScenarioError,
     SavedScenarioSpec,
     create_saved_scenario,
+    record_scenario_recheck,
 )
+
+logger = logging.getLogger("cultural_currency.travel")
 
 
 def _decimal_input_text(value) -> str:
@@ -49,6 +63,51 @@ def _scenario_converter_url(scenario: SavedScenario) -> str:
     if scenario.destination_country is not None:
         params["destination_country"] = scenario.destination_country.iso2
     return f"{reverse('converter')}?{urlencode(params)}"
+
+
+def _signed_decimal_text(value: Decimal) -> str:
+    text = _decimal_input_text(value)
+    if value > 0:
+        return f"+{text}"
+    return text
+
+
+def _scenario_rate_comparison_component(
+    scenario: SavedScenario,
+    *,
+    initial_observation,
+    latest_observation,
+) -> dict[str, object] | None:
+    if (
+        initial_observation is None
+        or latest_observation is None
+        or initial_observation.pk == latest_observation.pk
+    ):
+        return None
+
+    comparison = compare_scenario_observations(initial_observation, latest_observation)
+    if comparison.direction is ScenarioRateDirection.HIGHER:
+        difference_phrase = (
+            f"{_decimal_input_text(abs(comparison.output_amount_difference))} "
+            f"{scenario.destination_currency.code} more"
+        )
+    elif comparison.direction is ScenarioRateDirection.LOWER:
+        difference_phrase = (
+            f"{_decimal_input_text(abs(comparison.output_amount_difference))} "
+            f"{scenario.destination_currency.code} less"
+        )
+    else:
+        difference_phrase = f"no change in {scenario.destination_currency.code} output"
+
+    return {
+        "difference_phrase": difference_phrase,
+        "rate_change_percent": _signed_decimal_text(comparison.rate_difference_percent),
+        "initial_output": _decimal_input_text(initial_observation.output_amount),
+        "latest_output": _decimal_input_text(latest_observation.output_amount),
+        "initial_effective_date": initial_observation.effective_date,
+        "latest_effective_date": latest_observation.effective_date,
+        "changed": comparison.changed,
+    }
 
 
 def _scenario_default_title(
@@ -186,6 +245,11 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
         }
         for item in scenario.budget_items.all()
     )
+    rate_comparison = _scenario_rate_comparison_component(
+        scenario,
+        initial_observation=initial_observation,
+        latest_observation=latest_observation,
+    )
 
     return render(
         request,
@@ -195,9 +259,85 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
             "budget_item_rows": budget_item_rows,
             "initial_observation": initial_observation,
             "latest_observation": latest_observation,
+            "rate_comparison": rate_comparison,
             "converter_url": _scenario_converter_url(scenario),
         },
     )
+
+
+@login_required
+@require_POST
+def recheck_saved_scenario(request: HttpRequest, scenario_id: int) -> HttpResponse:
+    scenario = get_object_or_404(
+        SavedScenario.objects.select_related(
+            "source_currency",
+            "destination_currency",
+        ),
+        pk=scenario_id,
+        user=request.user,
+    )
+    latest_before = scenario.observations.order_by("-recorded_at", "-id").first()
+
+    try:
+        gateway = build_latest_quote_gateway()
+        conversion = quote_conversion(
+            amount=scenario.source_amount,
+            base_currency=scenario.source_currency.code,
+            quote_currency=scenario.destination_currency.code,
+            quote_minor_units=scenario.destination_currency.minor_units,
+            gateway=gateway,
+        )
+    except FxConfigurationError:
+        logger.exception(
+            "saved_scenario_recheck_fx_configuration_error",
+            extra={"scenario_id": scenario.pk},
+        )
+        messages.error(
+            request,
+            "The latest reference rate is temporarily unavailable. Your saved observation was not changed.",
+        )
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+    except (FxProviderError, FxDomainError) as exc:
+        logger.warning(
+            "saved_scenario_recheck_fx_unavailable",
+            extra={
+                "scenario_id": scenario.pk,
+                "error_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "The latest reference rate is temporarily unavailable. Your saved observation was not changed.",
+        )
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+    try:
+        observation = record_scenario_recheck(scenario, conversion=conversion)
+    except SavedScenarioError as exc:
+        messages.error(request, f"Could not re-check this scenario: {exc}")
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+    except DatabaseError:
+        logger.exception(
+            "saved_scenario_recheck_persistence_unavailable",
+            extra={"scenario_id": scenario.pk},
+        )
+        messages.error(
+            request,
+            "The latest rate was retrieved, but the re-check could not be saved. Your existing observations were not changed.",
+        )
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+    if latest_before is not None and observation.pk == latest_before.pk:
+        messages.info(
+            request,
+            "The latest available reference matches the most recent stored observation.",
+        )
+    else:
+        messages.success(
+            request,
+            "Reference rate re-checked. The original saved observation remains unchanged.",
+        )
+    return redirect("saved_scenario_detail", scenario_id=scenario.pk)
 
 
 @login_required

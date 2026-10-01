@@ -348,3 +348,64 @@ def test_duplicate_budget_categories_are_rejected_before_write(reference_data):
         )
 
     assert SavedScenario.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_recheck_reuses_latest_identical_provider_observation(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="dedupe-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.TRIP,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+    initial = scenario.observations.get()
+
+    result = record_scenario_recheck(scenario, conversion=_conversion())
+
+    assert result.pk == initial.pk
+    assert scenario.observations.count() == 1
+
+
+@pytest.mark.django_db
+def test_recheck_observation_limit_is_enforced_without_deleting_history(
+    reference_data,
+    monkeypatch,
+):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="bounded-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.TRIP,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+    record_scenario_recheck(
+        scenario,
+        conversion=_conversion(output=Decimal("18000"), rate=Decimal("180")),
+    )
+    monkeypatch.setattr("apps.travel.scenarios.MAX_SCENARIO_OBSERVATIONS", 2)
+
+    with pytest.raises(SavedScenarioError, match="at most 2 FX observations"):
+        record_scenario_recheck(
+            scenario,
+            conversion=_conversion(output=Decimal("18100"), rate=Decimal("181")),
+        )
+
+    assert scenario.observations.count() == 2
+    assert scenario.observations.filter(kind=SavedScenarioObservationKind.INITIAL).count() == 1

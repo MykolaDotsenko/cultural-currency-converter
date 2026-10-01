@@ -21,6 +21,7 @@ from apps.travel.models import (
 )
 
 MAX_ACCOUNT_SCENARIOS = 50
+MAX_SCENARIO_OBSERVATIONS = 100
 MAX_PROVIDER_KEYS = 8
 MAX_PROVIDER_KEY_LENGTH = 80
 
@@ -158,12 +159,43 @@ def record_scenario_recheck(
 
     with transaction.atomic():
         locked = SavedScenario.objects.select_for_update().get(pk=scenario.pk)
+        latest = locked.observations.order_by("-recorded_at", "-id").first()
+        if latest is not None and _observation_matches_conversion(
+            latest,
+            conversion=conversion,
+            provider_keys=provider_keys,
+        ):
+            return latest
+
+        if locked.observations.count() >= MAX_SCENARIO_OBSERVATIONS:
+            raise SavedScenarioError(
+                f"A saved scenario may store at most {MAX_SCENARIO_OBSERVATIONS} FX observations."
+            )
+
         return _create_observation(
             locked,
             conversion=conversion,
             kind="recheck",
             provider_keys=provider_keys,
         )
+
+
+def _observation_matches_conversion(
+    observation: SavedScenarioObservation,
+    *,
+    conversion: ConversionResult,
+    provider_keys: list[str],
+) -> bool:
+    """Return whether a provider observation is already represented by the latest row."""
+
+    return (
+        observation.input_amount == conversion.input_amount
+        and observation.output_amount == conversion.output_amount
+        and observation.rate == conversion.quote.rate
+        and observation.effective_date == conversion.quote.effective_date
+        and observation.provider_keys == provider_keys
+        and observation.stale is conversion.stale
+    )
 
 
 def _create_observation(

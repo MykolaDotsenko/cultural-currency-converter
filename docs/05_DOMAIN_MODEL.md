@@ -190,7 +190,9 @@ A scenario observation is an immutable trusted current FX observation recorded w
 
 It stores the scenario amount, output amount, rate, effective date, provider attribution, fetch timestamp and stale state. Historical FX is not accepted into this current travel-scenario path.
 
-Observations are append-only. This provides the evidence needed for future **rate changed since saved / last re-check** features without rewriting the original baseline.
+Observations are append-only, and an explicit re-check does not add a duplicate row when the latest stored observation already represents the same effective date, rate, output, provider attribution and stale state. A bounded per-scenario observation history prevents accidental/unbounded growth while preserving the original baseline.
+
+The account scenario detail can compare the immutable initial observation with the latest distinct re-check using deterministic Decimal arithmetic. The comparison reports the rate/output difference neutrally and does not attach investment or exchange-timing meaning.
 
 The first account-facing budget save flow persists only normalized scenario assumptions plus the trusted FX observation. Current TypicalPrice rows and rendered budget results are intentionally **not** copied into the scenario: when the product later re-checks a scenario, current local-price context should be recomputed from the canonical provenance-aware data layer rather than presenting an old local-price snapshot as current truth.
 
