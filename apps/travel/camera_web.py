@@ -230,11 +230,7 @@ def add_camera_confirmed_spend(request: HttpRequest, scenario_id: int) -> HttpRe
     )
     if not form.is_valid():
         error_message = next(
-            (
-                str(message)
-                for errors in form.errors.values()
-                for message in errors
-            ),
+            (str(message) for errors in form.errors.values() for message in errors),
             "Camera confirmation is invalid. Scan and confirm the amount again.",
         )
         return _handoff_error_response(
@@ -283,4 +279,3 @@ def add_camera_confirmed_spend(request: HttpRequest, scenario_id: int) -> HttpRe
         "Camera-confirmed spend added to this saved budget.",
     )
     return redirect("saved_scenario_detail", scenario_id=scenario.pk)
-
