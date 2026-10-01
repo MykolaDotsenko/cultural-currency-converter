@@ -196,6 +196,23 @@ Observations are append-only, and an explicit re-check does not add a duplicate 
 
 The account scenario detail can compare the immutable initial observation with the latest distinct re-check using deterministic Decimal arithmetic. The comparison reports the rate/output difference neutrally and does not attach investment or exchange-timing meaning.
 
+### SavedScenarioSpendEntry
+
+A spend entry is a minimal immutable record of **confirmed destination-currency spend** for a saved budget scenario.
+
+Current identity is deliberately narrow:
+
+- parent saved budget scenario;
+- positive amount representable in the scenario destination currency's minor units;
+- confirmation source (`manual` today, `camera` reserved for future user-confirmed camera input);
+- recorded timestamp.
+
+The model does not store merchant identity, receipt/media bytes, arbitrary purchase notes or an inferred category. Corrections are explicit delete-and-add operations rather than in-place mutation.
+
+The original `SavedScenarioObservation(kind=initial)` output amount is the reference-budget baseline. Later re-check observations must not change remaining-budget arithmetic. This keeps **rate movement** and **confirmed spending** as separate meanings.
+
+`TripBudgetSummary` is derived state, not persisted financial truth: confirmed spend is summed, remaining never goes below zero, over-reference is reported separately, and a per-day reference is shown only when explicit duration/date semantics support it.
+
 The first account-facing budget save flow persists only normalized scenario assumptions plus the trusted FX observation. Current TypicalPrice rows and rendered budget results are intentionally **not** copied into the scenario: when the product later re-checks a scenario, current local-price context should be recomputed from the canonical provenance-aware data layer rather than presenting an old local-price snapshot as current truth.
 
 Scenario read/delete operations are always owner-scoped. Anonymous browser-local scenario persistence is a separate future privacy surface and must not be inferred from account persistence.
