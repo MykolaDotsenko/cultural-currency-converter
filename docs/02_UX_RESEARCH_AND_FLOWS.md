@@ -245,6 +245,22 @@ A useful returning-user summary can show:
 
 Do not turn this into a dense travel dashboard. The purpose is to remove repeated setup and surface the next useful action.
 
+### Camera confirmation → trip budget handoff
+
+Camera extraction and spend persistence remain two separate user decisions.
+
+After the user confirms or corrects an extracted amount:
+
+1. the page shows the confirmed destination-currency amount;
+2. no spend is written yet;
+3. **Add to trip budget** performs a separate CSRF-protected POST;
+4. the server reloads and verifies the short-lived scenario-scoped signed confirmation token;
+5. the signed token—not an editable amount field—is the authoritative handoff value;
+6. the existing idempotent saved-scenario spend service records only amount, source and timestamp;
+7. replaying the exact same confirmed token must not double-count spend.
+
+A user can always return without adding the amount. The source image, receipt text and merchant identity remain outside saved-trip persistence.
+
 ## Trip-cycle retention flow
 
 Saved scenarios should support a deliberate lifecycle rather than ending at a bookmark:
@@ -400,5 +416,5 @@ The save handoff must preserve these boundaries:
 - owner scoping applies to view and delete operations;
 - anonymous users get an opt-in sign-in affordance rather than silent account persistence.
 
-The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness and explicit Trip Budget Remaining are now present; current local-value refresh, Camera-confirmed spend and deeper trip-day workflows remain later iterations.
+The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness, explicit Trip Budget Remaining and explicit Camera-confirmed spend are now present. Current local-value refresh and deeper trip-day workflows remain later iterations.
 
