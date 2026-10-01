@@ -1,5 +1,6 @@
 const REGION_ID = "conversion-explanation-region";
 const CLIENT_STATUS_ID = "explanation-client-status";
+const ANNOUNCER_ID = "explanation-announcer";
 const TRIGGER_SELECTOR = "[data-ai-explanation-trigger]";
 const FOCUS_SELECTOR = "[data-ai-explanation-focus]";
 
@@ -9,6 +10,10 @@ function explanationRegion(): HTMLElement | null {
 
 function clientStatus(): HTMLElement | null {
   return document.getElementById(CLIENT_STATUS_ID);
+}
+
+function announcer(): HTMLElement | null {
+  return document.getElementById(ANNOUNCER_ID);
 }
 
 function explanationTrigger(target: EventTarget | null): HTMLElement | null {
@@ -32,6 +37,16 @@ function resetPending(): void {
   region.setAttribute("aria-busy", "false");
 }
 
+function announce(message: string): void {
+  const status = announcer();
+  if (!status) return;
+
+  status.textContent = "";
+  window.setTimeout(() => {
+    status.textContent = message;
+  }, 0);
+}
+
 function clearClientStatus(): void {
   const status = clientStatus();
   if (status) status.textContent = "";
@@ -44,6 +59,7 @@ function showClientFailure(): void {
 
   status.textContent =
     "The explanation request could not be completed. Choose the question again to retry.";
+  announce("Explanation request failed. Choose the question again to retry.");
   status.focus();
 }
 
@@ -51,6 +67,8 @@ document.addEventListener("htmx:beforeRequest", (event) => {
   if (!explanationTrigger(event.target)) return;
   clearClientStatus();
   setPending(1);
+  const label = explanationTrigger(event.target)?.textContent?.trim();
+  announce(label ? `Generating explanation: ${label}` : "Generating explanation.");
 });
 
 document.addEventListener("htmx:afterRequest", (event) => {
@@ -60,10 +78,22 @@ document.addEventListener("htmx:afterRequest", (event) => {
 
 document.addEventListener("htmx:afterSwap", (event) => {
   const target = event.target;
-  if (!(target instanceof Element) || target.id !== REGION_ID) return;
+  if (!(target instanceof HTMLElement) || target.id !== REGION_ID) return;
 
   resetPending();
-  target.querySelector<HTMLElement>(FOCUS_SELECTOR)?.focus();
+  clearClientStatus();
+
+  const focusTarget = target.querySelector<HTMLElement>(FOCUS_SELECTOR);
+  const generated = target.querySelector<HTMLElement>("[data-ai-generated]")?.dataset.aiGenerated;
+  if (generated === "true") {
+    announce("AI explanation ready.");
+  } else if (generated === "false") {
+    announce("Built-in explanation ready. Live AI is unavailable.");
+  } else if (target.querySelector('[role="alert"]')) {
+    announce("Explanation unavailable. Choose the question again to retry.");
+  }
+
+  focusTarget?.focus();
 });
 
 document.addEventListener("htmx:responseError", (event) => {
@@ -72,6 +102,12 @@ document.addEventListener("htmx:responseError", (event) => {
 });
 
 document.addEventListener("htmx:sendError", (event) => {
+  if (!explanationTrigger(event.target)) return;
+  showClientFailure();
+});
+
+
+document.addEventListener("htmx:timeout", (event) => {
   if (!explanationTrigger(event.target)) return;
   showClientFailure();
 });
