@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from django import forms
 
 
@@ -16,8 +18,8 @@ class SavedScenarioPlanningForm(forms.Form):
         widget=forms.DateInput(attrs={"type": "date", "class": "qa-text-input"}),
     )
 
-    def clean(self) -> dict[str, object]:
-        cleaned = super().clean()
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean() or {}
         start = cleaned.get("travel_start_date")
         end = cleaned.get("travel_end_date")
 
