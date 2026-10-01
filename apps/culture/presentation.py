@@ -53,6 +53,8 @@ def build_destination_context_component(
             ),
             "equivalent_text": _equivalent_text(price.equivalent),
             "scope": price.scope_label,
+            "scope_kind": "city" if price.is_city_scope else "national_fallback",
+            "scope_badge": "City evidence" if price.is_city_scope else "National fallback",
             "observed": date_format(price.observed_at, "M Y"),
             "source_class": price.source_class.replace("_", " ").capitalize(),
             "confidence": price.confidence.capitalize(),
