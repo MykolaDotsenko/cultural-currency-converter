@@ -285,6 +285,10 @@ class SavedScenario(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        if self.travel_end_date and not self.travel_start_date:
+            raise ValidationError(
+                {"travel_start_date": "Travel start date is required when an end date is set."}
+            )
         if (
             self.travel_start_date
             and self.travel_end_date
