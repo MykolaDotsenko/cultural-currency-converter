@@ -214,6 +214,23 @@ Observations are append-only, and an explicit re-check does not add a duplicate 
 
 The account scenario detail can compare the immutable initial observation with the latest distinct re-check using deterministic Decimal arithmetic. The comparison reports the rate/output difference neutrally and does not attach investment or exchange-timing meaning.
 
+## Camera amount extraction
+
+Camera input has no durable database model in the first slice.
+
+`SanitizedCameraImage` is an ephemeral in-memory value produced only after file-size/type, decoded-pixel and single-frame validation. It is metadata-stripped and normalized before external processing.
+
+`CameraAmountCandidate` contains only:
+
+- positive bounded Decimal amount;
+- blank or normalized three-letter currency code;
+- semantic kind (`total`, `line_item`, `atm_amount`, `other`);
+- bounded confidence class.
+
+A provider response may contain at most six candidates. Empty output is a distinct “no amount found” state; malformed provider data is not accepted as a valid extraction.
+
+A signed camera candidate token binds one normalized candidate to a narrow scenario scope for a short time. User confirmation may correct the amount but cannot silently reinterpret an explicit conflicting currency. The resulting confirmed-camera token contains only scope, amount and currency code. It is not a spend record and carries no image, merchant, receipt text, account/card field or provider prose.
+
 ### SavedScenarioSpendEntry
 
 A spend entry is a minimal immutable record of **confirmed destination-currency spend** for a saved budget scenario.
