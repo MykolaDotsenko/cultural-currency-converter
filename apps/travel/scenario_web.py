@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -116,7 +117,7 @@ def _scenario_rate_comparison_component(
 def _scenario_schedule_component(
     scenario: SavedScenario,
     *,
-    as_of,
+    as_of: date,
 ) -> dict[str, object] | None:
     try:
         schedule = evaluate_trip_schedule(
