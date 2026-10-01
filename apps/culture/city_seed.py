@@ -15,6 +15,8 @@ from apps.culture.price_quality import TypicalPriceUnit
 
 _WAVE_ONE_OBSERVED_AT = date(2026, 10, 1)
 _WAVE_ONE_VERIFIED_AT = datetime(2026, 10, 1, 12, 0, tzinfo=UTC)
+_WAVE_TWO_OBSERVED_AT = date(2026, 10, 1)
+_WAVE_TWO_VERIFIED_AT = datetime(2026, 10, 1, 13, 0, tzinfo=UTC)
 _CITY_CONTEXT_SOURCE_CLASS = TypicalPriceSourceClass.APPROXIMATE_CONTEXTUAL
 _CITY_CONTEXT_CONFIDENCE = TypicalPriceConfidence.MEDIUM
 
@@ -105,13 +107,13 @@ def _city_prices(
     coffee: tuple[str, str],
     meal: tuple[str, str],
     groceries: tuple[str, str],
-    transit: _PriceSpec,
+    transit: _PriceSpec | None,
 ) -> tuple[_PriceSpec, ...]:
     reviewed_note = (
         "City-level crowdsourced price range reviewed on 2026-10-01; "
         "contextual rather than authoritative."
     )
-    return (
+    prices = [
         _context_price(
             category=TypicalPriceCategory.COFFEE,
             unit=TypicalPriceUnit.SERVING,
@@ -134,7 +136,10 @@ def _city_prices(
             notes=reviewed_note,
             display_order=20,
         ),
-        transit,
+    ]
+    if transit is not None:
+        prices.append(transit)
+    prices.append(
         _context_price(
             category=TypicalPriceCategory.GROCERIES,
             unit=TypicalPriceUnit.BASKET,
@@ -149,8 +154,9 @@ def _city_prices(
                 "Reviewed on 2026-10-01; contextual rather than authoritative."
             ),
             display_order=40,
-        ),
+        )
     )
+    return tuple(prices)
 
 
 _HELSINKI_SOURCE = "https://de.numbeo.com/lebenshaltungskosten/stadt/Helsinki"
@@ -313,12 +319,115 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
 )
 
 
-def seed_curated_city_prices_wave1() -> tuple[int, int]:
-    """Seed reviewed city-scoped price anchors without bypassing TypicalPrice contracts."""
+_TOKYO_SOURCE = "https://www.numbeo.com/cost-of-living/in/Tokyo"
+_SINGAPORE_SOURCE = "https://www.numbeo.com/cost-of-living/in/Singapore"
+_TORONTO_SOURCE = "https://www.numbeo.com/cost-of-living/in/Toronto"
+_AUCKLAND_SOURCE = "https://www.numbeo.com/cost-of-living/in/Auckland"
 
+_WAVE_TWO_CITIES: tuple[_CitySpec, ...] = (
+    _CitySpec(
+        country_code="JP",
+        currency_code="JPY",
+        slug="tokyo",
+        name="Tokyo",
+        prices=_city_prices(
+            city_name="Tokyo",
+            source_url=_TOKYO_SOURCE,
+            coffee=("261.24", "900.00"),
+            meal=("800.00", "2000.00"),
+            groceries=("1280.00", "2248.00"),
+            transit=None,
+        ),
+    ),
+    _CitySpec(
+        country_code="SG",
+        currency_code="SGD",
+        slug="singapore",
+        name="Singapore",
+        prices=_city_prices(
+            city_name="Singapore",
+            source_url=_SINGAPORE_SOURCE,
+            coffee=("4.23", "8.00"),
+            meal=("7.00", "25.00"),
+            groceries=("8.46", "24.00"),
+            transit=_transit_price(
+                label="Adult MRT/LRT card fare",
+                low="1.28",
+                high="2.57",
+                source_name="Public Transport Council Singapore",
+                source_url=(
+                    "https://www.ptc.gov.sg/fares/public-transport-fares-and-passes/"
+                ),
+                notes=(
+                    "Adult card fare range across the published distance bands for MRT/LRT; "
+                    "official fare table reviewed 2026-10-01."
+                ),
+            ),
+        ),
+    ),
+    _CitySpec(
+        country_code="CA",
+        currency_code="CAD",
+        slug="toronto",
+        name="Toronto",
+        prices=_city_prices(
+            city_name="Toronto",
+            source_url=_TORONTO_SOURCE,
+            coffee=("3.00", "8.00"),
+            meal=("16.00", "39.00"),
+            groceries=("9.57", "25.99"),
+            transit=_transit_price(
+                label="TTC adult single fare",
+                low="3.30",
+                high="3.35",
+                source_name="Toronto Transit Commission (TTC)",
+                source_url="https://www.ttc.ca/Fares-and-passes",
+                notes=(
+                    "Adult fare reviewed 2026-10-01: CAD 3.30 with PRESTO/contactless and "
+                    "CAD 3.35 with cash or one-ride PRESTO ticket."
+                ),
+            ),
+        ),
+    ),
+    _CitySpec(
+        country_code="NZ",
+        currency_code="NZD",
+        slug="auckland",
+        name="Auckland",
+        prices=_city_prices(
+            city_name="Auckland",
+            source_url=_AUCKLAND_SOURCE,
+            coffee=("5.08", "8.00"),
+            meal=("20.00", "40.00"),
+            groceries=("13.94", "26.20"),
+            transit=_transit_price(
+                label="Auckland adult 1-zone bus/train fare",
+                low="3.00",
+                high=None,
+                source_name="Auckland Transport",
+                source_url=(
+                    "https://at.govt.nz/bus-train-ferry/fares-and-discounts/"
+                    "public-transport-fare-changes"
+                ),
+                notes=(
+                    "Adult AT HOP/contactless 1-zone bus/train fare effective 2026-02-01 and "
+                    "reviewed 2026-10-01."
+                ),
+            ),
+        ),
+    ),
+)
+
+
+def _seed_curated_city_prices(
+    *,
+    cities: tuple[_CitySpec, ...],
+    observed_at: date,
+    verified_at: datetime,
+) -> tuple[int, int]:
     created = existing = 0
 
-    for city_spec in _WAVE_ONE_CITIES:
+    for city_spec in cities:
         country = Country.objects.get(iso2=city_spec.country_code)
         currency = Currency.objects.get(code=city_spec.currency_code)
         city, _city_created = City.objects.update_or_create(
@@ -334,7 +443,7 @@ def seed_curated_city_prices_wave1() -> tuple[int, int]:
                 category=price_spec.category,
                 unit=price_spec.unit,
                 label=price_spec.label,
-                observed_at=_WAVE_ONE_OBSERVED_AT,
+                observed_at=observed_at,
             ).first()
             row_created = row is None
             if row is None:
@@ -344,7 +453,7 @@ def seed_curated_city_prices_wave1() -> tuple[int, int]:
                     category=price_spec.category,
                     unit=price_spec.unit,
                     label=price_spec.label,
-                    observed_at=_WAVE_ONE_OBSERVED_AT,
+                    observed_at=observed_at,
                 )
 
             row.amount_low = price_spec.amount_low
@@ -352,7 +461,7 @@ def seed_curated_city_prices_wave1() -> tuple[int, int]:
             row.currency = currency
             row.source_name = price_spec.source_name
             row.source_url = price_spec.source_url
-            row.verified_at = _WAVE_ONE_VERIFIED_AT
+            row.verified_at = verified_at
             row.source_class = price_spec.source_class
             row.confidence = price_spec.confidence
             row.notes = price_spec.notes
@@ -367,3 +476,24 @@ def seed_curated_city_prices_wave1() -> tuple[int, int]:
                 existing += 1
 
     return created, existing
+
+
+def seed_curated_city_prices_wave1() -> tuple[int, int]:
+    """Seed reviewed European/Nordic city anchors through the canonical quality contract."""
+
+    return _seed_curated_city_prices(
+        cities=_WAVE_ONE_CITIES,
+        observed_at=_WAVE_ONE_OBSERVED_AT,
+        verified_at=_WAVE_ONE_VERIFIED_AT,
+    )
+
+
+def seed_curated_city_prices_wave2() -> tuple[int, int]:
+    """Seed reviewed Asia/Oceania/North America city anchors without parallel state."""
+
+    return _seed_curated_city_prices(
+        cities=_WAVE_TWO_CITIES,
+        observed_at=_WAVE_TWO_OBSERVED_AT,
+        verified_at=_WAVE_TWO_VERIFIED_AT,
+    )
+
