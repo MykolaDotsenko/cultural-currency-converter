@@ -13,6 +13,7 @@ from apps.exchange.views import (
     budget_interpretation,
     conversion_explanation,
     converter,
+    destination_comparison,
     destination_mode,
     historical_series,
     payment_estimate,
@@ -39,6 +40,7 @@ from apps.travel.views import (
 urlpatterns = [
     path("", converter, name="converter"),
     path("destination/", destination_mode, name="destination_mode"),
+    path("compare/", destination_comparison, name="destination_comparison"),
     path("picker/options/", picker_options, name="picker_options"),
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
     path("payment/estimate/", payment_estimate, name="payment_estimate"),

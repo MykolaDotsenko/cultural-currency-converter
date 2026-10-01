@@ -26,6 +26,7 @@ const SURFACES = [
   { name: "converter", path: "/_design/converter/" },
   { name: "current-converter", path: "/" },
   { name: "destination-mode", path: "/destination/" },
+  { name: "destination-comparison", path: "/compare/" },
   { name: "saved-state", path: "/saved/" },
   { name: "account-login", path: "/accounts/login/" },
   { name: "account-signup", path: "/accounts/signup/" },
@@ -185,7 +186,12 @@ async function assertKeyboardFocus(page, surfaceName) {
   }
 
   if (surfaceName === "current-converter") {
-    for (const expectedText of ["Plan by destination", "Saved & recent", "Sign in"]) {
+    for (const expectedText of [
+      "Plan by destination",
+      "Compare destinations",
+      "Saved & recent",
+      "Sign in",
+    ]) {
       await page.keyboard.press("Tab");
       const focused = await page.evaluate(() => ({
         tagName: document.activeElement?.tagName ?? "",
@@ -1466,7 +1472,9 @@ const activeSurfaces =
   BROWSER_SCOPE === "full"
     ? SURFACES
     : SURFACES.filter((surface) =>
-        ["current-converter", "saved-state", "rate-series"].includes(surface.name),
+        ["current-converter", "destination-comparison", "saved-state", "rate-series"].includes(
+          surface.name,
+        ),
       );
 const activeViewports =
   BROWSER_SCOPE === "full"
