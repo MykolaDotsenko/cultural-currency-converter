@@ -210,7 +210,7 @@ Current identity is deliberately narrow:
 
 The model does not store merchant identity, receipt/media bytes, arbitrary purchase notes or an inferred category. Corrections are explicit delete-and-add operations rather than in-place mutation. Replaying one confirmed submission key returns the existing entry instead of recording spend twice.
 
-Each scenario has exactly one database-enforced `initial` FX observation. That row is the unique immutable reference-budget baseline used by Trip Budget Remaining.
+Scenario creation establishes one `initial` FX observation, and a database uniqueness constraint prevents a second `initial` row for the same scenario. The creation-service contract plus that constraint make the original observation the unique immutable reference-budget baseline used by Trip Budget Remaining.
 
 The original `SavedScenarioObservation(kind=initial)` output amount is the reference-budget baseline. Later re-check observations must not change remaining-budget arithmetic. This keeps **rate movement** and **confirmed spending** as separate meanings.
 
