@@ -195,7 +195,7 @@ def _classify_price(
     return _PriceClassification(
         category=row.category,
         fresh=not codes,
-        stale=codes == {TypicalPriceQualityCode.OBSERVATION_STALE},
+        stale=TypicalPriceQualityCode.OBSERVATION_STALE in codes,
         provenance_gap=bool(codes.intersection(_PROVENANCE_CODES)),
     )
 
