@@ -10,11 +10,12 @@
       {{ side.converted_amount }} <span>{{ side.currency_code }}</span>
     </p>
   </div>
-
   <dl class="qa-destination-comparison-side__rate">
     <div>
       <dt>Reference rate</dt>
-      <dd>1 {{ comparison.source_currency_code }} = {{ side.rate }} {{ side.currency_code }}</dd>
+      <dd>
+        1 {{ comparison.source_currency_code }} = {{ side.rate }} {{ side.currency_code }}
+      </dd>
     </div>
     <div>
       <dt>Effective date</dt>
@@ -22,10 +23,11 @@
     </div>
     <div>
       <dt>Provider</dt>
-      <dd>{{ side.providers }}</dd>
+      <dd>
+        {{ side.providers }}
+      </dd>
     </div>
   </dl>
-
   <section class="qa-destination-comparison-side__budget"
            aria-label="{{ side.destination_name }} budget interpretation">
     <div class="qa-destination-comparison-side__budget-heading">
@@ -42,11 +44,12 @@
         <span>per person / day</span>
       </p>
     </div>
-
     <dl class="qa-destination-comparison-side__facts">
       <div>
         <dt>Available amount</dt>
-        <dd>{{ side.budget.available_budget }} {{ side.currency_code }}</dd>
+        <dd>
+          {{ side.budget.available_budget }} {{ side.currency_code }}
+        </dd>
       </div>
       <div>
         <dt>Known basket range</dt>
@@ -66,7 +69,6 @@
         </dd>
       </div>
     </dl>
-
     {% if side.budget.lines %}
       <div class="qa-destination-comparison-side__lines">
         {% for line in side.budget.lines %}
@@ -87,7 +89,6 @@
       </div>
     {% endif %}
   </section>
-
   {% if side.payment %}
     <section class="qa-destination-comparison-side__payment"
              aria-label="{{ side.destination_name }} payment context">
@@ -101,7 +102,8 @@
       {% endif %}
       <p class="qa-context-source">
         Verified {{ side.payment.verified_at }} ·
-        <a href="{{ side.payment.source_url }}" rel="noopener noreferrer">{{ side.payment.source_name }}</a>
+        <a href="{{ side.payment.source_url }}"
+           rel="noopener noreferrer">{{ side.payment.source_name }}</a>
       </p>
     </section>
   {% endif %}
