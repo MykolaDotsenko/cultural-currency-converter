@@ -169,9 +169,7 @@ def test_payment_guidance_is_used_when_no_price_anchor_is_available():
 
     assert summary.kind is SmartResultSummaryKind.PAYMENT
     assert "reviewed payment guidance for Japan is available below" in summary.text
-    assert summary.evidence_label == (
-        "Verified 2026-09-20 · Official payment source"
-    )
+    assert summary.evidence_label == ("Verified 2026-09-20 · Official payment source")
     assert summary.evidence_url == "https://example.org/payment"
 
 
