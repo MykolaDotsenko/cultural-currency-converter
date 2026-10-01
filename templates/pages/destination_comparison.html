@@ -118,9 +118,8 @@
               {% if form.duration_days.errors %}
                 <span class="qa-field__message qa-field__message--error"
                       id="duration_days-error">{{ form.duration_days.errors.0 }}</span>
-              {% else %}
-                <span class="qa-field__message" id="duration_days-hint">Same calendar duration on both sides.</span>
               {% endif %}
+              <span class="qa-field__message" id="duration_days-hint">Same calendar duration on both sides.</span>
             </label>
             <label class="qa-field{% if form.travelers.errors %} qa-field--error{% endif %}">
               <span class="qa-field__label">{{ form.travelers.label }}</span>
@@ -128,9 +127,8 @@
               {% if form.travelers.errors %}
                 <span class="qa-field__message qa-field__message--error"
                       id="travelers-error">{{ form.travelers.errors.0 }}</span>
-              {% else %}
-                <span class="qa-field__message" id="travelers-hint">Same number of travelers on both sides.</span>
               {% endif %}
+              <span class="qa-field__message" id="travelers-hint">Same number of travelers on both sides.</span>
             </label>
           </div>
 
@@ -149,6 +147,9 @@
                     <span class="qa-field__message qa-field__message--error"
                           id="{{ field.html_name }}-error">{{ field.errors.0 }}</span>
                   {% endif %}
+                  <span class="qa-field__message" id="{{ field.html_name }}-hint">
+                    Editable units per person per day, applied identically to both destinations.
+                  </span>
                 </label>
               {% endfor %}
             </div>
