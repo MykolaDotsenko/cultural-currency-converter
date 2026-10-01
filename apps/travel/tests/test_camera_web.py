@@ -5,7 +5,6 @@ import re
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import Mock, patch
-from uuid import uuid4
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -387,15 +386,10 @@ def test_explicit_camera_handoff_adds_camera_spend_and_updates_remaining_budget(
         amount=Decimal("4750"),
         currency_code="JPY",
     )
-    submission_key = uuid4()
-
     with patch("apps.travel.camera_web.build_camera_extraction_service") as provider_factory:
         response = client.post(
             reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
-            {
-                "confirmed_camera_token": token,
-                "submission_key": str(submission_key),
-            },
+            {"confirmed_camera_token": token},
         )
 
     assert response.status_code == 302
@@ -404,7 +398,6 @@ def test_explicit_camera_handoff_adds_camera_spend_and_updates_remaining_budget(
     entry = scenario.spend_entries.get()
     assert entry.amount == Decimal("4750")
     assert entry.source == SavedScenarioSpendSource.CAMERA
-    assert entry.submission_key == submission_key
 
     detail = client.get(response.url)
     text = _normalized_response_text(detail)
@@ -422,11 +415,7 @@ def test_camera_handoff_replay_is_idempotent(client, camera_scenario):
         amount=Decimal("4750"),
         currency_code="JPY",
     )
-    submission_key = uuid4()
-    payload = {
-        "confirmed_camera_token": token,
-        "submission_key": str(submission_key),
-    }
+    payload = {"confirmed_camera_token": token}
     url = reverse("add_camera_confirmed_spend", args=(scenario.pk,))
 
     first = client.post(url, payload)
@@ -437,7 +426,6 @@ def test_camera_handoff_replay_is_idempotent(client, camera_scenario):
     assert scenario.spend_entries.count() == 1
     entry = scenario.spend_entries.get()
     assert entry.source == SavedScenarioSpendSource.CAMERA
-    assert entry.submission_key == submission_key
 
 
 @pytest.mark.django_db
@@ -475,7 +463,6 @@ def test_camera_handoff_rejects_currency_or_scope_mismatch(
         reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
         {
             "confirmed_camera_token": token_factory(scenario),
-            "submission_key": str(uuid4()),
         },
     )
 
@@ -499,7 +486,6 @@ def test_tampered_camera_handoff_token_never_persists_spend(client, camera_scena
         reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
         {
             "confirmed_camera_token": token + "tampered",
-            "submission_key": str(uuid4()),
         },
     )
 
@@ -521,7 +507,6 @@ def test_expired_camera_handoff_token_never_persists_spend(client, camera_scenar
             reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
             {
                 "confirmed_camera_token": "signed-but-expired",
-                "submission_key": str(uuid4()),
             },
         )
 
@@ -539,7 +524,6 @@ def test_anonymous_camera_handoff_redirects_before_token_validation(client, came
             reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
             {
                 "confirmed_camera_token": "not-even-validated",
-                "submission_key": str(uuid4()),
             },
         )
 
@@ -560,7 +544,6 @@ def test_camera_handoff_is_owner_scoped_before_token_validation(client, camera_s
             reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
             {
                 "confirmed_camera_token": "not-even-validated",
-                "submission_key": str(uuid4()),
             },
         )
 
@@ -583,7 +566,6 @@ def test_camera_handoff_reuses_trip_spend_domain_bounds(client, camera_scenario)
         reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
         {
             "confirmed_camera_token": token,
-            "submission_key": str(uuid4()),
         },
     )
 
@@ -610,7 +592,6 @@ def test_camera_handoff_database_failure_preserves_saved_budget(client, camera_s
             reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
             {
                 "confirmed_camera_token": token,
-                "submission_key": str(uuid4()),
             },
         )
 
