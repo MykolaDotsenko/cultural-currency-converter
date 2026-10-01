@@ -119,9 +119,7 @@ def build_explore_destinations(
         .exclude(source_url="")
         .values_list("country_id", "city_ref_id", "city", "currency_id", "source_url")
     )
-    valid_price_rows = tuple(
-        row for row in fresh_price_rows if is_valid_provenance_url(row[4])
-    )
+    valid_price_rows = tuple(row for row in fresh_price_rows if is_valid_provenance_url(row[4]))
     valid_profile_country_ids = {
         country_id
         for country_id, source_url in (
@@ -137,7 +135,8 @@ def build_explore_destinations(
     }
 
     candidate_country_ids = valid_profile_country_ids | {
-        country_id for country_id, _city_ref_id, _city, _currency_id, _source_url in valid_price_rows
+        country_id
+        for country_id, _city_ref_id, _city, _currency_id, _source_url in valid_price_rows
     }
     if not candidate_country_ids:
         return ()
@@ -182,10 +181,7 @@ def build_explore_destinations(
 
     candidates: list[tuple[str, int, str, CountryCurrency, City | None]] = []
     for link in current_links:
-        if (
-            link.country_id in national_country_ids
-            or link.country_id in valid_profile_country_ids
-        ):
+        if link.country_id in national_country_ids or link.country_id in valid_profile_country_ids:
             candidates.append(
                 (
                     link.country.name.casefold(),
