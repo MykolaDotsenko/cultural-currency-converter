@@ -70,6 +70,8 @@ The first **Explore** slice is a provider-free discovery surface over already-re
 
 The first **City Money Profile** slice turns that reviewed city scope into a coherent provider-free destination page without creating new financial state. It resolves the city's current primary currency, shows reviewed everyday-price anchors with explicit city/national scope, freshness, source class, confidence and provenance, and includes reviewed country-level payment guidance when available. A city profile cannot exist on national fallback alone. Convert, Budget and Compare handoffs preserve the canonical city scope; saving remains in the existing account-owned budget/scenario workflow until standalone My Places persistence is intentionally introduced later.
 
+The completed **city fallback trust audit** makes those scope rules executable rather than editorial. National fallback remains labelled national evidence; wrong-currency and stale rows cannot become current city-price claims; city profiles and Explore city cards require surviving direct city evidence; and cross-country city references are rejected at validation and defensively filtered from current context composition. These protections remain fail-closed for optional context and never invalidate an otherwise valid FX conversion.
+
 Future mobile/PWA delivery should reuse the same saved-observation, trip-budget, destination-context and versioned offline-snapshot meaning rather than create parallel calculations or silently cache live pages.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
