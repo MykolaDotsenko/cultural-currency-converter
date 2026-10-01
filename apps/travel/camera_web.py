@@ -72,7 +72,7 @@ def camera_scan_saved_scenario(
     request: HttpRequest,
     scenario_id: int,
     *,
-    service_factory: CameraServiceFactory = build_camera_extraction_service,
+    service_factory: CameraServiceFactory | None = None,
 ) -> HttpResponse:
     """Ephemerally extract and confirm one destination-currency amount.
 
@@ -101,8 +101,9 @@ def camera_scan_saved_scenario(
     raw = upload.read(MAX_CAMERA_UPLOAD_BYTES + 1)
     content_type = str(getattr(upload, "content_type", "") or "")
 
+    factory = service_factory or build_camera_extraction_service
     try:
-        delivery = service_factory().scan(
+        delivery = factory().scan(
             raw,
             content_type=content_type,
             expected_currency=scenario.destination_currency.code,
