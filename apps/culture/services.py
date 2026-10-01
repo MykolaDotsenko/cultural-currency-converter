@@ -360,7 +360,7 @@ def build_destination_context(
     )
 
     if city is None:
-        price_rows = tuple(
+        candidate_rows = tuple(
             base_prices.order_by("display_order", "city", "label", "pk")[:price_candidate_limit]
         )
     else:
@@ -376,18 +376,20 @@ def build_destination_context(
                 "pk",
             )[:price_candidate_limit]
         )
-        selected_rows = []
-        selected_categories: set[str] = set()
-        for row in (*city_rows, *national_rows):
-            if row.category in selected_categories:
-                continue
-            if not row.source_name.strip() or not is_valid_provenance_url(row.source_url):
-                continue
-            selected_rows.append(row)
-            selected_categories.add(row.category)
-            if len(selected_rows) >= price_limit:
-                break
-        price_rows = tuple(selected_rows)
+        candidate_rows = (*city_rows, *national_rows)
+
+    selected_rows = []
+    selected_categories: set[str] = set()
+    for row in candidate_rows:
+        if row.category in selected_categories:
+            continue
+        if not row.source_name.strip() or not is_valid_provenance_url(row.source_url):
+            continue
+        selected_rows.append(row)
+        selected_categories.add(row.category)
+        if len(selected_rows) >= price_limit:
+            break
+    price_rows = tuple(selected_rows)
 
     prices = tuple(
         TypicalPriceContext(
