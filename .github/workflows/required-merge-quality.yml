@@ -105,6 +105,7 @@ jobs:
           mypy \
             apps/exchange/domain.py \
             apps/exchange/budget.py \
+            apps/exchange/comparison.py \
             apps/exchange/money_context.py \
             apps/exchange/payment_estimate.py \
             apps/exchange/providers/base.py \
