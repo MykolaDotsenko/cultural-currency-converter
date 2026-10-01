@@ -129,6 +129,29 @@ def test_semantic_validator_rejects_untrusted_extensions(packet, mutation, messa
         validate_provider_payload(payload, packet=packet)
 
 
+def test_market_interpretation_filter_does_not_match_inside_normal_words(packet):
+    payload = _valid_payload()
+    payload["next_step"] = _insight(
+        "Run the conversion again using this reference observation.",
+        ["reference_scope"],
+    )
+
+    result = validate_provider_payload(payload, packet=packet)
+
+    assert result.next_step.text.startswith("Run the conversion again")
+
+
+def test_market_interpretation_filter_still_rejects_standalone_gain(packet):
+    payload = _valid_payload()
+    payload["next_step"] = _insight(
+        "This reference shows a gain.",
+        ["reference_scope"],
+    )
+
+    with pytest.raises(ExplanationValidationError, match="market interpretation"):
+        validate_provider_payload(payload, packet=packet)
+
+
 def test_validator_rejects_extra_schema_fields_even_if_provider_schema_would_normally_block_them(
     packet,
 ):
