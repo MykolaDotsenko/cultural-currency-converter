@@ -207,7 +207,11 @@ class CurrentConversionForm(forms.Form):
     source_currency = forms.ChoiceField(label="Source currency")
     destination_country = forms.ChoiceField(required=False, label="Destination country")
     destination_currency = forms.ChoiceField(label="Destination currency")
-    destination_city_slug = forms.CharField(required=False, max_length=140, widget=forms.HiddenInput())
+    destination_city_slug = forms.CharField(
+        required=False,
+        max_length=140,
+        widget=forms.HiddenInput(),
+    )
 
     def __init__(self, *args, **kwargs):
         if args and args[0] is not None and "rate_mode" not in args[0]:
