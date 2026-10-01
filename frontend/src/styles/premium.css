@@ -1819,3 +1819,201 @@ h3 {
     border-color: CanvasText;
   }
 }
+
+
+/* Camera: ephemeral capture with explicit human confirmation. */
+.qa-camera-intro {
+  max-width: 58rem;
+  margin-block-end: clamp(2rem, 5vw, 3.75rem);
+}
+
+.qa-camera {
+  display: grid;
+  max-width: 72rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+  align-items: start;
+  gap: clamp(2rem, 6vw, 5rem);
+}
+
+.qa-camera__instrument,
+.qa-camera-confirm {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  border: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-surface) 98%, var(--color-canvas)),
+    color-mix(in srgb, var(--color-surface) 94%, var(--color-canvas))
+  );
+  box-shadow: var(--qa-shadow-premium);
+}
+
+.qa-camera__instrument::before,
+.qa-camera-confirm::before {
+  position: absolute;
+  inset: 0 0 auto;
+  block-size: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--qa-accent-metal) 28%, transparent) 38%,
+    color-mix(in srgb, var(--color-brand) 18%, transparent) 72%,
+    transparent
+  );
+  content: "";
+}
+
+.qa-camera__heading,
+.qa-camera-confirm__heading {
+  max-width: 40rem;
+  margin-block-end: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.qa-camera__heading h2,
+.qa-camera-confirm__heading h2 {
+  max-width: 14ch;
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 470;
+  line-height: 1.02;
+}
+
+.qa-camera-confirm__heading > p:last-child {
+  max-width: 52rem;
+  margin-block-start: var(--qa-space-4);
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.qa-camera__upload-form,
+.qa-camera-confirm__form {
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 2rem);
+}
+
+.qa-file-input {
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+}
+
+.qa-file-input::file-selector-button {
+  min-block-size: 2.25rem;
+  margin-inline-end: 0.8rem;
+  padding-inline: 0.85rem;
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 620;
+}
+
+.qa-camera__action,
+.qa-camera-confirm__action {
+  display: flex;
+  align-items: center;
+  gap: var(--qa-space-5);
+  padding-block-start: var(--qa-space-4);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-camera__action p,
+.qa-camera-confirm__action p {
+  max-width: 36rem;
+  margin: 0;
+  color: var(--color-tertiary);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.qa-camera__principles {
+  padding-block-start: var(--qa-space-4);
+}
+
+.qa-camera__principles dl {
+  display: grid;
+  margin: 0;
+}
+
+.qa-camera__principles dl > div {
+  display: grid;
+  gap: var(--qa-space-2);
+  padding-block: var(--qa-space-5);
+  border-block-end: 1px solid var(--qa-hairline);
+}
+
+.qa-camera__principles dl > div:first-child {
+  padding-block-start: 0;
+}
+
+.qa-camera__principles dt {
+  color: var(--color-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.qa-camera__principles dd {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.qa-camera-confirm {
+  max-width: 72rem;
+  margin-block-start: clamp(2rem, 6vw, 4rem);
+}
+
+.qa-camera-confirm__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(2, minmax(11rem, 0.75fr));
+  gap: var(--qa-space-5);
+}
+
+@media (max-width: 48rem) {
+  .qa-camera {
+    grid-template-columns: 1fr;
+    gap: var(--qa-space-8);
+  }
+
+  .qa-camera-confirm__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-camera__action,
+  .qa-camera-confirm__action {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qa-camera__action .qa-primary-button,
+  .qa-camera-confirm__action .qa-primary-button {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-camera__instrument,
+  .qa-camera-confirm,
+  .qa-camera__principles dl > div,
+  .qa-file-input,
+  .qa-file-input::file-selector-button {
+    border-color: CanvasText;
+  }
+
+  .qa-file-input,
+  .qa-file-input::file-selector-button {
+    background: Canvas;
+    color: CanvasText;
+  }
+}
