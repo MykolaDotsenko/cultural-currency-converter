@@ -25,6 +25,7 @@ const SURFACES = [
   { name: "shell", path: "/_design/shell/" },
   { name: "converter", path: "/_design/converter/" },
   { name: "current-converter", path: "/" },
+  { name: "destination-mode", path: "/destination/" },
   { name: "saved-state", path: "/saved/" },
   { name: "account-login", path: "/accounts/login/" },
   { name: "account-signup", path: "/accounts/signup/" },
@@ -184,7 +185,7 @@ async function assertKeyboardFocus(page, surfaceName) {
   }
 
   if (surfaceName === "current-converter") {
-    for (const expectedText of ["Saved & recent", "Sign in"]) {
+    for (const expectedText of ["Plan by destination", "Saved & recent", "Sign in"]) {
       await page.keyboard.press("Tab");
       const focused = await page.evaluate(() => ({
         tagName: document.activeElement?.tagName ?? "",
