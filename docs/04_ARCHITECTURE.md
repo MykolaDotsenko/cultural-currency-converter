@@ -91,6 +91,8 @@ The contract keeps these concerns explicit:
 
 The Money Context Engine is not a second datastore, rate provider or calculation truth source. It is an application-level composition boundary intended for reuse by budget, destination comparison, saved-trip, camera and mobile/offline flows. Canonical city scope now travels through this contract so those consumers do not need a parallel city-context path.
 
+Destination mode is deliberately an entry adapter, not a second conversion engine. It resolves an explicit current country/city selection to the current primary destination currency, then redirects to the canonical converter with normalized destination scope. It performs no FX-provider call itself; conversion truth, source/effective-date semantics and context composition remain centralized.
+
 `apps/exchange/budget.py` is the first pure-domain consumer of that contract. It compares an explicitly selected destination amount basis with a user/editorial daily basket built from already-sourced `TypicalPriceContext` values. It does not query providers, infer missing categories or establish a universal cost-of-living truth. Country-level interpretation excludes city-only observations; city-level interpretation may use the selected city plus visibly national fallback rows already present in the MoneyContext.
 
 ### Budget interpretation web trust boundary
