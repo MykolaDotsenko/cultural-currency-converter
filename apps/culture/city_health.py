@@ -19,6 +19,7 @@ CITY_COVERAGE_CORE_CATEGORIES: tuple[str, ...] = (
     "transit",
     "groceries",
 )
+_CATEGORY_ORDER: tuple[str, ...] = (*CITY_COVERAGE_CORE_CATEGORIES, "other")
 _FRESH_CITY_POINTS = 25
 _NATIONAL_FALLBACK_POINTS = 15
 _PROVENANCE_CODES = frozenset(
@@ -110,11 +111,11 @@ def build_city_coverage_health(
 
         direct = tuple(
             _classify_price(row, current_currency_code=currency_code, as_of=selected_date)
-            for row in direct_by_city.get(city.pk, ())
+            for row in direct_by_city.get(city.pk, [])
         )
         national = tuple(
             _classify_price(row, current_currency_code=currency_code, as_of=selected_date)
-            for row in national_by_country.get(city.country_id, ())
+            for row in national_by_country.get(city.country_id, [])
         )
 
         fresh = {item.category for item in direct if item.fresh}
@@ -207,5 +208,5 @@ def _classify_price(
 
 
 def _ordered_categories(categories: set[str]) -> tuple[str, ...]:
-    order = {category: index for index, category in enumerate(TypicalPriceCategory.values)}
+    order = {category: index for index, category in enumerate(_CATEGORY_ORDER)}
     return tuple(sorted(categories, key=lambda category: (order.get(category, 999), category)))
