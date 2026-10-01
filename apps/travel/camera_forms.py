@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any
+from uuid import uuid4
 
 from django import forms
 
@@ -9,6 +10,7 @@ from apps.exchange.camera import (
     MAX_CAMERA_UPLOAD_BYTES,
     CameraTokenError,
     load_camera_candidate_token,
+    load_confirmed_camera_amount_token,
 )
 from apps.exchange.forms import parse_amount_text
 
@@ -118,3 +120,47 @@ class CameraCandidateConfirmationForm(forms.Form):
         cleaned["candidate_snapshot"] = snapshot
         cleaned["confirmed_amount"] = amount
         return cleaned
+
+
+class CameraSpendHandoffForm(forms.Form):
+    """Consume a signed confirmed camera amount without trusting a posted amount."""
+
+    confirmed_camera_token = forms.CharField(widget=forms.HiddenInput())
+    submission_key = forms.UUIDField(widget=forms.HiddenInput())
+
+    def __init__(
+        self,
+        *args: Any,
+        scenario_id: int,
+        destination_currency_code: str,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.scope = camera_scope_for_scenario(scenario_id)
+        self.destination_currency_code = destination_currency_code.upper().strip()
+        if not self.is_bound:
+            self.fields["submission_key"].initial = uuid4()
+
+    def clean(self) -> dict[str, Any]:
+        cleaned = super().clean() or {}
+        token = cleaned.get("confirmed_camera_token")
+        if not token:
+            return cleaned
+
+        try:
+            snapshot = load_confirmed_camera_amount_token(
+                str(token),
+                expected_scope=self.scope,
+            )
+        except CameraTokenError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+
+        if snapshot.currency_code != self.destination_currency_code:
+            raise forms.ValidationError(
+                f"The confirmed camera amount uses {snapshot.currency_code}, but this saved trip "
+                f"uses {self.destination_currency_code}."
+            )
+
+        cleaned["confirmed_snapshot"] = snapshot
+        return cleaned
+
