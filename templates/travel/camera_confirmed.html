@@ -37,7 +37,6 @@
             class="qa-saved-row__actions">
         {% csrf_token %}
         {{ spend_handoff_form.confirmed_camera_token }}
-        {{ spend_handoff_form.submission_key }}
         <button class="qa-primary-button" type="submit">Add to trip budget</button>
         <a class="qa-secondary-button"
            href="{% url 'saved_scenario_detail' scenario.pk %}">Return without adding</a>
