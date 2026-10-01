@@ -103,6 +103,8 @@ jobs:
           ruff format --check apps config scripts manage.py
           ruff check apps config scripts manage.py
           mypy \
+            apps/culture/price_quality.py \
+            apps/culture/city_health.py \
             apps/exchange/domain.py \
             apps/exchange/budget.py \
             apps/exchange/camera.py \
