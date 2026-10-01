@@ -172,6 +172,10 @@
           </div>
           <div class="qa-saved-row__actions">
             <button class="qa-secondary-button" type="submit">Add spend</button>
+            {% if camera_extraction_available %}
+              <a class="qa-secondary-button"
+                 href="{% url 'camera_scan_saved_scenario' scenario.pk %}">Scan a price</a>
+            {% endif %}
           </div>
         </form>
         {% if spend_entries %}
