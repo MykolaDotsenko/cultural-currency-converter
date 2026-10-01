@@ -114,14 +114,14 @@ The following additional user-facing capabilities also clear the current **60/10
    - Evolve beyond pair-only bookmarks so a user can save a reusable travel-money scenario such as a trip budget or shopping calculation.
    - Design the scenario model so existing FavouritePair and RecentConversion data can coexist or migrate safely rather than creating duplicate persistence concepts.
    - Keep ownership, browser-local/account sync and privacy semantics explicit.
-   - **Current status:** normalized account-owned SavedScenario persistence is implemented with typed trip/budget/shopping kinds, canonical destination city scope, normalized budget assumptions and immutable initial/re-check FX observations. The first user-facing budget flow supports explicit account save, listing in Saved & recent, owner-scoped detail/reopen, converter return, deletion and explicit live reference-rate re-check. Anonymous local scenarios, account/local sync and shopping save UX remain future work.
+   - **Current status:** normalized account-owned SavedScenario persistence is implemented with typed trip/budget/shopping kinds, canonical destination city scope, normalized budget assumptions, optional validated travel dates and immutable initial/re-check FX observations. The first user-facing budget flow supports explicit account save, listing in Saved & recent, owner-scoped detail/reopen, converter return, deletion, explicit live reference-rate re-check and deterministic trip-timing readiness. Anonymous local scenarios, account/local sync and shopping save UX remain future work.
 
 13. **Saved trip / budget detail — 85/100**
    - Give a saved travel-money scenario a focused detail page with current local value, typical costs, money tips, relevant conversion history and remaining budget where the user has entered spending.
    - During an active trip, surface simple spent / remaining / approximate-per-day values without becoming a general-purpose expense tracker.
    - Keep scope intentionally narrower than a full trip planner or expense-management product.
    - Reuse destination context, history and scenario data rather than duplicating them into a separate content system.
-   - **Current slice:** authenticated budget scenarios now have a focused detail page showing destination, duration/travellers, normalized basket assumptions and immutable saved/latest FX observations, plus explicit reference-rate re-check, neutral since-saved comparison, converter return and delete actions. Live local-context refresh and remaining-spend tracking are still future work.
+   - **Current slice:** authenticated budget scenarios now have a focused detail page showing destination, duration/travellers, optional saved travel dates, deterministic upcoming/active/ended readiness, normalized basket assumptions and immutable saved/latest FX observations, plus explicit reference-rate re-check, neutral since-saved comparison, converter return and delete actions. Live local-context refresh and remaining-spend tracking are still future work.
 
 14. **Rate changed since last visit — 84/100**
    - When a user reopens a saved pair/scenario, show how the current reference rate differs from the last relevant stored observation.
@@ -176,6 +176,7 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
    - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
    - Include destination/offline-pack freshness when it materially affects readiness for travel.
    - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
+   - **Current slice:** saved budget scenarios can now store optional validated travel dates and derive deterministic upcoming/active/started/ended readiness on the detail page. Reference-rate re-check is already explicit and owner-scoped. Reminder delivery, notification preferences and automatic local-context refresh remain future work.
 
 ### Enabling data/content foundation
 
