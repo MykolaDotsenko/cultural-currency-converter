@@ -126,11 +126,14 @@ def test_stale_only_city_price_context_fails_closed(seeded_context):
 
     assert context is not None
     assert context.prices == ()
-    assert build_city_money_profile(
-        country_code="SG",
-        city_slug="singapore",
-        as_of=AS_OF,
-    ) is None
+    assert (
+        build_city_money_profile(
+            country_code="SG",
+            city_slug="singapore",
+            as_of=AS_OF,
+        )
+        is None
+    )
 
     report = build_city_coverage_health(
         as_of=AS_OF,
