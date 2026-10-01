@@ -153,6 +153,7 @@
               class="qa-saved-row qa-saved-spend-form"
               novalidate>
           {% csrf_token %}
+          {{ spend_form.submission_key }}
           <div class="qa-saved-row__copy">
             <h3>Add confirmed spend</h3>
             <div class="qa-field{% if spend_form.amount.errors %} qa-field--error{% endif %}">
