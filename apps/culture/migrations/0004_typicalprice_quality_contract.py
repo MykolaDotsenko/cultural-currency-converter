@@ -1,18 +1,16 @@
 from django.db import migrations, models
 
 
-_CATEGORY_UNITS = {
-    "coffee": "serving",
-    "casual_meal": "meal",
-    "transit": "ride",
-    "groceries": "basket",
-    "other": "item",
-}
-
-
 def backfill_typical_price_units(apps, schema_editor):
     TypicalPrice = apps.get_model("culture", "TypicalPrice")
-    for category, unit in _CATEGORY_UNITS.items():
+    category_units = {
+        "coffee": "serving",
+        "casual_meal": "meal",
+        "transit": "ride",
+        "groceries": "basket",
+        "other": "item",
+    }
+    for category, unit in category_units.items():
         TypicalPrice.objects.filter(category=category).update(unit=unit)
 
 
