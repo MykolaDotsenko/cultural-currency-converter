@@ -163,6 +163,7 @@ class RuntimeExplanationService:
                 )
                 return _fallback_delivery(
                     snapshot,
+                    intent=intent,
                     packet_hash=packet.packet_hash,
                     reason="Live AI explanation is temporarily unavailable.",
                 )
