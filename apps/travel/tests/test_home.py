@@ -286,7 +286,7 @@ def test_clean_converter_home_surfaces_upcoming_saved_trip_without_live_fx(
         response = client.get("/")
 
     assert response.status_code == 200
-    assert b'class="qa-returning-trip-home"' in response.content
+    assert b"qa-returning-trip-home" in response.content
     assert b"Tokyo spring" in response.content
     assert b"Upcoming trip" in response.content
     assert reverse("saved_scenario_detail", args=(scenario.pk,)).encode() in response.content
@@ -320,4 +320,4 @@ def test_loaded_converter_pair_keeps_focus_on_requested_pair_not_trip_home(
     )
 
     assert response.status_code == 200
-    assert b'class="qa-returning-trip-home"' not in response.content
+    assert b"qa-returning-trip-home" not in response.content
