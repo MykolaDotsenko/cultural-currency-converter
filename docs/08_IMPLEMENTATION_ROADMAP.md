@@ -205,6 +205,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Require user confirmation before financial interpretation when OCR/model extraction is uncertain.
    - When an active saved trip exists, optionally let the user add the confirmed expense amount to that trip so the lightweight remaining-budget view updates.
    - Treat screenshots and receipts as potentially sensitive; minimize retention and never infer hidden banking credentials.
+   - **Current foundation slice:** bounded JPEG/PNG/WebP upload, safe raster decoding, feature-flagged schema-constrained multimodal extraction, explicit ambiguous/no-price/unavailable states, short-lived signed candidate confirmation and redirect into the canonical converter are implemented. Raw image bytes are not persisted by the app. Camera → Add to Trip remains the next slice.
 
 26. **Explore / discovery mode — 88/100**
    - Offer a discovery surface for sourced money-context collections such as same-amount destination comparisons, card/cash patterns, currency stories and regional exploration.
