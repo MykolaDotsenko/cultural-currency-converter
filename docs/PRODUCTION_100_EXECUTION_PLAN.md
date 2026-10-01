@@ -314,6 +314,8 @@ Create a coherent city money profile using existing canonical context:
 - Compare;
 - Save/My Places handoff.
 
+**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. The current save handoff remains truthful: users continue into existing account-owned budget/scenario saving; standalone My Places persistence is still reserved for PR #208 rather than being duplicated here.
+
 ## PR #193 — City/national fallback trust audit
 
 Add invariants proving:
