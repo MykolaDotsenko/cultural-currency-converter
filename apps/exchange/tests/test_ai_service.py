@@ -12,6 +12,7 @@ from django.db import DatabaseError, transaction
 from django.test import override_settings
 
 from apps.exchange.ai.contracts import ProviderExplanation
+from apps.exchange.ai.intents import ExplanationIntent
 from apps.exchange.ai.service import (
     AITransactionPolicyError,
     RuntimeExplanationService,
@@ -122,6 +123,8 @@ def test_live_explanation_is_validated_persisted_reused_and_observable(snapshot,
     assert stored.output_tokens == 60
     assert stored.total_tokens == 180
     assert stored.provider_response_id == "response-1"
+    assert stored.prompt_version == "exchange.runtime_explanation:v3"
+    assert stored.schema_version == "runtime-explanation:v2"
 
     success = next(
         record for record in caplog.records if record.msg == "AI runtime explanation success"
@@ -161,6 +164,10 @@ def test_provider_failure_returns_deterministic_fallback_sets_cooldown_and_logs(
     assert first.result.generated is False
     assert first.cache_status == "deterministic_fallback"
     assert "temporarily unavailable" in first.result.fallback_reason
+    assert first.result.short_answer.text
+    assert first.result.key_factors
+    assert first.result.watch_out_for.supporting_fact_ids == ("reference_scope",)
+    assert first.result.next_step.supporting_fact_ids
     assert second.result.generated is False
     assert "cooling down" in second.result.fallback_reason
     assert drafter.calls == 1
@@ -192,6 +199,40 @@ def test_schema_valid_but_semantically_invalid_output_falls_back(snapshot):
 
     assert delivery.result.generated is False
     assert RuntimeExplanationCache.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_historical_fallback_keeps_purchasing_power_boundary():
+    snapshot = TrustedConversionSnapshot(
+        input_amount=Decimal("100.00"),
+        output_amount=Decimal("17450"),
+        base_currency="EUR",
+        quote_currency="JPY",
+        rate=Decimal("174.50"),
+        requested_date=date(1998, 6, 14),
+        effective_date=date(1998, 6, 12),
+        historical=True,
+        observation_granularity=ObservationGranularity.DAILY,
+        provider_keys=("ecb",),
+        stale=False,
+    )
+    service = RuntimeExplanationService(
+        enabled=False,
+        model="gemini-3.1-flash-lite",
+        drafter=None,
+    )
+
+    delivery = service.explain(snapshot, intent=ExplanationIntent.HISTORICAL_CONTEXT)
+
+    assert delivery.result.generated is False
+    assert delivery.result.watch_out_for.text == (
+        "Historical FX does not describe historical purchasing power."
+    )
+    assert delivery.result.watch_out_for.supporting_fact_ids == ("historical_scope",)
+    assert delivery.result.next_step.supporting_fact_ids == (
+        "requested_date",
+        "effective_date",
+    )
 
 
 @pytest.mark.django_db
