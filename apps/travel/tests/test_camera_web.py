@@ -305,7 +305,9 @@ def test_user_can_correct_and_confirm_candidate_without_persisting_spend(
     assert b"4750 JPY" in response.content
     text = _normalized_response_text(response)
     assert "uploaded image itself was not persisted" in text
-    assert "Nothing was added to confirmed spend" in text
+    assert "Nothing is added until you choose Add to trip budget" in text
+    assert "Add to trip budget" in text
+    assert reverse("add_confirmed_camera_spend", args=(scenario.pk,)).encode() in response.content
     assert scenario.spend_entries.count() == 0
 
     match = re.search(
