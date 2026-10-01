@@ -117,6 +117,32 @@ def test_explore_reuses_reviewed_country_and_canonical_city_context(explore_refe
 
 
 @pytest.mark.django_db
+def test_explore_limit_preserves_combined_country_city_alphabetical_order(
+    explore_reference_data,
+):
+    data = explore_reference_data
+    TypicalPrice.objects.create(
+        country=data["finland"],
+        category=TypicalPriceCategory.COFFEE,
+        label="Finland coffee anchor",
+        amount_low=Decimal("4.50"),
+        currency=data["eur"],
+        source_name="Finland source",
+        source_url="https://example.org/finland-coffee",
+        observed_at=data["today"],
+        verified_at=timezone.now(),
+        is_published=True,
+    )
+
+    destinations = build_explore_destinations(as_of=data["today"], limit=2)
+
+    assert [destination.scope_label for destination in destinations] == [
+        "Finland",
+        "Japan",
+    ]
+
+
+@pytest.mark.django_db
 def test_explore_does_not_create_city_scope_from_legacy_city_text_or_national_fallback(
     explore_reference_data,
 ):
