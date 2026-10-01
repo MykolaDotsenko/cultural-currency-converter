@@ -8,7 +8,7 @@ from typing import Any, Protocol
 from urllib.parse import urlencode
 
 from django.db import DatabaseError
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.urls import reverse
 from django.utils import timezone
 
@@ -99,6 +99,12 @@ class ReturningTripHome:
         return "Open trip"
 
     @property
+    def budget_day_label(self) -> str:
+        if self.schedule.state is TripScheduleState.UPCOMING:
+            return "per trip day"
+        return "per remaining trip day"
+
+    @property
     def latest_price_observed_at(self) -> date | None:
         if self.destination_context is None or not self.destination_context.prices:
             return None
@@ -183,6 +189,7 @@ def _focus_scenario(owner: ScenarioOwner, *, as_of: date) -> SavedScenario | Non
             kind__in=(SavedScenarioKind.TRIP, SavedScenarioKind.BUDGET),
             travel_start_date__isnull=False,
         )
+        .filter(Q(travel_end_date__isnull=True) | Q(travel_end_date__gte=as_of))
         .select_related(
             "source_currency",
             "destination_currency",
