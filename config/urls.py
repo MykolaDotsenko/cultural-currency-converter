@@ -11,6 +11,8 @@ from apps.common.views import converter_preview, rate_series_preview, shell_prev
 from apps.culture.views import current_destination_context, money_culture_story
 from apps.exchange.views import (
     budget_interpretation,
+    camera_capture,
+    camera_confirm,
     conversion_explanation,
     converter,
     destination_mode,
@@ -42,6 +44,8 @@ urlpatterns = [
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
     path("payment/estimate/", payment_estimate, name="payment_estimate"),
     path("budget/interpret/", budget_interpretation, name="budget_interpretation"),
+    path("camera/", camera_capture, name="camera_capture"),
+    path("camera/confirm/", camera_confirm, name="camera_confirm"),
     path("story/", money_culture_story, name="money_culture_story"),
     path(
         "destination/current-context/",
