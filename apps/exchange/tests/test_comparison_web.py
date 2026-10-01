@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -70,7 +70,7 @@ def comparison_reference_data(db):
 
     tokyo = City.objects.create(country=jp, slug="tokyo", name="Tokyo")
     verified_at = timezone.now()
-    observed_at = timezone.localdate() - timezone.timedelta(days=5)
+    observed_at = timezone.localdate() - timedelta(days=5)
 
     for country, summary in (
         (jp, "Cards are common in Tokyo; keep some cash for smaller situations."),
