@@ -160,7 +160,7 @@ def _scenario_schedule_component(
             "explicit and never overwrite the original observation."
         )
     elif schedule.state is TripScheduleState.STARTED:
-        headline = "Trip start date has passed"
+        headline = "Trip start date reached"
         detail = (
             "No end date was saved, so the product does not assume whether travel is still active."
         )
