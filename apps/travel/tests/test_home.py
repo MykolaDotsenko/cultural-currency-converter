@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import DatabaseError
+from django.urls import reverse
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.services import DestinationContext
@@ -257,3 +258,59 @@ def test_destination_context_failure_does_not_remove_saved_trip_continuity(
     assert home.scenario == scenario
     assert home.destination_context is None
     assert home.initial_observation is not None
+
+
+@pytest.mark.django_db
+def test_clean_converter_home_surfaces_upcoming_saved_trip_without_live_fx(
+    client,
+    home_reference_data,
+):
+    user = User.objects.create_user(username="web-owner", password="StrongPass-482!")
+    scenario = _scenario(
+        user,
+        home_reference_data,
+        title="Tokyo spring",
+        start=date(2099, 4, 12),
+        end=date(2099, 4, 18),
+    )
+    client.force_login(user)
+
+    with patch("apps.exchange.views.build_latest_quote_gateway") as gateway_factory:
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert b'class="qa-returning-trip-home"' in response.content
+    assert b"Tokyo spring" in response.content
+    assert b"Upcoming trip" in response.content
+    assert reverse("saved_scenario_detail", args=(scenario.pk,)).encode() in response.content
+    gateway_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_loaded_converter_pair_keeps_focus_on_requested_pair_not_trip_home(
+    client,
+    home_reference_data,
+):
+    user = User.objects.create_user(username="load-owner", password="StrongPass-482!")
+    _scenario(
+        user,
+        home_reference_data,
+        title="Tokyo spring",
+        start=date(2099, 4, 12),
+        end=date(2099, 4, 18),
+    )
+    client.force_login(user)
+
+    response = client.get(
+        "/",
+        {
+            "load": "1",
+            "source_currency": "EUR",
+            "destination_currency": "JPY",
+            "source_country": "FI",
+            "destination_country": "JP",
+        },
+    )
+
+    assert response.status_code == 200
+    assert b'class="qa-returning-trip-home"' not in response.content
