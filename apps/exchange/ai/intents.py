@@ -98,14 +98,13 @@ def available_explanation_intents(
     historical: bool,
     stale: bool,
 ) -> tuple[ExplanationIntentSpec, ...]:
-    intents = [
-        ExplanationIntent.RATE_MEANING,
-        ExplanationIntent.PAYMENT_DIFFERENCE,
-    ]
+    intents = [ExplanationIntent.RATE_MEANING]
     if historical:
         intents.append(ExplanationIntent.HISTORICAL_CONTEXT)
-    elif stale:
-        intents.append(ExplanationIntent.STALE_REFERENCE)
+    else:
+        intents.append(ExplanationIntent.PAYMENT_DIFFERENCE)
+        if stale:
+            intents.append(ExplanationIntent.STALE_REFERENCE)
     return tuple(explanation_intent_spec(intent) for intent in intents)
 
 
