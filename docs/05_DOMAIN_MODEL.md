@@ -90,6 +90,24 @@ Current neutral bands are **below reference**, **within reference range** and **
 
 Historical FX is not eligible for current budget interpretation because current typical-price context is not historical purchasing-power data.
 
+## DestinationComparison
+
+A DestinationComparison is a deterministic side-by-side interpretation of the **same source amount and source currency** across two different current destination scopes.
+
+The first domain slice deliberately reuses:
+
+- one trusted MoneyContext per destination;
+- the same explicit BudgetAssumptions on both sides;
+- each destination's full ConversionResult, including effective-date/provider/stale semantics;
+- each destination's own quote currency and minor-unit semantics;
+- each side's MoneyContext availability state, sourced city/national price scopes and payment guidance.
+
+The comparison does **not** compute a winner, universal cost-of-living index, purchasing-power parity claim or direct cross-currency price ratio.
+
+If one side lacks one or more requested budget categories, the result is partial and keeps the known lines visible while preserving the missing-category state. City/national scope and provenance remain properties of each budget line rather than being flattened into a single comparable number.
+
+The current comparison basis is the reference conversion only. Payment-estimate comparison remains future work until the same explicit fee assumptions can be carried transparently and consistently across both destinations.
+
 ## PaymentEstimate
 
 A payment estimate is a deterministic scenario calculation layered on top of a trusted current conversion.
