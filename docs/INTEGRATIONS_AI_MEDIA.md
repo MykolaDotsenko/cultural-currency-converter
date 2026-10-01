@@ -193,7 +193,7 @@ The configured provider/model is an implementation choice and may change after q
 
 ## Multimodal inputs
 
-Camera amount extraction has a first opt-in runtime slice for saved budget scenarios. Voice remains a future capability.
+Camera amount extraction and explicit confirmed-spend handoff are available for saved budget scenarios. Voice remains a future capability.
 
 The Camera boundary is intentionally stricter than ordinary destination context:
 
@@ -207,6 +207,9 @@ The Camera boundary is intentionally stricter than ordinary destination context:
 - merchant names, people, addresses, account/card identifiers, phone numbers and surrounding receipt/menu text are explicitly outside the extraction contract;
 - an explicit provider currency conflict cannot be confirmed as spend in a scenario using another currency;
 - the user may correct the amount before confirmation;
+- confirmation produces a short-lived scenario-scoped signed amount token and performs no write by itself;
+- a confirmed Camera amount can enter trip-budget persistence only through a separate explicit POST that re-verifies token scope/currency and uses the token as the sole amount source;
+- replay of the same confirmed token is idempotent because the spend submission key is derived deterministically from that exact token;
 - confirmation creates only a short-lived signed scenario-scoped token and performs no spend write in this slice;
 - deterministic conversion/payment/budget math remains outside the model.
 
