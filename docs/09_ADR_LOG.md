@@ -210,6 +210,18 @@ Historical and currency-only conversions do not silently receive current destina
 
 **Revisit when:** a future domain boundary can provide the same semantics more cleanly without duplicating financial truth or coupling all consumers to web presentation structures.
 
+## ADR-020 — Camera media is ephemeral and confirmation-gated
+
+**Status:** active
+
+User-selected Camera media is processed only after explicit action, normalized in memory and not persisted by the application. Before any external multimodal call, the image is decoded, size/pixel bounded, orientation-normalized, metadata-stripped and re-encoded. Provider output is restricted to a project-owned monetary candidate schema.
+
+An extracted value is not financial truth. Explicit currency conflicts are blocked and the user must confirm or correct the amount before a short-lived scope-bound confirmation token is created. This token contains no source image, merchant text, receipt body or banking identifier. Camera extraction itself does not write `SavedScenarioSpendEntry`; any later persistence must be a separate explicit handoff through the existing idempotent spend service.
+
+**Why:** receipts, ATM screens and screenshots may contain sensitive information, while OCR/multimodal extraction is probabilistic. Ephemeral processing plus confirmation keeps sensitive media out of durable state and prevents model output from becoming silent financial input.
+
+**Revisit when:** a proven on-device extraction path can provide equal or better accuracy with less external data transfer, or a user requirement justifies durable media storage with an explicit retention/deletion model.
+
 ## Adding/changing a decision
 
 Create or update an ADR when a change affects a durable project-wide choice.

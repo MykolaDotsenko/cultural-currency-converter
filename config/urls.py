@@ -18,6 +18,7 @@ from apps.exchange.views import (
     payment_estimate,
     picker_options,
 )
+from apps.travel.camera_web import camera_scan_saved_scenario
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
@@ -64,6 +65,11 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/recheck/",
         recheck_saved_scenario,
         name="recheck_saved_scenario",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/camera/",
+        camera_scan_saved_scenario,
+        name="camera_scan_saved_scenario",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/spend/add/",

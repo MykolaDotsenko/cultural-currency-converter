@@ -76,6 +76,21 @@ def _generate(client):
     )
 
 
+def _generate_with_image(client):
+    return client.generate_json_with_image(
+        model="gemini-3.1-flash-lite",
+        system_instruction="Extract monetary fields only.",
+        prompt="Expected trip currency: JPY.",
+        image_bytes=b"sanitized-jpeg-bytes",
+        image_mime_type="image/jpeg",
+        response_json_schema={
+            "type": "object",
+            "properties": {"candidates": {"type": "array"}},
+            "required": ["candidates"],
+        },
+    )
+
+
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -107,6 +122,46 @@ def test_client_returns_parsed_structured_output_and_usage(monkeypatch):
     assert fake_models.calls[0]["model"] == "gemini-3.1-flash-lite"
     assert fake_models.calls[0]["config"].response_mime_type == "application/json"
     assert not getattr(fake_models.calls[0]["config"], "tools", None)
+
+
+def test_client_sends_ephemeral_inline_image_with_structured_schema(monkeypatch):
+    client, fake_models = _build_client(
+        monkeypatch,
+        [_response(parsed={"candidates": []})],
+        max_attempts=1,
+    )
+
+    generation = _generate_with_image(client)
+
+    assert generation.data == {"candidates": []}
+    assert len(fake_models.calls) == 1
+    contents = fake_models.calls[0]["contents"]
+    assert contents[0] == "Expected trip currency: JPY."
+    inline_data = getattr(contents[1], "inline_data", None)
+    assert inline_data is not None
+    assert inline_data.mime_type == "image/jpeg"
+    assert inline_data.data == b"sanitized-jpeg-bytes"
+
+
+@pytest.mark.parametrize(
+    ("image_bytes", "mime_type"),
+    [
+        (b"", "image/jpeg"),
+        (b"bytes", "image/gif"),
+    ],
+)
+def test_client_rejects_invalid_inline_image_request(monkeypatch, image_bytes, mime_type):
+    client, _ = _build_client(monkeypatch, [_response(parsed={"candidates": []})])
+
+    with pytest.raises(AIConfigurationError):
+        client.generate_json_with_image(
+            model="gemini-3.1-flash-lite",
+            system_instruction="Extract monetary fields only.",
+            prompt="Expected trip currency: JPY.",
+            image_bytes=image_bytes,
+            image_mime_type=mime_type,
+            response_json_schema={"type": "object"},
+        )
 
 
 def test_client_can_decode_json_text_when_parsed_value_is_unavailable(monkeypatch):

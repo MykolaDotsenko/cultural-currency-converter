@@ -54,7 +54,9 @@ Destination-first planning now has a first production slice. A user can begin wi
 
 The first Trip Budget Remaining slice extends saved budget scenarios into point-of-use planning. Confirmed spend is explicitly entered in the destination currency and subtracted from the immutable original saved FX output, so later rate re-checks never move the user's spending baseline. The surface can derive a remaining-per-day reference only from explicit saved duration/date information; it stops inferring a daily figure when a trip has started without an end date or has ended. Spend persistence is intentionally minimal—amount, confirmation source and timestamp only—and is not a bank balance, receipt archive or general expense ledger.
 
-Future comparison, trip, camera and mobile/offline work should extend the same contract rather than create parallel calculations or duplicate destination-context semantics.
+The first Camera slice is an explicit, opt-in extraction/confirmation boundary for saved budget scenarios. A user-selected JPEG/PNG/WebP image is decoded, dimension/size bounded, orientation-normalized and re-encoded in memory without metadata before the configured multimodal provider sees it. The structured provider contract requests monetary amount candidates only and excludes merchant names, personal identifiers, account/card data, addresses and surrounding receipt text. Extracted values are never financial truth by themselves: explicit currency mismatches are blocked, the user can correct the amount, and a short-lived signed confirmation token represents only the confirmed amount/currency/scope. The application does not persist the source image or confirmed amount in this slice.
+
+Future Camera-confirmed spend handoff, offline/mobile and deeper returning-user work should extend the same trusted contracts rather than create parallel calculations or duplicate destination-context semantics.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 

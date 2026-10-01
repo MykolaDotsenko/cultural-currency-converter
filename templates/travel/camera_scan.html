@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Scan price · {{ scenario.title|default:scenario.get_kind_display }}{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Ephemerally extract and confirm a travel-money amount from a user-selected image.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link"
+     href="{% url 'saved_scenario_detail' scenario.pk %}">Saved trip</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro" aria-labelledby="camera-scan-title">
+    <p class="qa-foundation-kicker">Camera · explicit confirmation</p>
+    <h1 id="camera-scan-title">Scan a visible price</h1>
+    <p class="qa-foundation-lede">
+      Upload a menu, receipt, shelf-price or ATM screenshot only when you want it processed.
+      The app extracts monetary candidates, but nothing becomes financial truth until you
+      confirm or correct the amount.
+    </p>
+  </section>
+  <div class="qa-saved-state">
+    <section class="qa-saved-section" aria-labelledby="camera-privacy-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Privacy boundary</p>
+          <h2 id="camera-privacy-title">Image processing is ephemeral</h2>
+          <p>
+            CCC does not save the uploaded image in the database or media library. When live camera
+            extraction is enabled, a sanitized metadata-stripped copy is sent to the configured
+            Gemini provider only for this explicit extraction request.
+          </p>
+        </div>
+      </div>
+      <p class="qa-saved-state__privacy">
+        The extraction contract requests monetary amounts only. It does not request merchant names,
+        account/card identifiers, addresses or surrounding receipt text.
+      </p>
+    </section>
+    {% if provider_unavailable %}
+      <section class="qa-saved-section"
+               role="status"
+               aria-labelledby="camera-unavailable-title">
+        <p class="qa-foundation-kicker">Unavailable</p>
+        <h2 id="camera-unavailable-title">Camera extraction is temporarily unavailable</h2>
+        <p>No amount was stored. You can return to the saved trip and add confirmed spend manually.</p>
+      </section>
+    {% endif %}
+    <section class="qa-saved-section" aria-labelledby="camera-upload-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">1 · Select image</p>
+          <h2 id="camera-upload-title">Upload a photo or screenshot</h2>
+          <p>JPEG, PNG or WebP · up to 8 MiB. The image is normalized before any provider call.</p>
+        </div>
+      </div>
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="scan">
+        <div class="qa-field{% if upload_form.image.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ upload_form.image.id_for_label }}">{{ upload_form.image.label }}</label>
+          {{ upload_form.image }}
+          {% if upload_form.image.errors %}
+            <p class="qa-field__message qa-field__message--error"
+               id="camera_image-error">{{ upload_form.image.errors.0 }}</p>
+          {% else %}
+            <p class="qa-field__message">Avoid uploading images that contain account or card secrets.</p>
+          {% endif %}
+        </div>
+        <button class="qa-primary-button" type="submit">Extract visible amounts</button>
+      </form>
+    </section>
+    {% if confirmation_form %}
+      {% if confirmation_form.non_field_errors %}
+        <section class="qa-saved-section" role="alert">
+          <p class="qa-foundation-kicker">Confirmation rejected</p>
+          <h2>Confirm from a fresh scan</h2>
+          <p>{{ confirmation_form.non_field_errors.0 }}</p>
+        </section>
+      {% else %}
+        <section class="qa-saved-section" aria-labelledby="camera-confirm-retry-title">
+          <p class="qa-foundation-kicker">2 · Correct amount</p>
+          <h2 id="camera-confirm-retry-title">Check the extracted value</h2>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="confirm">
+            {{ confirmation_form.candidate_token }}
+            <div class="qa-field{% if confirmation_form.amount.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ confirmation_form.amount.id_for_label }}">{{ confirmation_form.amount.label }}</label>
+              {{ confirmation_form.amount }}
+              {% if confirmation_form.amount.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="camera_amount-error">{{ confirmation_form.amount.errors.0 }}</p>
+              {% else %}
+                <p class="qa-field__message">
+                  Correct the amount before confirmation if the extraction is not exact.
+                </p>
+              {% endif %}
+            </div>
+            <button class="qa-primary-button" type="submit">Confirm corrected amount</button>
+          </form>
+        </section>
+      {% endif %}
+    {% endif %}
+    {% if candidate_rows %}
+      <section class="qa-saved-section" aria-labelledby="camera-candidates-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">2 · Review</p>
+            <h2 id="camera-candidates-title">Choose and confirm a candidate</h2>
+            <p>
+              Expected trip currency: <strong>{{ scenario.destination_currency.code }}</strong>.
+              Edit the amount if the extraction is not exact.
+              {% if image_dimensions %}Processed image {{ image_dimensions }} px.{% endif %}
+            </p>
+          </div>
+        </div>
+        <div class="qa-saved-list">
+          {% for row in candidate_rows %}
+            <article class="qa-saved-row">
+              <div class="qa-saved-row__copy">
+                <h3>{{ row.display_amount }} {{ row.display_currency }}</h3>
+                <p class="qa-saved-row__meta">
+                  {{ row.candidate.kind|title }} · {{ row.candidate.confidence|title }} extraction confidence
+                </p>
+                {% if not row.currency_matches %}
+                  <p class="qa-field__message qa-field__message--error">
+                    This candidate explicitly uses {{ row.candidate.currency_code }}, while the saved
+                    trip uses {{ scenario.destination_currency.code }}. It cannot be confirmed as trip
+                    spend without a separate conversion.
+                  </p>
+                {% endif %}
+              </div>
+              {% if row.form %}
+                <form method="post" class="qa-saved-row__actions" novalidate>
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="confirm">
+                  {{ row.form.candidate_token }}
+                  <div class="qa-field">
+                    <label class="qa-field__label"
+                           for="{{ row.form.amount.id_for_label }}">{{ row.form.amount.label }}</label>
+                    {{ row.form.amount }}
+                  </div>
+                  <button class="qa-secondary-button" type="submit">Confirm this amount</button>
+                </form>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+    <p class="qa-saved-state__privacy">
+      Extraction confidence is not a financial guarantee. The saved scenario currency remains the
+      authoritative currency boundary for future spend handoff.
+    </p>
+  </div>
+{% endblock %}
