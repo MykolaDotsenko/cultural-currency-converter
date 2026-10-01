@@ -156,14 +156,10 @@ def record_scenario_spend(
     media, merchant identity and free-text purchase details are out of scope.
     """
 
-    if scenario.kind != SavedScenarioKind.BUDGET:
-        raise SavedScenarioError("Confirmed spend requires a saved budget scenario.")
     if not isinstance(amount, Decimal) or not amount.is_finite() or amount <= 0:
         raise SavedScenarioError("Confirmed spend must be a finite amount greater than zero.")
     if amount > MAX_SCENARIO_SPEND_AMOUNT:
-        raise SavedScenarioError(
-            "Confirmed spend must be no greater than 1,000,000,000."
-        )
+        raise SavedScenarioError("Confirmed spend must be no greater than 1,000,000,000.")
     if not isinstance(source, SavedScenarioSpendSource):
         raise SavedScenarioError("Confirmed spend source is invalid.")
 
@@ -173,6 +169,8 @@ def record_scenario_spend(
             .select_related("destination_currency")
             .get(pk=scenario.pk)
         )
+        if locked.kind != SavedScenarioKind.BUDGET:
+            raise SavedScenarioError("Confirmed spend requires a saved budget scenario.")
         _validate_spend_amount(
             amount,
             minor_units=locked.destination_currency.minor_units,
