@@ -233,6 +233,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Define freshness/expiry for rates versus slower-moving payment/cultural content; never present stale FX as current.
    - A last-known FX observation may be useful offline only when its provider/effective timestamp and stale/offline status are explicit; it must never masquerade as a live rate.
    - Keep offline scope small enough to remain maintainable and privacy-conscious.
+   - **Current slice:** an account-owned saved budget scenario can download a versioned, self-contained HTML pack. It makes no live FX call, exports the newest already-stored observation with provider/effective/fetch/stale semantics, keeps remaining-budget arithmetic anchored to the immutable initial observation, snapshots currently reviewed city/national local-price and payment context with provenance, and degrades gracefully when destination context is unavailable. The file contains no executable script or remote styling/media dependency and explicitly states that offline FX is stored—not live. Automatic refresh, PWA/service-worker installation and native-mobile pack storage remain future work.
 
 31. **Lightweight personalization — 79/100**
    - Allow opt-in preferences such as home currency, preferred language, travel style or answer-detail level to reduce repetitive setup.
@@ -278,7 +279,7 @@ Retention work should follow the dependency order of the product, not engagement
 
 **P0 foundation sequence:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode. First production slices now exist through Destination Mode.
 
-**P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs → Returning-user trip home. Camera confirmation and persistence remain separate explicit actions, and confirmed amounts now enter the existing idempotent spend contract rather than a parallel Camera ledger.
+**P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs ✅ first portable slice → Returning-user trip home. Camera confirmation and persistence remain separate explicit actions, and offline export now has explicit stored-FX/freshness semantics without introducing a second calculation path.
 
 **P2:** Scenario-based notifications → mobile quick actions/widget → destination comparison → Explore.
 
