@@ -488,6 +488,39 @@ def test_budget_scenario_records_minimal_immutable_confirmed_spend(reference_dat
 
 
 @pytest.mark.django_db
+def test_confirmed_spend_source_is_normalized_and_validated(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-source-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+
+    camera_entry = record_scenario_spend(
+        scenario,
+        amount=Decimal("100"),
+        source="camera",
+    )
+    assert camera_entry.source == SavedScenarioSpendSource.CAMERA
+
+    with pytest.raises(SavedScenarioError, match="source is invalid"):
+        record_scenario_spend(
+            scenario,
+            amount=Decimal("100"),
+            source="untrusted",
+        )
+
+
+@pytest.mark.django_db
 def test_confirmed_spend_rejects_non_budget_scenario_and_invalid_amount(reference_data):
     eur, jpy, fi, jp, tokyo, _ = reference_data
     user = User.objects.create_user(username="spend-contract-owner", password="StrongPass-482!")
