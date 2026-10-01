@@ -29,6 +29,10 @@ class CameraExtractionError(ValueError):
     pass
 
 
+class CameraNoAmountFound(CameraExtractionError):
+    pass
+
+
 class CameraTokenError(ValueError):
     pass
 
@@ -89,7 +93,7 @@ class CameraExtraction:
 
     def __post_init__(self) -> None:
         if not self.candidates:
-            raise CameraExtractionError("No monetary amounts were found in this image.")
+            raise CameraNoAmountFound("No monetary amounts were found in this image.")
         if len(self.candidates) > MAX_CAMERA_CANDIDATES:
             raise CameraExtractionError("Camera extraction returned too many amount candidates.")
         if not self.provider_model.strip():
