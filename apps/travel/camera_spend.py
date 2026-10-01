@@ -4,12 +4,17 @@ from uuid import NAMESPACE_URL, uuid5
 
 from apps.exchange.camera import CameraTokenError, load_confirmed_camera_amount_token
 from apps.travel.camera_scope import camera_scope_for_scenario
-from apps.travel.models import SavedScenario, SavedScenarioKind, SavedScenarioSpendEntry
+from apps.travel.models import (
+    SavedScenario,
+    SavedScenarioKind,
+    SavedScenarioSpendEntry,
+    SavedScenarioSpendSource,
+)
 from apps.travel.scenarios import SavedScenarioError, record_scenario_spend
 
 _CAMERA_SPEND_NAMESPACE = uuid5(
     NAMESPACE_URL,
-    "https://cultural-currency-converter.example/camera-confirmed-spend/v1",
+    "urn:cultural-currency-converter:camera-confirmed-spend:v1",
 )
 MAX_CONFIRMED_CAMERA_TOKEN_LENGTH = 2048
 
@@ -61,7 +66,7 @@ def record_confirmed_camera_spend(
         return record_scenario_spend(
             scenario,
             amount=snapshot.amount,
-            source="camera",
+            source=SavedScenarioSpendSource.CAMERA,
             submission_key=submission_key,
         )
     except SavedScenarioError as exc:
