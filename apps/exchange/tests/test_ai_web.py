@@ -132,7 +132,7 @@ def test_converter_never_builds_ai_service_before_explicit_explain_click(client,
     assert b"What does this rate mean?" in response.content
     assert b"Why might my bank or card differ?" in response.content
     assert b'name="prompt_id"' in response.content
-    assert b'data-ai-explanation-trigger' in response.content
+    assert b"data-ai-explanation-trigger" in response.content
     assert b'aria-controls="conversion-explanation-region"' in response.content
     assert b'hx-disabled-elt="this"' in response.content
     assert b'aria-busy="false"' in response.content
@@ -241,7 +241,7 @@ def test_explicit_htmx_explain_uses_signed_snapshot_and_ignores_arbitrary_prompt
     assert b"What matters most" in response.content
     assert b"Watch out for" in response.content
     assert b"Next step" in response.content
-    assert b'data-ai-explanation-focus' in response.content
+    assert b"data-ai-explanation-focus" in response.content
     assert b'tabindex="-1"' in response.content
     assert len(service.snapshots) == 1
     snapshot = service.snapshots[0]
@@ -356,7 +356,9 @@ def test_non_javascript_fallback_guides_user_back_to_retry(client, reference_dat
 
     assert response.status_code == 200
     assert b"Built-in explanation" in response.content
-    assert b"Return to the converter and choose the same question again to retry" in response.content
+    assert (
+        b"Return to the converter and choose the same question again to retry" in response.content
+    )
     assert b"Back to converter" in response.content
 
 
