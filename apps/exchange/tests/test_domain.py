@@ -5,6 +5,8 @@ import pytest
 
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
+    MAX_PROVIDER_KEY_LENGTH,
+    MAX_PROVIDER_KEYS,
     ConversionRepresentationError,
     FxDomainError,
     FxSourcePolicy,
@@ -54,6 +56,54 @@ def test_rate_quote_rejects_unbounded_numeric_representation(rate):
 def test_rate_series_point_rejects_unbounded_numeric_representation(rate):
     with pytest.raises(FxDomainError, match="representation limits"):
         RateSeriesPoint(date(2026, 9, 18), Decimal(rate), ("ecb",))
+
+
+def test_rate_quote_normalizes_provider_attribution():
+    value = RateQuote(
+        base_currency="EUR",
+        quote_currency="JPY",
+        rate=Decimal("174.5"),
+        requested_date=None,
+        effective_date=date(2026, 9, 18),
+        fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+        provider_policy=DEFAULT_SOURCE_POLICY,
+        provider_keys=(" ECB ", "ecb", "source-b"),
+        historical=False,
+    )
+
+    assert value.provider_keys == ("ecb", "source-b")
+
+
+@pytest.mark.parametrize(
+    "provider_keys",
+    [
+        tuple(f"source-{index}" for index in range(MAX_PROVIDER_KEYS + 1)),
+        ("x" * (MAX_PROVIDER_KEY_LENGTH + 1),),
+        (123,),
+    ],
+)
+def test_rate_quote_rejects_unbounded_or_invalid_provider_attribution(provider_keys):
+    with pytest.raises(FxDomainError, match="provider attribution"):
+        RateQuote(
+            base_currency="EUR",
+            quote_currency="JPY",
+            rate=Decimal("174.5"),
+            requested_date=None,
+            effective_date=date(2026, 9, 18),
+            fetched_at=datetime(2026, 9, 20, tzinfo=UTC),
+            provider_policy=DEFAULT_SOURCE_POLICY,
+            provider_keys=provider_keys,
+            historical=False,
+        )
+
+
+def test_rate_series_point_rejects_unbounded_provider_attribution():
+    with pytest.raises(FxDomainError, match="provider attribution"):
+        RateSeriesPoint(
+            date(2026, 9, 18),
+            Decimal("174.5"),
+            tuple(f"source-{index}" for index in range(MAX_PROVIDER_KEYS + 1)),
+        )
 
 
 def test_pinned_policy_requires_provider():
