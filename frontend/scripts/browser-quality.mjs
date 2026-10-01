@@ -645,9 +645,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   const historicalSummary = historicalResult.locator(".qa-result-summary");
   await historicalSummary.waitFor();
   assert(
-    (await historicalSummary.innerText()).includes(
-      "does not describe historical purchasing power",
-    ),
+    (await historicalSummary.innerText()).includes("does not describe historical purchasing power"),
     "current-converter: historical smart summary lost its purchasing-power boundary",
   );
   const historicalUrl = new URL(page.url());
