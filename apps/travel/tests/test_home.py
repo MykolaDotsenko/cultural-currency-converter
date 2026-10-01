@@ -25,6 +25,11 @@ from apps.travel.scenarios import (
 User = get_user_model()
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def home_reference_data(db):
     eur = Currency.objects.create(code="EUR", name="Euro", minor_units=2)
