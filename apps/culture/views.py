@@ -97,10 +97,23 @@ def explore(request: HttpRequest) -> HttpResponse:
         }
         if destination.city_slug:
             params["destination_city_slug"] = destination.city_slug
+        converter_url = f"{reverse('converter')}?{urlencode(params)}"
+        profile_url = (
+            reverse(
+                "city_money_profile",
+                kwargs={
+                    "country_code": destination.country_code,
+                    "city_slug": destination.city_slug,
+                },
+            )
+            if destination.city_slug
+            else ""
+        )
         destination_cards.append(
             {
                 "destination": destination,
-                "converter_url": f"{reverse('converter')}?{urlencode(params)}",
+                "converter_url": converter_url,
+                "profile_url": profile_url,
             }
         )
 
