@@ -207,12 +207,15 @@ The Camera boundary is intentionally stricter than ordinary destination context:
 - merchant names, people, addresses, account/card identifiers, phone numbers and surrounding receipt/menu text are explicitly outside the extraction contract;
 - an explicit provider currency conflict cannot be confirmed as spend in a scenario using another currency;
 - the user may correct the amount before confirmation;
-- confirmation creates only a short-lived signed scenario-scoped token and performs no spend write in this slice;
+- confirmation creates only a short-lived signed scenario-scoped token and performs no spend write by itself;
+- a separate explicit handoff can consume the signed token through the existing idempotent `SavedScenarioSpendEntry` service with source `camera`;
+- the handoff validates owner, scenario scope and destination currency before persistence and accepts no independently editable amount field;
+- persisted camera spend remains minimal: confirmed amount, Camera source marker and timestamp only;
 - deterministic conversion/payment/budget math remains outside the model.
 
-Provider failure, safety blocking, timeout or invalid structured output must leave the saved scenario untouched. No live multimodal provider call is allowed inside a database transaction.
+Provider failure, safety blocking, timeout or invalid structured output must leave the saved scenario untouched. No live multimodal provider call is allowed inside a database transaction. Expired/tampered/mismatched confirmation tokens and handoff persistence failures likewise leave the saved budget unchanged.
 
-A later Camera-confirmed spend handoff may consume the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It must not persist raw media or create a parallel receipt ledger.
+Camera handoff must not persist raw media or create a parallel receipt ledger.
 
 Voice, if introduced later, requires an equivalent explicit capture/minimized-retention contract.
 
