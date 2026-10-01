@@ -16,6 +16,11 @@ The web product already includes:
 - destination payment/everyday-value context;
 - destination-first country/city planning that resolves into the canonical converter and preserves canonical city scope;
 - side-by-side destination comparison across two explicit current scopes using one shared assumption set and canonical Money Context composition;
+- deterministic budget interpretation plus account-owned saved budget scenarios, reference-rate re-check and Trip Budget Remaining;
+- explicit Camera extraction/confirmation with a separate idempotent spend handoff;
+- self-contained Offline Destination Pack export from saved budget scenarios;
+- returning-user trip continuity on the clean converter home;
+- provider-free Explore discovery over reviewed country/canonical-city money context;
 - deterministic culture/story content;
 - managed raster media with provenance/review;
 - optional AI explanation with deterministic fallback;
@@ -35,7 +40,7 @@ The following previously planned items are now part of the current product basel
 - **#4 Country ↔ currency smart filtering — shipped.** The current picker supports country-context and currency-only choices, respects historical mode/date semantics and labels historical options; form validation rejects mismatched country/currency submissions before provider access.
 - **#10 Real Payment Estimate — shipped first production slice.** Current non-identity conversions can apply explicit FX markup plus source/destination fixed-fee assumptions through a signed trusted conversion snapshot. Reusable saved fee profiles remain future work.
 - **#23 Historical quick ranges and anchor values — shipped.** The historical-series UI supports 1Y / 5Y / 10Y / custom ranges with selected/minimum/maximum/last observations, provider/stale context and Then & Now where available.
-- **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope now travels through the same contract instead of using a parallel path. This is the foundation for budget, comparison, trip, camera and mobile/offline work; those higher-level workflows are not shipped yet.
+- **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope travels through the same contract instead of using a parallel path. Budget, destination comparison, saved-trip, Camera, offline-pack, returning-home and Explore slices now consume this shared meaning; native/mobile consumers remain future work.
 - **#34 Destination mode — shipped first production slice.** Manual country/canonical-city selection resolves the current primary local currency, preserves explicit city scope where available and redirects into the canonical converter. The destination entry surface makes no FX-provider call and uses no device location.
 
 ## Now: premium visual pass
@@ -124,7 +129,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - During an active trip, surface simple spent / remaining / approximate-per-day values without becoming a general-purpose expense tracker.
    - Keep scope intentionally narrower than a full trip planner or expense-management product.
    - Reuse destination context, history and scenario data rather than duplicating them into a separate content system.
-   - **Current slice:** authenticated budget scenarios now have a focused detail page showing destination, duration/travellers, optional saved travel dates, deterministic upcoming/active/ended readiness, normalized basket assumptions and immutable saved/latest FX observations, plus explicit reference-rate re-check, neutral since-saved comparison, converter return and delete actions. Live local-context refresh and remaining-spend tracking are still future work.
+   - **Current slice:** authenticated budget scenarios now have a focused detail page showing destination, duration/travellers, optional saved travel dates, deterministic upcoming/active/ended readiness, normalized basket assumptions and immutable saved/latest FX observations, plus explicit reference-rate re-check, neutral since-saved comparison, converter return and delete actions. Trip Budget Remaining is now shipped as a separate lightweight spend/remaining-budget slice; live local-context refresh remains future work.
 
 14. **Rate changed since last visit — 84/100**
    - When a user reopens a saved pair/scenario, show how the current reference rate differs from the last relevant stored observation.
@@ -136,7 +141,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Let a user compare what the same source amount roughly means across two destinations.
    - Compare sourced everyday-value, payment-context and budget assumptions side by side while keeping currency/country identity distinct.
    - Avoid flattening country-wide estimates into false precision; city/scope differences must remain visible.
-   - **Current production slice:** the deterministic comparison domain is exposed through a provider-free entry page and explicit POST orchestration. The user supplies one source amount/currency, two country/canonical-city destinations and one shared duration/traveller/reference-basket assumption set. Each side is quoted through the canonical converter/MoneyContext path and retains effective date/provider/stale semantics, city/national scope, price provenance and payment context. Partial coverage remains visible; no winner/ranking, direct cross-currency price ratio, PPP claim or generic cost-of-living index is produced. Saved comparisons and Explore-level discovery remain future work.
+   - **Current production slice:** the deterministic comparison domain is exposed through a provider-free entry page and explicit POST orchestration. The user supplies one source amount/currency, two country/canonical-city destinations and one shared duration/traveller/reference-basket assumption set. Each side is quoted through the canonical converter/MoneyContext path and retains effective date/provider/stale semantics, city/national scope, price provenance and payment context. Partial coverage remains visible; no winner/ranking, direct cross-currency price ratio, PPP claim or generic cost-of-living index is produced. Saved comparisons remain future work; the first provider-free Explore discovery slice is now shipped separately.
 
 16. **Product modes: Quick / Travel / Budget / Shopping — 80/100**
    - Use one shared conversion/domain engine and expose progressively richer workflows rather than building four separate products.
@@ -200,7 +205,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Add city-scoped local-value and budget context where data quality supports it, because national averages are often too broad for practical travel decisions.
    - Keep city/national scope visible and never silently substitute one for the other.
    - Reuse the same provenance/freshness model as country-level typical prices.
-   - **Foundation status:** canonical `City` identity exists; `TypicalPrice` has an additive canonical city reference with legacy-row backfill, the destination-context service can select an explicit city with national fallback for missing categories, and the budget domain preserves those city/national scopes. City selection UX, broader city datasets and user-facing budget integration remain future work.
+   - **Foundation status:** canonical `City` identity exists; `TypicalPrice` has an additive canonical city reference with legacy-row backfill, the destination-context service can select an explicit city with national fallback for missing categories, and the budget domain preserves those city/national scopes. Canonical city selection is already exposed through Destination Mode and Destination Comparison, and Explore can publish city cards only with explicit city evidence. Broader city datasets and a dedicated City Money Profile remain future work.
 
 25. **Camera mode for menu / receipt / price / ATM understanding — 90/100**
    - Let a user explicitly capture or upload a menu, receipt, shelf price or ATM screen and extract amount/currency/context for conversion.
@@ -284,7 +289,7 @@ Retention work should follow the dependency order of the product, not engagement
 
 **P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs ✅ first portable slice → Returning-user trip home ✅ first continuity slice. Camera confirmation and persistence remain separate explicit actions, and offline export now has explicit stored-FX/freshness semantics without introducing a second calculation path.
 
-**P2:** Scenario-based notifications → mobile quick actions/widget → saved-comparison continuity → Explore. The first destination-comparison web slice is already shipped.
+**P2:** Scenario-based notifications → mobile quick actions/widget → saved-comparison continuity → broader Explore. The first destination-comparison web slice and the first provider-free Explore slice are already shipped.
 
 The target is not maximum DAU. The target is strong **saved-trip reopen**, **uses per active travel day**, and **return for the next trip**.
 
@@ -292,7 +297,7 @@ The target is not maximum DAU. The target is strong **saved-trip reopen**, **use
 
 The first consolidation is now shipped as a shared application contract around trusted conversion output plus optional current destination context. It explicitly preserves conversion truth, fail-open enrichment semantics and available/empty/not-applicable/degraded context states.
 
-The next work is depth, not another parallel context layer: broaden city-scoped datasets, connect the budget interpretation to saved-trip/scenario persistence, then add comparison and camera/mobile consumers on top of this same contract.
+The next work is depth, not another parallel context layer: broaden city-scoped datasets and dedicated city UX, deepen Explore and contextual AI consumers, and eventually add mobile consumers on top of the same contract. Budget, saved-trip, comparison, Camera and offline/returning-home web consumers already reuse this shared meaning.
 
 Prioritize comparability, freshness, provenance and clear uncertainty over adding many shallow utility widgets.
 

@@ -8,7 +8,7 @@ It is an execution and release-readiness plan, not a replacement for the product
 
 ## Current baseline
 
-Baseline reviewed against the current `master` at:
+The program baseline was reviewed against `master` at the start of this execution plan:
 
 `c5b4f0d4191f72a69ea9e0555427eb309ad6826e`
 
