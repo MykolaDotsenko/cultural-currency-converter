@@ -410,6 +410,7 @@ def test_explicit_camera_handoff_adds_camera_spend_and_updates_remaining_budget(
     text = _normalized_response_text(detail)
     assert "99950 JPY remaining" in text
     assert "Confirmed spend 4750 JPY" in text
+    assert "Camera-confirmed" in text
 
 
 @pytest.mark.django_db
@@ -526,6 +527,25 @@ def test_expired_camera_handoff_token_never_persists_spend(client, camera_scenar
 
     assert response.status_code == 422
     assert b"has expired" in response.content
+    assert scenario.spend_entries.count() == 0
+
+
+@pytest.mark.django_db
+def test_anonymous_camera_handoff_redirects_before_token_validation(client, camera_scenario):
+    _owner, scenario = camera_scenario
+
+    with patch("apps.travel.camera_forms.load_confirmed_camera_amount_token") as token_loader:
+        response = client.post(
+            reverse("add_camera_confirmed_spend", args=(scenario.pk,)),
+            {
+                "confirmed_camera_token": "not-even-validated",
+                "submission_key": str(uuid4()),
+            },
+        )
+
+    assert response.status_code == 302
+    assert reverse("login") in response.url
+    token_loader.assert_not_called()
     assert scenario.spend_entries.count() == 0
 
 
