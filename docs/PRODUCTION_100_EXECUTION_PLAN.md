@@ -207,6 +207,8 @@ Never produce:
 - unsupported “cheap/expensive” judgments;
 - unsupported affordability claims.
 
+**Implemented first slice:** deterministic trust-first summary on every successful conversion, with optional reviewed local-price/payment context only after Money Context provenance/freshness gates. Historical, stale and exact 1:1 semantics outrank enrichment; unsupported price-equivalent states fail closed.
+
 ## PR #187 — AI UX reliability pass
 
 Cover:
