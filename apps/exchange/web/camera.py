@@ -12,6 +12,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 
 from apps.countries.models import Currency
 from apps.exchange.camera import (
+    CameraCandidate,
     CameraExtractionState,
     CameraExtractor,
     CameraExtractionValidationError,
@@ -36,6 +37,7 @@ def _render_camera(
     upload_form: CameraUploadForm | None = None,
     confirm_form: CameraConfirmForm | None = None,
     extraction_state: CameraExtractionState | None = None,
+    candidate: CameraCandidate | None = None,
     status: int = 200,
 ) -> HttpResponse:
     return render(
@@ -46,6 +48,7 @@ def _render_camera(
             "confirm_form": confirm_form,
             "camera_available": bool(settings.AI_CAMERA_EXTRACTION_ENABLED),
             "extraction_state": extraction_state,
+            "camera_candidate": candidate,
         },
         status=status,
     )
@@ -147,6 +150,7 @@ def camera_view(
         ),
         confirm_form=confirm_form,
         extraction_state=extraction.state,
+        candidate=candidate,
     )
 
 
