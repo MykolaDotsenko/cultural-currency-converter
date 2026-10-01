@@ -8,7 +8,6 @@
   --color-canvas: #f5f2eb;
   --color-surface: #fffdf9;
   --color-surface-soft: #eeebe4;
-  --color-surface-accent: #e6ebe7;
 
   --color-ink: #171b19;
   --color-muted: #666861;
@@ -25,8 +24,6 @@
   --color-history: #4b5964;
   --color-history-soft: #e9ecee;
 
-  --color-success: #2d6a4f;
-  --color-success-soft: #e5f2e9;
   --color-warning: #9a5a13;
   --color-warning-soft: #fff2d8;
   --color-danger: #a93632;
@@ -39,12 +36,9 @@
   --radius-xl: 1.125rem;
   --radius-pill: 999px;
 
-  --shadow-raised: 0 1.25rem 3.5rem rgb(23 27 25 / 0.07);
   --shadow-overlay: 0 1.75rem 5rem rgb(23 27 25 / 0.16);
 
-  --text-display-result: clamp(2.25rem, 7vw, 4.75rem);
   --text-display-page: clamp(2.75rem, 7vw, 5.75rem);
-  --text-heading-1: clamp(1.75rem, 3vw, 2.5rem);
   --text-heading-2: 1.5rem;
   --text-heading-3: 1.25rem;
   --text-body-lg: 1.125rem;
@@ -71,10 +65,7 @@
 
   --qa-duration-instant: 100ms;
   --qa-duration-fast: 160ms;
-  --qa-duration-base: 220ms;
-  --qa-duration-slow: 300ms;
   --qa-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
-  --qa-ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --qa-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --qa-shell-max: 80rem;
