@@ -158,7 +158,7 @@ def test_camera_page_is_owner_scoped_and_explains_ephemeral_privacy(client, came
 
 @pytest.mark.django_db
 def test_camera_page_requires_owner_login(client, camera_scenario):
-    owner, scenario = camera_scenario
+    _, scenario = camera_scenario
     other = User.objects.create_user(username="camera-other", password="StrongPass-482!")
 
     anonymous = client.get(reverse("camera_scan_saved_scenario", args=(scenario.pk,)))
