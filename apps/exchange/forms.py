@@ -727,7 +727,10 @@ class DestinationComparisonForm(BudgetInterpretationForm):
                 "right_destination",
                 "duration_days",
                 "travelers",
-                *(self.units_field_name(category) for category, _label in _COMPARISON_CATEGORY_OPTIONS),
+                *(
+                    self.units_field_name(category)
+                    for category, _label in _COMPARISON_CATEGORY_OPTIONS
+                ),
             ]
         )
 
