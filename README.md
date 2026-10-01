@@ -42,6 +42,7 @@ Those boundaries are more important to this project than adding another conversi
 - optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing, mandatory user confirmation and a separate idempotent Add-to-trip-budget handoff;
 - self-contained offline destination-pack export using stored FX/freshness semantics and reviewed destination context;
 - provider-free Explore discovery over reviewed country/canonical-city money context with canonical converter handoff and no destination ranking;
+- read-only `report_city_coverage` maintenance diagnostics for reviewed city-price freshness, national fallback and provenance gaps; its score is operational only, never a cost-of-living ranking;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
 - optional Gemini structured insight with deterministic fallback, server-approved contextual quick prompts and per-section grounding against the signed conversion snapshot;
