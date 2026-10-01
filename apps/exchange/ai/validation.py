@@ -169,11 +169,11 @@ def _validated_text(value: Any, *, field: str, max_length: int) -> str:
 
 def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
     lowered = text.casefold()
-    if any(phrase in lowered for phrase in _FORBIDDEN_CAUSAL_PHRASES):
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_CAUSAL_PHRASES):
         raise ExplanationValidationError("Explanation makes an unsupported causal claim.")
-    if any(phrase in lowered for phrase in _FORBIDDEN_ADVICE_PHRASES):
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_ADVICE_PHRASES):
         raise ExplanationValidationError("Explanation contains financial or timing advice.")
-    if any(phrase in lowered for phrase in _FORBIDDEN_MARKET_INTERPRETATIONS):
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_MARKET_INTERPRETATIONS):
         raise ExplanationValidationError("Explanation adds unsupported market interpretation.")
     if "%" in text:
         raise ExplanationValidationError("Explanation introduces an unsupported percentage.")
@@ -199,6 +199,13 @@ def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
         identity = _decimal_identity(raw_number.replace(",", "."))
         if identity not in allowed_numbers:
             raise ExplanationValidationError("Explanation introduces an unsupported number.")
+
+
+def _contains_forbidden_phrase(text: str, phrases: tuple[str, ...]) -> bool:
+    return any(
+        re.search(rf"(?<!\\w){re.escape(phrase)}(?!\\w)", text)
+        for phrase in phrases
+    )
 
 
 def _decimal_identity(value: str) -> Decimal:
