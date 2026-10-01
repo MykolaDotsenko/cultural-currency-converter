@@ -20,12 +20,12 @@ class TypicalPriceUnit(models.TextChoices):
     ITEM = "item", "Item"
 
 
-_CANONICAL_UNIT_BY_CATEGORY = {
-    "coffee": TypicalPriceUnit.SERVING,
-    "casual_meal": TypicalPriceUnit.MEAL,
-    "transit": TypicalPriceUnit.RIDE,
-    "groceries": TypicalPriceUnit.BASKET,
-    "other": TypicalPriceUnit.ITEM,
+_CANONICAL_UNIT_BY_CATEGORY: dict[str, str] = {
+    "coffee": "serving",
+    "casual_meal": "meal",
+    "transit": "ride",
+    "groceries": "basket",
+    "other": "item",
 }
 
 
@@ -72,8 +72,7 @@ class TypicalPriceQualityInput:
 
 
 def canonical_unit_for_category(category: str) -> str | None:
-    unit = _CANONICAL_UNIT_BY_CATEGORY.get(category)
-    return unit.value if unit is not None else None
+    return _CANONICAL_UNIT_BY_CATEGORY.get(category)
 
 
 def normalize_price_label(value: str) -> str:
