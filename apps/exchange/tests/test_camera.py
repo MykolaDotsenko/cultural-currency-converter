@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 from decimal import Decimal
+from uuid import UUID
 
 import pytest
 from django.core import signing
@@ -178,9 +179,11 @@ def test_confirmed_camera_token_contains_only_confirmed_money_scope():
 
     assert snapshot.amount == Decimal("4800")
     assert snapshot.currency_code == "JPY"
+    assert isinstance(snapshot.confirmation_id, UUID)
 
     raw_payload = signing.loads(
         token,
         salt="exchange.camera-confirmed.v1",
     )
-    assert set(raw_payload) == {"scope", "amount", "currency_code"}
+    assert set(raw_payload) == {"scope", "amount", "currency_code", "confirmation_id"}
+    assert raw_payload["confirmation_id"] == str(snapshot.confirmation_id)
