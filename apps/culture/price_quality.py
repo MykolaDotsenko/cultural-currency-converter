@@ -73,7 +73,7 @@ class TypicalPriceQualityInput:
 
 def canonical_unit_for_category(category: str) -> str | None:
     unit = _CANONICAL_UNIT_BY_CATEGORY.get(category)
-    return str(unit) if unit is not None else None
+    return unit.value if unit is not None else None
 
 
 def normalize_price_label(value: str) -> str:
