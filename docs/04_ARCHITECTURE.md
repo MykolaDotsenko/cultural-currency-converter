@@ -112,6 +112,23 @@ On submit, the endpoint reconstructs the trusted conversion, rebuilds current so
 
 The token does not serialize price rows as truth. Price anchors are reloaded from the project-owned reviewed data layer so retired/unpublished or invalid context is not kept alive merely because an old browser form still exists.
 
+### Camera extraction trust boundary
+
+Camera extraction is a separate sensitive-input boundary and does not bypass Money Context or Trip Budget rules.
+
+- the browser uploads media only after explicit user action;
+- `CameraUploadForm` performs early file-size/type checks, while `sanitize_camera_image` remains the authoritative decode/normalization boundary;
+- accepted images are decoded in memory, bounded by bytes/pixels/dimensions, EXIF orientation is applied, metadata is discarded and the result is re-encoded as a normalized JPEG;
+- only the sanitized in-memory bytes may cross the configured multimodal provider boundary;
+- the project-owned provider schema requests amount, currency, semantic kind and confidence only;
+- raw media, merchant identity, receipt text and banking identifiers are not persisted;
+- provider output is normalized into `CameraAmountCandidate` values and remains untrusted until the user confirms or corrects it;
+- signed camera candidate/confirmation tokens are short-lived and scope-bound to the saved scenario;
+- live provider calls are forbidden inside database transactions;
+- this slice never writes a spend entry. A later handoff must consume the confirmed token through the existing idempotent `SavedScenarioSpendEntry` service with source=`camera`.
+
+This keeps OCR/model uncertainty upstream of deterministic financial persistence.
+
 ### Saved trip budget continuity
 
 Trip Budget Remaining is a persistence/domain consumer, not a second financial engine.
