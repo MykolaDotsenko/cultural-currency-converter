@@ -174,7 +174,9 @@ def test_rate_recheck_never_moves_trip_budget_reference_baseline(client, trip_bu
     assert b"100000 JPY remaining" in response.content
     assert b"saved reference budget 104700 JPY" in response.content
     assert b"120000 JPY" in response.content
-    assert b"Re-checking the FX rate never changes this remaining-budget baseline." in response.content
+    assert (
+        b"Re-checking the FX rate never changes this remaining-budget baseline." in response.content
+    )
 
 
 @pytest.mark.django_db
