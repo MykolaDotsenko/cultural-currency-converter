@@ -498,6 +498,23 @@ def test_live_ai_call_is_rejected_inside_database_transaction(snapshot):
     assert drafter.calls == 0
 
 
+def test_service_factory_uses_deterministic_fixture_without_gemini_client():
+    with (
+        override_settings(
+            AI_RUNTIME_EXPLANATION_ENABLED=True,
+            AI_RUNTIME_TEST_FIXTURE_ENABLED=True,
+            AI_TEXT_MODEL="gemini-3.1-flash-lite",
+            GEMINI_API_KEY="",
+        ),
+        patch("apps.exchange.ai.service.GeminiStructuredClient") as client_factory,
+    ):
+        service = build_runtime_explanation_service()
+
+    assert service.enabled is True
+    assert service.model == "deterministic-browser-fixture"
+    client_factory.assert_not_called()
+
+
 def test_service_factory_does_not_construct_provider_when_feature_disabled():
     with (
         override_settings(AI_RUNTIME_EXPLANATION_ENABLED=False),
