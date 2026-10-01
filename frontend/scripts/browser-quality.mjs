@@ -1153,7 +1153,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await returningTrip.getByRole("heading", { name: "QA Tokyo budget", level: 2 }).waitFor();
   const returningTripText = await returningTrip.innerText();
   assert(
-    returningTripText.includes("Upcoming trip"),
+    returningTripText.toLowerCase().includes("upcoming trip"),
     `returning-trip/e2e: saved future trip was not promoted on clean home: ${returningTripText}`,
   );
   assert(
