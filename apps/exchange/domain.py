@@ -103,6 +103,7 @@ DEFAULT_SOURCE_POLICY = FxSourcePolicy()
 MAX_PROVIDER_KEYS = 128
 MAX_PROVIDER_KEY_LENGTH = 80
 
+
 def normalize_provider_keys(values: Iterable[object]) -> tuple[str, ...]:
     materialized = tuple(values)
     if len(materialized) > MAX_PROVIDER_KEYS:
