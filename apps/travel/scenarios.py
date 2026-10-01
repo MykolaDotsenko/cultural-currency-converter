@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any, Protocol
 
 from django.contrib.auth import get_user_model
@@ -163,7 +163,15 @@ def record_scenario_spend(
         raise SavedScenarioError("Confirmed spend source is invalid.")
 
     with transaction.atomic():
-        locked = SavedScenario.objects.select_for_update().get(pk=scenario.pk)
+        locked = (
+            SavedScenario.objects.select_for_update()
+            .select_related("destination_currency")
+            .get(pk=scenario.pk)
+        )
+        _validate_spend_amount(
+            amount,
+            minor_units=locked.destination_currency.minor_units,
+        )
         if locked.spend_entries.count() >= MAX_SCENARIO_SPEND_ENTRIES:
             raise SavedScenarioError(
                 f"A saved scenario may store at most {MAX_SCENARIO_SPEND_ENTRIES} spend entries."
@@ -179,6 +187,7 @@ def record_scenario_spend(
         except ValidationError as exc:
             raise SavedScenarioError(_validation_message(exc)) from exc
         entry.save()
+        locked.save(update_fields=("updated_at",))
         return entry
 
 
@@ -295,6 +304,28 @@ def _validate_city(city: City | None, country: Country | None) -> None:
         raise SavedScenarioError("Destination city must belong to the destination country.")
     if not city.is_active:
         raise SavedScenarioError("Destination city must be active when a scenario is created.")
+
+
+def _validate_spend_amount(amount: Decimal, *, minor_units: int) -> None:
+    if not 0 <= minor_units <= 6:
+        raise SavedScenarioError("Destination currency minor-unit metadata is unsupported.")
+
+    quantum = Decimal(1).scaleb(-minor_units)
+    try:
+        with localcontext() as context:
+            context.prec = max(64, len(amount.as_tuple().digits) + minor_units + 8)
+            normalized = amount.quantize(quantum)
+    except InvalidOperation as exc:
+        raise SavedScenarioError(
+            "Confirmed spend cannot be represented in the destination currency."
+        ) from exc
+
+    if normalized != amount:
+        place_label = "decimal place" if minor_units == 1 else "decimal places"
+        raise SavedScenarioError(
+            f"Confirmed spend supports at most {minor_units} {place_label} "
+            "for the destination currency."
+        )
 
 
 def _validate_budget_categories(items: Iterable[BudgetCategoryAssumption]) -> None:
