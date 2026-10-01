@@ -87,6 +87,8 @@ Cross-device recent history is opt-in. Disabling future recording should not une
 
 Anonymous browser state should be described as local browser storage, not account sync.
 
+Camera uploads are higher-sensitivity transient inputs. The application must not persist raw receipt/menu/ATM/screenshot bytes as a side effect of extraction, must not log their text/content, and must validate decoded raster type/size before any external provider call. User-facing copy must disclose that enabled camera extraction sends the selected image to the configured external AI provider for ephemeral processing. Extracted amounts/currencies require explicit user confirmation before deterministic conversion or later spend persistence.
+
 ## Accessibility baseline
 
 Target WCAG 2.2 AA behaviour for the product experience.
