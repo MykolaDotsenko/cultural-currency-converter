@@ -19,7 +19,6 @@
       Engine.
     </p>
   </section>
-
   <section class="qa-destination-mode"
            aria-labelledby="destination-mode-form-title">
     <div class="qa-destination-mode__instrument">
@@ -27,7 +26,6 @@
         <p class="qa-foundation-kicker">Plan a reference conversion</p>
         <h2 id="destination-mode-form-title">What does my money mean there?</h2>
       </div>
-
       {% if form.errors %}
         <div class="qa-inline-alert qa-inline-alert--error"
              id="destination-mode-errors"
@@ -46,7 +44,6 @@
           </ul>
         </div>
       {% endif %}
-
       {% if reference_data_ready %}
         <form method="post"
               action="{% url 'destination_mode' %}"
@@ -65,9 +62,7 @@
               {% endif %}
             </div>
             <div class="qa-field{% if form.source_currency.errors %} qa-field--error{% endif %}">
-              <label class="qa-field__label" for="{{ form.source_currency.id_for_label }}">
-                Your currency
-              </label>
+              <label class="qa-field__label" for="{{ form.source_currency.id_for_label }}">Your currency</label>
               {{ form.source_currency }}
               {% if form.source_currency.errors %}
                 <p class="qa-field__message qa-field__message--error"
@@ -75,7 +70,6 @@
               {% endif %}
             </div>
           </div>
-
           <div class="qa-field qa-destination-mode__destination{% if form.destination.errors %} qa-field--error{% endif %}">
             <label class="qa-field__label" for="{{ form.destination.id_for_label }}">
               Where are you going?
@@ -91,7 +85,6 @@
               </p>
             {% endif %}
           </div>
-
           <div class="qa-destination-mode__action">
             <button class="qa-primary-button" type="submit">Open destination conversion</button>
             <p>
@@ -108,22 +101,27 @@
         </div>
       {% endif %}
     </div>
-
     <aside class="qa-destination-mode__principles"
            aria-label="Destination mode trust model">
       <p class="qa-foundation-kicker">Same engine, less setup</p>
       <dl>
         <div>
           <dt>Currency</dt>
-          <dd>Resolved from the current primary country-currency relationship.</dd>
+          <dd>
+            Resolved from the current primary country-currency relationship.
+          </dd>
         </div>
         <div>
           <dt>City context</dt>
-          <dd>Applied only when a canonical city is explicitly selected.</dd>
+          <dd>
+            Applied only when a canonical city is explicitly selected.
+          </dd>
         </div>
         <div>
           <dt>Rate trust</dt>
-          <dd>Provider, effective date, stale state and payment caveats stay unchanged.</dd>
+          <dd>
+            Provider, effective date, stale state and payment caveats stay unchanged.
+          </dd>
         </div>
       </dl>
     </aside>
