@@ -222,6 +222,9 @@ def test_explore_page_is_provider_free_and_links_back_to_canonical_converter(
     assert response.status_code == 200
     assert b"Discover the money side of a place." in response.content
     assert b"Tokyo, Japan" in response.content
+    assert b"reviewed country payment guidance" in response.content
+    assert b"national price anchor" in response.content
+    assert b"shown" in response.content
     assert b"Alphabetical discovery only" in response.content
     assert b"destination_city_slug=tokyo" in response.content
     assert b"load=1" in response.content
