@@ -18,10 +18,13 @@ from apps.travel.models import (
     SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
+    SavedScenarioSpendEntry,
+    SavedScenarioSpendSource,
 )
 
 MAX_ACCOUNT_SCENARIOS = 50
 MAX_SCENARIO_OBSERVATIONS = 100
+MAX_SCENARIO_SPEND_ENTRIES = 100
 MAX_PROVIDER_KEYS = 8
 MAX_PROVIDER_KEY_LENGTH = 80
 
@@ -138,6 +141,45 @@ def create_saved_scenario(
         )
 
     return scenario
+
+
+def record_scenario_spend(
+    scenario: SavedScenario,
+    *,
+    amount: Decimal,
+    source: SavedScenarioSpendSource = SavedScenarioSpendSource.MANUAL,
+) -> SavedScenarioSpendEntry:
+    """Persist one confirmed destination-currency spend entry.
+
+    Spend entries intentionally contain only amount/source/timestamp. Receipt
+    media, merchant identity and free-text purchase details are out of scope.
+    """
+
+    if scenario.kind != SavedScenarioKind.BUDGET:
+        raise SavedScenarioError("Confirmed spend requires a saved budget scenario.")
+    if not isinstance(amount, Decimal) or not amount.is_finite() or amount <= 0:
+        raise SavedScenarioError("Confirmed spend must be a finite amount greater than zero.")
+    if not isinstance(source, SavedScenarioSpendSource):
+        raise SavedScenarioError("Confirmed spend source is invalid.")
+
+    with transaction.atomic():
+        locked = SavedScenario.objects.select_for_update().get(pk=scenario.pk)
+        if locked.spend_entries.count() >= MAX_SCENARIO_SPEND_ENTRIES:
+            raise SavedScenarioError(
+                f"A saved scenario may store at most {MAX_SCENARIO_SPEND_ENTRIES} spend entries."
+            )
+
+        entry = SavedScenarioSpendEntry(
+            scenario=locked,
+            amount=amount,
+            source=source,
+        )
+        try:
+            entry.full_clean()
+        except ValidationError as exc:
+            raise SavedScenarioError(_validation_message(exc)) from exc
+        entry.save()
+        return entry
 
 
 def record_scenario_recheck(
