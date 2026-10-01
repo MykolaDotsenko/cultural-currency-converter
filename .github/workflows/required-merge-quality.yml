@@ -118,8 +118,8 @@ jobs:
             config/cache.py \
             config/csp.py \
             config/ai.py \
-            apps/exchange/ai/providers/gemini_camera.py
-          integrations/gemini/client.py
+            apps/exchange/ai/providers/gemini_camera.py \
+            integrations/gemini/client.py
           djlint templates --check
           python manage.py check
           python manage.py makemigrations --check --dry-run
