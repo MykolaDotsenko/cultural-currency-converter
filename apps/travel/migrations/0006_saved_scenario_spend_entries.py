@@ -52,8 +52,11 @@ class Migration(migrations.Migration):
                 ],
                 "constraints": [
                     models.CheckConstraint(
-                        condition=models.Q(("amount__gt", 0)),
-                        name="scenario_spend_amount_positive",
+                        condition=models.Q(
+                            ("amount__gt", 0),
+                            ("amount__lte", 1000000000),
+                        ),
+                        name="scenario_spend_amount_range",
                     ),
                     models.CheckConstraint(
                         condition=models.Q(("source__in", ["manual", "camera"])),
