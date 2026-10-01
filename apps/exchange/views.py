@@ -3,12 +3,14 @@ from __future__ import annotations
 from django.http import HttpRequest, HttpResponse
 
 from apps.exchange.ai.service import build_runtime_explanation_service
+from apps.exchange.camera_provider import build_camera_extractor
 from apps.exchange.services import (
     compare_historical_to_latest,
     get_rate_series,
     quote_conversion,
 )
 from apps.exchange.web.budget import budget_interpretation_view
+from apps.exchange.web.camera import camera_confirm_view, camera_view
 from apps.exchange.web.converter import converter_view
 from apps.exchange.web.destination import destination_mode_view
 from apps.exchange.web.explanation import conversion_explanation_view
@@ -70,3 +72,14 @@ def conversion_explanation(request: HttpRequest) -> HttpResponse:
         request,
         explanation_service_factory=build_runtime_explanation_service,
     )
+
+
+def camera_capture(request: HttpRequest) -> HttpResponse:
+    return camera_view(
+        request,
+        extractor_factory=build_camera_extractor,
+    )
+
+
+def camera_confirm(request: HttpRequest) -> HttpResponse:
+    return camera_confirm_view(request)
