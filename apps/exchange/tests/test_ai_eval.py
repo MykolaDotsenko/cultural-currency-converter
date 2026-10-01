@@ -46,23 +46,27 @@ def test_live_eval_can_explicitly_compare_candidate_model(monkeypatch):
         def draft(self, packet):
             conversion_fact = next(f for f in packet.facts if f.id == "conversion")
             rate_fact = next(f for f in packet.facts if f.id == "rate")
+            scope_fact = next(f for f in packet.facts if f.id == "reference_scope")
             return ProviderExplanation(
                 payload={
-                    "headline": "Reference conversion explained",
-                    "bullets": [
-                        {
-                            "text": conversion_fact.statement,
-                            "supporting_fact_ids": ["conversion"],
-                        },
+                    "short_answer": {
+                        "text": conversion_fact.statement,
+                        "supporting_fact_ids": ["conversion"],
+                    },
+                    "key_factors": [
                         {
                             "text": rate_fact.statement,
                             "supporting_fact_ids": ["rate"],
-                        },
+                        }
                     ],
-                    "caveat": (
-                        "Reference exchange-rate data is informational; payment providers may use "
-                        "different rates or add fees."
-                    ),
+                    "watch_out_for": {
+                        "text": scope_fact.statement,
+                        "supporting_fact_ids": ["reference_scope"],
+                    },
+                    "next_step": {
+                        "text": "Use this reference observation as a comparison point.",
+                        "supporting_fact_ids": ["reference_scope"],
+                    },
                 },
                 provider_model=self.model,
                 response_id=None,
