@@ -34,7 +34,7 @@ _SPECS = {
             "Summarize the displayed reference conversion, its observation timing and its "
             "reference-rate limitation."
         ),
-        required_fact_ids=("conversion", "rate"),
+        required_fact_ids=(),
     ),
     ExplanationIntent.RATE_MEANING: ExplanationIntentSpec(
         intent=ExplanationIntent.RATE_MEANING,
