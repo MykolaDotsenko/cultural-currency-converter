@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
@@ -150,7 +150,7 @@ def camera_scan_saved_scenario(
         )
 
     context["candidate_rows"] = tuple(candidate_rows)
-    context["image_dimensions"] = f"{delivery.image_width} × {delivery.image_height}"
+    context["image_dimensions"] = f"{delivery.image_width} x {delivery.image_height}"
     return render(request, "travel/camera_scan.html", context)
 
 
