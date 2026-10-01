@@ -79,12 +79,38 @@
       </form>
     </section>
 
-    {% if confirmation_form and confirmation_form.non_field_errors %}
-      <section class="qa-saved-section" role="alert">
-        <p class="qa-foundation-kicker">Confirmation rejected</p>
-        <h2>Confirm from a fresh scan</h2>
-        <p>{{ confirmation_form.non_field_errors.0 }}</p>
-      </section>
+    {% if confirmation_form %}
+      {% if confirmation_form.non_field_errors %}
+        <section class="qa-saved-section" role="alert">
+          <p class="qa-foundation-kicker">Confirmation rejected</p>
+          <h2>Confirm from a fresh scan</h2>
+          <p>{{ confirmation_form.non_field_errors.0 }}</p>
+        </section>
+      {% else %}
+        <section class="qa-saved-section" aria-labelledby="camera-confirm-retry-title">
+          <p class="qa-foundation-kicker">2 · Correct amount</p>
+          <h2 id="camera-confirm-retry-title">Check the extracted value</h2>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="confirm">
+            {{ confirmation_form.candidate_token }}
+            <div class="qa-field{% if confirmation_form.amount.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ confirmation_form.amount.id_for_label }}">{{ confirmation_form.amount.label }}</label>
+              {{ confirmation_form.amount }}
+              {% if confirmation_form.amount.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="camera_amount-error">{{ confirmation_form.amount.errors.0 }}</p>
+              {% else %}
+                <p class="qa-field__message">
+                  Correct the amount before confirmation if the extraction is not exact.
+                </p>
+              {% endif %}
+            </div>
+            <button class="qa-primary-button" type="submit">Confirm corrected amount</button>
+          </form>
+        </section>
+      {% endif %}
     {% endif %}
 
     {% if candidate_rows %}
