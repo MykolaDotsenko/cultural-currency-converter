@@ -5,13 +5,14 @@ from decimal import DecimalException
 from urllib.parse import urlencode
 
 from django.db import DatabaseError
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
 from apps.countries.models import Country, Currency
+from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
 from apps.culture.forms import CurrentDestinationContextForm, StoryRequestForm
 from apps.culture.media import select_destination_media
@@ -22,6 +23,51 @@ from apps.media.models import MediaRole
 from apps.media.presentation import select_media_for_display
 
 logger = logging.getLogger("cultural_currency.culture")
+
+
+@require_GET
+def city_money_profile(
+    request: HttpRequest,
+    country_code: str,
+    city_slug: str,
+) -> HttpResponse:
+    """Show reviewed current money context for one canonical city without requesting FX."""
+
+    try:
+        profile = build_city_money_profile(country_code=country_code, city_slug=city_slug)
+    except DatabaseError as exc:
+        logger.warning(
+            "City money profile composition failed",
+            extra={
+                "error_code": exc.__class__.__name__,
+                "culture.country": country_code.upper(),
+                "culture.city": city_slug.lower(),
+            },
+        )
+        return render(
+            request,
+            "pages/city_money_profile.html",
+            {
+                "city_profile": None,
+                "city_profile_error": {
+                    "title": "City money context is temporarily unavailable.",
+                    "detail": "The converter and destination planner remain available.",
+                },
+            },
+            status=503,
+        )
+
+    if profile is None:
+        raise Http404("Reviewed city money context is not available.")
+
+    return render(
+        request,
+        "pages/city_money_profile.html",
+        {
+            "city_profile": build_city_money_profile_component(profile),
+            "city_profile_error": None,
+        },
+    )
 
 
 @require_GET
