@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -128,6 +129,36 @@ def test_owner_can_add_confirmed_spend_and_remaining_uses_original_baseline(
     assert "100000 JPY remaining" in text
     assert "Confirmed spend 4700 JPY" in text
     assert "About 20000 JPY per planned day" in text
+
+
+@pytest.mark.django_db
+def test_replayed_spend_submission_does_not_double_count_budget(client, trip_budget_scenario):
+    owner, scenario = trip_budget_scenario
+    client.force_login(owner)
+    submission_key = uuid4()
+    payload = {
+        "amount": "4700",
+        "submission_key": str(submission_key),
+    }
+
+    first = client.post(
+        reverse("add_saved_scenario_spend", args=(scenario.pk,)),
+        payload,
+    )
+    replay = client.post(
+        reverse("add_saved_scenario_spend", args=(scenario.pk,)),
+        payload,
+    )
+
+    assert first.status_code == 302
+    assert replay.status_code == 302
+    assert scenario.spend_entries.count() == 1
+    entry = scenario.spend_entries.get()
+    assert entry.submission_key == submission_key
+    detail = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    text = _normalized_response_text(detail)
+    assert "Confirmed spend 4700 JPY" in text
+    assert "100000 JPY remaining" in text
 
 
 @pytest.mark.django_db
