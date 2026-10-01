@@ -144,6 +144,7 @@ def _validated_insight(
 
     return ExplanationInsight(text=text, supporting_fact_ids=tuple(fact_ids))
 
+
 def _validated_text(value: Any, *, field: str, max_length: int) -> str:
     if not isinstance(value, str):
         raise ExplanationValidationError(f"Explanation {field} must be text.")
