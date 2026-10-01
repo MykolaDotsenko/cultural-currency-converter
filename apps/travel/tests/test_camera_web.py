@@ -437,6 +437,41 @@ def test_replaying_same_confirmed_camera_token_is_idempotent(
 
 
 @pytest.mark.django_db
+def test_separate_camera_confirmations_of_same_amount_remain_distinct(
+    client,
+    camera_scenario,
+):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+    scope = camera_scope_for_scenario(scenario.pk)
+    first_token = make_confirmed_camera_amount_token(
+        scope=scope,
+        amount=Decimal("4750"),
+        currency_code="JPY",
+    )
+    second_token = make_confirmed_camera_amount_token(
+        scope=scope,
+        amount=Decimal("4750"),
+        currency_code="JPY",
+    )
+
+    assert first_token != second_token
+
+    for token in (first_token, second_token):
+        response = client.post(
+            reverse("add_confirmed_camera_spend", args=(scenario.pk,)),
+            {"confirmed_camera_token": token},
+        )
+        assert response.status_code == 302
+
+    assert scenario.spend_entries.count() == 2
+    assert list(scenario.spend_entries.values_list("amount", flat=True)) == [
+        Decimal("4750.000000000000"),
+        Decimal("4750.000000000000"),
+    ]
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "token_factory",
     [
