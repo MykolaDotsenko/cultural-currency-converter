@@ -4,11 +4,13 @@ import logging
 from collections.abc import Callable
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.exchange.camera import (
     MAX_CAMERA_UPLOAD_BYTES,
@@ -25,10 +27,12 @@ from apps.exchange.camera_service import (
 )
 from apps.travel.camera_forms import (
     CameraCandidateConfirmationForm,
+    CameraSpendHandoffForm,
     CameraUploadForm,
     camera_scope_for_scenario,
 )
-from apps.travel.models import SavedScenario, SavedScenarioKind
+from apps.travel.models import SavedScenario, SavedScenarioKind, SavedScenarioSpendSource
+from apps.travel.scenarios import SavedScenarioError, record_scenario_spend
 
 logger = logging.getLogger("cultural_currency.travel")
 
@@ -69,6 +73,7 @@ def _base_context(
         "confirmation_form": None,
         "confirmed_amount": None,
         "confirmed_camera_token": "",
+        "handoff_error": "",
         "provider_unavailable": False,
     }
 
@@ -185,9 +190,97 @@ def _confirm_candidate(
     scope = camera_scope_for_scenario(scenario.pk)
     context["confirmed_amount"] = amount
     context["confirmed_amount_display"] = _decimal_display_text(amount)
-    context["confirmed_camera_token"] = make_confirmed_camera_amount_token(
+    confirmed_camera_token = make_confirmed_camera_amount_token(
         scope=scope,
         amount=amount,
         currency_code=scenario.destination_currency.code,
     )
+    context["confirmed_camera_token"] = confirmed_camera_token
+    context["spend_handoff_form"] = CameraSpendHandoffForm(
+        scenario_id=scenario.pk,
+        destination_currency_code=scenario.destination_currency.code,
+        initial={"confirmed_camera_token": confirmed_camera_token},
+    )
     return render(request, "travel/camera_confirmed.html", context)
+
+
+def _handoff_error_response(
+    request: HttpRequest,
+    scenario: SavedScenario,
+    *,
+    message: str,
+    status: int,
+) -> HttpResponse:
+    context = _base_context(scenario)
+    context["handoff_error"] = message
+    return render(request, "travel/camera_scan.html", context, status=status)
+
+
+@login_required
+@never_cache
+@require_POST
+def add_camera_confirmed_spend(request: HttpRequest, scenario_id: int) -> HttpResponse:
+    """Persist one explicitly confirmed Camera amount into Trip Budget Remaining."""
+
+    scenario = _owned_budget_scenario(request, scenario_id)
+    form = CameraSpendHandoffForm(
+        request.POST,
+        scenario_id=scenario.pk,
+        destination_currency_code=scenario.destination_currency.code,
+    )
+    if not form.is_valid():
+        error_message = next(
+            (
+                str(message)
+                for errors in form.errors.values()
+                for message in errors
+            ),
+            "Camera confirmation is invalid. Scan and confirm the amount again.",
+        )
+        return _handoff_error_response(
+            request,
+            scenario,
+            message=error_message,
+            status=422,
+        )
+
+    snapshot = form.cleaned_data.get("confirmed_snapshot")
+    submission_key = form.cleaned_data.get("submission_key")
+    if snapshot is None or submission_key is None:
+        raise RuntimeError("Valid camera spend handoff returned incomplete trusted data.")
+
+    try:
+        record_scenario_spend(
+            scenario,
+            amount=snapshot.amount,
+            source=SavedScenarioSpendSource.CAMERA,
+            submission_key=submission_key,
+        )
+    except SavedScenarioError as exc:
+        return _handoff_error_response(
+            request,
+            scenario,
+            message=f"Could not add camera-confirmed spend: {exc}",
+            status=422,
+        )
+    except DatabaseError:
+        logger.exception(
+            "camera_confirmed_spend_persistence_unavailable",
+            extra={"scenario_id": scenario.pk},
+        )
+        return _handoff_error_response(
+            request,
+            scenario,
+            message=(
+                "Camera-confirmed spend is temporarily unavailable. "
+                "Your saved budget was not changed."
+            ),
+            status=503,
+        )
+
+    messages.success(
+        request,
+        "Camera-confirmed spend added to this saved budget.",
+    )
+    return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
