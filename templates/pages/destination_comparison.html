@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Compare destinations · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Compare the same travel-money amount across two destinations using trusted reference FX, sourced local-value anchors and explicit budget assumptions.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan by destination</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-destination-comparison-intro"
+           aria-labelledby="destination-comparison-title">
+    <p class="qa-foundation-kicker">Destination comparison</p>
+    <h1 id="destination-comparison-title">Same money. Two places. Visible assumptions.</h1>
+    <p class="qa-foundation-lede">
+      Compare one source amount across two explicit destinations using the same trip duration,
+      traveler count and daily reference basket. Each side keeps its own currency, city or national
+      scope, rate date, provider attribution and local-price provenance.
+    </p>
+  </section>
+
+  <section class="qa-destination-comparison"
+           aria-labelledby="destination-comparison-form-title">
+    <div class="qa-destination-comparison__instrument">
+      <div class="qa-destination-comparison__heading">
+        <p class="qa-foundation-kicker">Build one comparable scenario</p>
+        <h2 id="destination-comparison-form-title">What does this budget look like in each place?</h2>
+        <p>
+          This is a descriptive comparison, not a “cheaper destination” ranking or purchasing-power
+          index. Missing categories stay missing instead of being guessed.
+        </p>
+      </div>
+
+      {% if form.errors %}
+        <div class="qa-inline-alert qa-inline-alert--error"
+             id="destination-comparison-errors"
+             role="alert"
+             tabindex="-1">
+          <h3>Check these details</h3>
+          <ul class="qa-error-summary">
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if comparison_error %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <h3>{{ comparison_error.title }}</h3>
+          <p>{{ comparison_error.detail }}</p>
+        </div>
+      {% endif %}
+
+      {% if reference_data_ready %}
+        <form method="post"
+              action="{% url 'destination_comparison' %}"
+              class="qa-destination-comparison__form">
+          {% csrf_token %}
+
+          <div class="qa-destination-comparison__money">
+            <label class="qa-field{% if form.amount.errors %} qa-field--error{% endif %}">
+              <span class="qa-field__label">{{ form.amount.label }}</span>
+              {{ form.amount }}
+              {% if form.amount.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="amount-error">{{ form.amount.errors.0 }}</span>
+              {% else %}
+                <span class="qa-field__message">One source budget used on both sides.</span>
+              {% endif %}
+            </label>
+            <label class="qa-field{% if form.source_currency.errors %} qa-field--error{% endif %}">
+              <span class="qa-field__label">{{ form.source_currency.label }}</span>
+              {{ form.source_currency }}
+              {% if form.source_currency.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="source_currency-error">{{ form.source_currency.errors.0 }}</span>
+              {% endif %}
+            </label>
+          </div>
+
+          <div class="qa-destination-comparison__destinations">
+            <label class="qa-field{% if form.left_destination.errors %} qa-field--error{% endif %}">
+              <span class="qa-foundation-kicker">A</span>
+              <span class="qa-field__label">{{ form.left_destination.label }}</span>
+              {{ form.left_destination }}
+              {% if form.left_destination.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="left_destination-error">{{ form.left_destination.errors.0 }}</span>
+              {% else %}
+                <span class="qa-field__message">Choose a city when city-scoped context is available.</span>
+              {% endif %}
+            </label>
+            <label class="qa-field{% if form.right_destination.errors %} qa-field--error{% endif %}">
+              <span class="qa-foundation-kicker">B</span>
+              <span class="qa-field__label">{{ form.right_destination.label }}</span>
+              {{ form.right_destination }}
+              {% if form.right_destination.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="right_destination-error">{{ form.right_destination.errors.0 }}</span>
+              {% else %}
+                <span class="qa-field__message">Country scope remains distinct from city scope.</span>
+              {% endif %}
+            </label>
+          </div>
+
+          <div class="qa-destination-comparison__trip">
+            <label class="qa-field{% if form.duration_days.errors %} qa-field--error{% endif %}">
+              <span class="qa-field__label">{{ form.duration_days.label }}</span>
+              {{ form.duration_days }}
+              {% if form.duration_days.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="duration_days-error">{{ form.duration_days.errors.0 }}</span>
+              {% else %}
+                <span class="qa-field__message" id="duration_days-hint">Same calendar duration on both sides.</span>
+              {% endif %}
+            </label>
+            <label class="qa-field{% if form.travelers.errors %} qa-field--error{% endif %}">
+              <span class="qa-field__label">{{ form.travelers.label }}</span>
+              {{ form.travelers }}
+              {% if form.travelers.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="travelers-error">{{ form.travelers.errors.0 }}</span>
+              {% else %}
+                <span class="qa-field__message" id="travelers-hint">Same number of travelers on both sides.</span>
+              {% endif %}
+            </label>
+          </div>
+
+          <fieldset class="qa-destination-comparison__basket">
+            <legend class="qa-field__label">Daily reference basket</legend>
+            <p class="qa-field__message">
+              These are explicit editable units per person per day. They are comparison assumptions,
+              not a claim about what every traveler spends.
+            </p>
+            <div class="qa-destination-comparison__basket-grid">
+              {% for field in comparison_category_fields %}
+                <label class="qa-field{% if field.errors %} qa-field--error{% endif %}">
+                  <span class="qa-field__label">{{ field.label }}</span>
+                  {{ field }}
+                  {% if field.errors %}
+                    <span class="qa-field__message qa-field__message--error"
+                          id="{{ field.html_name }}-error">{{ field.errors.0 }}</span>
+                  {% endif %}
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+
+          <div class="qa-destination-comparison__action">
+            <button class="qa-primary-button" type="submit">Compare destinations</button>
+            <p>
+              Rates are requested only after you submit. The result keeps each provider observation
+              and effective date visible rather than forcing both destinations into one artificial rate.
+            </p>
+          </div>
+        </form>
+      {% else %}
+        <div class="qa-inline-alert" role="status">
+          <h3>Destination reference data is unavailable.</h3>
+          <p>Comparison needs at least two resolvable current destination scopes.</p>
+          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if comparison %}
+    <section class="qa-destination-comparison__results"
+             aria-labelledby="destination-comparison-results-title">
+      <div class="qa-destination-comparison__results-heading">
+        <div>
+          <p class="qa-foundation-kicker">Side-by-side context</p>
+          <h2 id="destination-comparison-results-title">
+            {{ comparison.source_amount }} {{ comparison.source_currency_code }}
+            · {{ comparison.duration_days }} day{{ comparison.duration_days|pluralize }}
+            · {{ comparison.travelers }} traveler{{ comparison.travelers|pluralize }}
+          </h2>
+        </div>
+        <p>
+          {% if comparison.coverage_complete %}
+            All selected basket categories are sourced on both sides.
+          {% else %}
+            Coverage is partial. Known rows remain visible; missing rows are not estimated.
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="qa-destination-comparison__grid">
+        {% for side in comparison_sides|default:"" %}
+        {% endfor %}
+        {% with side=comparison.left %}
+          {% include "components/comparison/destination_side.html" %}
+        {% endwith %}
+        {% with side=comparison.right %}
+          {% include "components/comparison/destination_side.html" %}
+        {% endwith %}
+      </div>
+
+      <div class="qa-destination-comparison__caveat">
+        <strong>No winner is calculated.</strong>
+        <span>
+          Different local currencies, scopes and incomplete price coverage are kept explicit.
+          This is not a universal cost-of-living index, purchasing-power-parity measure or financial advice.
+        </span>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}
