@@ -351,6 +351,7 @@ def test_saved_scenario_detail_renders_explicit_budget_and_converter_return(
     assert b"amount=600" in response.content
     assert b"source_currency=EUR" in response.content
     assert b"destination_currency=JPY" in response.content
+    assert b"destination_city_slug=tokyo" in response.content
 
 
 @pytest.mark.django_db
