@@ -82,7 +82,9 @@ class CameraAmountCandidate:
 
         currency_code = self.currency_code.upper().strip()
         if currency_code and not _CURRENCY_CODE_RE.fullmatch(currency_code):
-            raise CameraExtractionError("Camera currency code must be blank or three ASCII letters.")
+            raise CameraExtractionError(
+                "Camera currency code must be blank or three ASCII letters."
+            )
         object.__setattr__(self, "currency_code", currency_code)
 
 
@@ -224,7 +226,9 @@ def normalize_camera_provider_payload(
             kind = CameraCandidateKind(raw_kind)
             confidence = CameraConfidence(raw_confidence)
         except (InvalidOperation, ValueError) as exc:
-            raise CameraExtractionError("Camera extraction candidate contains invalid values.") from exc
+            raise CameraExtractionError(
+                "Camera extraction candidate contains invalid values."
+            ) from exc
 
         candidates.append(
             CameraAmountCandidate(
@@ -326,7 +330,9 @@ def load_confirmed_camera_amount_token(
             max_age=max_age,
         )
     except signing.SignatureExpired as exc:
-        raise CameraTokenError("Confirmed camera amount has expired. Scan the image again.") from exc
+        raise CameraTokenError(
+            "Confirmed camera amount has expired. Scan the image again."
+        ) from exc
     except signing.BadSignature as exc:
         raise CameraTokenError("Confirmed camera amount token is invalid.") from exc
 
