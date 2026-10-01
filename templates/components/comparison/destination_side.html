@@ -1,0 +1,108 @@
+<article class="qa-destination-comparison-side">
+  <div class="qa-destination-comparison-side__heading">
+    <div>
+      <p class="qa-foundation-kicker">
+        {% if side.destination_city_slug %}City scope{% else %}Country scope{% endif %}
+      </p>
+      <h3>{{ side.destination_name }}</h3>
+    </div>
+    <p class="qa-destination-comparison-side__amount">
+      {{ side.converted_amount }} <span>{{ side.currency_code }}</span>
+    </p>
+  </div>
+
+  <dl class="qa-destination-comparison-side__rate">
+    <div>
+      <dt>Reference rate</dt>
+      <dd>1 {{ comparison.source_currency_code }} = {{ side.rate }} {{ side.currency_code }}</dd>
+    </div>
+    <div>
+      <dt>Effective date</dt>
+      <dd>{{ side.effective_date }}{% if side.stale %} · stale fallback{% endif %}</dd>
+    </div>
+    <div>
+      <dt>Provider</dt>
+      <dd>{{ side.providers }}</dd>
+    </div>
+  </dl>
+
+  <section class="qa-destination-comparison-side__budget"
+           aria-label="{{ side.destination_name }} budget interpretation">
+    <div class="qa-destination-comparison-side__budget-heading">
+      <div>
+        <p class="qa-foundation-kicker">Reference basket</p>
+        {% if side.budget.complete %}
+          <p class="qa-destination-comparison-side__band">{{ side.budget.band_label }}</p>
+        {% else %}
+          <p class="qa-destination-comparison-side__band">Insufficient current data</p>
+        {% endif %}
+      </div>
+      <p class="qa-destination-comparison-side__daily">
+        {{ side.budget.daily_budget_per_person }} {{ side.currency_code }}
+        <span>per person / day</span>
+      </p>
+    </div>
+
+    <dl class="qa-destination-comparison-side__facts">
+      <div>
+        <dt>Available amount</dt>
+        <dd>{{ side.budget.available_budget }} {{ side.currency_code }}</dd>
+      </div>
+      <div>
+        <dt>Known basket range</dt>
+        <dd>
+          {{ side.budget.reference_low }}–{{ side.budget.reference_high }}
+          {{ side.currency_code }}
+        </dd>
+      </div>
+      <div>
+        <dt>Coverage</dt>
+        <dd>
+          {% if side.budget.complete %}
+            All selected categories matched sourced anchors.
+          {% else %}
+            Missing: {{ side.budget.missing_categories|join:", " }}
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+
+    {% if side.budget.lines %}
+      <div class="qa-destination-comparison-side__lines">
+        {% for line in side.budget.lines %}
+          <div class="qa-destination-comparison-side__line">
+            <div>
+              <strong>{{ line.label }}</strong>
+              <span>{{ line.units }} / person / day · {{ line.scope_label }}</span>
+            </div>
+            <div class="qa-destination-comparison-side__line-value">
+              {{ line.total_low }}–{{ line.total_high }} {{ side.currency_code }}
+            </div>
+            <p class="qa-context-source">
+              Observed {{ line.observed_at }} · {{ line.confidence }} confidence ·
+              <a href="{{ line.source_url }}" rel="noopener noreferrer">{{ line.source_name }}</a>
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+
+  {% if side.payment %}
+    <section class="qa-destination-comparison-side__payment"
+             aria-label="{{ side.destination_name }} payment context">
+      <p class="qa-foundation-kicker">Payment context</p>
+      {% if side.payment.summary %}<p>{{ side.payment.summary }}</p>{% endif %}
+      {% if side.payment.cash_usage %}
+        <p><strong>Cash:</strong> {{ side.payment.cash_usage }}</p>
+      {% endif %}
+      {% if side.payment.dcc_warning %}
+        <p><strong>DCC:</strong> {{ side.payment.dcc_warning }}</p>
+      {% endif %}
+      <p class="qa-context-source">
+        Verified {{ side.payment.verified_at }} ·
+        <a href="{{ side.payment.source_url }}" rel="noopener noreferrer">{{ side.payment.source_name }}</a>
+      </p>
+    </section>
+  {% endif %}
+</article>
