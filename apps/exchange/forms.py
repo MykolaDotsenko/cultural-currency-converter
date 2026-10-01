@@ -69,6 +69,64 @@ def parse_amount_text(value: str, *, minor_units: int) -> Decimal:
     return amount
 
 
+DestinationResolution = tuple[Country, City | None, Currency]
+
+
+def _destination_reference_choices() -> tuple[
+    dict[str, Currency],
+    dict[str, DestinationResolution],
+    list[tuple[str, str]],
+    list[object],
+]:
+    currencies = list(Currency.objects.filter(is_active=True).order_by("code"))
+    currency_by_code = {currency.code: currency for currency in currencies}
+    currency_choices = [
+        (currency.code, f"{currency.name} · {currency.code}") for currency in currencies
+    ]
+
+    primary_links = list(
+        CountryCurrency.objects.current()
+        .primary()
+        .select_related("country", "currency")
+        .order_by("country__name", "country__iso2")
+    )
+    destination_by_token: dict[str, DestinationResolution] = {}
+    country_choices: list[tuple[str, str]] = []
+    country_ids: list[int] = []
+    for link in primary_links:
+        token = link.country.iso2
+        destination_by_token[token] = (link.country, None, link.currency)
+        country_choices.append((token, f"{link.country.name} · {link.currency.code}"))
+        country_ids.append(link.country_id)
+
+    city_choices: list[tuple[str, str]] = []
+    if country_ids:
+        for city in (
+            City.objects.filter(
+                is_active=True,
+                country_id__in=country_ids,
+                country__is_active=True,
+            )
+            .select_related("country")
+            .order_by("country__name", "name", "slug")
+        ):
+            country_entry = destination_by_token.get(city.country.iso2)
+            if country_entry is None:
+                continue
+            currency = country_entry[2]
+            token = f"{city.country.iso2}:{city.slug}"
+            destination_by_token[token] = (city.country, city, currency)
+            city_choices.append((token, f"{city.name}, {city.country.name} · {currency.code}"))
+
+    destination_choices: list[object] = [("", "Choose a country or city")]
+    if city_choices:
+        destination_choices.append(("Cities", city_choices))
+    if country_choices:
+        destination_choices.append(("Countries", country_choices))
+
+    return currency_by_code, destination_by_token, currency_choices, destination_choices
+
+
 class DestinationModeForm(forms.Form):
     """Destination-first entry point that resolves into the canonical converter."""
 
@@ -79,51 +137,13 @@ class DestinationModeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        currencies = list(Currency.objects.filter(is_active=True).order_by("code"))
-        self._currency_by_code = {currency.code: currency for currency in currencies}
-        self.fields["source_currency"].choices = [
-            (currency.code, f"{currency.name} · {currency.code}") for currency in currencies
-        ]
-
-        primary_links = list(
-            CountryCurrency.objects.current()
-            .primary()
-            .select_related("country", "currency")
-            .order_by("country__name", "country__iso2")
-        )
-        self._destination_by_token: dict[str, tuple[Country, City | None, Currency]] = {}
-        country_choices: list[tuple[str, str]] = []
-        country_ids: list[int] = []
-        for link in primary_links:
-            token = link.country.iso2
-            self._destination_by_token[token] = (link.country, None, link.currency)
-            country_choices.append((token, f"{link.country.name} · {link.currency.code}"))
-            country_ids.append(link.country_id)
-
-        city_choices: list[tuple[str, str]] = []
-        if country_ids:
-            for city in (
-                City.objects.filter(
-                    is_active=True,
-                    country_id__in=country_ids,
-                    country__is_active=True,
-                )
-                .select_related("country")
-                .order_by("country__name", "name", "slug")
-            ):
-                country_entry = self._destination_by_token.get(city.country.iso2)
-                if country_entry is None:
-                    continue
-                currency = country_entry[2]
-                token = f"{city.country.iso2}:{city.slug}"
-                self._destination_by_token[token] = (city.country, city, currency)
-                city_choices.append((token, f"{city.name}, {city.country.name} · {currency.code}"))
-
-        destination_choices: list[object] = [("", "Choose a country or city")]
-        if city_choices:
-            destination_choices.append(("Cities", city_choices))
-        if country_choices:
-            destination_choices.append(("Countries", country_choices))
+        (
+            self._currency_by_code,
+            self._destination_by_token,
+            currency_choices,
+            destination_choices,
+        ) = _destination_reference_choices()
+        self.fields["source_currency"].choices = currency_choices
         self.fields["destination"].choices = destination_choices
 
         self.fields["amount"].widget.attrs.update(
