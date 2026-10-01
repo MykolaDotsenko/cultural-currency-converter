@@ -214,7 +214,9 @@ def _scenario_trip_budget_component(
     if scenario.kind != SavedScenarioKind.BUDGET or initial_observation is None:
         return None
 
-    confirmed_spend = sum((entry.amount for entry in spend_entries), Decimal("0"))
+    with localcontext() as context:
+        context.prec = 64
+        confirmed_spend = sum((entry.amount for entry in spend_entries), Decimal("0"))
     try:
         summary = calculate_trip_budget_summary(
             reference_budget=initial_observation.output_amount,
@@ -261,6 +263,7 @@ def _scenario_trip_budget_component(
         "is_over_reference": summary.is_over_reference,
         "days": summary.days,
         "day_label": day_label,
+        "has_remaining_per_day": summary.remaining_per_day is not None,
         "remaining_per_day": (
             _format_currency_amount(
                 summary.remaining_per_day,
