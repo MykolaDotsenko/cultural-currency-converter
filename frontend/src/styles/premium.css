@@ -46,10 +46,7 @@ h3 {
   white-space: nowrap;
 }
 
-.qa-header-actions {
-  gap: var(--qa-space-5);
-}
-
+.qa-header-actions,
 .qa-header-link {
   min-height: 2.75rem;
   padding-inline: 0;
@@ -258,11 +255,7 @@ h3 {
   box-shadow: 0 1px 0 var(--qa-context-accent, var(--color-brand));
 }
 
-.qa-selector-trigger__country {
-  font-size: 1rem;
-  font-weight: 620;
-}
-
+.qa-selector-trigger__country,
 .qa-selector-trigger__currency {
   color: var(--color-tertiary);
   font-size: 0.82rem;
@@ -731,10 +724,7 @@ h3 {
   gap: var(--qa-space-8);
 }
 
-.qa-payment-estimate__heading > div {
-  max-width: 44rem;
-}
-
+.qa-payment-estimate__heading > div,
 .qa-payment-estimate__heading h3 {
   max-width: 20ch;
   font-size: clamp(1.55rem, 3vw, 2.25rem);
@@ -830,12 +820,7 @@ h3 {
   width: 100%;
 }
 
-.qa-payment-estimate__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--qa-space-4);
-}
-
+.qa-payment-estimate__actions,
 .qa-local-save-control {
   margin-block-start: var(--qa-space-8);
   padding-block-start: var(--qa-space-5);
