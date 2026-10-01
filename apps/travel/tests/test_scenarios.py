@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -528,6 +529,48 @@ def test_budget_scenario_records_minimal_immutable_confirmed_spend(reference_dat
 
 
 @pytest.mark.django_db
+def test_confirmed_spend_submission_key_is_idempotent(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-idempotent-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+    submission_key = uuid4()
+
+    first = record_scenario_spend(
+        scenario,
+        amount=Decimal("1200"),
+        submission_key=submission_key,
+    )
+    replay = record_scenario_spend(
+        scenario,
+        amount=Decimal("1200"),
+        submission_key=submission_key,
+    )
+
+    assert replay.pk == first.pk
+    assert scenario.spend_entries.count() == 1
+
+    with pytest.raises(SavedScenarioError, match="already bound"):
+        record_scenario_spend(
+            scenario,
+            amount=Decimal("1300"),
+            submission_key=submission_key,
+        )
+
+
+
+@pytest.mark.django_db
 def test_confirmed_spend_source_is_normalized_and_validated(reference_data):
     eur, jpy, fi, jp, tokyo, _ = reference_data
     user = User.objects.create_user(username="spend-source-owner", password="StrongPass-482!")
@@ -663,11 +706,46 @@ def test_database_rejects_non_positive_confirmed_spend(reference_data):
     with pytest.raises(IntegrityError):
         SavedScenarioSpendEntry.objects.create(
             scenario=scenario,
+            submission_key=uuid4(),
             amount=Decimal("0"),
         )
 
     with pytest.raises(IntegrityError):
         SavedScenarioSpendEntry.objects.create(
             scenario=scenario,
+            submission_key=uuid4(),
             amount=Decimal("1000000001"),
+        )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_database_allows_only_one_initial_observation_per_scenario(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="initial-baseline-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+    initial = scenario.observations.get(kind=SavedScenarioObservationKind.INITIAL)
+
+    with pytest.raises(IntegrityError):
+        SavedScenarioObservation.objects.create(
+            scenario=scenario,
+            kind=SavedScenarioObservationKind.INITIAL,
+            input_amount=initial.input_amount,
+            output_amount=initial.output_amount,
+            rate=initial.rate,
+            effective_date=initial.effective_date,
+            fetched_at=initial.fetched_at,
+            provider_keys=initial.provider_keys,
+            stale=initial.stale,
         )
