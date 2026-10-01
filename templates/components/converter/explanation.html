@@ -1,11 +1,16 @@
 {% if explanation_error %}
-  <section class="qa-inline-alert qa-inline-alert--error" role="alert">
+  <section class="qa-inline-alert qa-inline-alert--error"
+           role="alert"
+           tabindex="-1"
+           data-ai-explanation-focus>
     <h3>{{ explanation_error.title }}</h3>
     <p>{{ explanation_error.detail }}</p>
   </section>
 {% elif explanation %}
   <section class="qa-ai-explanation"
            data-ai-generated="{% if explanation.result.generated %}true{% else %}false{% endif %}"
+           data-ai-explanation-focus
+           tabindex="-1"
            aria-labelledby="conversion-explanation-title">
     <div>
       <p class="qa-foundation-kicker">
@@ -35,7 +40,7 @@
     <p class="qa-ai-explanation__meta">
       {{ explanation.result.source_label }}.
       {% if not explanation.result.generated %}
-        Live AI is unavailable; the conversion itself is unchanged.
+        Live AI is unavailable; the conversion itself is unchanged. Choose the same question again to retry.
       {% elif explanation.cache_status == "persistent_hit" %}
         Reused from the validated explanation cache.
       {% endif %}
