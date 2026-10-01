@@ -357,6 +357,7 @@ class SavedScenarioSpendEntry(models.Model):
         on_delete=models.CASCADE,
         related_name="spend_entries",
     )
+    submission_key = models.UUIDField(unique=True, editable=False)
     amount = models.DecimalField(max_digits=40, decimal_places=12)
     source = models.CharField(
         max_length=16,
@@ -437,6 +438,11 @@ class SavedScenarioObservation(models.Model):
             models.CheckConstraint(
                 condition=Q(rate__gt=0),
                 name="scenario_observation_rate_positive",
+            ),
+            models.UniqueConstraint(
+                fields=("scenario",),
+                condition=Q(kind=SavedScenarioObservationKind.INITIAL),
+                name="unique_scenario_initial_observation",
             ),
         ]
         indexes = [
