@@ -8,7 +8,12 @@ from django.urls import include, path
 from apps.common.health import health_live, health_ready
 from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
-from apps.culture.views import current_destination_context, explore, money_culture_story
+from apps.culture.views import (
+    city_money_profile,
+    current_destination_context,
+    explore,
+    money_culture_story,
+)
 from apps.exchange.views import (
     budget_interpretation,
     conversion_explanation,
@@ -43,6 +48,11 @@ urlpatterns = [
     path("destination/", destination_mode, name="destination_mode"),
     path("compare/", destination_comparison, name="destination_comparison"),
     path("explore/", explore, name="explore"),
+    path(
+        "city/<str:country_code>/<slug:city_slug>/",
+        city_money_profile,
+        name="city_money_profile",
+    ),
     path("picker/options/", picker_options, name="picker_options"),
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
     path("payment/estimate/", payment_estimate, name="payment_estimate"),
