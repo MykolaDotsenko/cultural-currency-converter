@@ -84,9 +84,7 @@ def build_smart_result_summary(
                     f"Using the reviewed {price.scope_label} price anchor for {price.label}, "
                     f"this amount corresponds to {purchase_phrase}."
                 ),
-                evidence_label=(
-                    f"Observed {price.observed_at.isoformat()} · {price.source_name}"
-                ),
+                evidence_label=(f"Observed {price.observed_at.isoformat()} · {price.source_name}"),
                 evidence_url=price.source_url,
             )
 
