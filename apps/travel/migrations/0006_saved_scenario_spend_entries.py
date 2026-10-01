@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("submission_key", models.UUIDField(unique=True)),
+                ("submission_key", models.UUIDField(editable=False, unique=True)),
                 ("amount", models.DecimalField(decimal_places=12, max_digits=40)),
                 (
                     "source",
