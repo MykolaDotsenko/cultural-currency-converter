@@ -20,6 +20,7 @@ from apps.exchange.domain import (
 _TOKEN_SALT = "exchange.runtime-explanation:v1"
 TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60
 
+
 class TrustedSnapshotTokenError(ValueError):
     pass
 
