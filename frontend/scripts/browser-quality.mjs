@@ -225,6 +225,144 @@ async function assertKeyboardFocus(page, surfaceName) {
   }
 }
 
+async function assertAiExplanationReliability(page) {
+  const region = page.locator("#conversion-explanation-region");
+  const ratePrompt = page.getByRole("button", { name: "What does this rate mean?" });
+  const paymentPrompt = page.getByRole("button", { name: "Why might my bank or card differ?" });
+  const loading = page.locator("#explanation-loading");
+
+  await ratePrompt.waitFor();
+  await paymentPrompt.waitFor();
+  assert(
+    (await ratePrompt.getAttribute("aria-controls")) === "conversion-explanation-region" &&
+      (await ratePrompt.getAttribute("hx-disabled-elt")) === "this",
+    "current-converter/ai: quick prompt is missing scoped request controls",
+  );
+  assert(
+    (await region.getAttribute("aria-live")) === "polite" &&
+      (await region.getAttribute("aria-atomic")) === "true" &&
+      (await region.getAttribute("aria-busy")) === "false",
+    "current-converter/ai: explanation region is missing live/busy semantics",
+  );
+  assert(
+    (await loading.getAttribute("role")) === "status" &&
+      (await loading.getAttribute("aria-live")) === "polite",
+    "current-converter/ai: loading indicator is not an accessible status",
+  );
+
+  const waitForExplanation = () =>
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/conversion/explain/",
+    );
+
+  const viewport = page.viewportSize();
+  const exerciseCancellation =
+    BROWSER_SCOPE === "full" && viewport?.width === 1440;
+
+  if (exerciseCancellation) {
+    await ratePrompt.click();
+    await page.waitForFunction(
+      () =>
+        document.getElementById("conversion-explanation-region")?.getAttribute("aria-busy") ===
+        "true",
+    );
+    assert(await ratePrompt.isDisabled(), "current-converter/ai: active prompt was not disabled");
+
+    const paymentResponsePromise = waitForExplanation();
+    await paymentPrompt.click();
+    const paymentResponse = await paymentResponsePromise;
+    assert(
+      paymentResponse.status() === 200,
+      `current-converter/ai: timeout fallback returned ${paymentResponse.status()}`,
+    );
+  } else {
+    const paymentResponsePromise = waitForExplanation();
+    await paymentPrompt.click();
+    const paymentResponse = await paymentResponsePromise;
+    assert(
+      paymentResponse.status() === 200,
+      `current-converter/ai: timeout fallback returned ${paymentResponse.status()}`,
+    );
+  }
+
+  await region.getByText("Built-in explanation", { exact: true }).waitFor();
+  const fallbackText = await region.innerText();
+  assert(
+    fallbackText.includes("Why might my bank or card show a different result?") &&
+      fallbackText.includes("Choose the same question again to retry"),
+    `current-converter/ai: timeout fallback/retry copy mismatch: ${JSON.stringify(fallbackText)}`,
+  );
+  assert(
+    (await region.getAttribute("aria-busy")) === "false",
+    "current-converter/ai: explanation region stayed busy after fallback",
+  );
+  assert(
+    await page.evaluate(() =>
+      document.activeElement?.matches("#conversion-explanation-region [data-ai-explanation-focus]"),
+    ),
+    "current-converter/ai: fallback result did not receive focus",
+  );
+
+  const rateResponsePromise = waitForExplanation();
+  await ratePrompt.click();
+  const rateResponse = await rateResponsePromise;
+  assert(
+    rateResponse.status() === 200,
+    `current-converter/ai: generated explanation returned ${rateResponse.status()}`,
+  );
+  await region.getByText("AI explanation", { exact: true }).waitFor();
+  const generatedText = await region.innerText();
+  assert(
+    generatedText.includes("What does this reference rate mean?") &&
+      generatedText.includes("What matters most") &&
+      generatedText.includes("Watch out for") &&
+      generatedText.includes("Next step"),
+    `current-converter/ai: structured generated answer mismatch: ${JSON.stringify(generatedText)}`,
+  );
+  assert(
+    await page.evaluate(() =>
+      document.activeElement?.matches("#conversion-explanation-region [data-ai-explanation-focus]"),
+    ),
+    "current-converter/ai: generated result did not receive focus",
+  );
+
+  if (exerciseCancellation) {
+    await page.route(
+      "**/conversion/explain/",
+      (route) => route.abort("failed"),
+      { times: 1 },
+    );
+    await ratePrompt.click();
+    await page
+      .getByText("The explanation request could not be completed. Choose the question again to retry.", {
+        exact: true,
+      })
+      .waitFor();
+    assert(
+      (await region.getAttribute("aria-busy")) === "false",
+      "current-converter/ai: transport failure left the region busy",
+    );
+    assert(
+      (await page.locator("#explanation-client-status").getAttribute("tabindex")) === "-1" &&
+        (await page.evaluate(() => document.activeElement?.id)) === "explanation-client-status",
+      "current-converter/ai: transport failure status did not receive focus",
+    );
+
+    const recoveryResponsePromise = waitForExplanation();
+    await ratePrompt.click();
+    const recoveryResponse = await recoveryResponsePromise;
+    assert(
+      recoveryResponse.status() === 200,
+      `current-converter/ai: retry after transport failure returned ${recoveryResponse.status()}`,
+    );
+    await region.getByText("AI explanation", { exact: true }).waitFor();
+  }
+
+  await assertAxe(page, "current-converter/ai-explanation");
+}
+
 async function assertCurrentConverterFlow(page, consoleErrors) {
   const waitForPost = () =>
     page.waitForResponse(
@@ -276,6 +414,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await page.locator("#id_amount").fill("100");
   await Promise.all([waitForPost(), page.locator(".qa-primary-button").click()]);
   await page.getByRole("heading", { name: "Estimate what explicit fees may change" }).waitFor();
+  await assertAiExplanationReliability(page);
 
   const waitForPaymentEstimate = () =>
     page.waitForResponse(
