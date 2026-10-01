@@ -431,10 +431,19 @@ def _fallback_delivery(
             text="Historical FX does not describe historical purchasing power.",
             supporting_fact_ids=("historical_scope",),
         )
-        next_step = ExplanationInsight(
-            text="Read the requested and effective dates together when using this historical reference.",
-            supporting_fact_ids=("requested_date", "effective_date"),
-        )
+        if snapshot.requested_date is not None:
+            next_step = ExplanationInsight(
+                text=(
+                    "Read the requested and effective dates together when using this historical "
+                    "reference."
+                ),
+                supporting_fact_ids=("requested_date", "effective_date"),
+            )
+        else:
+            next_step = ExplanationInsight(
+                text="Use the effective date when reading this historical reference.",
+                supporting_fact_ids=("effective_date",),
+            )
     elif intent is ExplanationIntent.STALE_REFERENCE:
         short_answer = ExplanationInsight(
             text=(
