@@ -205,7 +205,8 @@ def test_scan_shows_only_confirmation_paths_compatible_with_trip_currency(
     assert b"52.4 USD" in response.content
     assert b"820 JPY" in response.content
     assert response.content.count(b"Confirm this amount") == 2
-    assert b"cannot be confirmed as trip spend" in response.content
+    text = _normalized_response_text(response)
+    assert "cannot be confirmed as trip spend" in text
     assert b"receipt.png" not in response.content
     assert scenario.spend_entries.count() == 0
     service.scan.assert_called_once()
