@@ -17,12 +17,15 @@ from apps.travel.models import (
     SavedScenarioKind,
     SavedScenarioObservation,
     SavedScenarioObservationKind,
+    SavedScenarioSpendEntry,
+    SavedScenarioSpendSource,
 )
 from apps.travel.scenarios import (
     SavedScenarioError,
     SavedScenarioSpec,
     create_saved_scenario,
     record_scenario_recheck,
+    record_scenario_spend,
 )
 
 User = get_user_model()
@@ -452,4 +455,114 @@ def test_database_rejects_trip_end_without_start_date(reference_data):
             destination_city=tokyo,
             source_amount=Decimal("100"),
             travel_end_date=date(2027, 4, 18),
+        )
+
+
+@pytest.mark.django_db
+def test_budget_scenario_records_minimal_immutable_confirmed_spend(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+
+    entry = record_scenario_spend(scenario, amount=Decimal("1200"))
+
+    assert scenario.spend_entries.count() == 1
+    assert entry.amount == Decimal("1200")
+    assert entry.source == SavedScenarioSpendSource.MANUAL
+
+    entry.amount = Decimal("1300")
+    with pytest.raises(ValidationError, match="immutable"):
+        entry.save()
+
+
+@pytest.mark.django_db
+def test_confirmed_spend_rejects_non_budget_scenario_and_invalid_amount(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-contract-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.TRIP,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+
+    with pytest.raises(SavedScenarioError, match="saved budget scenario"):
+        record_scenario_spend(scenario, amount=Decimal("10"))
+
+    scenario.kind = SavedScenarioKind.BUDGET
+    with pytest.raises(SavedScenarioError, match="greater than zero"):
+        record_scenario_spend(scenario, amount=Decimal("0"))
+    with pytest.raises(SavedScenarioError, match="greater than zero"):
+        record_scenario_spend(scenario, amount=Decimal("NaN"))
+
+
+@pytest.mark.django_db
+def test_confirmed_spend_limit_is_enforced_without_deleting_existing_entries(
+    reference_data,
+    monkeypatch,
+):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-limit-owner", password="StrongPass-482!")
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+        ),
+        conversion=_conversion(),
+    )
+    record_scenario_spend(scenario, amount=Decimal("100"))
+    monkeypatch.setattr("apps.travel.scenarios.MAX_SCENARIO_SPEND_ENTRIES", 1)
+
+    with pytest.raises(SavedScenarioError, match="at most 1 spend entries"):
+        record_scenario_spend(scenario, amount=Decimal("200"))
+
+    assert list(scenario.spend_entries.values_list("amount", flat=True)) == [
+        Decimal("100.000000000000")
+    ]
+
+
+@pytest.mark.django_db(transaction=True)
+def test_database_rejects_non_positive_confirmed_spend(reference_data):
+    eur, jpy, _fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-db-owner", password="StrongPass-482!")
+    scenario = SavedScenario.objects.create(
+        user=user,
+        kind=SavedScenarioKind.BUDGET,
+        title="Database spend constraint",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("100"),
+    )
+
+    with pytest.raises(IntegrityError):
+        SavedScenarioSpendEntry.objects.create(
+            scenario=scenario,
+            amount=Decimal("0"),
         )
