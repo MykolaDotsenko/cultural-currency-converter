@@ -105,6 +105,8 @@ jobs:
           mypy \
             apps/exchange/domain.py \
             apps/exchange/budget.py \
+            apps/exchange/camera.py \
+            apps/exchange/camera_service.py \
             apps/exchange/comparison.py \
             apps/exchange/money_context.py \
             apps/exchange/payment_estimate.py \
@@ -116,7 +118,8 @@ jobs:
             config/cache.py \
             config/csp.py \
             config/ai.py \
-            integrations/gemini/client.py
+            apps/exchange/ai/providers/gemini_camera.py
+          integrations/gemini/client.py
           djlint templates --check
           python manage.py check
           python manage.py makemigrations --check --dry-run
