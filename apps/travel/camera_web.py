@@ -125,11 +125,7 @@ def camera_scan_saved_scenario(
             not candidate.currency_code
             or candidate.currency_code == scenario.destination_currency.code
         )
-        token = (
-            make_camera_candidate_token(candidate, scope=scope)
-            if currency_matches
-            else ""
-        )
+        token = make_camera_candidate_token(candidate, scope=scope) if currency_matches else ""
         form = (
             CameraCandidateConfirmationForm(
                 scenario_id=scenario.pk,
