@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("submission_key", models.UUIDField(editable=False, unique=True)),
+                ("submission_key", models.UUIDField(editable=False)),
                 ("amount", models.DecimalField(decimal_places=12, max_digits=40)),
                 (
                     "source",
@@ -62,6 +62,10 @@ class Migration(migrations.Migration):
                     models.CheckConstraint(
                         condition=models.Q(("source__in", ["manual", "camera"])),
                         name="scenario_spend_source_valid",
+                    ),
+                    models.UniqueConstraint(
+                        fields=("scenario", "submission_key"),
+                        name="unique_scenario_spend_submission",
                     ),
                 ],
             },
