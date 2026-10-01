@@ -52,6 +52,8 @@ Saved-scenario persistence now has a normalized domain foundation for account-ow
 
 Destination-first planning now has a first production slice. A user can begin with an explicit country or reviewed canonical city plus a source amount/currency; the product resolves the destination's current primary currency and redirects into the same canonical converter. City scope travels through the Money Context Engine when selected, while rate/provider/date semantics remain owned by the converter. Destination mode does not request an FX rate on its own and does not use device location.
 
+The first Trip Budget Remaining slice extends saved budget scenarios into point-of-use planning. Confirmed spend is explicitly entered in the destination currency and subtracted from the immutable original saved FX output, so later rate re-checks never move the user's spending baseline. The surface can derive a remaining-per-day reference only from explicit saved duration/date information; it stops inferring a daily figure when a trip has started without an end date or has ended. Spend persistence is intentionally minimal—amount, confirmation source and timestamp only—and is not a bank balance, receipt archive or general expense ledger.
+
 Future comparison, trip, camera and mobile/offline work should extend the same contract rather than create parallel calculations or duplicate destination-context semantics.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
