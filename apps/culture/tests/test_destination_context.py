@@ -158,6 +158,73 @@ def test_destination_context_preserves_city_scope_and_provenance(japan_context):
 
 
 @pytest.mark.django_db
+def test_country_context_uses_one_anchor_per_category(japan_context):
+    japan, jpy, _profile, tokyo_transit = japan_context
+    today = timezone.localdate()
+    national_coffee = TypicalPrice.objects.create(
+        country=japan,
+        category=TypicalPriceCategory.COFFEE,
+        label="National coffee",
+        amount_low=Decimal("500"),
+        currency=jpy,
+        source_name="National source",
+        source_url="https://example.org/national-coffee",
+        observed_at=today,
+        verified_at=timezone.now(),
+        display_order=10,
+        is_published=True,
+    )
+    TypicalPrice.objects.create(
+        country=japan,
+        city="Tokyo",
+        city_ref=tokyo_transit.city_ref,
+        category=TypicalPriceCategory.COFFEE,
+        label="Tokyo coffee",
+        amount_low=Decimal("600"),
+        currency=jpy,
+        source_name="Tokyo source",
+        source_url="https://example.org/tokyo-coffee",
+        observed_at=today,
+        verified_at=timezone.now(),
+        display_order=10,
+        is_published=True,
+    )
+    national_meal = TypicalPrice.objects.create(
+        country=japan,
+        category=TypicalPriceCategory.CASUAL_MEAL,
+        label="National meal",
+        amount_low=Decimal("900"),
+        currency=jpy,
+        source_name="National source",
+        source_url="https://example.org/national-meal",
+        observed_at=today,
+        verified_at=timezone.now(),
+        display_order=20,
+        is_published=True,
+    )
+
+    context = build_destination_context(
+        country_code="JP",
+        converted_amount=Decimal("17450"),
+        quote_currency="JPY",
+        price_limit=3,
+    )
+
+    assert context is not None
+    assert [item.label for item in context.prices] == [
+        national_coffee.label,
+        national_meal.label,
+        tokyo_transit.label,
+    ]
+    assert [item.category for item in context.prices] == [
+        TypicalPriceCategory.COFFEE,
+        TypicalPriceCategory.CASUAL_MEAL,
+        TypicalPriceCategory.TRANSIT,
+    ]
+    assert context.prices[-1].scope_label == "Tokyo"
+
+
+@pytest.mark.django_db
 def test_city_scoped_context_prefers_city_and_falls_back_only_to_national(japan_context):
     japan, jpy, _profile, tokyo_transit = japan_context
     osaka = City.objects.create(country=japan, slug="osaka", name="Osaka")
