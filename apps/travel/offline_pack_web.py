@@ -44,9 +44,7 @@ def download_offline_destination_pack(
         request=request,
     )
     destination_slug = slugify(pack.destination_label) or "destination"
-    filename = (
-        f"cultural-currency-{destination_slug}-offline-{pack.context_as_of.isoformat()}.html"
-    )
+    filename = f"cultural-currency-{destination_slug}-offline-{pack.context_as_of.isoformat()}.html"
 
     response = HttpResponse(body, content_type="text/html; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
