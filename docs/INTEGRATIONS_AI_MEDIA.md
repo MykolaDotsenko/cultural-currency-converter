@@ -210,12 +210,11 @@ The Camera boundary is intentionally stricter than ordinary destination context:
 - confirmation produces a short-lived scenario-scoped signed amount token and performs no write by itself;
 - a confirmed Camera amount can enter trip-budget persistence only through a separate explicit POST that re-verifies token scope/currency and uses the token as the sole amount source;
 - each confirmed token carries a signed unique confirmation id; that id becomes the spend submission key, so replay is idempotent without collapsing separate confirmations of the same amount;
-- confirmation creates only a short-lived signed scenario-scoped token and performs no spend write in this slice;
 - deterministic conversion/payment/budget math remains outside the model.
 
 Provider failure, safety blocking, timeout or invalid structured output must leave the saved scenario untouched. No live multimodal provider call is allowed inside a database transaction.
 
-A later Camera-confirmed spend handoff may consume the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It must not persist raw media or create a parallel receipt ledger.
+The implemented Camera-confirmed spend handoff consumes the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It persists no raw media and creates no parallel receipt ledger.
 
 Voice, if introduced later, requires an equivalent explicit capture/minimized-retention contract.
 
