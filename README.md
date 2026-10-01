@@ -38,7 +38,9 @@ Those boundaries are more important to this project than adding another conversi
 - side-by-side destination comparison for one source budget across two explicit country/canonical-city scopes, preserving each side's rate source/date, local-price provenance and payment context without ranking destinations;
 - account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness, confirmed-spend tracking and deterministic remaining-budget meaning;
 - returning-user home continuity for the most relevant active/upcoming saved trip, using stored FX observations, confirmed spend and reviewed local-context freshness without silent rate refresh;
-- optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing and mandatory user confirmation before any later spend handoff;
+- optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing, mandatory user confirmation and a separate idempotent Add-to-trip-budget handoff;
+- self-contained offline destination-pack export using stored FX/freshness semantics and reviewed destination context;
+- provider-free Explore discovery over reviewed country/canonical-city money context with canonical converter handoff and no destination ranking;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
 - optional Gemini explanation with deterministic fallback;
