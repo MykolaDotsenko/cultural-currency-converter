@@ -209,7 +209,7 @@ The Camera boundary is intentionally stricter than ordinary destination context:
 - the user may correct the amount before confirmation;
 - confirmation produces a short-lived scenario-scoped signed amount token and performs no write by itself;
 - a confirmed Camera amount can enter trip-budget persistence only through a separate explicit POST that re-verifies token scope/currency and uses the token as the sole amount source;
-- replay of the same confirmed token is idempotent because the spend submission key is derived deterministically from that exact token;
+- each confirmed token carries a signed unique confirmation id; that id becomes the spend submission key, so replay is idempotent without collapsing separate confirmations of the same amount;
 - confirmation creates only a short-lived signed scenario-scoped token and performs no spend write in this slice;
 - deterministic conversion/payment/budget math remains outside the model.
 
