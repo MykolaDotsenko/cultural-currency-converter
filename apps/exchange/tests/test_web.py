@@ -304,6 +304,7 @@ def test_same_currency_uses_exact_one_without_gateway_call(client, reference_dat
     assert b"100.00" in response.content
     assert b"Exact same-currency rate" in response.content
     assert b"equals" in response.content
+    assert b'data-summary-kind="identity"' in response.content
     assert b"No exchange-rate lookup is needed because both sides use EUR" in response.content
     assert b"Last synced" not in response.content
     assert gateway.calls == []
