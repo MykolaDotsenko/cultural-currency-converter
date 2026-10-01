@@ -378,7 +378,9 @@ async function assertAiExplanationReliability(page) {
     `current-converter/ai: structured generated answer mismatch: ${JSON.stringify(generatedText)}`,
   );
   await page.waitForFunction(() =>
-    document.getElementById("explanation-announcer")?.textContent?.includes("AI explanation ready."),
+    document
+      .getElementById("explanation-announcer")
+      ?.textContent?.includes("AI explanation ready."),
   );
   assert(
     await page.evaluate(() =>
