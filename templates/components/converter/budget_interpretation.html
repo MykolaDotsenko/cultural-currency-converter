@@ -208,6 +208,28 @@
                      autocomplete="off"
                      placeholder="{{ budget_interpretation.destination_name }} budget">
             </label>
+            <div class="qa-budget-interpretation__trip-fields">
+              <label class="qa-field">
+                <span class="qa-field__label">Trip starts <span class="qa-field__optional">Optional</span></span>
+                <input class="qa-text-input"
+                       type="date"
+                       name="travel_start_date"
+                       autocomplete="off">
+                <span class="qa-field__message">
+                  Adds a planning anchor for pre-trip re-checks. It does not trigger reminders yet.
+                </span>
+              </label>
+              <label class="qa-field">
+                <span class="qa-field__label">Trip ends <span class="qa-field__optional">Optional</span></span>
+                <input class="qa-text-input"
+                       type="date"
+                       name="travel_end_date"
+                       autocomplete="off">
+                <span class="qa-field__message">
+                  Leave blank if only the departure date matters for this scenario.
+                </span>
+              </label>
+            </div>
             <button class="qa-secondary-button" type="submit">Save budget</button>
           </form>
         {% else %}
