@@ -299,6 +299,7 @@ def test_destination_context_suppresses_invalid_published_provenance(japan_conte
     fallback = TypicalPrice.objects.create(
         country=japan,
         city="Tokyo",
+        city_ref=price.city_ref,
         category=TypicalPriceCategory.CASUAL_MEAL,
         label="Simple meal",
         amount_low=Decimal("900"),
