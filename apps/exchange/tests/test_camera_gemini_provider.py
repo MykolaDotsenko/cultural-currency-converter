@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 from apps.exchange.ai.providers.gemini_camera import GeminiCameraAmountExtractor
 from apps.exchange.camera import CameraCandidateKind, CameraConfidence, SanitizedCameraImage
 from integrations.gemini.models import ProviderUsage, StructuredGeneration
