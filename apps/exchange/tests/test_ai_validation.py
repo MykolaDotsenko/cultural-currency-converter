@@ -76,9 +76,7 @@ def test_valid_grounded_payload_is_normalized(packet):
     ("mutation", "message"),
     [
         (
-            lambda payload: payload["short_answer"].update(
-                supporting_fact_ids=["not-a-real-fact"]
-            ),
+            lambda payload: payload["short_answer"].update(supporting_fact_ids=["not-a-real-fact"]),
             "unknown fact ID",
         ),
         (
@@ -88,9 +86,7 @@ def test_valid_grounded_payload_is_normalized(packet):
             "causal",
         ),
         (
-            lambda payload: payload["short_answer"].update(
-                text="You should exchange 100 EUR now."
-            ),
+            lambda payload: payload["short_answer"].update(text="You should exchange 100 EUR now."),
             "advice",
         ),
         (
@@ -184,7 +180,9 @@ def test_selected_question_requires_its_grounding_facts(packet):
             "100 EUR is approximately 17450 JPY.",
             ["conversion"],
         ),
-        "key_factors": [_insight("The effective observation date is 2026-09-18.", ["effective_date"])],
+        "key_factors": [
+            _insight("The effective observation date is 2026-09-18.", ["effective_date"])
+        ],
         "watch_out_for": _insight(
             "100 EUR is approximately 17450 JPY.",
             ["conversion"],
