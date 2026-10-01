@@ -105,6 +105,8 @@ MAX_PROVIDER_KEY_LENGTH = 80
 
 
 def normalize_provider_keys(values: Iterable[object]) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)):
+        raise FxDomainError("FX provider attribution must be a collection of identifiers.")
     materialized = tuple(values)
     if len(materialized) > MAX_PROVIDER_KEYS:
         raise FxDomainError("FX provider attribution exceeds supported entry limits.")
