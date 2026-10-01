@@ -18,6 +18,10 @@ class GroundedFact:
 class ExplanationPacket:
     packet_version: str
     locale: str
+    intent_id: str
+    intent_question: str
+    focus_instruction: str
+    required_fact_ids: tuple[str, ...]
     facts: tuple[GroundedFact, ...]
     allowed_currencies: tuple[str, ...]
     allowed_uppercase_tokens: tuple[str, ...]
@@ -28,6 +32,10 @@ class ExplanationPacket:
         payload = {
             "packet_version": self.packet_version,
             "locale": self.locale,
+            "intent_id": self.intent_id,
+            "intent_question": self.intent_question,
+            "focus_instruction": self.focus_instruction,
+            "required_fact_ids": list(self.required_fact_ids),
             "facts": [asdict(fact) for fact in self.facts],
             "allowed_currencies": list(self.allowed_currencies),
             "allowed_uppercase_tokens": list(self.allowed_uppercase_tokens),
