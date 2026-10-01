@@ -27,11 +27,12 @@ from apps.exchange.forms import BudgetInterpretationForm
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.web.gateways import build_latest_quote_gateway
-from apps.travel.forms import SavedScenarioPlanningForm
+from apps.travel.forms import SavedScenarioPlanningForm, SavedScenarioSpendForm
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioKind,
     SavedScenarioObservationKind,
+    SavedScenarioSpendEntry,
 )
 from apps.travel.scenario_comparison import (
     ScenarioRateDirection,
@@ -43,6 +44,11 @@ from apps.travel.scenarios import (
     SavedScenarioSpec,
     create_saved_scenario,
     record_scenario_recheck,
+    record_scenario_spend,
+)
+from apps.travel.trip_budget import (
+    TripBudgetDayBasis,
+    calculate_trip_budget_summary,
 )
 
 logger = logging.getLogger("cultural_currency.travel")
@@ -184,6 +190,149 @@ def _scenario_schedule_component(
     }
 
 
+def _format_currency_amount(value: Decimal, *, minor_units: int) -> str:
+    quantum = Decimal(1).scaleb(-minor_units)
+    rounded = value.quantize(quantum)
+    return format(rounded, f".{minor_units}f") if minor_units else format(rounded, "f")
+
+
+def _scenario_trip_budget_component(
+    scenario: SavedScenario,
+    *,
+    initial_observation,
+    spend_entries: tuple[SavedScenarioSpendEntry, ...],
+    as_of: date,
+) -> dict[str, object] | None:
+    if scenario.kind != SavedScenarioKind.BUDGET or initial_observation is None:
+        return None
+
+    confirmed_spend = sum((entry.amount for entry in spend_entries), Decimal("0"))
+    try:
+        summary = calculate_trip_budget_summary(
+            reference_budget=initial_observation.output_amount,
+            confirmed_spend=confirmed_spend,
+            duration_days=scenario.duration_days,
+            travel_start_date=scenario.travel_start_date,
+            travel_end_date=scenario.travel_end_date,
+            as_of=as_of,
+        )
+    except ValueError:
+        logger.warning(
+            "saved_scenario_trip_budget_invalid",
+            extra={"scenario_id": scenario.pk},
+        )
+        return None
+
+    minor_units = scenario.destination_currency.minor_units
+    day_label = ""
+    if summary.day_basis is TripBudgetDayBasis.SCHEDULE:
+        if scenario.travel_start_date is not None and as_of < scenario.travel_start_date:
+            day_label = "per trip day"
+        else:
+            day_label = "per remaining trip day"
+    elif summary.day_basis is TripBudgetDayBasis.PLAN:
+        day_label = "per planned day"
+
+    return {
+        "reference_budget": _format_currency_amount(
+            summary.reference_budget,
+            minor_units=minor_units,
+        ),
+        "confirmed_spend": _format_currency_amount(
+            summary.confirmed_spend,
+            minor_units=minor_units,
+        ),
+        "remaining": _format_currency_amount(
+            summary.remaining,
+            minor_units=minor_units,
+        ),
+        "over_reference": _format_currency_amount(
+            summary.over_reference,
+            minor_units=minor_units,
+        ),
+        "is_over_reference": summary.is_over_reference,
+        "days": summary.days,
+        "day_label": day_label,
+        "remaining_per_day": (
+            _format_currency_amount(
+                summary.remaining_per_day,
+                minor_units=minor_units,
+            )
+            if summary.remaining_per_day is not None
+            else None
+        ),
+    }
+
+
+def _scenario_detail_context(
+    scenario: SavedScenario,
+    *,
+    spend_form: SavedScenarioSpendForm | None = None,
+) -> dict[str, object]:
+    initial_observation = (
+        scenario.observations.filter(kind=SavedScenarioObservationKind.INITIAL)
+        .order_by("recorded_at", "id")
+        .first()
+    )
+    latest_observation = scenario.observations.order_by("-recorded_at", "-id").first()
+    budget_item_rows = tuple(
+        {
+            "item": item,
+            "label": item.category.replace("_", " ").title(),
+        }
+        for item in scenario.budget_items.all()
+    )
+    spend_entries = tuple(scenario.spend_entries.all())
+    as_of = timezone.localdate()
+    rate_comparison = _scenario_rate_comparison_component(
+        scenario,
+        initial_observation=initial_observation,
+        latest_observation=latest_observation,
+    )
+    trip_schedule = _scenario_schedule_component(
+        scenario,
+        as_of=as_of,
+    )
+    trip_budget = _scenario_trip_budget_component(
+        scenario,
+        initial_observation=initial_observation,
+        spend_entries=spend_entries,
+        as_of=as_of,
+    )
+    if spend_form is None:
+        spend_form = SavedScenarioSpendForm(
+            destination_currency_code=scenario.destination_currency.code,
+            destination_minor_units=scenario.destination_currency.minor_units,
+        )
+
+    return {
+        "scenario": scenario,
+        "budget_item_rows": budget_item_rows,
+        "initial_observation": initial_observation,
+        "latest_observation": latest_observation,
+        "rate_comparison": rate_comparison,
+        "trip_schedule": trip_schedule,
+        "trip_budget": trip_budget,
+        "spend_entries": spend_entries,
+        "spend_form": spend_form,
+        "converter_url": _scenario_converter_url(scenario),
+    }
+
+
+def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedScenario:
+    return get_object_or_404(
+        SavedScenario.objects.select_related(
+            "source_currency",
+            "destination_currency",
+            "source_country",
+            "destination_country",
+            "destination_city",
+        ).prefetch_related("budget_items", "spend_entries"),
+        pk=scenario_id,
+        user=request.user,
+    )
+
+
 def _scenario_default_title(
     *,
     destination_country: Country,
@@ -305,54 +454,76 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
 @never_cache
 @require_GET
 def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpResponse:
-    scenario = get_object_or_404(
-        SavedScenario.objects.select_related(
-            "source_currency",
-            "destination_currency",
-            "source_country",
-            "destination_country",
-            "destination_city",
-        ).prefetch_related("budget_items"),
-        pk=scenario_id,
-        user=request.user,
-    )
-    initial_observation = (
-        scenario.observations.filter(kind=SavedScenarioObservationKind.INITIAL)
-        .order_by("recorded_at", "id")
-        .first()
-    )
-    latest_observation = scenario.observations.order_by("-recorded_at", "-id").first()
-
-    budget_item_rows = tuple(
-        {
-            "item": item,
-            "label": item.category.replace("_", " ").title(),
-        }
-        for item in scenario.budget_items.all()
-    )
-    rate_comparison = _scenario_rate_comparison_component(
-        scenario,
-        initial_observation=initial_observation,
-        latest_observation=latest_observation,
-    )
-    trip_schedule = _scenario_schedule_component(
-        scenario,
-        as_of=timezone.localdate(),
-    )
-
+    scenario = _owned_scenario_for_detail(request, scenario_id)
     return render(
         request,
         "travel/saved_scenario_detail.html",
-        {
-            "scenario": scenario,
-            "budget_item_rows": budget_item_rows,
-            "initial_observation": initial_observation,
-            "latest_observation": latest_observation,
-            "rate_comparison": rate_comparison,
-            "trip_schedule": trip_schedule,
-            "converter_url": _scenario_converter_url(scenario),
-        },
+        _scenario_detail_context(scenario),
     )
+
+
+@login_required
+@never_cache
+@require_POST
+def add_saved_scenario_spend(request: HttpRequest, scenario_id: int) -> HttpResponse:
+    scenario = _owned_scenario_for_detail(request, scenario_id)
+    if scenario.kind != SavedScenarioKind.BUDGET:
+        return HttpResponse(status=404)
+
+    form = SavedScenarioSpendForm(
+        request.POST,
+        destination_currency_code=scenario.destination_currency.code,
+        destination_minor_units=scenario.destination_currency.minor_units,
+    )
+    if not form.is_valid():
+        return render(
+            request,
+            "travel/saved_scenario_detail.html",
+            _scenario_detail_context(scenario, spend_form=form),
+            status=422,
+        )
+
+    amount = form.cleaned_data.get("amount_decimal")
+    if not isinstance(amount, Decimal):
+        raise RuntimeError("Valid spend form returned no Decimal amount.")
+
+    try:
+        record_scenario_spend(scenario, amount=amount)
+    except SavedScenarioError as exc:
+        messages.error(request, f"Could not add confirmed spend: {exc}")
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+    except DatabaseError:
+        logger.exception(
+            "saved_scenario_spend_persistence_unavailable",
+            extra={"scenario_id": scenario.pk},
+        )
+        messages.error(
+            request,
+            "Confirmed spend is temporarily unavailable. Your saved budget was not changed.",
+        )
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+    messages.success(request, "Confirmed spend added to this saved budget.")
+    return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+
+@login_required
+@require_POST
+def delete_saved_scenario_spend(
+    request: HttpRequest,
+    scenario_id: int,
+    entry_id: int,
+) -> HttpResponse:
+    entry = get_object_or_404(
+        SavedScenarioSpendEntry.objects.select_related("scenario"),
+        pk=entry_id,
+        scenario_id=scenario_id,
+        scenario__user=request.user,
+    )
+    scenario_id_value = entry.scenario_id
+    entry.delete()
+    messages.success(request, "Confirmed spend entry removed.")
+    return redirect("saved_scenario_detail", scenario_id=scenario_id_value)
 
 
 @login_required
