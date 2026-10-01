@@ -569,7 +569,6 @@ def test_confirmed_spend_submission_key_is_idempotent(reference_data):
         )
 
 
-
 @pytest.mark.django_db
 def test_confirmed_spend_source_is_normalized_and_validated(reference_data):
     eur, jpy, fi, jp, tokyo, _ = reference_data
