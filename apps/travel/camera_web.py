@@ -138,7 +138,7 @@ def camera_scan_saved_scenario(
                     "candidate_token": token,
                     "amount": format(candidate.amount, "f"),
                 },
-                prefix=f"candidate-{index}",
+                auto_id=f"id_candidate_{index}_%s",
             )
             if currency_matches
             else None
