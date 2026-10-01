@@ -310,23 +310,23 @@
               {% endfor %}
             </div>
           </div>
-          <div id="conversion-explanation-region"
-               class="qa-ai-explanation-region"
-               aria-live="polite"
-               aria-atomic="true"
-               aria-busy="false">
+          <div class="qa-ai-explanation-status">
             <span id="explanation-loading"
                   class="qa-loading-indicator htmx-indicator"
-                  role="status"
-                  aria-live="polite"
-                  aria-atomic="true">Generating optional explanation…</span>
+                  aria-hidden="true">Generating optional explanation…</span>
             <p id="explanation-client-status"
                class="qa-field__message"
-               role="status"
-               aria-live="polite"
-               aria-atomic="true"
                tabindex="-1"></p>
+            <span id="explanation-announcer"
+                  class="qa-visually-hidden"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"></span>
           </div>
+          <div id="conversion-explanation-region"
+               class="qa-ai-explanation-region"
+               data-ai-pending-requests="0"
+               aria-busy="false"></div>
         {% endif %}
         {% if result_component.stale %}
           <div class="qa-result-actions">
