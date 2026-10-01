@@ -1,10 +1,33 @@
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
+from apps.culture.services import DestinationContext
+from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
+
+
+class DestinationModeGateway:
+    def get(self, base, quote, policy, *, now):
+        return (
+            RateQuote(
+                base_currency=base,
+                quote_currency=quote,
+                rate=Decimal("174.50"),
+                requested_date=None,
+                effective_date=date(2026, 9, 18),
+                fetched_at=datetime(2026, 9, 20, 8, tzinfo=UTC),
+                provider_policy=DEFAULT_SOURCE_POLICY,
+                provider_keys=("ecb",),
+                historical=False,
+            ),
+            False,
+        )
 
 
 @pytest.fixture
@@ -139,3 +162,52 @@ def test_destination_mode_uses_source_currency_minor_units(
 
     assert response.status_code == 422
     assert b"This amount is ambiguous" in response.content
+
+
+@pytest.mark.django_db
+def test_destination_mode_city_scope_reaches_money_context_engine(
+    client,
+    destination_reference_data,
+):
+    context = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=timezone.localdate(),
+        payment=None,
+        prices=(),
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+
+    with (
+        patch(
+            "apps.exchange.views.build_latest_quote_gateway",
+            return_value=DestinationModeGateway(),
+        ),
+        patch(
+            "apps.exchange.money_context.build_destination_context_default",
+            return_value=context,
+        ) as context_builder,
+    ):
+        response = client.get(
+            reverse("converter"),
+            {
+                "convert": "1",
+                "amount": "100",
+                "source_country": "",
+                "source_currency": "EUR",
+                "destination_country": "JP",
+                "destination_currency": "JPY",
+                "destination_city_slug": "tokyo",
+            },
+        )
+
+    assert response.status_code == 200
+    assert b'name="destination_city_slug"' in response.content
+    assert b'value="tokyo"' in response.content
+    context_builder.assert_called_once()
+    call = context_builder.call_args.kwargs
+    assert call["country_code"] == "JP"
+    assert call["quote_currency"] == "JPY"
+    assert call["city_slug"] == "tokyo"
+    assert call["converted_amount"] == Decimal("17450")
