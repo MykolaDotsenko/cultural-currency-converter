@@ -618,4 +618,3 @@ def test_camera_handoff_database_failure_preserves_saved_budget(client, camera_s
     assert b"temporarily unavailable" in response.content
     assert b"saved budget was not changed" in response.content
     assert scenario.spend_entries.count() == 0
-
