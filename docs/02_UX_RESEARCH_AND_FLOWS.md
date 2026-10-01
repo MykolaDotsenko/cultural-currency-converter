@@ -293,7 +293,18 @@ The first shipped remaining-budget slice is account-owned and explicit:
 - remaining-per-day uses the explicit saved travel window when both dates exist, otherwise an explicit planning duration only when that does not pretend to know how many travel days remain;
 - an ended trip or a started trip with no end date keeps the remaining amount visible but does not invent a per-day figure.
 
-A future Camera flow may create the same confirmed-spend entry only **after** the user confirms or corrects the extracted amount/currency.
+The first Camera extraction/confirmation slice now exists for saved budget scenarios:
+
+- entry is explicit; no camera/device access occurs without the user selecting/capturing a file;
+- accepted uploads are JPEG/PNG/WebP, bounded to 8 MiB and a bounded decoded image size;
+- the application strips metadata/orientation ambiguity by decoding and re-encoding the image in memory before any provider call;
+- raw uploaded media is not persisted by the application;
+- the provider is asked for monetary amount candidates only, not surrounding receipt/menu/account content;
+- an explicit detected currency that conflicts with the saved scenario currency cannot cross the confirmation boundary;
+- the user can correct the amount before confirmation;
+- confirmation produces only a short-lived signed amount/currency/scope token; it does **not** yet write a spend entry.
+
+The next Camera step may create the same confirmed-spend entry only after consuming that signed confirmation token through a separate explicit action. It must reuse the existing idempotent Trip Budget Remaining persistence contract instead of creating camera-specific spend storage.
 
 
 ### After travel
