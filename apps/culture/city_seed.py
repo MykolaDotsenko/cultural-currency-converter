@@ -230,8 +230,7 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
                 high=None,
                 source_name="SL",
                 source_url=(
-                    "https://sl.se/en/fares-and-tickets/visitor-tickets/"
-                    "single-journey-tickets"
+                    "https://sl.se/en/fares-and-tickets/visitor-tickets/single-journey-tickets"
                 ),
                 notes="Adult 75-minute single-journey ticket price observed 2026-10-01.",
             ),
@@ -254,8 +253,7 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
                 high=None,
                 source_name="DOT",
                 source_url=(
-                    "https://dinoffentligetransport.dk/media/pmngcey0/"
-                    "dot-takstblad-2026-a.pdf"
+                    "https://dinoffentligetransport.dk/media/pmngcey0/dot-takstblad-2026-a.pdf"
                 ),
                 notes="Adult 2-zone single-ticket fare from the 2026 DOT tariff sheet.",
             ),
@@ -278,8 +276,7 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
                 high=None,
                 source_name="Ruter",
                 source_url=(
-                    "https://ruter.no/en/about-our-tickets/ticket-prices/"
-                    "how-prices-are-set"
+                    "https://ruter.no/en/about-our-tickets/ticket-prices/how-prices-are-set"
                 ),
                 notes=(
                     "Adult Zone 1 single-ticket fare effective from 2026-01-25 and "
