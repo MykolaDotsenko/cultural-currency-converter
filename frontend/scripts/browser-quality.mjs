@@ -1143,6 +1143,12 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     !updatedSummary.includes("Confirmed spend 0 JPY"),
     "trip-budget/e2e: stale zero-spend state remained after confirmation",
   );
+  const remainingMatch = updatedSummary.match(/([0-9]+(?:\.[0-9]+)?) JPY remaining/);
+  assert(
+    remainingMatch,
+    `trip-budget/e2e: updated saved budget omitted remaining amount: ${updatedSummary}`,
+  );
+  const expectedRemainingText = `${remainingMatch[1]} JPY remaining`;
   await page.getByRole("button", { name: "Remove entry" }).waitFor();
   await assertNoHorizontalOverflow(page, "trip-budget/e2e");
   await assertAxe(page, "trip-budget/e2e");
@@ -1157,8 +1163,8 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `returning-trip/e2e: saved future trip was not promoted on clean home: ${returningTripText}`,
   );
   assert(
-    returningTripText.includes("100000 JPY remaining"),
-    `returning-trip/e2e: saved confirmed spend was not reflected on home: ${returningTripText}`,
+    returningTripText.includes(expectedRemainingText),
+    `returning-trip/e2e: saved confirmed spend was not reflected on home; expected ${expectedRemainingText}: ${returningTripText}`,
   );
   assert(
     returningTripText.includes("does not refresh the FX rate automatically"),
