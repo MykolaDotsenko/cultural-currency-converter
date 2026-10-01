@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid5
 
 from django import forms
 
@@ -126,7 +126,6 @@ class CameraSpendHandoffForm(forms.Form):
     """Consume a signed confirmed camera amount without trusting a posted amount."""
 
     confirmed_camera_token = forms.CharField(widget=forms.HiddenInput())
-    submission_key = forms.UUIDField(widget=forms.HiddenInput())
 
     def __init__(
         self,
@@ -138,8 +137,6 @@ class CameraSpendHandoffForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.scope = camera_scope_for_scenario(scenario_id)
         self.destination_currency_code = destination_currency_code.upper().strip()
-        if not self.is_bound:
-            self.fields["submission_key"].initial = uuid4()
 
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean() or {}
@@ -162,4 +159,8 @@ class CameraSpendHandoffForm(forms.Form):
             )
 
         cleaned["confirmed_snapshot"] = snapshot
+        cleaned["submission_key"] = uuid5(
+            NAMESPACE_URL,
+            f"ccc:camera-spend:{token}",
+        )
         return cleaned
