@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import logging
 from decimal import DecimalException
+from urllib.parse import urlencode
 
 from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
 from apps.countries.models import Country, Currency
+from apps.culture.explore import build_explore_destinations
 from apps.culture.forms import CurrentDestinationContextForm, StoryRequestForm
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
@@ -19,6 +22,50 @@ from apps.media.models import MediaRole
 from apps.media.presentation import select_media_for_display
 
 logger = logging.getLogger("cultural_currency.culture")
+
+
+@require_GET
+def explore(request: HttpRequest) -> HttpResponse:
+    """Discover reviewed current money context without requesting FX or AI."""
+
+    explore_error = None
+    destinations = ()
+    try:
+        destinations = build_explore_destinations()
+    except DatabaseError as exc:
+        logger.warning(
+            "Explore destination composition failed",
+            extra={"error_code": exc.__class__.__name__},
+        )
+        explore_error = {
+            "title": "Explore is temporarily unavailable.",
+            "detail": "The converter and saved travel-money tools remain available.",
+        }
+
+    destination_cards = []
+    for destination in destinations:
+        params = {
+            "load": "1",
+            "destination_country": destination.country_code,
+            "destination_currency": destination.currency_code,
+        }
+        if destination.city_slug:
+            params["destination_city_slug"] = destination.city_slug
+        destination_cards.append(
+            {
+                "destination": destination,
+                "converter_url": f"{reverse('converter')}?{urlencode(params)}",
+            }
+        )
+
+    return render(
+        request,
+        "pages/explore.html",
+        {
+            "explore_destinations": tuple(destination_cards),
+            "explore_error": explore_error,
+        },
+    )
 
 
 @require_GET
