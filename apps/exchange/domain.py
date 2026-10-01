@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation
@@ -102,6 +103,22 @@ DEFAULT_SOURCE_POLICY = FxSourcePolicy()
 MAX_PROVIDER_KEYS = 128
 MAX_PROVIDER_KEY_LENGTH = 80
 
+def normalize_provider_keys(values: Iterable[object]) -> tuple[str, ...]:
+    materialized = tuple(values)
+    if len(materialized) > MAX_PROVIDER_KEYS:
+        raise FxDomainError("FX provider attribution exceeds supported entry limits.")
+
+    normalized: set[str] = set()
+    for value in materialized:
+        if not isinstance(value, str):
+            raise FxDomainError("FX provider attribution must contain text identifiers.")
+        key = value.lower().strip()
+        if not key or len(key) > MAX_PROVIDER_KEY_LENGTH:
+            raise FxDomainError("FX provider attribution contains an invalid identifier.")
+        normalized.add(key)
+    return tuple(sorted(normalized))
+
+
 MAX_RATE_SIGNIFICANT_DIGITS = 64
 MAX_RATE_ABS_ADJUSTED_EXPONENT = 100
 
@@ -202,9 +219,7 @@ class RateQuote:
         validate_rate_decimal(self.rate)
         if self.fetched_at.tzinfo is None:
             raise FxDomainError("FX fetched_at must be timezone-aware.")
-        providers = tuple(
-            sorted({key.lower().strip() for key in self.provider_keys if key.strip()})
-        )
+        providers = normalize_provider_keys(self.provider_keys)
         exact_identity_quote = (
             base == quote
             and self.rate == Decimal("1")
@@ -249,9 +264,7 @@ class RateSeriesPoint:
 
     def __post_init__(self) -> None:
         validate_rate_decimal(self.rate, label="FX series rate")
-        providers = tuple(
-            sorted({key.lower().strip() for key in self.provider_keys if key.strip()})
-        )
+        providers = normalize_provider_keys(self.provider_keys)
         object.__setattr__(self, "provider_keys", providers)
 
 
