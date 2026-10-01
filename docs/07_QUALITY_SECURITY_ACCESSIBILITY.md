@@ -15,7 +15,7 @@ The current CI runs checks equivalent to:
 ```bash
 ruff format --check apps config scripts manage.py
 ruff check apps config scripts manage.py
-mypy apps/exchange/domain.py apps/exchange/budget.py apps/exchange/comparison.py apps/exchange/money_context.py apps/exchange/payment_estimate.py apps/exchange/providers/base.py apps/exchange/providers/frankfurter.py apps/travel/scenarios.py config/environment.py config/database.py config/cache.py config/csp.py config/ai.py integrations/gemini/client.py
+mypy apps/exchange/domain.py apps/exchange/budget.py apps/exchange/comparison.py apps/exchange/money_context.py apps/exchange/payment_estimate.py apps/exchange/result_summary.py apps/exchange/providers/base.py apps/exchange/providers/frankfurter.py apps/travel/scenarios.py config/environment.py config/database.py config/cache.py config/csp.py config/ai.py integrations/gemini/client.py
 djlint templates --check
 python manage.py check
 python manage.py makemigrations --check --dry-run
