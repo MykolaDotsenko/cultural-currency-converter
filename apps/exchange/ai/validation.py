@@ -97,6 +97,17 @@ def validate_provider_payload(
                 fact_ids.append(fact_id)
         bullets.append(ExplanationBullet(text=text, supporting_fact_ids=tuple(fact_ids)))
 
+    cited_fact_ids = {
+        fact_id
+        for bullet in bullets
+        for fact_id in bullet.supporting_fact_ids
+    }
+    missing_required = set(packet.required_fact_ids) - cited_fact_ids
+    if missing_required:
+        raise ExplanationValidationError(
+            "Explanation does not ground the selected question in its required facts."
+        )
+
     all_text = " ".join([headline, caveat, *(bullet.text for bullet in bullets)])
     _validate_semantics(all_text, packet=packet)
 
