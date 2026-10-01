@@ -361,7 +361,11 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     token = request.POST.get("budget_context_token", "")
     try:
         snapshot = load_budget_context_snapshot_token(token)
-    except BudgetContextTokenError:
+    except BudgetContextTokenError as exc:
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={"error_code": "invalid_budget_context", "detail_code": str(exc)},
+        )
         messages.error(
             request,
             "This budget context is no longer valid. Run the conversion again before saving.",
@@ -382,13 +386,21 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
                 slug=snapshot.destination_city_slug,
                 is_active=True,
             )
-    except (Currency.DoesNotExist, Country.DoesNotExist, City.DoesNotExist):
+    except (Currency.DoesNotExist, Country.DoesNotExist, City.DoesNotExist) as exc:
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={"error_code": "destination_metadata_missing", "detail_code": exc.__class__.__name__},
+        )
         messages.error(
             request,
             "The saved destination metadata is no longer available. Run the conversion again.",
         )
         return redirect("converter")
-    except DatabaseError:
+    except DatabaseError as exc:
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={"error_code": "metadata_database_unavailable", "detail_code": exc.__class__.__name__},
+        )
         messages.error(
             request,
             "Saved scenarios are temporarily unavailable. Your conversion was not changed.",
@@ -400,6 +412,13 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     # saving must not depend on a second live local-price lookup.
     form = BudgetInterpretationForm(request.POST, category_options=())
     if not form.is_valid():
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={
+                "error_code": "invalid_budget_assumptions",
+                "form_fields": sorted(form.errors.keys()),
+            },
+        )
         messages.error(
             request,
             "The budget assumptions changed or are invalid. Interpret the budget again before saving.",
@@ -412,6 +431,13 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
 
     planning_form = SavedScenarioPlanningForm(request.POST)
     if not planning_form.is_valid():
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={
+                "error_code": "invalid_trip_planning",
+                "form_fields": sorted(planning_form.errors.keys()),
+            },
+        )
         first_error = next(
             (str(message) for errors in planning_form.errors.values() for message in errors),
             "The saved trip details are invalid.",
@@ -448,9 +474,17 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
             conversion=snapshot.conversion,
         )
     except SavedScenarioError as exc:
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={"error_code": "scenario_domain_rejected", "detail_code": str(exc)},
+        )
         messages.error(request, f"Could not save this budget: {exc}")
         return redirect("converter")
-    except DatabaseError:
+    except DatabaseError as exc:
+        logger.warning(
+            "saved_budget_scenario_rejected",
+            extra={"error_code": "scenario_database_unavailable", "detail_code": exc.__class__.__name__},
+        )
         messages.error(
             request,
             "Saved scenarios are temporarily unavailable. Your conversion was not changed.",
