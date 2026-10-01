@@ -62,7 +62,9 @@ After confirmation, the user may explicitly choose **Add to trip budget**. That 
 
 Saved budget scenarios can now export a first **Offline Destination Pack** as a self-contained HTML snapshot. The pack never performs a live FX call: it labels the newest already-stored scenario observation with provider/effective-date/fetch semantics, keeps Trip Budget Remaining anchored to the immutable initial observation, and captures currently reviewed destination price/payment context with source/freshness metadata at download time. The file contains no scripts or remote styling, does not auto-refresh, and explicitly says that offline FX is stored reference data rather than a live executable rate.
 
-Future mobile/PWA delivery and deeper returning-user work should reuse this versioned snapshot meaning rather than create parallel offline calculations or silently cache live pages.
+The first **Returning-user Trip Home** slice now brings saved-trip continuity back to the clean converter home for authenticated users. It selects one relevant active/started/upcoming account-owned trip, shows stored trip-budget meaning and stored since-saved FX change when available, surfaces reviewed local-context freshness, and offers direct next actions. It performs no live FX request, never displaces a conversion deep link or explicitly loaded pair, and remains absent for anonymous/new users and ended/unscheduled scenarios.
+
+Future mobile/PWA delivery should reuse the same saved-observation, trip-budget and versioned offline-snapshot meaning rather than create parallel calculations or silently cache live pages.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 
