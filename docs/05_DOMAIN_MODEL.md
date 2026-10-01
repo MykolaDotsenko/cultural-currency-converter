@@ -229,7 +229,7 @@ Camera input has no durable database model in the first slice.
 
 A provider response may contain at most six candidates. Empty output is a distinct “no amount found” state; malformed provider data is not accepted as a valid extraction.
 
-A signed camera candidate token binds one normalized candidate to a narrow scenario scope for a short time. User confirmation may correct the amount but cannot silently reinterpret an explicit conflicting currency. The resulting confirmed-camera token contains only scope, amount and currency code. It is not a spend record and carries no image, merchant, receipt text, account/card field or provider prose.
+A signed camera candidate token binds one normalized candidate to a narrow scenario scope for a short time. User confirmation may correct the amount but cannot silently reinterpret an explicit conflicting currency. The resulting confirmed-camera token contains only scope, amount and currency code. It is not a spend record and carries no image, merchant, receipt text, account/card field or provider prose. A separate owner-scoped handoff may consume that token and create a normal idempotent `SavedScenarioSpendEntry(source=camera)`; the posted request does not contain a separately editable amount.
 
 ### SavedScenarioSpendEntry
 
@@ -239,7 +239,7 @@ Current identity is deliberately narrow:
 
 - parent saved budget scenario;
 - positive amount representable in the scenario destination currency's minor units;
-- confirmation source (`manual` today, `camera` reserved for future user-confirmed camera input);
+- confirmation source (`manual` or explicitly user-confirmed `camera` input);
 - opaque submission idempotency key;
 - recorded timestamp.
 
