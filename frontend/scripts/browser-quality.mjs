@@ -1501,9 +1501,13 @@ const activeSurfaces =
   BROWSER_SCOPE === "full"
     ? SURFACES
     : SURFACES.filter((surface) =>
-        ["current-converter", "destination-comparison", "explore", "saved-state", "rate-series"].includes(
-          surface.name,
-        ),
+        [
+          "current-converter",
+          "destination-comparison",
+          "explore",
+          "saved-state",
+          "rate-series",
+        ].includes(surface.name),
       );
 const activeViewports =
   BROWSER_SCOPE === "full"
