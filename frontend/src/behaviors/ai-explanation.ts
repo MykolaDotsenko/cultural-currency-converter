@@ -106,7 +106,6 @@ document.addEventListener("htmx:sendError", (event) => {
   showClientFailure();
 });
 
-
 document.addEventListener("htmx:timeout", (event) => {
   if (!explanationTrigger(event.target)) return;
   showClientFailure();
