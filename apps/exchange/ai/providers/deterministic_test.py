@@ -18,19 +18,12 @@ class DeterministicTestExplanationDrafter:
             raise AIProviderTimeout("Deterministic browser fixture timeout.")
 
         facts = {fact.id: fact for fact in packet.facts}
-        required = [
-            facts[fact_id]
-            for fact_id in packet.required_fact_ids
-            if fact_id in facts
-        ]
+        required = [facts[fact_id] for fact_id in packet.required_fact_ids if fact_id in facts]
         primary = required[0] if required else _preferred_fact(facts, "conversion", "rate")
         factor_candidates = required[1:] or [
             _preferred_fact(facts, "effective_date", "rate", "conversion")
         ]
-        key_factors = [
-            _grounded(fact)
-            for fact in _dedupe_facts(factor_candidates)
-        ][:3]
+        key_factors = [_grounded(fact) for fact in _dedupe_facts(factor_candidates)][:3]
 
         scope = facts.get("historical_scope") if packet.intent_id == "historical_context" else None
         scope = scope or facts.get("reference_scope") or primary
