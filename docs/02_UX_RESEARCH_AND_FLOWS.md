@@ -309,7 +309,7 @@ The first shipped remaining-budget slice is account-owned and explicit:
 - remaining-per-day uses the explicit saved travel window when both dates exist, otherwise an explicit planning duration only when that does not pretend to know how many travel days remain;
 - an ended trip or a started trip with no end date keeps the remaining amount visible but does not invent a per-day figure.
 
-The first Camera extraction/confirmation slice now exists for saved budget scenarios:
+The Camera flow for saved budget scenarios is explicit end to end:
 
 - entry is explicit; no camera/device access occurs without the user selecting/capturing a file;
 - accepted uploads are JPEG/PNG/WebP, bounded to 8 MiB and a bounded decoded image size;
@@ -318,9 +318,28 @@ The first Camera extraction/confirmation slice now exists for saved budget scena
 - the provider is asked for monetary amount candidates only, not surrounding receipt/menu/account content;
 - an explicit detected currency that conflicts with the saved scenario currency cannot cross the confirmation boundary;
 - the user can correct the amount before confirmation;
-- confirmation produces only a short-lived signed amount/currency/scope token; it does **not** yet write a spend entry.
+- confirmation creates a short-lived signed amount/currency/scope token with a unique confirmation id and still performs no spend write;
+- **Add to trip budget** is a second explicit action that re-verifies the token and persists through the same idempotent Trip Budget Remaining contract used by manual spend;
+- replaying one confirmation cannot double-count spend, while a separately confirmed identical amount remains a separate user action.
 
-The next Camera step may create the same confirmed-spend entry only after consuming that signed confirmation token through a separate explicit action. It must reuse the existing idempotent Trip Budget Remaining persistence contract instead of creating camera-specific spend storage.
+
+### Offline destination pack
+
+The first offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden service-worker cache.
+
+The exported HTML file is self-contained: it carries its own restrained styling, no executable scripts and no remote asset dependency. It includes:
+
+- the newest already-stored FX observation, with amount, rate, provider attribution, effective date, fetch time and stored stale flag;
+- Trip Budget Remaining derived from the immutable initial saved FX observation and confirmed spend;
+- saved destination/city and explicit trip timing assumptions;
+- currently reviewed local-price anchors and payment guidance with scope, observation/verification dates and provenance;
+- an explicit pack-generation timestamp and versioned pack-format marker.
+
+The file must say clearly that **offline means stored, not live**. Opening it later never refreshes FX or context. A user who wants fresher meaning must return online, explicitly re-check as needed and download a new pack.
+
+If local destination context is unavailable while generating the file, the pack still exports the saved FX/budget state and shows a degraded context notice instead of inventing prices or advice.
+
+The pack intentionally excludes receipt images, merchant identities, account/card data and individual purchase descriptions. Because the file may still contain a user’s saved budget/travel details, the download UI should remind the user to store it privately.
 
 
 ### After travel
