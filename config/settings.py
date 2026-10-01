@@ -97,6 +97,7 @@ AI_CONFIG = load_ai_config(os.environ)
 AI_PROVIDER = AI_CONFIG.provider
 AI_TEXT_MODEL = AI_CONFIG.text_model
 AI_RUNTIME_EXPLANATION_ENABLED = AI_CONFIG.runtime_explanation_enabled
+AI_RUNTIME_TEST_FIXTURE_ENABLED = AI_CONFIG.runtime_test_fixture_enabled
 AI_CAMERA_EXTRACTION_ENABLED = AI_CONFIG.camera_extraction_enabled
 AI_EDITORIAL_GENERATION_ENABLED = AI_CONFIG.editorial_generation_enabled
 AI_IMAGE_GENERATION_ENABLED = AI_CONFIG.image_generation_enabled

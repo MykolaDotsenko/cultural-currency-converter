@@ -231,6 +231,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Keep deterministic/sourced facts visually distinguishable from generated explanation.
    - A failed AI response must not remove or invalidate the conversion/context result.
    - **Current production slice:** runtime explanations now use one schema-versioned structured contract with `short_answer`, `key_factors`, `watch_out_for` and `next_step`. Every section carries supporting fact IDs, the validator rejects unknown facts/extra fields/unsupported numbers/dates/currencies and selected quick-prompt intents still require their declared grounding. Deterministic fallback uses the same structured result shape, so provider failure does not create a second UI/data contract. Historical panels also carry an explicit grounded boundary that historical FX is not historical purchasing power.
+   - **Reliability slice:** prompt requests expose accessible loading/busy state, only the active prompt is disabled, a newer prompt replaces an older in-flight request, swapped answer/error content receives focus, timeout fallback remains visible with an explicit retry path, transport errors are announced without removing the conversion, and the full interaction is exercised in browser CI through a test-only deterministic drafter that is rejected outside `APP_ENV=test`.
 
 29. **Smart result summary — 84/100**
    - After a successful conversion, optionally show one concise grounded sentence describing the most useful implication of the result.

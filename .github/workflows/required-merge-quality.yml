@@ -320,6 +320,8 @@ jobs:
       DJANGO_DEBUG: "true"
       DJANGO_ALLOWED_HOSTS: testserver,localhost,127.0.0.1
       FX_TEST_FIXTURE_ENABLED: "true"
+      AI_RUNTIME_EXPLANATION_ENABLED: "true"
+      AI_RUNTIME_TEST_FIXTURE_ENABLED: "true"
       BROWSER_QUALITY_ENGINE: chromium
       BROWSER_QUALITY_SCOPE: full
     steps:

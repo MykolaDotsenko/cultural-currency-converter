@@ -191,6 +191,8 @@ The first quick-prompt slice is conversion-snapshot-only. The UI never accepts a
 
 A model failure, timeout or validation failure must leave the deterministic result and sourced context intact.
 
+Runtime interaction reliability is also part of the contract: the browser keeps the trusted conversion visible while an explanation is loading, newer prompt requests replace older in-flight requests, deterministic fallback stays usable after provider timeout, and transport failures are announced without clearing the conversion. Browser/release-quality CI covers this flow with `AI_RUNTIME_TEST_FIXTURE_ENABLED=true` only under `APP_ENV=test`; configuration rejects that fixture in production and no live Gemini request is required for browser CI.
+
 The configured provider/model is an implementation choice and may change after quality, latency, cost and reliability evaluation.
 
 ## Multimodal inputs

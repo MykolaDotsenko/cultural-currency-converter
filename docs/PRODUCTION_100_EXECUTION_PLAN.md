@@ -225,6 +225,8 @@ Cover:
 - screen-reader announcements;
 - no layout collapse when AI fails.
 
+**Implemented first slice:** the existing quick-prompt flow now has explicit live loading/busy semantics, scoped button disabling, latest-request-wins cancellation through the existing HTMX sync boundary, focus transfer to inserted answer/error content, deterministic timeout fallback with retry guidance, client-side transport-error recovery messaging and no-JavaScript retry wording. Browser/release-quality CI enables a deterministic runtime-AI fixture only under `APP_ENV=test`, so Chromium/Firefox/WebKit can exercise the actual interaction without an external Gemini call. Production configuration rejects that fixture outside the test environment.
+
 ---
 
 # Phase 2 — City Money Intelligence

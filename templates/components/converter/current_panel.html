@@ -296,6 +296,8 @@
                         type="submit"
                         name="prompt_id"
                         value="{{ prompt.id }}"
+                        data-ai-explanation-trigger
+                        aria-controls="conversion-explanation-region"
                         formaction="{% url 'conversion_explanation' %}"
                         formmethod="post"
                         hx-post="{% url 'conversion_explanation' %}"
@@ -303,16 +305,28 @@
                         hx-target="#conversion-explanation-region"
                         hx-swap="innerHTML"
                         hx-sync="#conversion-explanation-region:replace"
+                        hx-disabled-elt="this"
                         hx-indicator="#explanation-loading">{{ prompt.label }}</button>
               {% endfor %}
             </div>
           </div>
+          <div class="qa-ai-explanation-status">
+            <span id="explanation-loading"
+                  class="qa-loading-indicator htmx-indicator"
+                  aria-hidden="true">Generating optional explanation…</span>
+            <p id="explanation-client-status"
+               class="qa-field__message"
+               tabindex="-1"></p>
+            <span id="explanation-announcer"
+                  class="qa-visually-hidden"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"></span>
+          </div>
           <div id="conversion-explanation-region"
                class="qa-ai-explanation-region"
-               aria-live="polite">
-            <span id="explanation-loading"
-                  class="qa-loading-indicator htmx-indicator">Generating optional explanation…</span>
-          </div>
+               data-ai-pending-requests="0"
+               aria-busy="false"></div>
         {% endif %}
         {% if result_component.stale %}
           <div class="qa-result-actions">
