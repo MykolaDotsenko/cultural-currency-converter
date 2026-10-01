@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any
+from uuid import uuid4
 
 from django import forms
 
@@ -43,6 +44,10 @@ class SavedScenarioPlanningForm(forms.Form):
 class SavedScenarioSpendForm(forms.Form):
     """Minimal confirmed-spend entry in the scenario destination currency."""
 
+    submission_key = forms.UUIDField(
+        required=False,
+        widget=forms.HiddenInput(),
+    )
     amount = forms.CharField(
         max_length=64,
         widget=forms.TextInput(
@@ -66,6 +71,8 @@ class SavedScenarioSpendForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.destination_minor_units = destination_minor_units
         self.fields["amount"].label = f"Confirmed spend in {destination_currency_code}"
+        if not self.is_bound:
+            self.fields["submission_key"].initial = uuid4()
 
     def add_error(self, field: str | None, error: Any) -> None:
         super().add_error(field, error)
@@ -79,6 +86,10 @@ class SavedScenarioSpendForm(forms.Form):
 
     def clean(self) -> dict[str, Any]:
         cleaned = super().clean() or {}
+        submission_key = cleaned.get("submission_key")
+        if submission_key is None:
+            cleaned["submission_key"] = uuid4()
+
         raw = cleaned.get("amount")
         if raw is None or self.has_error("amount"):
             return cleaned
