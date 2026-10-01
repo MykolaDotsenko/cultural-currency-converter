@@ -145,6 +145,8 @@ A useful pattern is:
 - **Quick prompts** — a small set of relevant next questions such as budget fit, cash need, payment warning or destination comparison;
 - **Structured insight panel** — short answer, what matters most, one caution and a useful next action.
 
+The first Smart result summary slice is now shipped as a deterministic part of the successful conversion result, before optional AI. It uses one concise sentence, keeps historical/stale/exact trust meaning ahead of destination enrichment and may reference only reviewed local-price/payment context already shown by the product. This keeps the top-line implication useful without turning it into a recommendation, hidden ranking or generated factual layer.
+
 AI answers must remain downstream of trusted structured data. The interface should make it easy to dismiss or ignore AI without weakening the core conversion experience.
 
 ## Cultural-history portal

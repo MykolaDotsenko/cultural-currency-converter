@@ -110,6 +110,7 @@ jobs:
             apps/exchange/comparison.py \
             apps/exchange/money_context.py \
             apps/exchange/payment_estimate.py \
+            apps/exchange/result_summary.py \
             apps/exchange/providers/base.py \
             apps/exchange/providers/frankfurter.py \
             apps/travel/home.py \

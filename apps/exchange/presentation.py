@@ -13,6 +13,7 @@ from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
 from apps.exchange.money_context import MoneyContext
+from apps.exchange.result_summary import build_smart_result_summary
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
 _FEATURED_THEME_BY_COUNTRY = {
@@ -192,6 +193,7 @@ def build_result_component(
         and bool(money_context.destination_country_code)
         else None
     )
+    smart_summary = build_smart_result_summary(result, money_context=money_context)
 
     return {
         "id": "current-conversion-result",
@@ -202,6 +204,7 @@ def build_result_component(
         "exact": same_currency,
         "stale": result.stale,
         "historical": historical,
+        "smart_summary": smart_summary,
         "local_state": {
             "input_amount": format(result.input_amount, "f"),
             "output_amount": format(result.output_amount, "f"),

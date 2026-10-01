@@ -489,6 +489,20 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     resultText.includes("Exact same-currency rate"),
     "current-converter: same-currency provenance is missing",
   );
+  const identitySummary = page.locator("#current-conversion-result .qa-result-summary");
+  await identitySummary.waitFor();
+  const identitySummaryText = await identitySummary.innerText();
+  const identitySummaryKind = await identitySummary.getAttribute("data-summary-kind");
+  const identitySummaryKicker = await identitySummary
+    .locator(".qa-foundation-kicker")
+    .textContent();
+  assert(
+    identitySummaryKind === "identity" &&
+      identitySummaryKicker?.trim() === "At a glance" &&
+      identitySummaryText.includes("No exchange-rate lookup is needed") &&
+      identitySummaryText.includes("exact 1:1"),
+    `current-converter: deterministic smart summary mismatch: kind=${identitySummaryKind}, kicker=${JSON.stringify(identitySummaryKicker)}, text=${JSON.stringify(identitySummaryText)}`,
+  );
   assert(
     new URL(page.url()).searchParams.get("convert") === "1",
     "current-converter: successful HTMX conversion did not push a bookmarkable URL",
@@ -631,6 +645,12 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   assert(
     historicalText.includes("Observation date"),
     "current-converter: historical observation date is missing",
+  );
+  const historicalSummary = historicalResult.locator(".qa-result-summary");
+  await historicalSummary.waitFor();
+  assert(
+    (await historicalSummary.innerText()).includes("does not describe historical purchasing power"),
+    "current-converter: historical smart summary lost its purchasing-power boundary",
   );
   const historicalUrl = new URL(page.url());
   assert(
