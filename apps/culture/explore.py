@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.countries.models import City, CountryCurrency
 from apps.culture.models import CulturalProfile, TypicalPrice
+from apps.culture.provenance import is_valid_provenance_url
 from apps.culture.services import (
     PRICE_CONTEXT_MAX_AGE,
     DestinationContext,
@@ -107,7 +108,7 @@ def build_explore_destinations(
     selected_date = as_of or timezone.localdate()
     cutoff = selected_date - PRICE_CONTEXT_MAX_AGE
 
-    fresh_price_scopes = tuple(
+    fresh_price_rows = tuple(
         TypicalPrice.objects.filter(
             is_published=True,
             verified_at__isnull=False,
@@ -116,38 +117,28 @@ def build_explore_destinations(
         )
         .exclude(source_name="")
         .exclude(source_url="")
-        .values_list("country_id", "city_ref_id", "city")
-        .distinct()
+        .values_list("country_id", "city_ref_id", "city", "currency_id", "source_url")
     )
-    profile_country_ids = set(
-        CulturalProfile.objects.filter(
-            is_published=True,
-            verified_at__isnull=False,
-        )
-        .exclude(source_name="")
-        .exclude(source_url="")
-        .values_list("country_id", flat=True)
+    valid_price_rows = tuple(
+        row for row in fresh_price_rows if is_valid_provenance_url(row[4])
     )
-
-    national_country_ids = {
+    valid_profile_country_ids = {
         country_id
-        for country_id, city_ref_id, legacy_city in fresh_price_scopes
-        if city_ref_id is None and not legacy_city
+        for country_id, source_url in (
+            CulturalProfile.objects.filter(
+                is_published=True,
+                verified_at__isnull=False,
+            )
+            .exclude(source_name="")
+            .exclude(source_url="")
+            .values_list("country_id", "source_url")
+        )
+        if is_valid_provenance_url(source_url)
     }
-    city_ids = {
-        city_ref_id
-        for _country_id, city_ref_id, _legacy_city in fresh_price_scopes
-        if city_ref_id is not None
+
+    candidate_country_ids = valid_profile_country_ids | {
+        country_id for country_id, _city_ref_id, _city, _currency_id, _source_url in valid_price_rows
     }
-    candidate_country_ids = (
-        national_country_ids
-        | profile_country_ids
-        | {
-            country_id
-            for country_id, city_ref_id, _legacy_city in fresh_price_scopes
-            if city_ref_id is not None
-        }
-    )
     if not candidate_country_ids:
         return ()
 
@@ -160,18 +151,74 @@ def build_explore_destinations(
     )
     current_by_country_id = {link.country_id: link for link in current_links}
 
-    results: list[ExploreDestination] = []
+    national_country_ids = {
+        country_id
+        for country_id, city_ref_id, legacy_city, currency_id, _source_url in valid_price_rows
+        if city_ref_id is None
+        and not legacy_city
+        and (link := current_by_country_id.get(country_id)) is not None
+        and link.currency_id == currency_id
+    }
+    city_ids = {
+        city_ref_id
+        for country_id, city_ref_id, _legacy_city, currency_id, _source_url in valid_price_rows
+        if city_ref_id is not None
+        and (link := current_by_country_id.get(country_id)) is not None
+        and link.currency_id == currency_id
+    }
 
+    cities_by_id = {
+        city.pk: city
+        for city in (
+            City.objects.filter(
+                pk__in=city_ids,
+                is_active=True,
+                country_id__in=current_by_country_id,
+            )
+            .select_related("country")
+            .order_by("country__name", "name", "slug")
+        )
+    }
+
+    candidates: list[tuple[str, int, str, CountryCurrency, City | None]] = []
     for link in current_links:
+        if (
+            link.country_id in national_country_ids
+            or link.country_id in valid_profile_country_ids
+        ):
+            candidates.append(
+                (
+                    link.country.name.casefold(),
+                    0,
+                    "",
+                    link,
+                    None,
+                )
+            )
+
+    for city in cities_by_id.values():
+        link = current_by_country_id.get(city.country_id)
+        if link is None:
+            continue
+        candidates.append(
+            (
+                link.country.name.casefold(),
+                1,
+                city.name.casefold(),
+                link,
+                city,
+            )
+        )
+
+    candidates.sort(key=lambda candidate: candidate[:3])
+
+    results: list[ExploreDestination] = []
+    for _country_sort, _scope_sort, _city_sort, link, city in candidates:
         if len(results) >= limit:
             break
-        if (
-            link.country_id not in national_country_ids
-            and link.country_id not in profile_country_ids
-        ):
-            continue
         context = build_destination_context(
             country_code=link.country.iso2,
+            city_slug=city.slug if city is not None else "",
             converted_amount=Decimal("1"),
             quote_currency=link.currency.code,
             as_of=selected_date,
@@ -183,41 +230,4 @@ def build_explore_destinations(
         if summary is not None:
             results.append(summary)
 
-    if city_ids:
-        cities = (
-            City.objects.filter(
-                pk__in=city_ids,
-                is_active=True,
-                country_id__in=current_by_country_id,
-            )
-            .select_related("country")
-            .order_by("country__name", "name", "slug")
-        )
-        for city in cities:
-            if len(results) >= limit:
-                break
-            link = current_by_country_id.get(city.country_id)
-            if link is None:
-                continue
-            context = build_destination_context(
-                country_code=link.country.iso2,
-                city_slug=city.slug,
-                converted_amount=Decimal("1"),
-                quote_currency=link.currency.code,
-                as_of=selected_date,
-                price_limit=6,
-            )
-            if context is None:
-                continue
-            summary = _summary_from_context(context, currency_code=link.currency.code)
-            if summary is not None:
-                results.append(summary)
-
-    results.sort(
-        key=lambda destination: (
-            destination.country_name.casefold(),
-            1 if destination.is_city_scope else 0,
-            destination.city_name.casefold(),
-        )
-    )
-    return tuple(results[:limit])
+    return tuple(results)
