@@ -59,6 +59,7 @@ jobs:
       APP_ENV: test
       DJANGO_DEBUG: "true"
       DJANGO_ALLOWED_HOSTS: testserver,localhost,127.0.0.1
+      FX_TEST_FIXTURE_ENABLED: "true"
       BROWSER_QUALITY_ENGINE: ${{ matrix.browser }}
       BROWSER_QUALITY_SCOPE: ${{ matrix.scope }}
 
