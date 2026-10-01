@@ -33,6 +33,7 @@ Those boundaries are more important to this project than adding another conversi
 - historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now comparison;
 - explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
 - sourced everyday-value and payment context;
+- destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions;
 - account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness and reopen/delete flow;
 - deterministic Money & culture stories;
