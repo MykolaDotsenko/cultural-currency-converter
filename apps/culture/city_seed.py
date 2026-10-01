@@ -251,11 +251,12 @@ _WAVE_ONE_CITIES: tuple[_CitySpec, ...] = (
                 label="DOT adult 2-zone single ticket",
                 low="24.00",
                 high=None,
-                source_name="DOT",
-                source_url=(
-                    "https://dinoffentligetransport.dk/media/pmngcey0/dot-takstblad-2026-a.pdf"
+                source_name="Public Transport Denmark (DOT)",
+                source_url="https://www.publictransport.dk/en/tickets",
+                notes=(
+                    "Adult single tickets start at DKK 24 for 2 zones; "
+                    "official fare page reviewed 2026-10-01."
                 ),
-                notes="Adult 2-zone single-ticket fare from the 2026 DOT tariff sheet.",
             ),
         ),
     ),
