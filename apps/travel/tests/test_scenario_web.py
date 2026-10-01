@@ -137,6 +137,8 @@ def test_signed_in_user_can_save_budget_without_second_live_price_lookup(
             "title": "Tokyo food and transit",
             "duration_days": "5",
             "travelers": "2",
+            "travel_start_date": "2027-04-12",
+            "travel_end_date": "2027-04-18",
             "units_coffee": "1",
             "units_casual_meal": "2",
             "units_transit": "2",
@@ -154,6 +156,8 @@ def test_signed_in_user_can_save_budget_without_second_live_price_lookup(
     assert scenario.source_amount == Decimal("600.000000000000")
     assert scenario.duration_days == 5
     assert scenario.travelers == 2
+    assert scenario.travel_start_date == date(2027, 4, 12)
+    assert scenario.travel_end_date == date(2027, 4, 18)
     assert list(scenario.budget_items.values_list("category", "units_per_person_per_day")) == [
         ("casual_meal", Decimal("2.00")),
         ("coffee", Decimal("1.00")),
@@ -242,6 +246,51 @@ def test_invalid_budget_assumptions_are_not_saved(client, scenario_reference_dat
     assert response.status_code == 302
     assert response.url == reverse("converter")
     assert SavedScenario.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_invalid_trip_date_order_is_not_saved(client, scenario_reference_data):
+    user = User.objects.create_user(username="date-owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "duration_days": "3",
+            "travelers": "1",
+            "travel_start_date": "2027-04-12",
+            "travel_end_date": "2027-04-11",
+            "units_coffee": "1",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert SavedScenario.objects.filter(user=user).count() == 0
+    assert b"Trip end date cannot be before the start date." in response.content
+
+
+@pytest.mark.django_db
+def test_trip_end_date_requires_start_date(client, scenario_reference_data):
+    user = User.objects.create_user(username="date-owner-2", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "duration_days": "3",
+            "travelers": "1",
+            "travel_end_date": "2027-04-18",
+            "units_coffee": "1",
+        },
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert SavedScenario.objects.filter(user=user).count() == 0
+    assert b"Add a trip start date before setting an end date." in response.content
 
 
 @pytest.mark.django_db
@@ -511,3 +560,60 @@ def test_recheck_is_owner_scoped_before_provider_access(client, scenario_referen
 
     assert response.status_code == 404
     gateway_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_saved_scenario_detail_shows_upcoming_trip_readiness(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="timing-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo departure",
+            "duration_days": "5",
+            "travelers": "1",
+            "travel_start_date": "2026-10-08",
+            "travel_end_date": "2026-10-12",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+
+    with patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 1)):
+        response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+
+    assert response.status_code == 200
+    assert b"Trip timing" in response.content
+    assert b"Starts in 7 days" in response.content
+    assert b"12 Oct 2026" in response.content
+    assert b"7 days until start" in response.content
+    assert b"Departure is close" in response.content
+
+
+@pytest.mark.django_db
+def test_unscheduled_scenario_does_not_invent_trip_timing(
+    client,
+    scenario_reference_data,
+):
+    eur, jpy, _fi, jp, tokyo = scenario_reference_data
+    user = User.objects.create_user(username="unscheduled-owner", password="StrongPass-482!")
+    scenario = SavedScenario.objects.create(
+        user=user,
+        kind=SavedScenarioKind.BUDGET,
+        title="Unscheduled Tokyo",
+        source_currency=eur,
+        destination_currency=jpy,
+        destination_country=jp,
+        destination_city=tokyo,
+        source_amount=Decimal("600"),
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+
+    assert response.status_code == 200
+    assert b'id="scenario-readiness-title"' not in response.content
