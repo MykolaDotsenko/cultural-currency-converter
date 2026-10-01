@@ -190,6 +190,7 @@ async function assertKeyboardFocus(page, surfaceName) {
     for (const expectedText of [
       "Plan by destination",
       "Compare destinations",
+      "Explore",
       "Saved & recent",
       "Sign in",
     ]) {
