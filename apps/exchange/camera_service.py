@@ -13,7 +13,6 @@ from apps.exchange.camera import (
     CameraExtraction,
     CameraExtractionError,
     CameraNoAmountFound,
-    SanitizedCameraImage,
     sanitize_camera_image,
 )
 from integrations.gemini.client import GeminiStructuredClient
