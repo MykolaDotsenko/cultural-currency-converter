@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Scan a price · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Explicitly upload a price image, confirm the extracted amount and currency, then continue through the trusted currency converter.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-camera-intro"
+           aria-labelledby="camera-title">
+    <p class="qa-foundation-kicker">Camera · explicit confirmation</p>
+    <h1 id="camera-title">Read the price. Confirm the money.</h1>
+    <p class="qa-foundation-lede">
+      Upload a menu, receipt, shelf label or ATM screen. The camera reader may suggest one amount
+      and currency, but nothing is converted until you review and confirm them.
+    </p>
+  </section>
+
+  <section class="qa-camera" aria-labelledby="camera-workflow-title">
+    <div class="qa-camera__instrument">
+      <div class="qa-camera__heading">
+        <p class="qa-foundation-kicker">Ephemeral image understanding</p>
+        <h2 id="camera-workflow-title">
+          {% if confirmation_form %}Confirm the detected price{% else %}Choose one clear price image{% endif %}
+        </h2>
+      </div>
+
+      {% if camera_error %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <h3>{{ camera_error.title }}</h3>
+          <p>{{ camera_error.detail }}</p>
+        </div>
+      {% endif %}
+
+      {% if confirmation_form %}
+        <div class="qa-camera__result" aria-live="polite">
+          <div class="qa-camera__result-meta">
+            <p><strong>Image context:</strong> {{ extraction.context_kind|capfirst }}</p>
+            <p><strong>Reader confidence:</strong> {{ extraction.confidence_label }}</p>
+          </div>
+          <p class="qa-field__message">
+            Confidence is not correctness. Check the amount and currency against the image before
+            continuing. The original image is not stored by this workflow.
+          </p>
+        </div>
+
+        {% if confirmation_form.errors %}
+          <div class="qa-inline-alert qa-inline-alert--error"
+               id="camera-confirm-errors"
+               role="alert"
+               tabindex="-1">
+            <h3>Check the confirmation</h3>
+            <ul class="qa-error-summary">
+              {% for field in confirmation_form.visible_fields %}
+                {% for error in field.errors %}
+                  <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in confirmation_form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="post"
+              action="{% url 'camera_capture' %}"
+              class="qa-camera__form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          {{ confirmation_form.extraction_token }}
+          <div class="qa-camera__confirmation-grid">
+            <div class="qa-field{% if confirmation_form.amount.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ confirmation_form.amount.id_for_label }}">
+                Amount
+              </label>
+              {{ confirmation_form.amount }}
+              {% if confirmation_form.amount.errors %}
+                <p class="qa-field__message qa-field__message--error" id="amount-error">
+                  {{ confirmation_form.amount.errors.0 }}
+                </p>
+              {% else %}
+                <p class="qa-field__message">Correct this if the reader chose the wrong total.</p>
+              {% endif %}
+            </div>
+            <div class="qa-field{% if confirmation_form.currency.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ confirmation_form.currency.id_for_label }}">
+                Price currency
+              </label>
+              {{ confirmation_form.currency }}
+              {% if confirmation_form.currency.errors %}
+                <p class="qa-field__message qa-field__message--error" id="currency-error">
+                  {{ confirmation_form.currency.errors.0 }}
+                </p>
+              {% endif %}
+            </div>
+            <div class="qa-field{% if confirmation_form.target_currency.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ confirmation_form.target_currency.id_for_label }}">
+                Convert to
+              </label>
+              {{ confirmation_form.target_currency }}
+              {% if confirmation_form.target_currency.errors %}
+                <p class="qa-field__message qa-field__message--error" id="target_currency-error">
+                  {{ confirmation_form.target_currency.errors.0 }}
+                </p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="qa-camera__actions">
+            <button class="qa-primary-button" type="submit">Confirm &amp; convert</button>
+            <a class="qa-secondary-button" href="{% url 'camera_capture' %}">Use another image</a>
+          </div>
+          <p class="qa-field__message">
+            Confirm &amp; convert opens the canonical converter. The AI reader never supplies or
+            changes the exchange rate.
+          </p>
+        </form>
+      {% else %}
+        {% if upload_form.errors %}
+          <div class="qa-inline-alert qa-inline-alert--error"
+               id="camera-upload-errors"
+               role="alert"
+               tabindex="-1">
+            <h3>Check the image details</h3>
+            <ul class="qa-error-summary">
+              {% for field in upload_form %}
+                {% for error in field.errors %}
+                  <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in upload_form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <form method="post"
+              action="{% url 'camera_capture' %}"
+              enctype="multipart/form-data"
+              class="qa-camera__form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="extract">
+          <div class="qa-camera__upload">
+            <div class="qa-field{% if upload_form.image.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ upload_form.image.id_for_label }}">
+                Photo or screenshot
+              </label>
+              {{ upload_form.image }}
+              {% if upload_form.image.errors %}
+                <p class="qa-field__message qa-field__message--error" id="image-error">
+                  {{ upload_form.image.errors.0 }}
+                </p>
+              {% else %}
+                <p class="qa-field__message">
+                  JPEG, PNG or WebP · up to 6 MB. A tighter crop with one visible price works best.
+                </p>
+              {% endif %}
+            </div>
+            <div class="qa-camera__currency-grid">
+              <div class="qa-field{% if upload_form.expected_currency.errors %} qa-field--error{% endif %}">
+                <label class="qa-field__label"
+                       for="{{ upload_form.expected_currency.id_for_label }}">Price currency hint</label>
+                {{ upload_form.expected_currency }}
+                <p class="qa-field__message">Optional. A hint never overrides ambiguous image evidence.</p>
+              </div>
+              <div class="qa-field{% if upload_form.target_currency.errors %} qa-field--error{% endif %}">
+                <label class="qa-field__label"
+                       for="{{ upload_form.target_currency.id_for_label }}">Convert to</label>
+                {{ upload_form.target_currency }}
+                {% if upload_form.target_currency.errors %}
+                  <p class="qa-field__message qa-field__message--error"
+                     id="target_currency-error">{{ upload_form.target_currency.errors.0 }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="qa-camera__actions">
+            <button class="qa-primary-button" type="submit">Read price</button>
+            <a class="qa-secondary-button" href="{% url 'converter' %}">Use converter instead</a>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <aside class="qa-camera__privacy" aria-label="Camera privacy and trust">
+      <p class="qa-foundation-kicker">Privacy &amp; trust</p>
+      <dl>
+        <div>
+          <dt>Raw image</dt>
+          <dd>Validated, resized and stripped of EXIF metadata in memory. This flow does not save it.</dd>
+        </div>
+        <div>
+          <dt>External reader</dt>
+          <dd>When enabled, the normalized image is sent to the configured Gemini service for one structured price candidate.</dd>
+        </div>
+        <div>
+          <dt>Confirmation</dt>
+          <dd>You can correct both amount and currency before any FX calculation.</dd>
+        </div>
+        <div>
+          <dt>Sensitive screens</dt>
+          <dd>Do not upload images containing PINs, full card details, account credentials or other secrets.</dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+{% endblock %}
