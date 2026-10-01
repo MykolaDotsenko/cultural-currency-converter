@@ -701,8 +701,11 @@ class DestinationComparisonForm(BudgetInterpretationForm):
 
         visible_categories = {category for category, _label in _COMPARISON_CATEGORY_OPTIONS}
         for category, _label in TypicalPriceCategory.choices:
+            field_name = self.units_field_name(category)
             if category not in visible_categories:
-                self.fields.pop(self.units_field_name(category), None)
+                self.fields.pop(field_name, None)
+                continue
+            self.fields[field_name].widget.attrs["aria-describedby"] = f"{field_name}-hint"
 
         self.fields["amount"].widget.attrs.update(
             {
