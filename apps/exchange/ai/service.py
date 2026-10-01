@@ -10,8 +10,8 @@ from django.core.cache import cache
 from django.db import DatabaseError, transaction
 
 from apps.exchange.ai.contracts import (
-    ExplanationBullet,
     ExplanationDrafter,
+    ExplanationInsight,
     ExplanationResult,
 )
 from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
@@ -361,133 +361,159 @@ def _fallback_delivery(
     reason: str,
 ) -> ExplanationDelivery:
     spec = explanation_intent_spec(intent)
+    reference_scope = ExplanationInsight(
+        text=(
+            "Reference exchange rates are informational. Payment providers may use different "
+            "rates or add fees."
+        ),
+        supporting_fact_ids=("reference_scope",),
+    )
+
     if intent is ExplanationIntent.RATE_MEANING:
-        headline = "What this reference rate means"
-        bullet_specs = [
-            (
-                (
+        short_answer = ExplanationInsight(
+            text=(
+                f"The displayed reference rate is 1 {snapshot.base_currency} = "
+                f"{format(snapshot.rate, 'f')} {snapshot.quote_currency}."
+            ),
+            supporting_fact_ids=("rate",),
+        )
+        key_factors = (
+            ExplanationInsight(
+                text=f"The effective observation date is {snapshot.effective_date.isoformat()}.",
+                supporting_fact_ids=("effective_date",),
+            ),
+        )
+        next_step = ExplanationInsight(
+            text="Compare any provider quote with this reference observation and its effective date.",
+            supporting_fact_ids=("reference_scope", "effective_date"),
+        )
+    elif intent is ExplanationIntent.PAYMENT_DIFFERENCE:
+        short_answer = ExplanationInsight(
+            text=(
+                "The displayed exchange rate is a reference observation. A payment provider may "
+                "use a different rate or add fees."
+            ),
+            supporting_fact_ids=("reference_scope",),
+        )
+        key_factors = (
+            ExplanationInsight(
+                text=(
                     f"The displayed reference rate is 1 {snapshot.base_currency} = "
                     f"{format(snapshot.rate, 'f')} {snapshot.quote_currency}."
                 ),
-                ("rate",),
+                supporting_fact_ids=("rate",),
             ),
-            (
-                f"The effective observation date is {snapshot.effective_date.isoformat()}.",
-                ("effective_date",),
-            ),
-        ]
-    elif intent is ExplanationIntent.PAYMENT_DIFFERENCE:
-        headline = "Why a bank or card result can differ"
-        bullet_specs = [
-            (
-                (
-                    "The displayed exchange rate is a reference observation. A payment provider "
-                    "may use a different rate or add fees."
-                ),
-                ("reference_scope",),
-            )
-        ]
+        )
+        next_step = ExplanationInsight(
+            text="Review the provider quote and fees alongside this reference observation.",
+            supporting_fact_ids=("reference_scope",),
+        )
     elif intent is ExplanationIntent.HISTORICAL_CONTEXT:
-        headline = "What this historical reference represents"
-        bullet_specs = [
-            (
-                "This is a historical reference observation, not a current market quote.",
-                ("historical_status",),
-            ),
-            (
-                f"The accepted observation date is {snapshot.effective_date.isoformat()}.",
-                ("effective_date",),
-            ),
+        short_answer = ExplanationInsight(
+            text="This is a historical reference observation, not a current market quote.",
+            supporting_fact_ids=("historical_status",),
+        )
+        factors = [
+            ExplanationInsight(
+                text=f"The accepted observation date is {snapshot.effective_date.isoformat()}.",
+                supporting_fact_ids=("effective_date",),
+            )
         ]
         if snapshot.requested_date is not None:
-            bullet_specs.append(
-                (
-                    f"The requested historical date is {snapshot.requested_date.isoformat()}.",
-                    ("requested_date",),
+            factors.append(
+                ExplanationInsight(
+                    text=f"The requested historical date is {snapshot.requested_date.isoformat()}.",
+                    supporting_fact_ids=("requested_date",),
                 )
             )
+        key_factors = tuple(factors)
+        reference_scope = ExplanationInsight(
+            text="Historical FX does not describe historical purchasing power.",
+            supporting_fact_ids=("historical_scope",),
+        )
+        next_step = ExplanationInsight(
+            text="Read the requested and effective dates together when using this historical reference.",
+            supporting_fact_ids=("requested_date", "effective_date"),
+        )
     elif intent is ExplanationIntent.STALE_REFERENCE:
-        headline = "Why this reference is marked cached"
-        bullet_specs = [
-            (
-                (
-                    "The displayed result is a labelled cached reference because a fresh provider "
-                    "response was unavailable."
-                ),
-                ("stale_status",),
+        short_answer = ExplanationInsight(
+            text=(
+                "The displayed result is a labelled cached reference because a fresh provider "
+                "response was unavailable."
             ),
-            (
-                f"The cached observation is effective {snapshot.effective_date.isoformat()}.",
-                ("effective_date",),
+            supporting_fact_ids=("stale_status",),
+        )
+        key_factors = (
+            ExplanationInsight(
+                text=f"The cached observation is effective {snapshot.effective_date.isoformat()}.",
+                supporting_fact_ids=("effective_date",),
             ),
-        ]
+        )
+        next_step = ExplanationInsight(
+            text="Run the conversion again when a fresh reference observation is needed.",
+            supporting_fact_ids=("stale_status",),
+        )
     else:
-        headline = "What this reference conversion means"
-        bullet_specs = [
-            (
-                (
-                    f"{format(snapshot.input_amount, 'f')} {snapshot.base_currency} is approximately "
-                    f"{format(snapshot.output_amount, 'f')} {snapshot.quote_currency} at the displayed "
-                    "reference observation."
-                ),
-                ("conversion",),
+        short_answer = ExplanationInsight(
+            text=(
+                f"{format(snapshot.input_amount, 'f')} {snapshot.base_currency} is approximately "
+                f"{format(snapshot.output_amount, 'f')} {snapshot.quote_currency} at the displayed "
+                "reference observation."
             ),
-            (
-                (
+            supporting_fact_ids=("conversion",),
+        )
+        factors = [
+            ExplanationInsight(
+                text=(
                     f"The displayed reference rate is 1 {snapshot.base_currency} = "
                     f"{format(snapshot.rate, 'f')} {snapshot.quote_currency}."
                 ),
-                ("rate",),
-            ),
+                supporting_fact_ids=("rate",),
+            )
         ]
-
         if snapshot.historical and snapshot.requested_date is not None:
-            if snapshot.requested_date == snapshot.effective_date:
-                bullet_specs.append(
-                    (
-                        f"The historical observation date is {snapshot.effective_date.isoformat()}.",
-                        ("effective_date", "historical_status"),
-                    )
-                )
-            else:
-                bullet_specs.append(
-                    (
-                        (
-                            f"You requested {snapshot.requested_date.isoformat()}; the accepted "
-                            f"observation is {snapshot.effective_date.isoformat()}."
-                        ),
-                        ("requested_date", "effective_date"),
-                    )
-                )
-        elif snapshot.stale:
-            bullet_specs.append(
-                (
-                    (
-                        "The displayed result is a labelled cached reference because a fresh provider "
-                        "response was unavailable."
+            factors.append(
+                ExplanationInsight(
+                    text=(
+                        f"You requested {snapshot.requested_date.isoformat()}; the accepted "
+                        f"observation is {snapshot.effective_date.isoformat()}."
                     ),
-                    ("stale_status",),
+                    supporting_fact_ids=("requested_date", "effective_date"),
+                )
+            )
+            reference_scope = ExplanationInsight(
+                text="Historical FX does not describe historical purchasing power.",
+                supporting_fact_ids=("historical_scope",),
+            )
+        elif snapshot.stale:
+            factors.append(
+                ExplanationInsight(
+                    text=(
+                        "The displayed result is a labelled cached reference because a fresh "
+                        "provider response was unavailable."
+                    ),
+                    supporting_fact_ids=("stale_status",),
                 )
             )
         else:
-            bullet_specs.append(
-                (
-                    f"The effective observation date is {snapshot.effective_date.isoformat()}.",
-                    ("effective_date",),
+            factors.append(
+                ExplanationInsight(
+                    text=f"The effective observation date is {snapshot.effective_date.isoformat()}.",
+                    supporting_fact_ids=("effective_date",),
                 )
             )
+        key_factors = tuple(factors)
+        next_step = ExplanationInsight(
+            text="Use this reference observation as a comparison point for any provider quote.",
+            supporting_fact_ids=("reference_scope",),
+        )
 
     return ExplanationDelivery(
         result=ExplanationResult(
-            headline=headline,
-            bullets=tuple(
-                ExplanationBullet(text=text, supporting_fact_ids=fact_ids)
-                for text, fact_ids in bullet_specs
-            ),
-            caveat=(
-                "Reference exchange rates are informational. Payment providers may use different "
-                "rates or add fees."
-            ),
+            short_answer=short_answer,
+            key_factors=key_factors,
+            watch_out_for=reference_scope,
+            next_step=next_step,
             generated=False,
             source_label="Built-in explanation",
             fallback_reason=reason or spec.question,
