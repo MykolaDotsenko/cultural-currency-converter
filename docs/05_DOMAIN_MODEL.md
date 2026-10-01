@@ -98,8 +98,9 @@ The first domain slice deliberately reuses:
 
 - one trusted MoneyContext per destination;
 - the same explicit BudgetAssumptions on both sides;
+- each destination's full ConversionResult, including effective-date/provider/stale semantics;
 - each destination's own quote currency and minor-unit semantics;
-- each side's sourced city/national price scopes and payment guidance.
+- each side's MoneyContext availability state, sourced city/national price scopes and payment guidance.
 
 The comparison does **not** compute a winner, universal cost-of-living index, purchasing-power parity claim or direct cross-currency price ratio.
 
