@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -538,11 +538,18 @@ def add_saved_scenario_spend(request: HttpRequest, scenario_id: int) -> HttpResp
         )
 
     amount = form.cleaned_data.get("amount_decimal")
+    submission_key = form.cleaned_data.get("submission_key")
     if not isinstance(amount, Decimal):
         raise RuntimeError("Valid spend form returned no Decimal amount.")
+    if submission_key is None:
+        raise RuntimeError("Valid spend form returned no submission key.")
 
     try:
-        record_scenario_spend(scenario, amount=amount)
+        record_scenario_spend(
+            scenario,
+            amount=amount,
+            submission_key=submission_key,
+        )
     except SavedScenarioError as exc:
         messages.error(request, f"Could not add confirmed spend: {exc}")
         return redirect("saved_scenario_detail", scenario_id=scenario.pk)
@@ -568,16 +575,20 @@ def delete_saved_scenario_spend(
     scenario_id: int,
     entry_id: int,
 ) -> HttpResponse:
-    entry = get_object_or_404(
-        SavedScenarioSpendEntry.objects.select_related("scenario"),
-        pk=entry_id,
-        scenario_id=scenario_id,
-        scenario__user=request.user,
-    )
-    scenario = entry.scenario
-    scenario_id_value = entry.scenario_id
-    entry.delete()
-    scenario.save(update_fields=("updated_at",))
+    with transaction.atomic():
+        scenario = get_object_or_404(
+            SavedScenario.objects.select_for_update(),
+            pk=scenario_id,
+            user=request.user,
+        )
+        entry = get_object_or_404(
+            SavedScenarioSpendEntry.objects.select_for_update(),
+            pk=entry_id,
+            scenario=scenario,
+        )
+        scenario_id_value = scenario.pk
+        entry.delete()
+        scenario.save(update_fields=("updated_at",))
     messages.success(request, "Confirmed spend entry removed.")
     return redirect("saved_scenario_detail", scenario_id=scenario_id_value)
 
