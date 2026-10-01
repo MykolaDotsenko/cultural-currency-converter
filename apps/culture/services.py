@@ -354,6 +354,7 @@ def build_destination_context(
             observed_at__gte=cutoff,
             observed_at__lte=selected_date,
         )
+        .filter(Q(city_ref__country=country) | Q(city_ref__isnull=True, city=""))
         .exclude(source_name="")
         .exclude(source_url="")
         .select_related("country", "currency", "city_ref")
