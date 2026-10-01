@@ -97,9 +97,7 @@ class DestinationModeForm(forms.Form):
         for link in primary_links:
             token = link.country.iso2
             self._destination_by_token[token] = (link.country, None, link.currency)
-            country_choices.append(
-                (token, f"{link.country.name} · {link.currency.code}")
-            )
+            country_choices.append((token, f"{link.country.name} · {link.currency.code}"))
             country_ids.append(link.country_id)
 
         city_choices: list[tuple[str, str]] = []
