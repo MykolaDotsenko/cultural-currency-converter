@@ -28,7 +28,7 @@ from apps.exchange.camera_service import (
     CameraScanDelivery,
 )
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
-from apps.travel.camera_forms import camera_scope_for_scenario
+from apps.travel.camera_scope import camera_scope_for_scenario
 from apps.travel.models import SavedScenarioKind, SavedScenarioSpendSource
 from apps.travel.scenarios import SavedScenarioSpec, create_saved_scenario
 
