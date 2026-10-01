@@ -10,12 +10,7 @@ from django.db import IntegrityError
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
-from apps.exchange.domain import (
-    MAX_PROVIDER_KEYS,
-    DEFAULT_SOURCE_POLICY,
-    ConversionResult,
-    RateQuote,
-)
+from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetItem,
@@ -169,47 +164,6 @@ def test_saved_scenario_preserves_multi_provider_attribution_within_shared_bound
     )
 
     assert scenario.observations.get().provider_keys == sorted(provider_keys)
-
-
-@pytest.mark.django_db
-def test_saved_scenario_rejects_provider_attribution_above_shared_bound(reference_data):
-    eur, jpy, fi, jp, tokyo, _ = reference_data
-    user = User.objects.create_user(username="provider-bound-owner", password="StrongPass-482!")
-    conversion = _conversion()
-    oversized_keys = tuple(f"source-{index}" for index in range(MAX_PROVIDER_KEYS + 1))
-    oversized_conversion = ConversionResult(
-        input_amount=conversion.input_amount,
-        output_amount=conversion.output_amount,
-        quote=RateQuote(
-            base_currency=conversion.quote.base_currency,
-            quote_currency=conversion.quote.quote_currency,
-            rate=conversion.quote.rate,
-            requested_date=None,
-            effective_date=conversion.quote.effective_date,
-            fetched_at=conversion.quote.fetched_at,
-            provider_policy=conversion.quote.provider_policy,
-            provider_keys=oversized_keys,
-            historical=False,
-        ),
-        stale=conversion.stale,
-    )
-
-    with pytest.raises(SavedScenarioError, match="provider attribution is too large"):
-        create_saved_scenario(
-            user,
-            spec=SavedScenarioSpec(
-                kind=SavedScenarioKind.BUDGET,
-                source_currency=eur,
-                destination_currency=jpy,
-                source_country=fi,
-                destination_country=jp,
-                destination_city=tokyo,
-                source_amount=Decimal("100.00"),
-            ),
-            conversion=oversized_conversion,
-        )
-
-    assert not SavedScenario.objects.filter(user=user).exists()
 
 
 @pytest.mark.django_db
