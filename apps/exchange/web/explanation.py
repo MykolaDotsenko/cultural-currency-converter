@@ -66,11 +66,12 @@ def conversion_explanation_view(
                 "question": intent_spec.question,
             }
 
+    fragment = is_htmx(request)
     context = {
         "explanation": explanation,
         "explanation_error": explanation_error,
+        "is_htmx_fragment": fragment,
     }
-    fragment = is_htmx(request)
     template = (
         "components/converter/explanation.html" if fragment else "pages/conversion_explanation.html"
     )
