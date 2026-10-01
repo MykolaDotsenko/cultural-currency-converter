@@ -18,6 +18,7 @@ class AIConfig:
     provider: str
     text_model: str
     runtime_explanation_enabled: bool
+    camera_extraction_enabled: bool
     editorial_generation_enabled: bool
     image_generation_enabled: bool
     fallback_mode: str
@@ -28,6 +29,10 @@ class AIConfig:
     @property
     def has_live_runtime_explanation(self) -> bool:
         return self.runtime_explanation_enabled and bool(self.gemini_api_key)
+
+    @property
+    def has_live_camera_extraction(self) -> bool:
+        return self.camera_extraction_enabled and bool(self.gemini_api_key)
 
 
 def _optional(environ: Mapping[str, str], name: str) -> str | None:
@@ -87,6 +92,11 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         "AI_RUNTIME_EXPLANATION_ENABLED",
         default=False,
     )
+    camera_enabled = _parse_bool(
+        values,
+        "AI_CAMERA_EXTRACTION_ENABLED",
+        default=False,
+    )
     editorial_enabled = _parse_bool(
         values,
         "AI_EDITORIAL_GENERATION_ENABLED",
@@ -119,11 +129,16 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         raise ConfigurationError(
             "GEMINI_API_KEY is required when AI_RUNTIME_EXPLANATION_ENABLED=true."
         )
+    if camera_enabled and not api_key:
+        raise ConfigurationError(
+            "GEMINI_API_KEY is required when AI_CAMERA_EXTRACTION_ENABLED=true."
+        )
 
     return AIConfig(
         provider=provider,
         text_model=model,
         runtime_explanation_enabled=runtime_enabled,
+        camera_extraction_enabled=camera_enabled,
         editorial_generation_enabled=editorial_enabled,
         image_generation_enabled=image_enabled,
         fallback_mode=fallback_mode,
