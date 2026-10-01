@@ -224,6 +224,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Offer a few relevant next questions derived from the current conversion/scenario instead of presenting an empty chatbot.
    - Examples can cover budget fit, cash need, payment warnings, rate explanation and destination comparison.
    - Prompts must resolve through bounded trusted context and remain optional.
+   - **Current production slice:** current/historical conversion results can now expose only server-approved questions supported by the signed conversion snapshot. Current conversions offer reference-rate meaning and bank/card-difference questions; stale current results may additionally explain the cached-reference state; historical results replace payment guidance with an observation-date question. The posted `prompt_id` is validated server-side before any AI service is built, arbitrary prompt text is ignored, the selected intent is part of the grounded packet/cache identity, and generated output must cite the intent's required fact IDs. Budget-, cash-, city- and comparison-specific prompts remain future until those trusted facts are included in the AI packet.
 
 28. **Structured AI insight panel — 86/100**
    - Present AI-assisted answers in a predictable structure such as short answer, key factors, one caution and next step.
