@@ -33,7 +33,6 @@ def test_fx_runtime_config_rejects_unsafe_or_invalid_values(values, message):
         load_fx_runtime_config(values)
 
 
-
 def test_fx_runtime_config_uses_deterministic_fixture_only_in_test_environment():
     config = load_fx_runtime_config(
         {
