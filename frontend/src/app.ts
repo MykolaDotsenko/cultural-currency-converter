@@ -1,5 +1,6 @@
 import "@fontsource-variable/inter/wght.css";
 import "htmx.org";
+import "./behaviors/ai-explanation";
 import "./behaviors/current-converter";
 import "./behaviors/local-saved-state";
 import "./behaviors/picker";
