@@ -106,7 +106,9 @@ def build_offline_destination_pack(
     if scenario.pk is None:
         raise OfflineDestinationPackError("Saved scenario must exist before an offline pack.")
     if scenario.kind != SavedScenarioKind.BUDGET:
-        raise OfflineDestinationPackError("Offline packs currently require a saved budget scenario.")
+        raise OfflineDestinationPackError(
+            "Offline packs currently require a saved budget scenario."
+        )
     if scenario.destination_country_id is None:
         raise OfflineDestinationPackError("Offline packs require a destination country.")
 
