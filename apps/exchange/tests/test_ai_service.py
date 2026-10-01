@@ -21,7 +21,12 @@ from apps.exchange.ai.service import (
 from apps.exchange.domain import ObservationGranularity
 from apps.exchange.models import RuntimeExplanationCache
 from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
-from integrations.gemini.errors import AIProviderUnavailable
+from integrations.gemini.errors import (
+    AIInvalidResponse,
+    AIProviderTimeout,
+    AIProviderUnavailable,
+    AISafetyBlocked,
+)
 from integrations.gemini.models import ProviderUsage
 
 
@@ -198,6 +203,30 @@ def test_schema_valid_but_semantically_invalid_output_falls_back(snapshot):
     delivery = service.explain(snapshot)
 
     assert delivery.result.generated is False
+    assert RuntimeExplanationCache.objects.count() == 0
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        AIProviderTimeout("timeout"),
+        AIInvalidResponse("malformed"),
+        AISafetyBlocked("blocked"),
+    ],
+)
+@pytest.mark.django_db(transaction=True)
+def test_normalized_provider_failure_modes_use_deterministic_fallback(snapshot, error):
+    service = RuntimeExplanationService(
+        enabled=True,
+        model="gemini-3.1-flash-lite",
+        drafter=FakeDrafter(error=error),
+    )
+
+    delivery = service.explain(snapshot)
+
+    assert delivery.result.generated is False
+    assert delivery.cache_status == "deterministic_fallback"
+    assert "temporarily unavailable" in delivery.result.fallback_reason
     assert RuntimeExplanationCache.objects.count() == 0
 
 
