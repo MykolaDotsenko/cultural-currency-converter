@@ -202,10 +202,7 @@ def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
 
 
 def _contains_forbidden_phrase(text: str, phrases: tuple[str, ...]) -> bool:
-    return any(
-        re.search(rf"(?<!\\w){re.escape(phrase)}(?!\\w)", text)
-        for phrase in phrases
-    )
+    return any(re.search(rf"(?<!\\w){re.escape(phrase)}(?!\\w)", text) for phrase in phrases)
 
 
 def _decimal_identity(value: str) -> Decimal:
