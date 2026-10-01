@@ -450,12 +450,14 @@ def test_replaying_same_confirmed_camera_token_is_idempotent(
             amount=Decimal("52"),
             currency_code="USD",
         ),
-        lambda scenario: make_confirmed_camera_amount_token(
-            scope=camera_scope_for_scenario(scenario.pk),
-            amount=Decimal("4750"),
-            currency_code="JPY",
-        )
-        + "tampered",
+        lambda scenario: (
+            make_confirmed_camera_amount_token(
+                scope=camera_scope_for_scenario(scenario.pk),
+                amount=Decimal("4750"),
+                currency_code="JPY",
+            )
+            + "tampered"
+        ),
     ],
 )
 def test_invalid_camera_spend_handoff_never_persists(
