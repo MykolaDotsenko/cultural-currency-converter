@@ -18,6 +18,7 @@ MAX_CAMERA_CANDIDATES = 6
 MAX_CAMERA_AMOUNT = Decimal("1000000000000")
 CAMERA_CANDIDATE_TOKEN_MAX_AGE_SECONDS = 15 * 60
 _CAMERA_TOKEN_SALT = "exchange.camera-candidate.v1"
+_CAMERA_CONFIRMED_TOKEN_SALT = "exchange.camera-confirmed.v1"
 _CURRENCY_CODE_RE = re.compile(r"^[A-Z]{3}$")
 
 
@@ -241,6 +242,28 @@ def normalize_camera_provider_payload(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class ConfirmedCameraAmountSnapshot:
+    scope: str
+    amount: Decimal
+    currency_code: str
+
+    def __post_init__(self) -> None:
+        if not self.scope.strip() or len(self.scope) > 120:
+            raise CameraTokenError("Confirmed camera amount scope is invalid.")
+        try:
+            CameraAmountCandidate(
+                amount=self.amount,
+                currency_code=self.currency_code,
+                kind=CameraCandidateKind.OTHER,
+                confidence=CameraConfidence.HIGH,
+            )
+        except CameraExtractionError as exc:
+            raise CameraTokenError(str(exc)) from exc
+        if not self.currency_code:
+            raise CameraTokenError("Confirmed camera amount requires a currency code.")
+
+
 def make_camera_candidate_token(
     candidate: CameraAmountCandidate,
     *,
@@ -263,6 +286,62 @@ def make_camera_candidate_token(
         },
         salt=_CAMERA_TOKEN_SALT,
         compress=True,
+    )
+
+
+def make_confirmed_camera_amount_token(
+    *,
+    scope: str,
+    amount: Decimal,
+    currency_code: str,
+) -> str:
+    snapshot = ConfirmedCameraAmountSnapshot(
+        scope=scope,
+        amount=amount,
+        currency_code=currency_code.upper().strip(),
+    )
+    return signing.dumps(
+        {
+            "scope": snapshot.scope,
+            "amount": format(snapshot.amount, "f"),
+            "currency_code": snapshot.currency_code,
+        },
+        salt=_CAMERA_CONFIRMED_TOKEN_SALT,
+        compress=True,
+    )
+
+
+def load_confirmed_camera_amount_token(
+    token: str,
+    *,
+    expected_scope: str,
+    max_age: int = CAMERA_CANDIDATE_TOKEN_MAX_AGE_SECONDS,
+) -> ConfirmedCameraAmountSnapshot:
+    if not token:
+        raise CameraTokenError("Confirmed camera amount token is missing.")
+    try:
+        payload = signing.loads(
+            token,
+            salt=_CAMERA_CONFIRMED_TOKEN_SALT,
+            max_age=max_age,
+        )
+    except signing.SignatureExpired as exc:
+        raise CameraTokenError("Confirmed camera amount has expired. Scan the image again.") from exc
+    except signing.BadSignature as exc:
+        raise CameraTokenError("Confirmed camera amount token is invalid.") from exc
+
+    if not isinstance(payload, dict) or payload.get("scope") != expected_scope:
+        raise CameraTokenError("Confirmed camera amount does not belong to this context.")
+    try:
+        amount = Decimal(str(payload["amount"]))
+        currency_code = str(payload["currency_code"])
+    except (KeyError, InvalidOperation) as exc:
+        raise CameraTokenError("Confirmed camera amount token payload is invalid.") from exc
+
+    return ConfirmedCameraAmountSnapshot(
+        scope=expected_scope,
+        amount=amount,
+        currency_code=currency_code,
     )
 
 
