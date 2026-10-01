@@ -139,14 +139,18 @@ A scoped price observation used to give rough everyday-value intuition.
 Important meaning includes:
 
 - city/national scope;
-- canonical `City` relationship for normalized city-scoped observations;
-- legacy city display text retained during the expand-first migration;
-- range/value;
-- observation date;
-- provenance;
+- canonical `City` relationship for published city-scoped observations;
+- legacy city display text retained only for migration/unpublished compatibility;
+- normalized category/unit semantics (`coffee→serving`, `casual_meal→meal`, `transit→ride`, `groceries→basket`, `other→item`);
+- positive ordered range/value;
+- the country's current primary currency for published current-context data;
+- observation date within the shared freshness policy;
+- source name and credential-free HTTPS provenance;
+- explicit verification;
+- duplicate identity scoped by canonical destination, category, unit, normalized label and observation date;
 - confidence/trust class.
 
-A typical price is an example, not a universal price for a country.
+A typical price is an example, not a universal price for a country. Published city observations must satisfy the reusable city-price quality contract; stale or otherwise invalid records are not promoted into current destination context.
 
 When a city is explicitly requested, city-scoped observations take priority and only clearly national observations may fill missing categories. Data from another city must never be substituted silently. National fallback remains visibly labelled as a national estimate.
 

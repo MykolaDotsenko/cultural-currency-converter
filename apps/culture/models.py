@@ -7,7 +7,16 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
+from apps.culture.price_quality import (
+    TypicalPriceQualityInput,
+    TypicalPriceUnit,
+    canonical_unit_for_category,
+    evaluate_typical_price_quality,
+    normalize_price_label,
+    normalized_duplicate_identity,
+)
 from apps.culture.provenance import ProvenanceUrlError, validate_provenance_url
 
 
@@ -285,6 +294,7 @@ class TypicalPrice(models.Model):
         blank=True,
     )
     category = models.CharField(max_length=24, choices=TypicalPriceCategory.choices)
+    unit = models.CharField(max_length=16, choices=TypicalPriceUnit.choices)
     label = models.CharField(max_length=160)
     amount_low = models.DecimalField(max_digits=12, decimal_places=2)
     amount_high = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
@@ -327,34 +337,147 @@ class TypicalPrice(models.Model):
                 fields=("country", "city", "category", "label", "observed_at"),
                 name="typical_price_observation_identity",
             ),
+            models.CheckConstraint(
+                condition=(
+                    Q(category=TypicalPriceCategory.COFFEE, unit=TypicalPriceUnit.SERVING)
+                    | Q(category=TypicalPriceCategory.CASUAL_MEAL, unit=TypicalPriceUnit.MEAL)
+                    | Q(category=TypicalPriceCategory.TRANSIT, unit=TypicalPriceUnit.RIDE)
+                    | Q(category=TypicalPriceCategory.GROCERIES, unit=TypicalPriceUnit.BASKET)
+                    | Q(category=TypicalPriceCategory.OTHER, unit=TypicalPriceUnit.ITEM)
+                ),
+                name="typical_price_category_unit",
+            ),
+            models.CheckConstraint(
+                condition=Q(is_published=False) | Q(city="") | Q(city_ref__isnull=False),
+                name="typical_price_published_city_is_canonical",
+            ),
+            models.UniqueConstraint(
+                fields=("country", "city_ref", "category", "unit", "label", "observed_at"),
+                condition=Q(city_ref__isnull=False),
+                name="typical_price_city_observation_identity",
+            ),
+            models.UniqueConstraint(
+                fields=("country", "category", "unit", "label", "observed_at"),
+                condition=Q(city_ref__isnull=True, city=""),
+                name="typical_price_national_observation_identity",
+            ),
         ]
 
     def clean(self) -> None:
         super().clean()
-        if self.city_ref_id is not None and self.country_id is not None:
-            city_country_id = self.city_ref.country_id
-            if city_country_id != self.country_id:
-                raise ValidationError(
-                    {"city_ref": "Typical-price city must belong to the selected country."}
-                )
-        if self.amount_low is not None and self.amount_low <= 0:
-            raise ValidationError({"amount_low": "Typical price must be positive."})
-        if (
-            self.amount_high is not None
-            and self.amount_low is not None
-            and self.amount_high < self.amount_low
-        ):
-            raise ValidationError({"amount_high": "High price cannot be below low price."})
-        if not self.is_published:
-            return
-        if not self.source_name.strip() or not self.source_url.strip() or self.verified_at is None:
-            raise ValidationError(
-                "Published typical prices require source name, HTTPS source URL and verification."
+        from apps.countries.models import CountryCurrency
+
+        country_code = self.country.iso2 if self.country_id is not None else ""
+        currency_code = self.currency.code if self.currency_id is not None else ""
+        city_slug = ""
+        city_country_code = ""
+        city_active = False
+        if self.city_ref_id is not None:
+            city_slug = self.city_ref.slug
+            city_country_code = self.city_ref.country.iso2
+            city_active = self.city_ref.is_active
+
+        current_primary_currency_code = ""
+        if self.country_id is not None:
+            current_link = (
+                CountryCurrency.objects.current()
+                .primary()
+                .filter(country_id=self.country_id)
+                .select_related("currency")
+                .first()
             )
-        try:
-            validate_provenance_url(self.source_url)
-        except ProvenanceUrlError as exc:
-            raise ValidationError({"source_url": str(exc)}) from exc
+            if current_link is not None:
+                current_primary_currency_code = current_link.currency.code
+
+        issues = evaluate_typical_price_quality(
+            TypicalPriceQualityInput(
+                category=self.category,
+                unit=self.unit,
+                amount_low=self.amount_low,
+                amount_high=self.amount_high,
+                country_code=country_code,
+                currency_code=currency_code,
+                current_primary_currency_code=current_primary_currency_code,
+                city_text=self.city,
+                city_slug=city_slug,
+                city_country_code=city_country_code,
+                city_active=city_active,
+                source_name=self.source_name,
+                source_url=self.source_url,
+                observed_at=self.observed_at,
+                verified_at=self.verified_at,
+                is_published=self.is_published,
+            ),
+            today=timezone.localdate(),
+        )
+        errors: dict[str, list[str]] = {}
+        for issue in issues:
+            errors.setdefault(issue.field, []).append(issue.message)
+
+        if (
+            self.country_id is not None
+            and self.observed_at is not None
+            and self.category
+            and self.unit
+            and self.label
+        ):
+            identity = normalized_duplicate_identity(
+                country_code=country_code,
+                city_slug=city_slug,
+                category=self.category,
+                unit=self.unit,
+                label=self.label,
+                observed_at=self.observed_at,
+            )
+            candidates = TypicalPrice.objects.filter(
+                country_id=self.country_id,
+                category=self.category,
+                unit=self.unit,
+                observed_at=self.observed_at,
+            )
+            if self.pk is not None:
+                candidates = candidates.exclude(pk=self.pk)
+            candidates = (
+                candidates.filter(city_ref_id=self.city_ref_id)
+                if self.city_ref_id is not None
+                else candidates.filter(city_ref__isnull=True, city="")
+            )
+            for candidate in candidates.only(
+                "country_id",
+                "city_ref_id",
+                "city",
+                "category",
+                "unit",
+                "label",
+                "observed_at",
+            ).select_related("country", "city_ref"):
+                candidate_identity = normalized_duplicate_identity(
+                    country_code=candidate.country.iso2,
+                    city_slug=candidate.city_ref.slug if candidate.city_ref_id is not None else "",
+                    category=candidate.category,
+                    unit=candidate.unit,
+                    label=candidate.label,
+                    observed_at=candidate.observed_at,
+                )
+                if candidate_identity == identity:
+                    errors.setdefault("__all__", []).append(
+                        "Duplicate typical-price observation for the same canonical scope, "
+                        "category, unit, label and observation date."
+                    )
+                    break
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.label = normalize_price_label(self.label)
+        self.source_name = normalize_price_label(self.source_name)
+        canonical_unit = canonical_unit_for_category(self.category)
+        if canonical_unit is not None and not self.unit:
+            self.unit = canonical_unit
+        if self.city_ref_id is not None:
+            self.city = normalize_price_label(self.city_ref.name)
+        super().save(*args, **kwargs)
 
     @property
     def scope_label(self) -> str:

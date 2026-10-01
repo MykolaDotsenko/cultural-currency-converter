@@ -143,7 +143,7 @@ def test_explore_limit_preserves_combined_country_city_alphabetical_order(
 
 
 @pytest.mark.django_db
-def test_explore_does_not_create_city_scope_from_legacy_city_text_or_national_fallback(
+def test_explore_does_not_create_city_scope_from_unpublished_legacy_city_text_or_national_fallback(
     explore_reference_data,
 ):
     data = explore_reference_data
@@ -159,7 +159,7 @@ def test_explore_does_not_create_city_scope_from_legacy_city_text_or_national_fa
         source_url="https://example.org/osaka",
         observed_at=data["today"],
         verified_at=timezone.now(),
-        is_published=True,
+        is_published=False,
     )
 
     destinations = build_explore_destinations(as_of=data["today"])

@@ -16,6 +16,8 @@ ORM / cache / provider adapter
 
 This layering is a practical ownership guide, not a requirement to create a class for every step.
 
+`apps/culture/price_quality.py` is the reusable policy layer for current `TypicalPrice` data quality. It owns the shared freshness window, canonical category→unit mapping, normalized duplicate identity and stable issue codes without querying a parallel city-money store. ORM/model validation supplies the current primary-currency and canonical-city facts to that pure evaluator; database constraints enforce the subset of invariants that can be represented relationally. Runtime destination context remains fail-closed and continues to consume only the existing `TypicalPrice` rows that satisfy its publication/provenance/freshness gates.
+
 ## Web
 
 Current web ownership:

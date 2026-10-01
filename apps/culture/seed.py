@@ -18,6 +18,7 @@ from apps.culture.models import (
     TypicalPriceConfidence,
     TypicalPriceSourceClass,
 )
+from apps.culture.price_quality import TypicalPriceUnit
 from apps.culture.services import approve_story_moment, publish_story_moment
 
 _FINLAND_EURO_SOURCE = (
@@ -180,6 +181,7 @@ def seed_demo_destination_context() -> tuple[int, int]:
         {
             "city": "",
             "category": TypicalPriceCategory.COFFEE,
+            "unit": TypicalPriceUnit.SERVING,
             "label": "Cup of coffee",
             "amount_low": Decimal("100"),
             "amount_high": Decimal("600"),
@@ -193,6 +195,7 @@ def seed_demo_destination_context() -> tuple[int, int]:
         {
             "city": "",
             "category": TypicalPriceCategory.CASUAL_MEAL,
+            "unit": TypicalPriceUnit.MEAL,
             "label": "Casual meal",
             "amount_low": Decimal("500"),
             "amount_high": Decimal("1000"),
@@ -206,6 +209,7 @@ def seed_demo_destination_context() -> tuple[int, int]:
         {
             "city": "Tokyo",
             "category": TypicalPriceCategory.TRANSIT,
+            "unit": TypicalPriceUnit.RIDE,
             "label": "Tokyo Metro regular ticket",
             "amount_low": Decimal("180"),
             "amount_high": Decimal("330"),
@@ -227,6 +231,7 @@ def seed_demo_destination_context() -> tuple[int, int]:
             label=spec["label"],
             observed_at=observation_date,
             defaults={
+                "unit": spec["unit"],
                 "amount_low": spec["amount_low"],
                 "amount_high": spec["amount_high"],
                 "currency": jpy,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -18,6 +18,7 @@ from apps.culture.models import (
     StoryMomentStatus,
     TypicalPrice,
 )
+from apps.culture.price_quality import PRICE_CONTEXT_MAX_AGE
 from apps.culture.provenance import (
     ProvenanceUrlError,
     is_valid_provenance_url,
@@ -190,9 +191,6 @@ def currency_era_links(
         .select_related("country", "currency")
         .order_by("country__name", "-is_primary", "-valid_from")
     )
-
-
-PRICE_CONTEXT_MAX_AGE = timedelta(days=730)
 
 
 @dataclass(frozen=True, slots=True)

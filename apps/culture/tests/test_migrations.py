@@ -54,3 +54,63 @@ def test_typical_price_city_backfill_creates_canonical_city_reference():
     assert city.country_id == japan.pk
     assert city.slug == "tokyo"
     assert city.name == "Tokyo"
+
+
+@pytest.mark.django_db(transaction=True)
+def test_typical_price_quality_migration_backfills_normalized_units():
+    migrate_from = [
+        ("countries", "0003_city"),
+        ("culture", "0003_typicalprice_city_ref"),
+    ]
+    migrate_to = [
+        ("countries", "0003_city"),
+        ("culture", "0004_typicalprice_quality_contract"),
+    ]
+
+    executor = MigrationExecutor(connection)
+    executor.migrate(migrate_from)
+    old_apps = executor.loader.project_state(migrate_from).apps
+
+    Country = old_apps.get_model("countries", "Country")
+    Currency = old_apps.get_model("countries", "Currency")
+    City = old_apps.get_model("countries", "City")
+    TypicalPrice = old_apps.get_model("culture", "TypicalPrice")
+
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    jpy = Currency.objects.create(code="JPY", name="Japanese yen")
+    tokyo = City.objects.create(country=japan, slug="tokyo", name="Tokyo")
+
+    coffee = TypicalPrice.objects.create(
+        country=japan,
+        category="coffee",
+        label="Coffee",
+        amount_low=Decimal("500"),
+        currency=jpy,
+        source_name="Source",
+        source_url="https://example.org/coffee",
+        observed_at="2026-09-21",
+    )
+    transit = TypicalPrice.objects.create(
+        country=japan,
+        city="Tokyo",
+        city_ref=tokyo,
+        category="transit",
+        label="Metro ticket",
+        amount_low=Decimal("180"),
+        currency=jpy,
+        source_name="Source",
+        source_url="https://example.org/transit",
+        observed_at="2026-09-21",
+    )
+
+    executor = MigrationExecutor(connection)
+    executor.migrate(migrate_to)
+    new_apps = executor.loader.project_state(migrate_to).apps
+    TypicalPrice = new_apps.get_model("culture", "TypicalPrice")
+
+    migrated_coffee = TypicalPrice.objects.get(pk=coffee.pk)
+    migrated_transit = TypicalPrice.objects.get(pk=transit.pk)
+
+    assert migrated_coffee.unit == "serving"
+    assert migrated_transit.unit == "ride"
+    assert migrated_transit.city_ref_id == tokyo.pk
