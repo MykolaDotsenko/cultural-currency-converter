@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import Never
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -25,12 +26,16 @@ def _comparison_category_fields(form: DestinationComparisonForm):
     )
 
 
-def _provider_error(side_name: str, detail: str) -> dict[str, str]:
+def _historical_gateway_not_allowed() -> Never:
+    raise AssertionError("Destination comparison must never request a historical quote.")
+
+
+def _provider_error(side_name: str) -> dict[str, str]:
     return {
         "title": f"{side_name} reference rate is unavailable",
         "detail": (
             "The comparison needs two trusted current conversions. "
-            f"{detail or 'Try again shortly.'}"
+            "Nothing has been inferred for the unavailable side; try again shortly."
         ),
     }
 
@@ -67,14 +72,11 @@ def destination_comparison_view(
                     destination_city_slug=cleaned["left_destination_city_slug"],
                 ),
                 latest_gateway_factory=shared_gateway_factory,
-                historical_gateway_factory=lambda: None,  # unused for current conversion
+                historical_gateway_factory=_historical_gateway_not_allowed
                 context_as_of=context_as_of,
             )
             if left_submission.error is not None or left_submission.money_context is None:
-                comparison_error = _provider_error(
-                    "Destination A",
-                    str(left_submission.error or ""),
-                )
+                comparison_error = _provider_error("Destination A")
                 status = 503
             else:
                 right_submission = run_converter_submission(
@@ -87,14 +89,11 @@ def destination_comparison_view(
                         destination_city_slug=cleaned["right_destination_city_slug"],
                     ),
                     latest_gateway_factory=shared_gateway_factory,
-                    historical_gateway_factory=lambda: None,  # unused for current conversion
+                    historical_gateway_factory=_historical_gateway_not_allowed
                     context_as_of=context_as_of,
                 )
                 if right_submission.error is not None or right_submission.money_context is None:
-                    comparison_error = _provider_error(
-                        "Destination B",
-                        str(right_submission.error or ""),
-                    )
+                    comparison_error = _provider_error("Destination B")
                     status = 503
                 else:
                     try:
