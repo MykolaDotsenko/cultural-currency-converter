@@ -124,7 +124,21 @@ Trip Budget Remaining is a persistence/domain consumer, not a second financial e
 - later FX re-check observations never rewrite the remaining-budget baseline;
 - `apps/travel/trip_budget.py` performs deterministic remaining/over-reference/per-day arithmetic without provider access.
 
-Receipt images, merchants and free-text purchase descriptions are deliberately outside this persistence contract. A future camera adapter may feed a confirmed amount into the same service only after the extraction has been shown to and confirmed by the user.
+Receipt images, merchants and free-text purchase descriptions are deliberately outside this persistence contract. The camera foundation now provides an ephemeral extraction/review adapter, but it does **not** persist spend in this slice. A later adapter may feed a confirmed amount into the same service only after the extraction has been shown to and confirmed by the user.
+
+### Camera extraction trust boundary
+
+Camera mode is an optional adapter around the canonical converter, not a second financial engine.
+
+- accepted uploads are bounded JPEG/PNG/WebP rasters and are decoded through the existing safe-image validator before provider access;
+- raw bytes are read for the single extraction request and are not written to application database or managed-media storage;
+- model output is schema-constrained and normalized into one project-owned amount/currency candidate or an explicit ambiguous/no-price state;
+- ambiguous/no-price/provider-failure results fail closed without conversion;
+- a short-lived signed token proves that a reviewed candidate originated from the extraction flow, while the user may explicitly correct amount/currency before proceeding;
+- corrected/confirmed values still pass the canonical amount/minor-unit validation and canonical converter;
+- camera extraction never supplies FX rates, fees, merchant/account identity or hidden banking data.
+
+The current provider is feature-flagged Gemini multimodal extraction. CI uses fake providers; live provider calls are not required for tests.
 
 ## Persistence
 
