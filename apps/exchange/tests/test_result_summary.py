@@ -191,6 +191,18 @@ def test_zero_purchase_equivalent_falls_back_instead_of_claiming_buying_power():
     assert "reference conversion" in summary.text
 
 
+def test_unknown_purchase_status_is_ignored_instead_of_breaking_conversion():
+    conversion = _conversion()
+    unknown_price = _price(status="future_status")
+    summary = build_smart_result_summary(
+        conversion,
+        money_context=_context(conversion, prices=(unknown_price,)),
+    )
+
+    assert summary.kind is SmartResultSummaryKind.REFERENCE
+    assert "reference conversion" in summary.text
+
+
 def test_mismatched_money_context_is_ignored_fail_closed():
     conversion = _conversion()
     other_conversion = _conversion(output=Decimal("34900"))
