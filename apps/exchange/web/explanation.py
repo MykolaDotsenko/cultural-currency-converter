@@ -9,6 +9,11 @@ from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_http_methods
 
+from apps.exchange.ai.intents import (
+    ExplanationIntentError,
+    ensure_explanation_intent_available,
+    parse_explanation_intent,
+)
 from apps.exchange.trusted_snapshot import (
     TrustedSnapshotTokenError,
     load_trusted_conversion_snapshot_token,
@@ -36,15 +41,30 @@ def conversion_explanation_view(
         response_status = 422
         explanation_error = {
             "title": "This explanation request is no longer valid.",
-            "detail": "Run the conversion again, then choose Explain this.",
+            "detail": "Run the conversion again, then choose one of the suggested questions.",
         }
     else:
-        service = explanation_service_factory()
-        delivery = service.explain(snapshot)
-        explanation = {
-            "result": delivery.result,
-            "cache_status": delivery.cache_status,
-        }
+        try:
+            intent = parse_explanation_intent(request.POST.get("prompt_id"))
+            intent_spec = ensure_explanation_intent_available(
+                intent,
+                historical=snapshot.historical,
+                stale=snapshot.stale,
+            )
+        except ExplanationIntentError:
+            response_status = 422
+            explanation_error = {
+                "title": "This explanation question is not available.",
+                "detail": "Choose one of the suggested questions for this conversion.",
+            }
+        else:
+            service = explanation_service_factory()
+            delivery = service.explain(snapshot, intent=intent)
+            explanation = {
+                "result": delivery.result,
+                "cache_status": delivery.cache_status,
+                "question": intent_spec.question,
+            }
 
     context = {
         "explanation": explanation,
