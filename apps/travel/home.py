@@ -82,9 +82,7 @@ class ReturningTripHome:
     @property
     def timing_label(self) -> str:
         if self.schedule.state is TripScheduleState.ACTIVE:
-            if self.schedule.end_date is None:
-                return "Your saved travel window is active."
-            return f"Travel window active through {self.schedule.end_date:%-d %b %Y}."
+            return "Your saved travel window is active."
         if self.schedule.state is TripScheduleState.STARTED:
             return "Your saved start date has arrived; no end date is stored."
         days = self.schedule.days_until_start or 0
