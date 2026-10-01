@@ -152,6 +152,8 @@ Important meaning includes:
 
 A typical price is an example, not a universal price for a country. Published city observations must satisfy the reusable city-price quality contract; stale or otherwise invalid records are not promoted into current destination context.
 
+City coverage health is a derived maintenance view, not a persisted domain entity. For each active canonical city it reports the current primary currency, currently usable fresh city categories, stale city categories, fresh national fallback categories and provenance gaps. `total_supported_categories` means categories currently usable by runtime city context (fresh city evidence plus fresh national fallback). The diagnostic `coverage_score` uses only the four core maintenance categories and must never be exposed as affordability, value, cost-of-living or destination quality.
+
 When a city is explicitly requested, city-scoped observations take priority and only clearly national observations may fill missing categories. Data from another city must never be substituted silently. National fallback remains visibly labelled as a national estimate.
 
 ## Story/cultural facts
