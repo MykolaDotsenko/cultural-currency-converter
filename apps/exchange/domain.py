@@ -97,6 +97,11 @@ class FxSourcePolicy:
 
 DEFAULT_SOURCE_POLICY = FxSourcePolicy()
 
+# Provider attribution is external provenance, so keep it bounded consistently
+# across signed snapshots and durable saved-scenario observations.
+MAX_PROVIDER_KEYS = 128
+MAX_PROVIDER_KEY_LENGTH = 80
+
 MAX_RATE_SIGNIFICANT_DIGITS = 64
 MAX_RATE_ABS_ADJUSTED_EXPONENT = 100
 
