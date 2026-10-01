@@ -72,7 +72,7 @@ def destination_comparison_view(
                     destination_city_slug=cleaned["left_destination_city_slug"],
                 ),
                 latest_gateway_factory=shared_gateway_factory,
-                historical_gateway_factory=_historical_gateway_not_allowed
+                historical_gateway_factory=_historical_gateway_not_allowed,
                 context_as_of=context_as_of,
             )
             if left_submission.error is not None or left_submission.money_context is None:
