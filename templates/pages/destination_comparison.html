@@ -20,7 +20,6 @@
       scope, rate date, provider attribution and local-price provenance.
     </p>
   </section>
-
   <section class="qa-destination-comparison"
            aria-labelledby="destination-comparison-form-title">
     <div class="qa-destination-comparison__instrument">
@@ -32,7 +31,6 @@
           index. Missing categories stay missing instead of being guessed.
         </p>
       </div>
-
       {% if form.errors %}
         <div class="qa-inline-alert qa-inline-alert--error"
              id="destination-comparison-errors"
@@ -51,20 +49,17 @@
           </ul>
         </div>
       {% endif %}
-
       {% if comparison_error %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
           <h3>{{ comparison_error.title }}</h3>
           <p>{{ comparison_error.detail }}</p>
         </div>
       {% endif %}
-
       {% if reference_data_ready %}
         <form method="post"
               action="{% url 'destination_comparison' %}"
               class="qa-destination-comparison__form">
           {% csrf_token %}
-
           <div class="qa-destination-comparison__money">
             <label class="qa-field{% if form.amount.errors %} qa-field--error{% endif %}">
               <span class="qa-field__label">{{ form.amount.label }}</span>
@@ -85,7 +80,6 @@
               {% endif %}
             </label>
           </div>
-
           <div class="qa-destination-comparison__destinations">
             <label class="qa-field{% if form.left_destination.errors %} qa-field--error{% endif %}">
               <span class="qa-foundation-kicker">A</span>
@@ -110,7 +104,6 @@
               {% endif %}
             </label>
           </div>
-
           <div class="qa-destination-comparison__trip">
             <label class="qa-field{% if form.duration_days.errors %} qa-field--error{% endif %}">
               <span class="qa-field__label">{{ form.duration_days.label }}</span>
@@ -119,7 +112,8 @@
                 <span class="qa-field__message qa-field__message--error"
                       id="duration_days-error">{{ form.duration_days.errors.0 }}</span>
               {% endif %}
-              <span class="qa-field__message" id="duration_days-hint">Same calendar duration on both sides.</span>
+              <span class="qa-field__message"
+                    id="duration_days-hint">Same calendar duration on both sides.</span>
             </label>
             <label class="qa-field{% if form.travelers.errors %} qa-field--error{% endif %}">
               <span class="qa-field__label">{{ form.travelers.label }}</span>
@@ -128,10 +122,10 @@
                 <span class="qa-field__message qa-field__message--error"
                       id="travelers-error">{{ form.travelers.errors.0 }}</span>
               {% endif %}
-              <span class="qa-field__message" id="travelers-hint">Same number of travelers on both sides.</span>
+              <span class="qa-field__message"
+                    id="travelers-hint">Same number of travelers on both sides.</span>
             </label>
           </div>
-
           <fieldset class="qa-destination-comparison__basket">
             <legend class="qa-field__label">Daily reference basket</legend>
             <p class="qa-field__message">
@@ -154,7 +148,6 @@
               {% endfor %}
             </div>
           </fieldset>
-
           <div class="qa-destination-comparison__action">
             <button class="qa-primary-button" type="submit">Compare destinations</button>
             <p>
@@ -172,7 +165,6 @@
       {% endif %}
     </div>
   </section>
-
   {% if comparison %}
     <section class="qa-destination-comparison__results"
              aria-labelledby="destination-comparison-results-title">
@@ -193,7 +185,6 @@
           {% endif %}
         </p>
       </div>
-
       <div class="qa-destination-comparison__grid">
         {% with side=comparison.left %}
           {% include "components/comparison/destination_side.html" %}
@@ -202,7 +193,6 @@
           {% include "components/comparison/destination_side.html" %}
         {% endwith %}
       </div>
-
       <div class="qa-destination-comparison__caveat">
         <strong>No winner is calculated.</strong>
         <span>
