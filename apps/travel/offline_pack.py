@@ -143,7 +143,9 @@ def build_offline_destination_pack(
             quote_currency=scenario.destination_currency.code,
             as_of=selected_date,
             price_limit=6,
-            city_slug=scenario.destination_city.slug if scenario.destination_city is not None else "",
+            city_slug=scenario.destination_city.slug
+            if scenario.destination_city is not None
+            else "",
         )
     except (DatabaseError, DecimalException, ValueError) as exc:
         logger.warning(
