@@ -18,6 +18,7 @@ class AIConfig:
     provider: str
     text_model: str
     runtime_explanation_enabled: bool
+    runtime_test_fixture_enabled: bool
     camera_extraction_enabled: bool
     editorial_generation_enabled: bool
     image_generation_enabled: bool
@@ -60,6 +61,22 @@ def _parse_bool(
     raise ConfigurationError(f"{name} must be a boolean value.")
 
 
+def _parse_runtime_test_fixture_enabled(values: Mapping[str, str]) -> bool:
+    raw = _optional(values, "AI_RUNTIME_TEST_FIXTURE_ENABLED")
+    if raw is None:
+        return False
+    normalized = raw.casefold()
+    if normalized in _FALSE_VALUES:
+        return False
+    if normalized not in _TRUE_VALUES:
+        raise ConfigurationError("AI_RUNTIME_TEST_FIXTURE_ENABLED must be a boolean value.")
+    if (_optional(values, "APP_ENV") or "").casefold() != "test":
+        raise ConfigurationError(
+            "AI_RUNTIME_TEST_FIXTURE_ENABLED is allowed only when APP_ENV=test."
+        )
+    return True
+
+
 def _parse_timeout(environ: Mapping[str, str]) -> float:
     raw = _optional(environ, "AI_TIMEOUT_SECONDS") or "5"
     try:
@@ -92,6 +109,7 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         "AI_RUNTIME_EXPLANATION_ENABLED",
         default=False,
     )
+    runtime_test_fixture_enabled = _parse_runtime_test_fixture_enabled(values)
     camera_enabled = _parse_bool(
         values,
         "AI_CAMERA_EXTRACTION_ENABLED",
@@ -125,7 +143,12 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         raise ConfigurationError(
             "AI_IMAGE_GENERATION_ENABLED is disabled in the public runtime architecture."
         )
-    if (runtime_enabled or camera_enabled) and not api_key:
+    if runtime_test_fixture_enabled and not runtime_enabled:
+        raise ConfigurationError(
+            "AI_RUNTIME_TEST_FIXTURE_ENABLED requires AI_RUNTIME_EXPLANATION_ENABLED=true."
+        )
+    live_runtime_requires_key = runtime_enabled and not runtime_test_fixture_enabled
+    if (live_runtime_requires_key or camera_enabled) and not api_key:
         raise ConfigurationError(
             "GEMINI_API_KEY is required when live runtime AI or camera extraction is enabled."
         )
@@ -134,6 +157,7 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         provider=provider,
         text_model=model,
         runtime_explanation_enabled=runtime_enabled,
+        runtime_test_fixture_enabled=runtime_test_fixture_enabled,
         camera_extraction_enabled=camera_enabled,
         editorial_generation_enabled=editorial_enabled,
         image_generation_enabled=image_enabled,
