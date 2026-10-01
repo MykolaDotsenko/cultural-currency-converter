@@ -195,7 +195,7 @@ Current UX rules:
 - changing the destination country or swapping sides clears stale city scope rather than applying a city to the wrong country;
 - users can still change currency manually once they reach the converter.
 
-Future work may add My Places, returning-user shortcuts or optional coarse location assistance. Any location assistance must remain opt-in and must never silently persist travel history.
+Future work may add My Places or optional coarse location assistance. Returning-user continuity is already available on the clean converter home for relevant saved trips. Any location assistance must remain opt-in and must never silently persist travel history.
 
 ## Destination comparison flow
 
@@ -217,13 +217,13 @@ UX rules:
 - a provider failure on either required side produces a neutral recoverable state rather than silently comparing one real side with one inferred side;
 - the surface remains usable without JavaScript and has browser QA coverage.
 
-Saved comparisons and Explore-level discovery remain future work.
+Saved comparisons remain future work. The first Explore discovery slice is now shipped and hands reviewed country/canonical-city scopes back to the canonical converter.
 
 ## Discovery / Explore experience
 
-A future Explore surface can make the product useful even when the user is not performing an immediate conversion.
+The first Explore surface is now shipped as a provider-free discovery page over reviewed current destination context. It is alphabetical, requires explicit canonical city price evidence before presenting a city card, keeps national fallback visibly scoped, and hands a selected destination back to the canonical converter. It performs no live FX or AI request and does not rank destinations.
 
-Potential discovery collections include:
+Future discovery expansion may add:
 
 - what the same source amount roughly means across destinations;
 - card-first versus cash-relevant destinations;
