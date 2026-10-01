@@ -289,6 +289,8 @@ Candidate set:
 
 Exact cities may change based on defensible source availability.
 
+**Current production slice:** the first reviewed wave deliberately ships six deep city scopes rather than twelve shallow ones: Helsinki, Turku, Stockholm, Copenhagen, Oslo and Berlin. Each canonical `City` has four fresh city-specific `TypicalPrice` anchors covering coffee, casual meal, transit and a fixed grocery basket, for 24 rows total. Coffee/meal/grocery ranges are city-level contextual snapshots with explicit provenance, review/observation date, medium confidence and transparent fixed-basket derivation; transit anchors use the relevant official operator with authoritative/high-confidence classification. Every seeded row is validated through the existing #188 `TypicalPrice.full_clean()` contract before persistence, uses the country's current primary currency, and reaches 4/4 direct fresh core categories in the #189 maintenance health diagnostic without national fallback. This dataset does not create affordability, value or cost-of-living rankings, and it does not promote national evidence to city evidence.
+
 ## PR #191 — Curated city dataset wave 2
 
 Expand to high-value Asia/Oceania/North America destinations with the same quality contract.
