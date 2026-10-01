@@ -12,7 +12,7 @@ from django.db import transaction
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
-from apps.exchange.domain import MAX_PROVIDER_KEY_LENGTH, MAX_PROVIDER_KEYS, ConversionResult
+from apps.exchange.domain import ConversionResult, FxDomainError, normalize_provider_keys
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetItem,
@@ -340,17 +340,10 @@ def _validate_budget_categories(items: Iterable[BudgetCategoryAssumption]) -> No
 
 
 def _provider_keys(values: tuple[str, ...]) -> list[str]:
-    if len(values) > MAX_PROVIDER_KEYS:
-        raise SavedScenarioError("Conversion provider attribution is too large to persist.")
-    normalized: list[str] = []
-    for value in values:
-        if not isinstance(value, str):
-            raise SavedScenarioError("Conversion provider attribution is invalid.")
-        key = value.strip()
-        if not key or len(key) > MAX_PROVIDER_KEY_LENGTH:
-            raise SavedScenarioError("Conversion provider attribution is invalid.")
-        normalized.append(key)
-    return normalized
+    try:
+        return list(normalize_provider_keys(values))
+    except FxDomainError as exc:
+        raise SavedScenarioError("Conversion provider attribution is invalid.") from exc
 
 
 def _validation_message(exc: ValidationError) -> str:
