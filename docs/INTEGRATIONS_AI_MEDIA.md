@@ -191,11 +191,13 @@ A model failure, timeout or validation failure must leave the deterministic resu
 
 The configured provider/model is an implementation choice and may change after quality, latency, cost and reliability evaluation.
 
-## Future multimodal inputs
+## Multimodal inputs
 
-Camera or voice features are future capabilities, not current runtime requirements.
+Camera extraction now has a bounded, optional runtime foundation; voice remains future work.
 
-If introduced, a camera flow may help interpret user-supplied menus, receipts, shelf prices or ATM screens. A voice flow may make trip/budget questions easier during travel. Both require stricter privacy boundaries than ordinary destination context:
+The current camera path can inspect a user-supplied menu, receipt, shelf price or ATM screen for **one** proposed amount/currency candidate. It is feature-flagged, schema-constrained and requires explicit review before the canonical converter receives user-confirmed values. Raw image bytes are not persisted by the app. When enabled, the selected image is sent to the configured Gemini provider for extraction.
+
+Voice may later make trip/budget questions easier during travel. Both camera and any future voice path require stricter privacy boundaries than ordinary destination context:
 
 - explicit user action before capture/upload;
 - minimize retained raw image/audio;
