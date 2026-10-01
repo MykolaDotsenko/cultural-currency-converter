@@ -122,7 +122,7 @@
           {% for row in candidate_rows %}
             <article class="qa-saved-row">
               <div class="qa-saved-row__copy">
-                <h3>{{ row.candidate.amount|floatformat:"-12" }} {{ row.display_currency }}</h3>
+                <h3>{{ row.display_amount }} {{ row.display_currency }}</h3>
                 <p class="qa-saved-row__meta">
                   {{ row.candidate.kind|title }} · {{ row.candidate.confidence|title }} extraction confidence
                 </p>
