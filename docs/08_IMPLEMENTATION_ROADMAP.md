@@ -135,6 +135,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Let a user compare what the same source amount roughly means across two destinations.
    - Compare sourced everyday-value, payment-context and budget assumptions side by side while keeping currency/country identity distinct.
    - Avoid flattening country-wide estimates into false precision; city/scope differences must remain visible.
+   - **Current foundation:** a deterministic comparison domain now requires the same source amount/currency on both sides, reuses one MoneyContext and one shared reference-budget assumption set per destination, preserves city/national scope and payment guidance, reports partial coverage without inventing missing categories, and intentionally exposes no winner/ranking or cross-currency price ratio. User-facing comparison entry, two-destination quote orchestration and presentation remain future work.
 
 16. **Product modes: Quick / Travel / Budget / Shopping — 80/100**
    - Use one shared conversion/domain engine and expose progressively richer workflows rather than building four separate products.
