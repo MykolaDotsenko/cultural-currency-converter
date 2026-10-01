@@ -177,7 +177,7 @@ def test_owner_downloads_self_contained_offline_pack_with_saved_freshness_semant
     html = response.content.decode("utf-8").lower()
     assert "<script" not in html
     assert 'rel="stylesheet"' not in html
-    assert "data-offline-pack-version=\"1\"" in html
+    assert 'data-offline-pack-version="1"' in html
 
 
 @pytest.mark.django_db
@@ -240,4 +240,7 @@ def test_saved_budget_detail_exposes_offline_pack_action(client, offline_pack_sc
 
     assert response.status_code == 200
     assert b"Download offline pack" in response.content
-    assert reverse("download_offline_destination_pack", args=(scenario.pk,)).encode() in response.content
+    assert (
+        reverse("download_offline_destination_pack", args=(scenario.pk,)).encode()
+        in response.content
+    )
