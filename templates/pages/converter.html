@@ -19,6 +19,9 @@
       Rates stay precise; culture, prices and payment guidance stay clearly sourced.
     </p>
   </section>
+  {% if returning_trip_home %}
+    {% include "travel/returning_trip_home.html" %}
+  {% endif %}
   {% include "components/converter/current_panel.html" %}
   <p id="conversion-announcer"
      class="qa-visually-hidden"

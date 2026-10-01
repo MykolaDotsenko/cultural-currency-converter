@@ -1,0 +1,107 @@
+<section class="qa-saved-section qa-returning-trip-home"
+         aria-labelledby="returning-trip-home-title">
+  <div class="qa-saved-section__heading">
+    <div>
+      <p class="qa-foundation-kicker">{{ returning_trip_home.kicker }}</p>
+      <h2 id="returning-trip-home-title">
+        {{ returning_trip_home.scenario.title|default:returning_trip_home.destination_label }}
+      </h2>
+      <p>{{ returning_trip_home.destination_label }} · {{ returning_trip_home.timing_label }}</p>
+    </div>
+    <div class="qa-saved-row__actions">
+      <a class="qa-primary-button"
+         href="{{ returning_trip_home.detail_url }}">{{ returning_trip_home.primary_action_label }}</a>
+      {% if returning_trip_home.camera_url %}
+        <a class="qa-secondary-button"
+           href="{{ returning_trip_home.camera_url }}">Scan a price</a>
+      {% else %}
+        <a class="qa-secondary-button"
+           href="{{ returning_trip_home.converter_url }}">Open money context</a>
+      {% endif %}
+      {% if returning_trip_home.offline_pack_url %}
+        <a class="qa-secondary-button"
+           href="{{ returning_trip_home.offline_pack_url }}">Offline pack</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="qa-saved-list">
+    {% if returning_trip_home.trip_budget %}
+      <article class="qa-saved-row">
+        <div class="qa-saved-row__copy">
+          <h3>Saved trip budget</h3>
+          {% if returning_trip_home.trip_budget.is_over_reference %}
+            <p>
+              {{ returning_trip_home.trip_budget.over_reference|floatformat:"-12" }}
+              {{ returning_trip_home.scenario.destination_currency.code }} over the saved reference
+            </p>
+          {% else %}
+            <p>
+              {{ returning_trip_home.trip_budget.remaining|floatformat:"-12" }}
+              {{ returning_trip_home.scenario.destination_currency.code }} remaining
+            </p>
+          {% endif %}
+          {% if returning_trip_home.trip_budget.remaining_per_day is not None %}
+            <p class="qa-saved-row__meta">
+              About {{ returning_trip_home.trip_budget.remaining_per_day|floatformat:"-12" }}
+              {{ returning_trip_home.scenario.destination_currency.code }} {{ returning_trip_home.budget_day_label }}
+            </p>
+          {% endif %}
+        </div>
+      </article>
+    {% endif %}
+    {% if returning_trip_home.rate_comparison %}
+      <article class="qa-saved-row">
+        <div class="qa-saved-row__copy">
+          <h3>Since saved</h3>
+          <p>{{ returning_trip_home.rate_change_phrase }}</p>
+          <p class="qa-saved-row__meta">
+            {{ returning_trip_home.rate_comparison.rate_difference_percent|floatformat:"-1" }}%
+            reference-rate change · latest stored observation
+            {{ returning_trip_home.latest_observation.effective_date|date:"j M Y" }}
+          </p>
+        </div>
+      </article>
+    {% elif returning_trip_home.initial_observation %}
+      <article class="qa-saved-row">
+        <div class="qa-saved-row__copy">
+          <h3>Saved FX baseline</h3>
+          <p>
+            {{ returning_trip_home.initial_observation.output_amount|floatformat:"-12" }}
+            {{ returning_trip_home.scenario.destination_currency.code }}
+          </p>
+          <p class="qa-saved-row__meta">
+            Effective {{ returning_trip_home.initial_observation.effective_date|date:"j M Y" }}
+            · no later re-check stored
+          </p>
+        </div>
+      </article>
+    {% endif %}
+    {% if returning_trip_home.latest_price_observed_at or returning_trip_home.payment_verified_at %}
+      <article class="qa-saved-row">
+        <div class="qa-saved-row__copy">
+          <h3>Local context</h3>
+          <p>
+            {% if returning_trip_home.destination_context.city_name %}
+              {{ returning_trip_home.destination_context.city_name }} scope
+            {% else %}
+              {{ returning_trip_home.destination_label }}
+            {% endif %}
+          </p>
+          <p class="qa-saved-row__meta">
+            {% if returning_trip_home.latest_price_observed_at %}
+              Price evidence observed through {{ returning_trip_home.latest_price_observed_at|date:"j M Y" }}
+            {% endif %}
+            {% if returning_trip_home.latest_price_observed_at and returning_trip_home.payment_verified_at %}·{% endif %}
+            {% if returning_trip_home.payment_verified_at %}
+              payment guidance reviewed {{ returning_trip_home.payment_verified_at|date:"j M Y" }}
+            {% endif %}
+          </p>
+        </div>
+      </article>
+    {% endif %}
+  </div>
+  <p class="qa-saved-state__privacy">
+    This continuity view uses saved observations and reviewed local context only.
+    It does not refresh the FX rate automatically.
+  </p>
+</section>

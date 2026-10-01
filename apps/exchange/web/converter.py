@@ -4,6 +4,7 @@ import logging
 from collections.abc import Callable
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
@@ -30,6 +31,7 @@ from apps.exchange.providers.base import (
     FxProviderUnsupportedPair,
 )
 from apps.exchange.web.common import is_history_restore, is_htmx
+from apps.travel.home import build_returning_trip_home
 
 logger = logging.getLogger("cultural_currency.exchange")
 
@@ -244,6 +246,7 @@ def converter_view(
     is_user_favourite_fn: Callable[..., bool],
 ) -> HttpResponse:
     convert_requested = False
+    load_pair_requested = False
     conversion_active = False
 
     if request.method == "POST":
@@ -394,6 +397,27 @@ def converter_view(
     )
     context["account_favourite_saved"] = account_favourite_saved
     context["account_recent_history_recorded"] = account_recent_history_recorded
+
+    returning_trip_home = None
+    if (
+        request.method == "GET"
+        and not convert_requested
+        and not load_pair_requested
+        and request.user.is_authenticated
+        and not is_htmx(request)
+    ):
+        try:
+            returning_trip_home = build_returning_trip_home(
+                request.user,
+                camera_enabled=bool(settings.AI_CAMERA_EXTRACTION_ENABLED),
+            )
+        except DatabaseError as exc:
+            logger.warning(
+                "Returning-trip home composition failed",
+                extra={"error_code": exc.__class__.__name__},
+            )
+    context["returning_trip_home"] = returning_trip_home
+
     fragment = is_htmx(request) and not is_history_restore(request)
     template = "components/converter/current_panel.html" if fragment else "pages/converter.html"
     response = render(request, template, context, status=response_status)

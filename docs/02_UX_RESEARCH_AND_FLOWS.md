@@ -267,6 +267,8 @@ A useful returning-user summary can show:
 
 Do not turn this into a dense travel dashboard. The purpose is to remove repeated setup and surface the next useful action.
 
+**Current production slice:** on a clean authenticated converter home, the product selects one account-owned active/started/upcoming trip without making a live FX request. Active travel takes priority, then a started trip without an end date, then the nearest upcoming trip. The surface can show remaining saved-trip budget, the latest stored re-check difference from the immutable saved baseline, reviewed city/country context freshness and quick actions into the saved trip, Camera or offline pack. Anonymous users, explicit conversion deep links, loaded pairs, ended trips and unscheduled scenarios remain converter-first.
+
 ### Camera confirmation → trip budget handoff
 
 Camera extraction and spend persistence remain two separate user decisions.
