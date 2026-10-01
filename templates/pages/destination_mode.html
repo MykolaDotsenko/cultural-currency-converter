@@ -20,7 +20,8 @@
     </p>
   </section>
 
-  <section class="qa-destination-mode" aria-labelledby="destination-mode-form-title">
+  <section class="qa-destination-mode"
+           aria-labelledby="destination-mode-form-title">
     <div class="qa-destination-mode__instrument">
       <div class="qa-destination-mode__heading">
         <p class="qa-foundation-kicker">Plan a reference conversion</p>
@@ -69,9 +70,8 @@
               </label>
               {{ form.source_currency }}
               {% if form.source_currency.errors %}
-                <p class="qa-field__message qa-field__message--error" id="source_currency-error">
-                  {{ form.source_currency.errors.0 }}
-                </p>
+                <p class="qa-field__message qa-field__message--error"
+                   id="source_currency-error">{{ form.source_currency.errors.0 }}</p>
               {% endif %}
             </div>
           </div>
@@ -82,9 +82,8 @@
             </label>
             {{ form.destination }}
             {% if form.destination.errors %}
-              <p class="qa-field__message qa-field__message--error" id="destination-error">
-                {{ form.destination.errors.0 }}
-              </p>
+              <p class="qa-field__message qa-field__message--error"
+                 id="destination-error">{{ form.destination.errors.0 }}</p>
             {% else %}
               <p class="qa-field__message">
                 Choose a city when available for city-scoped local-value context, or choose the
@@ -110,7 +109,8 @@
       {% endif %}
     </div>
 
-    <aside class="qa-destination-mode__principles" aria-label="Destination mode trust model">
+    <aside class="qa-destination-mode__principles"
+           aria-label="Destination mode trust model">
       <p class="qa-foundation-kicker">Same engine, less setup</p>
       <dl>
         <div>
