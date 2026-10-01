@@ -389,7 +389,10 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     except (Currency.DoesNotExist, Country.DoesNotExist, City.DoesNotExist) as exc:
         logger.warning(
             "saved_budget_scenario_rejected",
-            extra={"error_code": "destination_metadata_missing", "detail_code": exc.__class__.__name__},
+            extra={
+                "error_code": "destination_metadata_missing",
+                "detail_code": exc.__class__.__name__,
+            },
         )
         messages.error(
             request,
@@ -399,7 +402,10 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     except DatabaseError as exc:
         logger.warning(
             "saved_budget_scenario_rejected",
-            extra={"error_code": "metadata_database_unavailable", "detail_code": exc.__class__.__name__},
+            extra={
+                "error_code": "metadata_database_unavailable",
+                "detail_code": exc.__class__.__name__,
+            },
         )
         messages.error(
             request,
@@ -483,7 +489,10 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     except DatabaseError as exc:
         logger.warning(
             "saved_budget_scenario_rejected",
-            extra={"error_code": "scenario_database_unavailable", "detail_code": exc.__class__.__name__},
+            extra={
+                "error_code": "scenario_database_unavailable",
+                "detail_code": exc.__class__.__name__,
+            },
         )
         messages.error(
             request,
