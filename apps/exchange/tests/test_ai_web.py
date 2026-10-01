@@ -10,7 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
-from apps.exchange.ai.contracts import ExplanationBullet, ExplanationResult
+from apps.exchange.ai.contracts import ExplanationInsight, ExplanationResult
 from apps.exchange.ai.intents import ExplanationIntent
 from apps.exchange.ai.service import ExplanationDelivery
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
@@ -83,16 +83,26 @@ class StubService:
         self.intents.append(intent)
         return ExplanationDelivery(
             result=ExplanationResult(
-                headline="Reference conversion explained",
-                bullets=(
-                    ExplanationBullet(
-                        text="100 EUR is approximately 17450 JPY.",
-                        supporting_fact_ids=("conversion",),
+                short_answer=ExplanationInsight(
+                    text="100 EUR is approximately 17450 JPY.",
+                    supporting_fact_ids=("conversion",),
+                ),
+                key_factors=(
+                    ExplanationInsight(
+                        text="The displayed reference rate is 1 EUR = 174.50 JPY.",
+                        supporting_fact_ids=("rate",),
                     ),
                 ),
-                caveat=(
-                    "Reference exchange rates are informational. Payment providers may use "
-                    "different rates or add fees."
+                watch_out_for=ExplanationInsight(
+                    text=(
+                        "Reference exchange rates are informational. Payment providers may use "
+                        "different rates or add fees."
+                    ),
+                    supporting_fact_ids=("reference_scope",),
+                ),
+                next_step=ExplanationInsight(
+                    text="Use this reference observation as a comparison point.",
+                    supporting_fact_ids=("reference_scope",),
                 ),
                 generated=self.generated,
                 source_label=(
@@ -216,6 +226,9 @@ def test_explicit_htmx_explain_uses_signed_snapshot_and_ignores_arbitrary_prompt
     assert b"<html" not in response.content
     assert b"AI-generated explanation" in response.content
     assert b"100 EUR is approximately 17450 JPY" in response.content
+    assert b"What matters most" in response.content
+    assert b"Watch out for" in response.content
+    assert b"Next step" in response.content
     assert len(service.snapshots) == 1
     snapshot = service.snapshots[0]
     assert snapshot.base_currency == "EUR"

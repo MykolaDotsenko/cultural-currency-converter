@@ -12,6 +12,7 @@ from django.db import DatabaseError, transaction
 from django.test import override_settings
 
 from apps.exchange.ai.contracts import ProviderExplanation
+from apps.exchange.ai.intents import ExplanationIntent
 from apps.exchange.ai.service import (
     AITransactionPolicyError,
     RuntimeExplanationService,
@@ -50,12 +51,11 @@ def snapshot():
 
 def _payload():
     return {
-        "headline": "Reference conversion explained",
-        "bullets": [
-            {
-                "text": "100 EUR is approximately 17450 JPY.",
-                "supporting_fact_ids": ["conversion"],
-            },
+        "short_answer": {
+            "text": "100 EUR is approximately 17450 JPY.",
+            "supporting_fact_ids": ["conversion"],
+        },
+        "key_factors": [
             {
                 "text": "The displayed rate is 1 EUR = 174.5 JPY and attribution includes ECB.",
                 "supporting_fact_ids": ["rate", "provider"],
@@ -65,10 +65,17 @@ def _payload():
                 "supporting_fact_ids": ["effective_date"],
             },
         ],
-        "caveat": (
-            "Reference exchange rates are informational; payment providers may use different "
-            "rates or add fees."
-        ),
+        "watch_out_for": {
+            "text": (
+                "Reference exchange rates are informational; payment providers may use different "
+                "rates or add fees."
+            ),
+            "supporting_fact_ids": ["reference_scope"],
+        },
+        "next_step": {
+            "text": "Use this reference observation as a comparison point for any provider quote.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
     }
 
 
@@ -116,6 +123,8 @@ def test_live_explanation_is_validated_persisted_reused_and_observable(snapshot,
     assert stored.output_tokens == 60
     assert stored.total_tokens == 180
     assert stored.provider_response_id == "response-1"
+    assert stored.prompt_version == "exchange.runtime_explanation:v3"
+    assert stored.schema_version == "runtime-explanation:v2"
 
     success = next(
         record for record in caplog.records if record.msg == "AI runtime explanation success"
@@ -155,6 +164,10 @@ def test_provider_failure_returns_deterministic_fallback_sets_cooldown_and_logs(
     assert first.result.generated is False
     assert first.cache_status == "deterministic_fallback"
     assert "temporarily unavailable" in first.result.fallback_reason
+    assert first.result.short_answer.text
+    assert first.result.key_factors
+    assert first.result.watch_out_for.supporting_fact_ids == ("reference_scope",)
+    assert first.result.next_step.supporting_fact_ids
     assert second.result.generated is False
     assert "cooling down" in second.result.fallback_reason
     assert drafter.calls == 1
@@ -174,7 +187,7 @@ def test_provider_failure_returns_deterministic_fallback_sets_cooldown_and_logs(
 @pytest.mark.django_db(transaction=True)
 def test_schema_valid_but_semantically_invalid_output_falls_back(snapshot):
     payload = _payload()
-    payload["bullets"][0]["supporting_fact_ids"] = ["invented_fact"]
+    payload["short_answer"]["supporting_fact_ids"] = ["invented_fact"]
     drafter = FakeDrafter(payload=payload)
     service = RuntimeExplanationService(
         enabled=True,
@@ -186,6 +199,40 @@ def test_schema_valid_but_semantically_invalid_output_falls_back(snapshot):
 
     assert delivery.result.generated is False
     assert RuntimeExplanationCache.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_historical_fallback_keeps_purchasing_power_boundary():
+    snapshot = TrustedConversionSnapshot(
+        input_amount=Decimal("100.00"),
+        output_amount=Decimal("17450"),
+        base_currency="EUR",
+        quote_currency="JPY",
+        rate=Decimal("174.50"),
+        requested_date=date(1998, 6, 14),
+        effective_date=date(1998, 6, 12),
+        historical=True,
+        observation_granularity=ObservationGranularity.DAILY,
+        provider_keys=("ecb",),
+        stale=False,
+    )
+    service = RuntimeExplanationService(
+        enabled=False,
+        model="gemini-3.1-flash-lite",
+        drafter=None,
+    )
+
+    delivery = service.explain(snapshot, intent=ExplanationIntent.HISTORICAL_CONTEXT)
+
+    assert delivery.result.generated is False
+    assert delivery.result.watch_out_for.text == (
+        "Historical FX does not describe historical purchasing power."
+    )
+    assert delivery.result.watch_out_for.supporting_fact_ids == ("historical_scope",)
+    assert delivery.result.next_step.supporting_fact_ids == (
+        "requested_date",
+        "effective_date",
+    )
 
 
 @pytest.mark.django_db
@@ -215,14 +262,19 @@ def test_corrupt_persistent_cache_is_deleted_before_live_generation(snapshot):
     service.explain(snapshot)
     stored = RuntimeExplanationCache.objects.get()
     stored.result = {
-        "headline": "Bad",
-        "bullets": [
-            {
-                "text": "100 USD is better.",
-                "supporting_fact_ids": ["conversion"],
-            }
-        ],
-        "caveat": "Bad cache.",
+        "short_answer": {
+            "text": "100 USD is better.",
+            "supporting_fact_ids": ["conversion"],
+        },
+        "key_factors": [],
+        "watch_out_for": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
+        "next_step": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
     }
     stored.save(update_fields=("result",))
 
@@ -386,14 +438,19 @@ def test_invalid_persistent_cache_cleanup_failure_still_regenerates(snapshot, ca
     seed_service.explain(snapshot)
     stored = RuntimeExplanationCache.objects.get()
     stored.result = {
-        "headline": "Bad",
-        "bullets": [
-            {
-                "text": "100 USD is better.",
-                "supporting_fact_ids": ["conversion"],
-            }
-        ],
-        "caveat": "Bad cache.",
+        "short_answer": {
+            "text": "100 USD is better.",
+            "supporting_fact_ids": ["conversion"],
+        },
+        "key_factors": [],
+        "watch_out_for": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
+        "next_step": {
+            "text": "Bad cache.",
+            "supporting_fact_ids": ["reference_scope"],
+        },
     }
     stored.save(update_fields=("result",))
 

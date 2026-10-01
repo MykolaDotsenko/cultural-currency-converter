@@ -14,14 +14,24 @@
       {% if explanation.question %}
         <p class="qa-field__message">{{ explanation.question }}</p>
       {% endif %}
-      <h3 id="conversion-explanation-title">{{ explanation.result.headline }}</h3>
+      <h3 id="conversion-explanation-title">{{ explanation.result.short_answer.text }}</h3>
     </div>
-    <ul class="qa-ai-explanation__bullets">
-      {% for bullet in explanation.result.bullets %}
-        <li>{{ bullet.text }}</li>
-      {% endfor %}
-    </ul>
-    <p>{{ explanation.result.caveat }}</p>
+    <div>
+      <p class="qa-foundation-kicker">What matters most</p>
+      <ul class="qa-ai-explanation__bullets">
+        {% for factor in explanation.result.key_factors %}
+          <li>{{ factor.text }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <p class="qa-foundation-kicker">Watch out for</p>
+      <p>{{ explanation.result.watch_out_for.text }}</p>
+    </div>
+    <div>
+      <p class="qa-foundation-kicker">Next step</p>
+      <p>{{ explanation.result.next_step.text }}</p>
+    </div>
     <p class="qa-ai-explanation__meta">
       {{ explanation.result.source_label }}.
       {% if not explanation.result.generated %}

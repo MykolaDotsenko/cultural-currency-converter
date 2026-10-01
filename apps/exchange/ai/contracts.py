@@ -54,31 +54,33 @@ class ExplanationPacket:
 
 
 @dataclass(frozen=True, slots=True)
-class ExplanationBullet:
+class ExplanationInsight:
     text: str
     supporting_fact_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
 class ExplanationResult:
-    headline: str
-    bullets: tuple[ExplanationBullet, ...]
-    caveat: str
+    short_answer: ExplanationInsight
+    key_factors: tuple[ExplanationInsight, ...]
+    watch_out_for: ExplanationInsight
+    next_step: ExplanationInsight
     generated: bool
     source_label: str
     fallback_reason: str = ""
 
     def as_json(self) -> dict[str, object]:
+        def serialize(item: ExplanationInsight) -> dict[str, object]:
+            return {
+                "text": item.text,
+                "supporting_fact_ids": list(item.supporting_fact_ids),
+            }
+
         return {
-            "headline": self.headline,
-            "bullets": [
-                {
-                    "text": bullet.text,
-                    "supporting_fact_ids": list(bullet.supporting_fact_ids),
-                }
-                for bullet in self.bullets
-            ],
-            "caveat": self.caveat,
+            "short_answer": serialize(self.short_answer),
+            "key_factors": [serialize(item) for item in self.key_factors],
+            "watch_out_for": serialize(self.watch_out_for),
+            "next_step": serialize(self.next_step),
             "generated": self.generated,
             "source_label": self.source_label,
             "fallback_reason": self.fallback_reason,

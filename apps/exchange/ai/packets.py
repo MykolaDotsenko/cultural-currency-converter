@@ -4,7 +4,7 @@ from apps.exchange.ai.contracts import ExplanationPacket, GroundedFact
 from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
 from apps.exchange.trusted_snapshot import TrustedConversionSnapshot
 
-PACKET_VERSION = "exchange-conversion:v2"
+PACKET_VERSION = "exchange-conversion:v3"
 
 
 def build_explanation_packet(
@@ -54,6 +54,12 @@ def build_explanation_packet(
             GroundedFact(
                 id="historical_status",
                 statement="This is a historical reference observation, not a current market quote.",
+            )
+        )
+        facts.append(
+            GroundedFact(
+                id="historical_scope",
+                statement="Historical FX does not describe historical purchasing power.",
             )
         )
 

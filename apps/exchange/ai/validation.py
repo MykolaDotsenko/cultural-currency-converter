@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from apps.exchange.ai.contracts import (
-    ExplanationBullet,
+    ExplanationInsight,
     ExplanationPacket,
     ExplanationResult,
 )
@@ -59,61 +59,90 @@ def validate_provider_payload(
     *,
     packet: ExplanationPacket,
 ) -> ExplanationResult:
-    if set(payload) != {"headline", "bullets", "caveat"}:
+    expected_fields = {"short_answer", "key_factors", "watch_out_for", "next_step"}
+    if set(payload) != expected_fields:
         raise ExplanationValidationError("Explanation output has unexpected top-level fields.")
 
-    headline = _validated_text(payload.get("headline"), field="headline", max_length=100)
-    caveat = _validated_text(payload.get("caveat"), field="caveat", max_length=240)
+    short_answer = _validated_insight(
+        payload.get("short_answer"),
+        packet=packet,
+        field="short answer",
+        max_length=220,
+    )
 
-    raw_bullets = payload.get("bullets")
-    if not isinstance(raw_bullets, list) or not 1 <= len(raw_bullets) <= 4:
-        raise ExplanationValidationError("Explanation must contain between 1 and 4 bullets.")
-
-    bullets: list[ExplanationBullet] = []
-    known_fact_ids = packet.fact_ids
-    for index, raw_bullet in enumerate(raw_bullets):
-        if not isinstance(raw_bullet, dict) or set(raw_bullet) != {
-            "text",
-            "supporting_fact_ids",
-        }:
-            raise ExplanationValidationError(f"Bullet {index + 1} has an invalid structure.")
-        text = _validated_text(
-            raw_bullet.get("text"),
-            field=f"bullet {index + 1}",
-            max_length=220,
+    raw_key_factors = payload.get("key_factors")
+    if not isinstance(raw_key_factors, list) or not 1 <= len(raw_key_factors) <= 3:
+        raise ExplanationValidationError("Explanation must contain between 1 and 3 key factors.")
+    key_factors = tuple(
+        _validated_insight(
+            raw_factor,
+            packet=packet,
+            field=f"key factor {index + 1}",
+            max_length=200,
         )
-        raw_ids = raw_bullet.get("supporting_fact_ids")
-        if not isinstance(raw_ids, list) or not 1 <= len(raw_ids) <= 6:
-            raise ExplanationValidationError(
-                f"Bullet {index + 1} must reference between 1 and 6 facts."
-            )
-        fact_ids: list[str] = []
-        for fact_id in raw_ids:
-            if not isinstance(fact_id, str) or fact_id not in known_fact_ids:
-                raise ExplanationValidationError(
-                    f"Bullet {index + 1} references an unknown fact ID."
-                )
-            if fact_id not in fact_ids:
-                fact_ids.append(fact_id)
-        bullets.append(ExplanationBullet(text=text, supporting_fact_ids=tuple(fact_ids)))
+        for index, raw_factor in enumerate(raw_key_factors)
+    )
 
-    cited_fact_ids = {fact_id for bullet in bullets for fact_id in bullet.supporting_fact_ids}
+    watch_out_for = _validated_insight(
+        payload.get("watch_out_for"),
+        packet=packet,
+        field="watch out for",
+        max_length=220,
+    )
+    next_step = _validated_insight(
+        payload.get("next_step"),
+        packet=packet,
+        field="next step",
+        max_length=220,
+    )
+
+    insights = (short_answer, *key_factors, watch_out_for, next_step)
+    cited_fact_ids = {fact_id for insight in insights for fact_id in insight.supporting_fact_ids}
     missing_required = set(packet.required_fact_ids) - cited_fact_ids
     if missing_required:
         raise ExplanationValidationError(
             "Explanation does not ground the selected question in its required facts."
         )
 
-    all_text = " ".join([headline, caveat, *(bullet.text for bullet in bullets)])
+    all_text = " ".join(insight.text for insight in insights)
     _validate_semantics(all_text, packet=packet)
 
     return ExplanationResult(
-        headline=headline,
-        bullets=tuple(bullets),
-        caveat=caveat,
+        short_answer=short_answer,
+        key_factors=key_factors,
+        watch_out_for=watch_out_for,
+        next_step=next_step,
         generated=True,
         source_label="AI-generated explanation",
     )
+
+
+def _validated_insight(
+    value: Any,
+    *,
+    packet: ExplanationPacket,
+    field: str,
+    max_length: int,
+) -> ExplanationInsight:
+    if not isinstance(value, dict) or set(value) != {"text", "supporting_fact_ids"}:
+        raise ExplanationValidationError(f"Explanation {field} has an invalid structure.")
+
+    text = _validated_text(value.get("text"), field=field, max_length=max_length)
+    raw_ids = value.get("supporting_fact_ids")
+    if not isinstance(raw_ids, list) or not 1 <= len(raw_ids) <= 6:
+        raise ExplanationValidationError(
+            f"Explanation {field} must reference between 1 and 6 facts."
+        )
+
+    fact_ids: list[str] = []
+    known_fact_ids = packet.fact_ids
+    for fact_id in raw_ids:
+        if not isinstance(fact_id, str) or fact_id not in known_fact_ids:
+            raise ExplanationValidationError(f"Explanation {field} references an unknown fact ID.")
+        if fact_id not in fact_ids:
+            fact_ids.append(fact_id)
+
+    return ExplanationInsight(text=text, supporting_fact_ids=tuple(fact_ids))
 
 
 def _validated_text(value: Any, *, field: str, max_length: int) -> str:
@@ -140,11 +169,11 @@ def _validated_text(value: Any, *, field: str, max_length: int) -> str:
 
 def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
     lowered = text.casefold()
-    if any(phrase in lowered for phrase in _FORBIDDEN_CAUSAL_PHRASES):
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_CAUSAL_PHRASES):
         raise ExplanationValidationError("Explanation makes an unsupported causal claim.")
-    if any(phrase in lowered for phrase in _FORBIDDEN_ADVICE_PHRASES):
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_ADVICE_PHRASES):
         raise ExplanationValidationError("Explanation contains financial or timing advice.")
-    if any(phrase in lowered for phrase in _FORBIDDEN_MARKET_INTERPRETATIONS):
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_MARKET_INTERPRETATIONS):
         raise ExplanationValidationError("Explanation adds unsupported market interpretation.")
     if "%" in text:
         raise ExplanationValidationError("Explanation introduces an unsupported percentage.")
@@ -170,6 +199,10 @@ def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
         identity = _decimal_identity(raw_number.replace(",", "."))
         if identity not in allowed_numbers:
             raise ExplanationValidationError("Explanation introduces an unsupported number.")
+
+
+def _contains_forbidden_phrase(text: str, phrases: tuple[str, ...]) -> bool:
+    return any(re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", text) for phrase in phrases)
 
 
 def _decimal_identity(value: str) -> Decimal:
