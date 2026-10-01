@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
@@ -32,6 +33,13 @@ from apps.travel.models import SavedScenario, SavedScenarioKind
 logger = logging.getLogger("cultural_currency.travel")
 
 CameraServiceFactory = Callable[[], CameraExtractionService]
+
+
+def _decimal_display_text(value: Decimal) -> str:
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
 
 
 def _owned_budget_scenario(request: HttpRequest, scenario_id: int) -> SavedScenario:
@@ -145,6 +153,7 @@ def camera_scan_saved_scenario(
                 "candidate": candidate,
                 "form": form,
                 "currency_matches": currency_matches,
+                "display_amount": _decimal_display_text(candidate.amount),
                 "display_currency": candidate.currency_code or scenario.destination_currency.code,
             }
         )
@@ -175,6 +184,7 @@ def _confirm_candidate(
 
     scope = camera_scope_for_scenario(scenario.pk)
     context["confirmed_amount"] = amount
+    context["confirmed_amount_display"] = _decimal_display_text(amount)
     context["confirmed_camera_token"] = make_confirmed_camera_amount_token(
         scope=scope,
         amount=amount,
