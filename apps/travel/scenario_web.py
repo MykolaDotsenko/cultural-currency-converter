@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import DatabaseError
-from django.http import HttpRequest, HttpResponse
+from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -191,8 +191,16 @@ def _scenario_schedule_component(
 
 
 def _format_currency_amount(value: Decimal, *, minor_units: int) -> str:
+    if not 0 <= minor_units <= 6:
+        raise ValueError("Currency minor units must be between 0 and 6.")
+
     quantum = Decimal(1).scaleb(-minor_units)
-    rounded = value.quantize(quantum)
+    try:
+        with localcontext() as context:
+            context.prec = max(64, len(value.as_tuple().digits) + minor_units + 8)
+            rounded = value.quantize(quantum, rounding=ROUND_HALF_EVEN)
+    except InvalidOperation as exc:
+        raise ValueError("Currency amount cannot be represented for display.") from exc
     return format(rounded, f".{minor_units}f") if minor_units else format(rounded, "f")
 
 
@@ -468,7 +476,7 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
 def add_saved_scenario_spend(request: HttpRequest, scenario_id: int) -> HttpResponse:
     scenario = _owned_scenario_for_detail(request, scenario_id)
     if scenario.kind != SavedScenarioKind.BUDGET:
-        return HttpResponse(status=404)
+        raise Http404("Confirmed spend is available only for saved budget scenarios.")
 
     form = SavedScenarioSpendForm(
         request.POST,
@@ -520,8 +528,10 @@ def delete_saved_scenario_spend(
         scenario_id=scenario_id,
         scenario__user=request.user,
     )
+    scenario = entry.scenario
     scenario_id_value = entry.scenario_id
     entry.delete()
+    scenario.save(update_fields=("updated_at",))
     messages.success(request, "Confirmed spend entry removed.")
     return redirect("saved_scenario_detail", scenario_id=scenario_id_value)
 
