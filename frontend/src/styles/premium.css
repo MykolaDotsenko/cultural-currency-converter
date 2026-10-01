@@ -1805,27 +1805,9 @@ h3 {
 }
 
 /* Destination comparison: same source budget, two independently trusted contexts. */
-.qa-destination-comparison-intro {
-  max-width: 62rem;
-}
-
 .qa-destination-comparison,
 .qa-destination-comparison__results {
   max-width: 78rem;
-}
-
-.qa-destination-comparison__instrument {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(1.5rem, 4vw, 2.75rem);
-  border: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-surface) 98%, var(--color-canvas)),
-    color-mix(in srgb, var(--color-surface) 94%, var(--color-canvas))
-  );
-  box-shadow: var(--qa-shadow-premium);
 }
 
 .qa-destination-comparison__heading {
@@ -1842,22 +1824,9 @@ h3 {
   line-height: 1.02;
 }
 
-.qa-destination-comparison__heading > p:not(.qa-foundation-kicker),
-.qa-destination-comparison__results-heading > p {
-  color: var(--color-muted);
-  line-height: 1.65;
-}
-
 .qa-destination-comparison__form {
   display: grid;
   gap: clamp(1.4rem, 3vw, 2.1rem);
-}
-
-.qa-destination-comparison__money,
-.qa-destination-comparison__trip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.65fr);
-  gap: var(--qa-space-5);
 }
 
 .qa-destination-comparison__destinations {
@@ -1896,12 +1865,6 @@ h3 {
 .qa-destination-comparison__basket-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--qa-space-5);
-}
-
-.qa-destination-comparison__action {
-  display: flex;
-  align-items: center;
   gap: var(--qa-space-5);
 }
 
@@ -1971,16 +1934,6 @@ h3 {
   font-weight: 650;
 }
 
-.qa-destination-comparison-side__amount span,
-.qa-destination-comparison-side__daily span {
-  display: block;
-  color: var(--color-tertiary);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .qa-destination-comparison-side__rate,
 .qa-destination-comparison-side__facts {
   display: grid;
@@ -2000,23 +1953,6 @@ h3 {
 .qa-destination-comparison-side__rate > div:first-child,
 .qa-destination-comparison-side__facts > div:first-child {
   border-block-start: 0;
-}
-
-.qa-destination-comparison-side__rate dt,
-.qa-destination-comparison-side__facts dt {
-  color: var(--color-tertiary);
-  font-size: 0.72rem;
-  font-weight: 650;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
-}
-
-.qa-destination-comparison-side__rate dd,
-.qa-destination-comparison-side__facts dd {
-  margin: 0;
-  color: var(--color-ink);
-  font-size: 0.86rem;
-  line-height: 1.5;
 }
 
 .qa-destination-comparison-side__budget,
@@ -2050,16 +1986,6 @@ h3 {
   border-block-start: 1px solid var(--qa-hairline);
 }
 
-.qa-destination-comparison-side__line > div:first-child {
-  display: grid;
-  gap: var(--qa-space-1);
-}
-
-.qa-destination-comparison-side__line span {
-  color: var(--color-muted);
-  font-size: 0.78rem;
-}
-
 .qa-destination-comparison-side__line-value {
   font-variant-numeric: tabular-nums;
   font-weight: 650;
@@ -2076,12 +2002,6 @@ h3 {
   border-block-start: 1px solid var(--qa-hairline);
 }
 
-.qa-destination-comparison-side__payment > p:not(.qa-foundation-kicker, .qa-context-source) {
-  color: var(--color-muted);
-  font-size: 0.86rem;
-  line-height: 1.65;
-}
-
 .qa-destination-comparison__caveat {
   display: flex;
   gap: var(--qa-space-4);
@@ -2089,11 +2009,6 @@ h3 {
   color: var(--color-muted);
   font-size: 0.82rem;
   line-height: 1.6;
-}
-
-.qa-destination-comparison__caveat strong {
-  color: var(--color-ink);
-  white-space: nowrap;
 }
 
 @media (max-width: 56rem) {
@@ -2156,9 +2071,6 @@ h3 {
     text-align: start;
   }
 
-  .qa-destination-comparison__caveat strong {
-    white-space: normal;
-  }
 }
 
 @media (forced-colors: active) {
