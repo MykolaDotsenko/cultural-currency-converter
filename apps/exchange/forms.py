@@ -751,6 +751,7 @@ class DestinationComparisonForm(BudgetInterpretationForm):
         source_currency = self._currency_by_code.get(source_code)
         raw_amount = cleaned.get("amount")
         if source_currency is not None and raw_amount is not None:
+            cleaned["source_minor_units"] = source_currency.minor_units
             try:
                 cleaned["amount_decimal"] = parse_amount_text(
                     str(raw_amount),
