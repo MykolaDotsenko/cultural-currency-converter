@@ -670,6 +670,117 @@ class BudgetInterpretationForm(forms.Form):
         return cleaned
 
 
+_COMPARISON_CATEGORY_OPTIONS: tuple[tuple[str, str], ...] = (
+    (TypicalPriceCategory.COFFEE, "Coffee"),
+    (TypicalPriceCategory.CASUAL_MEAL, "Casual meal"),
+    (TypicalPriceCategory.TRANSIT, "Transit"),
+)
+
+
+class DestinationComparisonForm(BudgetInterpretationForm):
+    """Compare one explicit source budget across two current destination scopes."""
+
+    amount = forms.CharField(max_length=64, label="Amount")
+    source_currency = forms.ChoiceField(label="Your currency")
+    left_destination = forms.ChoiceField(label="Destination A")
+    right_destination = forms.ChoiceField(label="Destination B")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, category_options=_COMPARISON_CATEGORY_OPTIONS, **kwargs)
+
+        (
+            self._currency_by_code,
+            self._destination_by_token,
+            currency_choices,
+            destination_choices,
+        ) = _destination_reference_choices()
+
+        self.fields["source_currency"].choices = currency_choices
+        self.fields["left_destination"].choices = destination_choices
+        self.fields["right_destination"].choices = destination_choices
+
+        visible_categories = {category for category, _label in _COMPARISON_CATEGORY_OPTIONS}
+        for category, _label in TypicalPriceCategory.choices:
+            if category not in visible_categories:
+                self.fields.pop(self.units_field_name(category), None)
+
+        self.fields["amount"].widget.attrs.update(
+            {
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "autocomplete": "off",
+                "placeholder": "500",
+            }
+        )
+        self.fields["source_currency"].widget.attrs["class"] = "qa-native-select"
+        self.fields["left_destination"].widget.attrs["class"] = "qa-native-select"
+        self.fields["right_destination"].widget.attrs["class"] = "qa-native-select"
+
+        self.order_fields(
+            [
+                "amount",
+                "source_currency",
+                "left_destination",
+                "right_destination",
+                "duration_days",
+                "travelers",
+                *(self.units_field_name(category) for category, _label in _COMPARISON_CATEGORY_OPTIONS),
+            ]
+        )
+
+        if not self.is_bound:
+            self.initial.setdefault("amount", "500")
+            preferred_source = "EUR" if "EUR" in self._currency_by_code else ""
+            if not preferred_source and self._currency_by_code:
+                preferred_source = next(iter(self._currency_by_code))
+            if preferred_source:
+                self.initial.setdefault("source_currency", preferred_source)
+
+    @property
+    def reference_data_ready(self) -> bool:
+        return bool(self._currency_by_code and len(self._destination_by_token) >= 2)
+
+    @property
+    def comparison_categories(self) -> tuple[str, ...]:
+        return tuple(category for category, _label in _COMPARISON_CATEGORY_OPTIONS)
+
+    def clean(self):
+        cleaned = super().clean()
+
+        source_code = str(cleaned.get("source_currency") or "").upper()
+        source_currency = self._currency_by_code.get(source_code)
+        raw_amount = cleaned.get("amount")
+        if source_currency is not None and raw_amount is not None:
+            try:
+                cleaned["amount_decimal"] = parse_amount_text(
+                    str(raw_amount),
+                    minor_units=source_currency.minor_units,
+                )
+            except forms.ValidationError as exc:
+                self.add_error("amount", exc)
+
+        for side in ("left", "right"):
+            token = str(cleaned.get(f"{side}_destination") or "")
+            destination = self._destination_by_token.get(token)
+            if destination is None:
+                continue
+            country, city, currency = destination
+            cleaned[f"{side}_destination_country"] = country.iso2
+            cleaned[f"{side}_destination_city_slug"] = city.slug if city is not None else ""
+            cleaned[f"{side}_destination_currency"] = currency.code
+            cleaned[f"{side}_destination_minor_units"] = currency.minor_units
+            cleaned[f"{side}_destination_name"] = (
+                f"{city.name}, {country.name}" if city is not None else country.name
+            )
+
+        left_token = str(cleaned.get("left_destination") or "")
+        right_token = str(cleaned.get("right_destination") or "")
+        if left_token and right_token and left_token == right_token:
+            self.add_error("right_destination", "Choose a different destination scope.")
+
+        return cleaned
+
+
 SERIES_PERIOD_CHOICES = (
     ("1y", "1Y"),
     ("5y", "5Y"),
