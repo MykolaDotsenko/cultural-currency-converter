@@ -163,6 +163,8 @@ def build_explore_destinations(
     results: list[ExploreDestination] = []
 
     for link in current_links:
+        if len(results) >= limit:
+            break
         if (
             link.country_id not in national_country_ids
             and link.country_id not in profile_country_ids
@@ -192,6 +194,8 @@ def build_explore_destinations(
             .order_by("country__name", "name", "slug")
         )
         for city in cities:
+            if len(results) >= limit:
+                break
             link = current_by_country_id.get(city.country_id)
             if link is None:
                 continue
