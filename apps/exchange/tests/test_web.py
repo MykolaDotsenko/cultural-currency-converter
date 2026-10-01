@@ -238,6 +238,8 @@ def test_htmx_conversion_returns_fragment_and_pushes_bookmarkable_url(client, re
     assert b"17450" in response.content
     assert b"18 Sep 2026" in response.content
     assert b"Frankfurter" in response.content
+    assert b"At a glance" in response.content
+    assert b"Treat this as a reference conversion" in response.content
     assert response["HX-Push-Url"].startswith("/?convert=1&")
     assert "HX-Request" in response.get("Vary", "")
     assert len(gateway.calls) == 1
@@ -302,6 +304,7 @@ def test_same_currency_uses_exact_one_without_gateway_call(client, reference_dat
     assert b"100.00" in response.content
     assert b"Exact same-currency rate" in response.content
     assert b"equals" in response.content
+    assert b"No exchange-rate lookup is needed because both sides use EUR" in response.content
     assert b"Last synced" not in response.content
     assert gateway.calls == []
 
@@ -316,6 +319,7 @@ def test_stale_result_is_explicitly_labelled(client, reference_data):
 
     assert b"Cached reference" in response.content
     assert b"temporarily unavailable" in response.content
+    assert b"labelled cached reference observation" in response.content
     assert b"Retry reference rate" in response.content
 
 
@@ -489,6 +493,8 @@ def test_historical_htmx_conversion_preserves_requested_and_observation_dates(
 
     assert response.status_code == 200
     assert b"Historical reference" in response.content
+    assert b"historical FX reference observation" in response.content
+    assert b"historical purchasing power" in response.content
     assert b"Requested date" in response.content
     assert b"15 Jun 1998" in response.content
     assert b"Observation date" in response.content
