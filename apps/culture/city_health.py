@@ -121,23 +121,16 @@ def build_city_coverage_health(
         fresh = {item.category for item in direct if item.fresh}
         stale = {item.category for item in direct if item.stale and item.category not in fresh}
         national_fallback = {
-            item.category
-            for item in national
-            if item.fresh and item.category not in fresh
+            item.category for item in national if item.fresh and item.category not in fresh
         }
-        provenance_gaps = {
-            item.category
-            for item in (*direct, *national)
-            if item.provenance_gap
-        }
+        provenance_gaps = {item.category for item in (*direct, *national) if item.provenance_gap}
         supported = fresh | national_fallback
 
         core_fresh = fresh.intersection(CITY_COVERAGE_CORE_CATEGORIES)
         core_fallback = national_fallback.intersection(CITY_COVERAGE_CORE_CATEGORIES)
         score = min(
             100,
-            len(core_fresh) * _FRESH_CITY_POINTS
-            + len(core_fallback) * _NATIONAL_FALLBACK_POINTS,
+            len(core_fresh) * _FRESH_CITY_POINTS + len(core_fallback) * _NATIONAL_FALLBACK_POINTS,
         )
 
         fresh_categories = _ordered_categories(fresh)
