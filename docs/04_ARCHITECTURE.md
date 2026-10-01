@@ -119,7 +119,7 @@ Trip Budget Remaining is a persistence/domain consumer, not a second financial e
 - spend entries are immutable after creation; correction is delete-and-add;
 - web spend submissions carry a persisted idempotency key so replaying the same confirmation cannot double-count the budget;
 - add/remove operations serialize through the parent scenario transaction boundary;
-- the database permits only one `initial` observation per scenario, making the remaining-budget baseline structurally unique;
+- scenario creation writes one `initial` observation, and the database prevents any second `initial` observation for that scenario, keeping the remaining-budget baseline structurally unique;
 - scenario-level service validation enforces destination-currency minor units even when a future caller does not use the web form;
 - later FX re-check observations never rewrite the remaining-budget baseline;
 - `apps/travel/trip_budget.py` performs deterministic remaining/over-reference/per-day arithmetic without provider access.
