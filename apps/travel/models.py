@@ -258,9 +258,11 @@ class SavedScenario(models.Model):
                 name="scenario_travelers_range",
             ),
             models.CheckConstraint(
-                condition=Q(travel_start_date__isnull=True)
-                | Q(travel_end_date__isnull=True)
-                | Q(travel_end_date__gte=models.F("travel_start_date")),
+                condition=Q(travel_end_date__isnull=True)
+                | (
+                    Q(travel_start_date__isnull=False)
+                    & Q(travel_end_date__gte=models.F("travel_start_date"))
+                ),
                 name="scenario_travel_dates_ordered",
             ),
             models.CheckConstraint(
