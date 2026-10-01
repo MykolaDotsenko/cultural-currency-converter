@@ -109,6 +109,60 @@ def test_client_returns_parsed_structured_output_and_usage(monkeypatch):
     assert not getattr(fake_models.calls[0]["config"], "tools", None)
 
 
+def test_client_supports_schema_constrained_ephemeral_image_input(monkeypatch):
+    client, fake_models = _build_client(
+        monkeypatch,
+        [_response(parsed={"status": "candidate"})],
+    )
+
+    generation = client.generate_json_with_image(
+        model="gemini-3.1-flash-lite",
+        system_instruction="Extract one price only.",
+        contents="Inspect the supplied image.",
+        image_bytes=b"safe-image-bytes",
+        image_mime_type="image/png",
+        response_json_schema={
+            "type": "object",
+            "properties": {"status": {"type": "string"}},
+            "required": ["status"],
+        },
+    )
+
+    assert generation.data == {"status": "candidate"}
+    assert len(fake_models.calls) == 1
+    call = fake_models.calls[0]
+    assert not isinstance(call["contents"], str)
+    assert call["config"].temperature == 0.0
+    assert call["config"].response_mime_type == "application/json"
+
+
+@pytest.mark.parametrize(
+    ("image_bytes", "mime_type"),
+    [
+        (b"", "image/png"),
+        (b"data", "image/gif"),
+        (b"data", "text/plain"),
+    ],
+)
+def test_client_rejects_invalid_multimodal_image_input(monkeypatch, image_bytes, mime_type):
+    client, fake_models = _build_client(
+        monkeypatch,
+        [_response(parsed={"status": "candidate"})],
+    )
+
+    with pytest.raises(AIConfigurationError):
+        client.generate_json_with_image(
+            model="gemini-3.1-flash-lite",
+            system_instruction="Extract one price only.",
+            contents="Inspect the supplied image.",
+            image_bytes=image_bytes,
+            image_mime_type=mime_type,
+            response_json_schema={"type": "object"},
+        )
+
+    assert fake_models.calls == []
+
+
 def test_client_can_decode_json_text_when_parsed_value_is_unavailable(monkeypatch):
     client, _ = _build_client(
         monkeypatch,
