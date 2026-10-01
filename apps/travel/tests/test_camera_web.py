@@ -117,6 +117,27 @@ def _candidate(
 
 
 @pytest.mark.django_db
+def test_saved_budget_exposes_camera_action_only_when_runtime_capability_is_enabled(
+    client,
+    camera_scenario,
+    settings,
+):
+    owner, scenario = camera_scenario
+    client.force_login(owner)
+
+    settings.AI_CAMERA_EXTRACTION_ENABLED = False
+    disabled = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    assert disabled.status_code == 200
+    assert b"Scan a price" not in disabled.content
+
+    settings.AI_CAMERA_EXTRACTION_ENABLED = True
+    enabled = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    assert enabled.status_code == 200
+    assert b"Scan a price" in enabled.content
+    assert reverse("camera_scan_saved_scenario", args=(scenario.pk,)).encode() in enabled.content
+
+
+@pytest.mark.django_db
 def test_camera_page_is_owner_scoped_and_explains_ephemeral_privacy(client, camera_scenario):
     owner, scenario = camera_scenario
     client.force_login(owner)
