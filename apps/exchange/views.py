@@ -9,6 +9,7 @@ from apps.exchange.services import (
     quote_conversion,
 )
 from apps.exchange.web.budget import budget_interpretation_view
+from apps.exchange.web.comparison import destination_comparison_view
 from apps.exchange.web.converter import converter_view
 from apps.exchange.web.destination import destination_mode_view
 from apps.exchange.web.explanation import conversion_explanation_view
@@ -38,6 +39,13 @@ def converter(request: HttpRequest) -> HttpResponse:
 
 def destination_mode(request: HttpRequest) -> HttpResponse:
     return destination_mode_view(request)
+
+
+def destination_comparison(request: HttpRequest) -> HttpResponse:
+    return destination_comparison_view(
+        request,
+        latest_gateway_factory=build_latest_quote_gateway,
+    )
 
 
 def picker_options(request: HttpRequest) -> HttpResponse:
