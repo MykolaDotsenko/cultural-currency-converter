@@ -75,13 +75,14 @@ def build_smart_result_summary(
     )
     if context is not None and context.destination_state is MoneyContextState.AVAILABLE:
         for price in context.local_value:
-            if price.equivalent.status == "zero":
+            purchase_phrase = _purchase_phrase(price.equivalent)
+            if purchase_phrase is None:
                 continue
             return SmartResultSummary(
                 kind=SmartResultSummaryKind.LOCAL_VALUE,
                 text=(
                     f"Using the reviewed {price.scope_label} price anchor for {price.label}, "
-                    f"this amount corresponds to {_purchase_phrase(price.equivalent)}."
+                    f"this amount corresponds to {purchase_phrase}."
                 ),
                 evidence_label=(
                     f"Observed {price.observed_at.isoformat()} · {price.source_name}"
@@ -116,7 +117,9 @@ def _whole_count(value: Decimal) -> int:
     return int(value.to_integral_value(rounding=ROUND_FLOOR))
 
 
-def _purchase_phrase(equivalent: PurchaseEquivalent) -> str:
+def _purchase_phrase(equivalent: PurchaseEquivalent) -> str | None:
+    if equivalent.status == "zero":
+        return None
     if equivalent.status == "below_one":
         return "less than one typical purchase"
     if equivalent.status == "up_to":
@@ -129,4 +132,4 @@ def _purchase_phrase(equivalent: PurchaseEquivalent) -> str:
             f"{_whole_count(equivalent.maximum_count)} "
             "typical purchases"
         )
-    raise ValueError("Unsupported purchase-equivalent status for smart result summary.")
+    return None
