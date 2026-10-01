@@ -64,6 +64,7 @@ class GeminiStructuredClient:
             contents=contents,
             response_json_schema=response_json_schema,
             max_output_tokens=max_output_tokens,
+            temperature=0.2,
         )
 
     def generate_json_with_image(
@@ -97,6 +98,7 @@ class GeminiStructuredClient:
             contents=multimodal_contents,
             response_json_schema=response_json_schema,
             max_output_tokens=max_output_tokens,
+            temperature=0.0,
         )
 
     def _generate_json(
@@ -107,6 +109,7 @@ class GeminiStructuredClient:
         contents: Any,
         response_json_schema: Mapping[str, Any],
         max_output_tokens: int,
+        temperature: float,
     ) -> StructuredGeneration:
         if not model.strip():
             raise AIConfigurationError("Gemini model is required.")
@@ -124,7 +127,7 @@ class GeminiStructuredClient:
                         system_instruction=system_instruction,
                         response_mime_type="application/json",
                         response_json_schema=dict(response_json_schema),
-                        temperature=0.0,
+                        temperature=temperature,
                         max_output_tokens=max_output_tokens,
                     ),
                 )
