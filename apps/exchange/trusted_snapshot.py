@@ -8,11 +8,11 @@ from typing import Any
 from django.core import signing
 
 from apps.exchange.domain import (
-    MAX_PROVIDER_KEY_LENGTH,
-    MAX_PROVIDER_KEYS,
     ConversionResult,
+    FxDomainError,
     ObservationGranularity,
     normalize_currency_code,
+    normalize_provider_keys,
 )
 
 # Keep the original runtime-explanation salt so snapshots created before this
@@ -103,24 +103,16 @@ def load_trusted_conversion_snapshot_token(
         )
     if requested_date is not None and effective_date > requested_date:
         raise TrustedSnapshotTokenError("Conversion snapshot token observation date is invalid.")
-    if not isinstance(raw_provider_keys, list) or len(raw_provider_keys) > MAX_PROVIDER_KEYS:
+    if not isinstance(raw_provider_keys, list):
         raise TrustedSnapshotTokenError(
             "Conversion snapshot token provider attribution is invalid."
         )
-
-    provider_keys: list[str] = []
-    for value in raw_provider_keys:
-        if not isinstance(value, str):
-            raise TrustedSnapshotTokenError(
-                "Conversion snapshot token provider attribution is invalid."
-            )
-        normalized = value.strip().lower()
-        if not normalized or len(normalized) > MAX_PROVIDER_KEY_LENGTH:
-            raise TrustedSnapshotTokenError(
-                "Conversion snapshot token provider attribution is invalid."
-            )
-        if normalized not in provider_keys:
-            provider_keys.append(normalized)
+    try:
+        provider_keys = normalize_provider_keys(raw_provider_keys)
+    except FxDomainError as exc:
+        raise TrustedSnapshotTokenError(
+            "Conversion snapshot token provider attribution is invalid."
+        ) from exc
 
     return TrustedConversionSnapshot(
         input_amount=input_amount,
@@ -132,7 +124,7 @@ def load_trusted_conversion_snapshot_token(
         effective_date=effective_date,
         historical=historical,
         observation_granularity=granularity,
-        provider_keys=tuple(sorted(provider_keys)),
+        provider_keys=provider_keys,
         stale=stale,
     )
 
