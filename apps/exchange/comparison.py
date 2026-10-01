@@ -12,7 +12,8 @@ from apps.exchange.budget import (
     BudgetInterpretationState,
     interpret_budget,
 )
-from apps.exchange.money_context import MoneyContext
+from apps.exchange.domain import ConversionResult
+from apps.exchange.money_context import MoneyContext, MoneyContextState
 
 
 class DestinationComparisonError(ValueError):
@@ -28,14 +29,22 @@ class DestinationComparisonState(StrEnum):
 class DestinationComparisonSide:
     destination_country_code: str
     destination_city_slug: str
-    currency_code: str
-    converted_amount: Decimal
+    conversion: ConversionResult
+    destination_state: MoneyContextState
     budget: BudgetInterpretation
     payment_guidance: PaymentContext | None
 
     @property
     def scope_key(self) -> tuple[str, str]:
         return self.destination_country_code, self.destination_city_slug
+
+    @property
+    def currency_code(self) -> str:
+        return self.conversion.quote.quote_currency
+
+    @property
+    def converted_amount(self) -> Decimal:
+        return self.conversion.output_amount
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,12 +157,10 @@ def _validate_comparison_inputs(
     left_identity = (
         left_context.destination_country_code,
         left_context.destination_city_slug,
-        left_context.quote_currency,
     )
     right_identity = (
         right_context.destination_country_code,
         right_context.destination_city_slug,
-        right_context.quote_currency,
     )
     if left_identity == right_identity:
         raise DestinationComparisonError(
@@ -168,8 +175,8 @@ def _build_side(
     return DestinationComparisonSide(
         destination_country_code=context.destination_country_code,
         destination_city_slug=context.destination_city_slug,
-        currency_code=context.quote_currency,
-        converted_amount=context.converted_amount,
+        conversion=context.conversion,
+        destination_state=context.destination_state,
         budget=budget,
         payment_guidance=context.payment_guidance,
     )
