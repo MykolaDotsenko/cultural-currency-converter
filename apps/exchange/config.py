@@ -38,9 +38,7 @@ def _parse_test_fixture_enabled(values: Mapping[str, str]) -> bool:
     if raw not in {"1", "true", "yes", "on"}:
         raise FxConfigurationError("FX_TEST_FIXTURE_ENABLED must be a boolean value.")
     if values.get("APP_ENV", "").strip().lower() != "test":
-        raise FxConfigurationError(
-            "FX_TEST_FIXTURE_ENABLED is allowed only when APP_ENV=test."
-        )
+        raise FxConfigurationError("FX_TEST_FIXTURE_ENABLED is allowed only when APP_ENV=test.")
     return True
 
 
