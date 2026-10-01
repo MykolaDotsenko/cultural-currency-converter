@@ -37,6 +37,7 @@ Those boundaries are more important to this project than adding another conversi
 - deterministic budget interpretation against explicit sourced reference-basket assumptions;
 - side-by-side destination comparison for one source budget across two explicit country/canonical-city scopes, preserving each side's rate source/date, local-price provenance and payment context without ranking destinations;
 - account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness, confirmed-spend tracking and deterministic remaining-budget meaning;
+- returning-user home continuity for the most relevant active/upcoming saved trip, using stored FX observations, confirmed spend and reviewed local-context freshness without silent rate refresh;
 - optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing and mandatory user confirmation before any later spend handoff;
 - deterministic Money & culture stories;
 - provenance-aware photographic media;
