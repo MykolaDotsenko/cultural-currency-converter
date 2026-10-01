@@ -216,11 +216,25 @@ Historical and currency-only conversions do not silently receive current destina
 
 User-selected Camera media is processed only after explicit action, normalized in memory and not persisted by the application. Before any external multimodal call, the image is decoded, size/pixel bounded, orientation-normalized, metadata-stripped and re-encoded. Provider output is restricted to a project-owned monetary candidate schema.
 
-An extracted value is not financial truth. Explicit currency conflicts are blocked and the user must confirm or correct the amount before a short-lived scope-bound confirmation token is created. This token contains no source image, merchant text, receipt body or banking identifier. Camera extraction itself does not write `SavedScenarioSpendEntry`; any later persistence must be a separate explicit handoff through the existing idempotent spend service.
+An extracted value is not financial truth. Explicit currency conflicts are blocked and the user must confirm or correct the amount before a short-lived scope-bound confirmation token is created. This token contains no source image, merchant text, receipt body or banking identifier. Camera extraction itself does not write `SavedScenarioSpendEntry`; persistence is a separate explicit **Add to trip budget** handoff through the existing idempotent spend service, using the token's signed confirmation id as the submission key.
 
 **Why:** receipts, ATM screens and screenshots may contain sensitive information, while OCR/multimodal extraction is probabilistic. Ephemeral processing plus confirmation keeps sensitive media out of durable state and prevents model output from becoming silent financial input.
 
 **Revisit when:** a proven on-device extraction path can provide equal or better accuracy with less external data transfer, or a user requirement justifies durable media storage with an explicit retention/deletion model.
+
+## ADR-021 — Offline destination packs are explicit snapshots
+
+**Status:** active
+
+The first offline destination surface is a versioned, self-contained export generated from an account-owned saved budget scenario. It uses already-stored FX observations plus reviewed project-owned destination context and performs no live FX-provider call during export.
+
+The downloaded pack labels FX as stored reference data with provider/effective-date/fetch/stale semantics, keeps Trip Budget Remaining anchored to the immutable initial observation, and records its own generation/context dates. The HTML representation contains no executable script or remote asset dependency and does not auto-refresh when reopened.
+
+**Why:** offline utility is valuable only if stale/current meaning remains unambiguous. Caching an arbitrary live page or silently reusing an old rate would blur the project’s core financial trust boundary. A small explicit snapshot contract is portable to future PWA/mobile clients and can degrade destination enrichment without losing saved financial state.
+
+The server does not persist generated pack files. A newly downloaded pack is the explicit refresh action.
+
+**Revisit when:** native mobile or PWA work needs managed pack storage/background refresh. Any replacement must preserve explicit freshness, versioning, provenance and the separation between stored FX reference and live rates.
 
 ## Adding/changing a decision
 

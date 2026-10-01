@@ -28,6 +28,10 @@
         </div>
         <div class="qa-saved-row__actions">
           <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
+          {% if trip_budget %}
+            <a class="qa-secondary-button"
+               href="{% url 'download_offline_destination_pack' scenario.pk %}">Download offline pack</a>
+          {% endif %}
           <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
             {% csrf_token %}
             <button class="qa-secondary-button qa-destructive-button"
