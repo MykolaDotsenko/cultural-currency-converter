@@ -163,9 +163,7 @@ def _validate_comparison_inputs(
         right_context.destination_city_slug,
     )
     if left_identity == right_identity:
-        raise DestinationComparisonError(
-            "Choose two different destination scopes to compare."
-        )
+        raise DestinationComparisonError("Choose two different destination scopes to compare.")
 
 
 def _build_side(
