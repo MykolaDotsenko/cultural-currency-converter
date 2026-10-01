@@ -52,6 +52,7 @@
     <input type="hidden"
            name="conversion_active"
            value="{% if conversion_active %}1{% else %}0{% endif %}">
+    {{ form.destination_city_slug }}
     <div class="qa-workspace__amount">
       <div class="qa-field{% if form.amount.errors %} qa-field--error{% endif %}">
         <label class="qa-field__label" for="{{ form.amount.id_for_label }}">Amount</label>
