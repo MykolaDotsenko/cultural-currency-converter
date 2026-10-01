@@ -283,6 +283,19 @@ The saved trip should become a fast point-of-use surface rather than forcing the
 
 The budget view should remain intentionally lightweight. It is not a general bookkeeping or expense-management product.
 
+The first shipped remaining-budget slice is account-owned and explicit:
+
+- the immutable **initial saved FX observation** establishes the destination-currency reference budget;
+- later FX re-checks can inform the separate since-saved comparison but never move the remaining-budget baseline;
+- only user-confirmed destination-currency amounts are subtracted;
+- manual entries store amount, confirmation source and timestamp, not merchant/receipt/free-text purchase history;
+- corrections use explicit remove-and-add behaviour rather than silently editing history;
+- remaining-per-day uses the explicit saved travel window when both dates exist, otherwise an explicit planning duration only when that does not pretend to know how many travel days remain;
+- an ended trip or a started trip with no end date keeps the remaining amount visible but does not invent a per-day figure.
+
+A future Camera flow may create the same confirmed-spend entry only **after** the user confirms or corrects the extracted amount/currency.
+
+
 ### After travel
 
 The product may preserve reusable preferences such as home currency, language, travel style and explicit fee assumptions when the user has chosen to save them. Starting the next trip should reuse these defaults without silently copying destination-specific spending history or building a sensitive travel profile.
@@ -376,5 +389,5 @@ The save handoff must preserve these boundaries:
 - owner scoping applies to view and delete operations;
 - anonymous users get an opt-in sign-in affordance rather than silent account persistence.
 
-The current saved-budget detail is intentionally narrow. Current local-value refresh, rate-change comparison, remaining-spend tracking and trip-day workflows belong to later scenario iterations.
+The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness and explicit Trip Budget Remaining are now present; current local-value refresh, Camera-confirmed spend and deeper trip-day workflows remain later iterations.
 
