@@ -369,8 +369,8 @@ class SavedScenarioSpendEntry(models.Model):
         ordering = ("-recorded_at", "-id")
         constraints = [
             models.CheckConstraint(
-                condition=Q(amount__gt=0),
-                name="scenario_spend_amount_positive",
+                condition=Q(amount__gt=0, amount__lte=1000000000),
+                name="scenario_spend_amount_range",
             ),
             models.CheckConstraint(
                 condition=Q(source__in=SavedScenarioSpendSource.values),
