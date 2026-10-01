@@ -48,13 +48,11 @@
         A self-contained snapshot for {{ pack.scenario_title }}. It uses saved FX state and reviewed
         destination context captured when this file was generated.
       </p>
-
       <div class="notice" role="note">
         <strong>Offline means stored, not live.</strong>
         This file never refreshes itself. The FX figure below is a saved reference observation,
         not a current executable rate. Re-download the pack before travel when freshness matters.
       </div>
-
       <div class="grid">
         <section aria-labelledby="fx-title">
           <p class="eyebrow">Stored FX reference</p>
@@ -74,7 +72,6 @@
             fetched {{ pack.fx_reference.fetched_at|date:"j M Y, H:i T" }}
           </p>
         </section>
-
         <section aria-labelledby="budget-title">
           <p class="eyebrow">Trip Budget Remaining</p>
           <h2 id="budget-title">
@@ -98,7 +95,6 @@
           {% endif %}
         </section>
       </div>
-
       <section aria-labelledby="scope-title">
         <p class="eyebrow">Scope & freshness</p>
         <h2 id="scope-title">{{ pack.destination_label }}</h2>
@@ -120,7 +116,6 @@
           </p>
         {% endif %}
       </section>
-
       {% if pack.destination_context_state == "available" and pack.destination_context %}
         {% if pack.destination_context.prices %}
           <section aria-labelledby="value-title">
@@ -137,13 +132,13 @@
                 </p>
                 <p class="source">
                   Observed {{ item.observed_at|date:"j M Y" }} · confidence {{ item.confidence }}
-                  · source: <a href="{{ item.source_url }}" rel="noreferrer noopener">{{ item.source_name }}</a>
+                  · source: <a href="{{ item.source_url }}"
+    rel="noreferrer noopener">{{ item.source_name }}</a>
                 </p>
               </article>
             {% endfor %}
           </section>
         {% endif %}
-
         {% if pack.destination_context.payment %}
           <section aria-labelledby="payment-title">
             <p class="eyebrow">Money use</p>
@@ -157,7 +152,8 @@
               {% if payment.dcc_warning %}<div class="row"><h3>DCC</h3><p>{{ payment.dcc_warning }}</p></div>{% endif %}
               <p class="source">
                 Verified {{ payment.verified_at|date:"j M Y" }} · source:
-                <a href="{{ payment.source_url }}" rel="noreferrer noopener">{{ payment.source_name }}</a>
+                <a href="{{ payment.source_url }}"
+                   rel="noreferrer noopener">{{ payment.source_name }}</a>
               </p>
             {% endwith %}
           </section>
@@ -178,7 +174,6 @@
           <p>The pack keeps this section empty rather than inventing local prices or money guidance.</p>
         </section>
       {% endif %}
-
       <footer>
         <p>
           Keep this file private if your saved budget is sensitive. No receipt image, merchant
