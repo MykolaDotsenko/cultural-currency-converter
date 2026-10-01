@@ -75,9 +75,7 @@ def calculate_trip_budget_summary(
                 period_start = max(as_of, travel_start_date)
                 days = (travel_end_date - period_start).days + 1
                 day_basis = TripBudgetDayBasis.SCHEDULE
-        elif duration_days is not None and (
-            travel_start_date is None or as_of < travel_start_date
-        ):
+        elif duration_days is not None and (travel_start_date is None or as_of < travel_start_date):
             days = duration_days
             day_basis = TripBudgetDayBasis.PLAN
 
