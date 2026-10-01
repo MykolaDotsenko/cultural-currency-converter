@@ -118,7 +118,9 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("htmx:beforeRequest", (event) => {
   const target = event.target;
-  if (!(target instanceof Element) || !target.closest("[data-current-conversion-form]")) return;
+  if (!(target instanceof HTMLFormElement) || !target.matches("[data-current-conversion-form]")) {
+    return;
+  }
 
   const note = document.querySelector<HTMLElement>("[data-previous-result-note]");
   if (note) {
