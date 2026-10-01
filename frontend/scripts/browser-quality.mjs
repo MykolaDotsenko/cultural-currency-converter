@@ -1094,7 +1094,11 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   );
   const saveLocation = saveScenarioResponse.headers().location ?? "";
   if (!/^\/saved\/scenarios\/\d+\/$/.test(saveLocation)) {
-    await page.waitForLoadState("domcontentloaded");
+    if (saveLocation) {
+      await page.waitForURL((url) => url.pathname === new URL(saveLocation, BASE_URL).pathname);
+    } else {
+      await page.waitForLoadState("domcontentloaded");
+    }
     const flashMessages = await page.locator('.qa-message, [role="alert"]').allTextContents();
     assert(
       false,
