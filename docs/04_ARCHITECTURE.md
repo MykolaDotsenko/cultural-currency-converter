@@ -18,6 +18,8 @@ This layering is a practical ownership guide, not a requirement to create a clas
 
 `apps/culture/price_quality.py` is the reusable policy layer for current `TypicalPrice` data quality. It owns the shared freshness window, canonical category→unit mapping, normalized duplicate identity and stable issue codes without querying a parallel city-money store. ORM/model validation supplies the current primary-currency and canonical-city facts to that pure evaluator; database constraints enforce the subset of invariants that can be represented relationally. Runtime destination context remains fail-closed and continues to consume only the existing `TypicalPrice` rows that satisfy its publication/provenance/freshness gates.
 
+`apps/culture/city_health.py` is a read-only maintenance/reporting consumer of that same quality contract. It batches active canonical cities, current primary currencies and published `TypicalPrice` rows, then classifies fresh city coverage, stale city data, fresh national fallback and provenance gaps without creating another datastore or web-facing ranking. Its 0–100 coverage score is deliberately operational: the four core categories (`coffee`, `casual_meal`, `transit`, `groceries`) contribute 25 points each for fresh city evidence or 15 points when only fresh national fallback exists. Stale and provenance-invalid data contribute zero points.
+
 ## Web
 
 Current web ownership:
