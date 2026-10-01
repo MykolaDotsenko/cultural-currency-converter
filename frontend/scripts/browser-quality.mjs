@@ -88,10 +88,7 @@ function consumeExpectedConsoleErrors(
   const unexpected = newErrors.filter(
     (message) => !expected.some((fragment) => message.includes(fragment)),
   );
-  assert(
-    unexpected.length === 0,
-    `${label}: unexpected console errors: ${unexpected.join(" | ")}`,
-  );
+  assert(unexpected.length === 0, `${label}: unexpected console errors: ${unexpected.join(" | ")}`);
   consoleErrors.splice(startIndex, newErrors.length);
 }
 
