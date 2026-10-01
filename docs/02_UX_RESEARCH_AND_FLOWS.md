@@ -197,6 +197,28 @@ Current UX rules:
 
 Future work may add My Places, returning-user shortcuts or optional coarse location assistance. Any location assistance must remain opt-in and must never silently persist travel history.
 
+## Destination comparison flow
+
+The shipped comparison surface answers a bounded question: **what does the same source budget roughly mean across two explicit destinations under the same visible assumptions?**
+
+The current flow is:
+
+**Source amount/currency → Destination A + Destination B → shared duration/traveller/reference basket → two trusted conversions → side-by-side Money Context**
+
+UX rules:
+
+- the GET/entry page is provider-free; current rates are requested only after explicit submit;
+- both sides use the canonical current converter/Money Context path rather than a comparison-specific rate calculation;
+- country and canonical-city scope remain explicit per side;
+- each side keeps its own rate provider/effective date/stale state, price provenance and payment guidance;
+- the same visible basket assumptions apply to both sides;
+- missing categories stay visible as partial coverage instead of being guessed;
+- comparison language stays descriptive: no winner, no “cheapest destination”, no PPP claim and no direct cross-currency price ratio;
+- a provider failure on either required side produces a neutral recoverable state rather than silently comparing one real side with one inferred side;
+- the surface remains usable without JavaScript and has browser QA coverage.
+
+Saved comparisons and Explore-level discovery remain future work.
+
 ## Discovery / Explore experience
 
 A future Explore surface can make the product useful even when the user is not performing an immediate conversion.
