@@ -54,7 +54,9 @@ Destination-first planning now has a first production slice. A user can begin wi
 
 The first Trip Budget Remaining slice extends saved budget scenarios into point-of-use planning. Confirmed spend is explicitly entered in the destination currency and subtracted from the immutable original saved FX output, so later rate re-checks never move the user's spending baseline. The surface can derive a remaining-per-day reference only from explicit saved duration/date information; it stops inferring a daily figure when a trip has started without an end date or has ended. Spend persistence is intentionally minimal—amount, confirmation source and timestamp only—and is not a bank balance, receipt archive or general expense ledger.
 
-Future comparison, trip, camera and mobile/offline work should extend the same contract rather than create parallel calculations or duplicate destination-context semantics.
+Destination comparison now has a first user-facing production slice. One explicit source amount/currency can be compared across two current country/canonical-city scopes using the same duration, traveller count and visible daily reference-basket assumptions. Each side retains its own trusted ConversionResult, effective date/provider/stale state, city/national price scope, provenance and payment context. Partial coverage remains visible, and the product deliberately produces no winner, direct cross-currency price ratio, universal cost-of-living index or purchasing-power claim.
+
+Future trip, camera and mobile/offline work should extend the same contract rather than create parallel calculations or duplicate destination-context semantics.
 
 The product should not treat generic cash/card tips or basic FX conversion as its moat; those utilities are increasingly commoditized. Differentiation comes from trustworthy, scoped money meaning plus cultural/historical context and useful return flows.
 
