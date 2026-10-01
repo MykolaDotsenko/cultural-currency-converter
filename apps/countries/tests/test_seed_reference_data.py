@@ -17,6 +17,9 @@ def test_reference_seed_persists_currency_minor_units():
         "SEK": 2,
         "DKK": 2,
         "NOK": 2,
+        "SGD": 2,
+        "CAD": 2,
+        "NZD": 2,
         "FIM": 2,
     }
     assert {
@@ -41,5 +44,25 @@ def test_reference_seed_exposes_wave_one_current_primary_currencies():
         "DK": "DKK",
         "NO": "NOK",
         "DE": "EUR",
+    }
+    assert all(link.source.startswith("https://") for link in links)
+
+
+@pytest.mark.django_db
+def test_reference_seed_exposes_wave_two_current_primary_currencies():
+    call_command("seed_reference_data")
+
+    links = (
+        CountryCurrency.objects.current(date(2026, 10, 1))
+        .primary()
+        .filter(country__iso2__in={"JP", "SG", "CA", "NZ"})
+        .select_related("country", "currency")
+    )
+
+    assert {link.country.iso2: link.currency.code for link in links} == {
+        "JP": "JPY",
+        "SG": "SGD",
+        "CA": "CAD",
+        "NZ": "NZD",
     }
     assert all(link.source.startswith("https://") for link in links)
