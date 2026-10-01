@@ -17,7 +17,6 @@ from apps.exchange.comparison import (
 from apps.exchange.comparison_presentation import build_destination_comparison_component
 from apps.exchange.forms import DestinationComparisonForm
 
-
 LatestGatewayFactory = Callable[[], LatestQuoteGateway]
 
 
