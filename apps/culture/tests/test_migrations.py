@@ -55,6 +55,7 @@ def test_typical_price_city_backfill_creates_canonical_city_reference():
     assert city.slug == "tokyo"
     assert city.name == "Tokyo"
 
+
 @pytest.mark.django_db(transaction=True)
 def test_typical_price_quality_migration_backfills_normalized_units():
     migrate_from = [
@@ -113,4 +114,3 @@ def test_typical_price_quality_migration_backfills_normalized_units():
     assert migrated_coffee.unit == "serving"
     assert migrated_transit.unit == "ride"
     assert migrated_transit.city_ref_id == tokyo.pk
-
