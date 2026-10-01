@@ -9,7 +9,7 @@ from django.db import DatabaseError
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import (
     CulturalProfile,
     StoryDatePrecision,
@@ -71,6 +71,7 @@ def reference_data(db):
 
 def _seed_current_destination_context(reference_data):
     _fi, jp, _eur, jpy = reference_data
+    tokyo = City.objects.create(country=jp, slug="tokyo", name="Tokyo")
     CulturalProfile.objects.create(
         country=jp,
         summary="Current reviewed payment context.",
@@ -84,6 +85,7 @@ def _seed_current_destination_context(reference_data):
     TypicalPrice.objects.create(
         country=jp,
         city="Tokyo",
+        city_ref=tokyo,
         category=TypicalPriceCategory.COFFEE,
         label="Cup of coffee",
         amount_low=Decimal("500"),
