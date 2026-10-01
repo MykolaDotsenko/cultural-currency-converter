@@ -248,6 +248,8 @@ Formalize quality rules for city-scoped `TypicalPrice` data:
 
 Do not introduce a parallel city-money datastore.
 
+**Current production slice:** one reusable `apps/culture/price_quality.py` contract now owns the 730-day freshness policy, stable issue codes and canonical category→unit mapping. `TypicalPrice` stores that normalized unit, normalizes labels/source names and canonical city display text on save, rejects published legacy city text without a canonical `City`, rejects inactive/wrong-country city references, stale/future observations, missing/invalid provenance and non-current primary currency at validation time, and detects duplicate canonical scope/category/unit/label/date observations after whitespace/case normalization. Database constraints enforce category↔unit pairs, published canonical-city scope and exact canonical city/national observation identities. Existing rows are migration-backfilled; no parallel datastore is introduced.
+
 ## PR #189 — City coverage health tooling
 
 Add a management/report command exposing, per city:
