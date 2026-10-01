@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from io import StringIO
 
 import pytest
@@ -18,6 +19,8 @@ from apps.culture.models import (
     TypicalPriceConfidence,
     TypicalPriceSourceClass,
 )
+from apps.culture.services import build_destination_context
+
 
 
 @pytest.mark.django_db
@@ -201,6 +204,27 @@ def test_curated_city_wave_one_keeps_reviewed_price_ranges_stable():
         )
 
     assert actual == expected_ranges
+
+
+@pytest.mark.django_db
+def test_curated_city_wave_one_flows_through_destination_context_without_fallback():
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+    context = build_destination_context(
+        country_code="FI",
+        city_slug="helsinki",
+        converted_amount=Decimal("100.00"),
+        quote_currency="EUR",
+        as_of=date(2026, 10, 1),
+        price_limit=4,
+    )
+
+    assert context is not None
+    assert context.city_slug == "helsinki"
+    assert context.city_name == "Helsinki"
+    assert tuple(price.category for price in context.prices) == CITY_COVERAGE_CORE_CATEGORIES
+    assert all(price.city_slug == "helsinki" for price in context.prices)
 
 
 @pytest.mark.django_db
