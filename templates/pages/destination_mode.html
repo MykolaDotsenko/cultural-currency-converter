@@ -62,7 +62,8 @@
               {% endif %}
             </div>
             <div class="qa-field{% if form.source_currency.errors %} qa-field--error{% endif %}">
-              <label class="qa-field__label" for="{{ form.source_currency.id_for_label }}">Your currency</label>
+              <label class="qa-field__label"
+                     for="{{ form.source_currency.id_for_label }}">Your currency</label>
               {{ form.source_currency }}
               {% if form.source_currency.errors %}
                 <p class="qa-field__message qa-field__message--error"
