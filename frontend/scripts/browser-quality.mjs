@@ -76,6 +76,28 @@ function assert(condition, message) {
   }
 }
 
+function consumeExpectedTransportFailureConsoleErrors(consoleErrors, startIndex) {
+  const newErrors = consoleErrors.slice(startIndex);
+  const expected = [
+    "htmx:afterRequest",
+    "htmx:sendAbort",
+    "htmx:sendError",
+    "Failed to load resource: net::ERR_FAILED",
+  ];
+  assert(
+    newErrors.length > 0,
+    "current-converter/ai: intentional transport failure emitted no browser error evidence",
+  );
+  const unexpected = newErrors.filter(
+    (message) => !expected.some((fragment) => message.includes(fragment)),
+  );
+  assert(
+    unexpected.length === 0,
+    `current-converter/ai: intentional transport failure emitted unexpected console errors: ${unexpected.join(" | ")}`,
+  );
+  consoleErrors.splice(startIndex, newErrors.length);
+}
+
 async function waitForStableLayout(page) {
   await page.evaluate(async () => {
     await document.fonts.ready;
@@ -225,7 +247,7 @@ async function assertKeyboardFocus(page, surfaceName) {
   }
 }
 
-async function assertAiExplanationReliability(page) {
+async function assertAiExplanationReliability(page, consoleErrors) {
   const region = page.locator("#conversion-explanation-region");
   const announcer = page.locator("#explanation-announcer");
   const clientStatus = page.locator("#explanation-client-status");
@@ -400,6 +422,7 @@ async function assertAiExplanationReliability(page) {
   );
 
   if (exerciseCancellation) {
+    const consoleErrorStart = consoleErrors.length;
     await page.route("**/conversion/explain/", (route) => route.abort("failed"), { times: 1 });
     await ratePrompt.click();
     await page
@@ -435,6 +458,8 @@ async function assertAiExplanationReliability(page) {
       (await clientStatus.textContent())?.trim() === "",
       "current-converter/ai: retry did not clear the transport failure message",
     );
+    await page.waitForTimeout(50);
+    consumeExpectedTransportFailureConsoleErrors(consoleErrors, consoleErrorStart);
   }
 
   await assertAxe(page, "current-converter/ai-explanation");
@@ -490,7 +515,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await page.locator("#id_amount").fill("100");
   await Promise.all([waitForPost(), page.locator(".qa-primary-button").click()]);
   await page.getByRole("heading", { name: "Estimate what explicit fees may change" }).waitFor();
-  await assertAiExplanationReliability(page);
+  await assertAiExplanationReliability(page, consoleErrors);
 
   const waitForPaymentEstimate = () =>
     page.waitForResponse(
