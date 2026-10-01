@@ -208,6 +208,11 @@
                      autocomplete="off"
                      placeholder="{{ budget_interpretation.destination_name }} budget">
             </label>
+            <p class="qa-field__message">
+              Optional travel dates are planning anchors for the saved scenario. They do not
+              change the {{ budget_interpretation.save_payload.duration_days }}-day budget
+              interpretation above.
+            </p>
             <div class="qa-budget-interpretation__trip-fields">
               <label class="qa-field">
                 <span class="qa-field__label">Trip starts <span class="qa-field__optional">Optional</span></span>
