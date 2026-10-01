@@ -25,6 +25,7 @@ from apps.travel.models import (
 MAX_ACCOUNT_SCENARIOS = 50
 MAX_SCENARIO_OBSERVATIONS = 100
 MAX_SCENARIO_SPEND_ENTRIES = 100
+MAX_SCENARIO_SPEND_AMOUNT = Decimal("1000000000")
 MAX_PROVIDER_KEYS = 8
 MAX_PROVIDER_KEY_LENGTH = 80
 
@@ -159,6 +160,10 @@ def record_scenario_spend(
         raise SavedScenarioError("Confirmed spend requires a saved budget scenario.")
     if not isinstance(amount, Decimal) or not amount.is_finite() or amount <= 0:
         raise SavedScenarioError("Confirmed spend must be a finite amount greater than zero.")
+    if amount > MAX_SCENARIO_SPEND_AMOUNT:
+        raise SavedScenarioError(
+            "Confirmed spend must be no greater than 1,000,000,000."
+        )
     if not isinstance(source, SavedScenarioSpendSource):
         raise SavedScenarioError("Confirmed spend source is invalid.")
 
