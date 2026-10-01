@@ -5,7 +5,6 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.utils.text import slugify
-from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
 
 from apps.travel.models import SavedScenario
@@ -13,7 +12,6 @@ from apps.travel.offline_pack import OfflineDestinationPackError, build_offline_
 
 
 @login_required
-@never_cache
 @require_GET
 def download_offline_destination_pack(
     request: HttpRequest,
