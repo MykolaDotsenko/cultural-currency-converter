@@ -135,7 +135,7 @@
                   reference budget.
                 </p>
               {% endif %}
-              {% if trip_budget.remaining_per_day %}
+              {% if trip_budget.has_remaining_per_day %}
                 <p class="qa-saved-row__meta">
                   About {{ trip_budget.remaining_per_day }}
                   {{ scenario.destination_currency.code }} {{ trip_budget.day_label }}
