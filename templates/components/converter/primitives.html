@@ -154,6 +154,7 @@
     </div>
     {% if component.smart_summary %}
       <div class="qa-context-freshness-note qa-result-summary qa-result-summary--{{ component.smart_summary.kind }}"
+           data-summary-kind="{{ component.smart_summary.kind }}"
            aria-label="Result summary">
         <p class="qa-foundation-kicker">At a glance</p>
         <p class="qa-result-summary__text">{{ component.smart_summary.text }}</p>
