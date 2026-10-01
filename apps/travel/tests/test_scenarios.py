@@ -6,6 +6,7 @@ from decimal import Decimal
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
@@ -433,3 +434,22 @@ def test_scenario_rejects_end_date_without_start_date(reference_data):
         )
 
     assert not SavedScenario.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_database_rejects_trip_end_without_start_date(reference_data):
+    eur, jpy, _fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="db-date-owner", password="StrongPass-482!")
+
+    with pytest.raises(IntegrityError):
+        SavedScenario.objects.create(
+            user=user,
+            kind=SavedScenarioKind.BUDGET,
+            title="Invalid database dates",
+            source_currency=eur,
+            destination_currency=jpy,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+            travel_end_date=date(2027, 4, 18),
+        )
