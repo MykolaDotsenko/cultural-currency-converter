@@ -194,8 +194,6 @@
       </div>
 
       <div class="qa-destination-comparison__grid">
-        {% for side in comparison_sides|default:"" %}
-        {% endfor %}
         {% with side=comparison.left %}
           {% include "components/comparison/destination_side.html" %}
         {% endwith %}
