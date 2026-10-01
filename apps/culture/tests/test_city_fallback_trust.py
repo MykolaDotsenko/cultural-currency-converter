@@ -18,8 +18,8 @@ from apps.culture.models import (
     TypicalPriceCategory,
     TypicalPriceUnit,
 )
-from apps.culture.price_quality import PRICE_CONTEXT_MAX_AGE
 from apps.culture.presentation import build_destination_context_component
+from apps.culture.price_quality import PRICE_CONTEXT_MAX_AGE
 from apps.culture.services import build_destination_context
 
 
