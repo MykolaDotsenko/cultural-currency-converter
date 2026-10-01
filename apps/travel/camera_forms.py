@@ -11,10 +11,7 @@ from apps.exchange.camera import (
     load_camera_candidate_token,
 )
 from apps.exchange.forms import parse_amount_text
-
-
-def camera_scope_for_scenario(scenario_id: int) -> str:
-    return f"saved-scenario:{scenario_id}"
+from apps.travel.camera_scope import camera_scope_for_scenario
 
 
 class CameraUploadForm(forms.Form):
@@ -118,3 +115,12 @@ class CameraCandidateConfirmationForm(forms.Form):
         cleaned["candidate_snapshot"] = snapshot
         cleaned["confirmed_amount"] = amount
         return cleaned
+
+
+class CameraConfirmedSpendForm(forms.Form):
+    """Explicit signed handoff from Camera confirmation to saved-trip spend."""
+
+    confirmed_camera_token = forms.CharField(
+        max_length=2048,
+        widget=forms.HiddenInput(),
+    )

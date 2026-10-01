@@ -193,7 +193,7 @@ The configured provider/model is an implementation choice and may change after q
 
 ## Multimodal inputs
 
-Camera amount extraction has a first opt-in runtime slice for saved budget scenarios. Voice remains a future capability.
+Camera amount extraction and explicit confirmed-spend handoff are available for saved budget scenarios. Voice remains a future capability.
 
 The Camera boundary is intentionally stricter than ordinary destination context:
 
@@ -207,12 +207,14 @@ The Camera boundary is intentionally stricter than ordinary destination context:
 - merchant names, people, addresses, account/card identifiers, phone numbers and surrounding receipt/menu text are explicitly outside the extraction contract;
 - an explicit provider currency conflict cannot be confirmed as spend in a scenario using another currency;
 - the user may correct the amount before confirmation;
-- confirmation creates only a short-lived signed scenario-scoped token and performs no spend write in this slice;
+- confirmation produces a short-lived scenario-scoped signed amount token and performs no write by itself;
+- a confirmed Camera amount can enter trip-budget persistence only through a separate explicit POST that re-verifies token scope/currency and uses the token as the sole amount source;
+- each confirmed token carries a signed unique confirmation id; that id becomes the spend submission key, so replay is idempotent without collapsing separate confirmations of the same amount;
 - deterministic conversion/payment/budget math remains outside the model.
 
 Provider failure, safety blocking, timeout or invalid structured output must leave the saved scenario untouched. No live multimodal provider call is allowed inside a database transaction.
 
-A later Camera-confirmed spend handoff may consume the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It must not persist raw media or create a parallel receipt ledger.
+The implemented Camera-confirmed spend handoff consumes the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It persists no raw media and creates no parallel receipt ledger.
 
 Voice, if introduced later, requires an equivalent explicit capture/minimized-retention contract.
 

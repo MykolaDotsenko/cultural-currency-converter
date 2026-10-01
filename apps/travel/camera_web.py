@@ -4,9 +4,11 @@ import logging
 from collections.abc import Callable
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
@@ -25,9 +27,11 @@ from apps.exchange.camera_service import (
 )
 from apps.travel.camera_forms import (
     CameraCandidateConfirmationForm,
+    CameraConfirmedSpendForm,
     CameraUploadForm,
-    camera_scope_for_scenario,
 )
+from apps.travel.camera_scope import camera_scope_for_scenario
+from apps.travel.camera_spend import CameraSpendHandoffError, record_confirmed_camera_spend
 from apps.travel.models import SavedScenario, SavedScenarioKind
 
 logger = logging.getLogger("cultural_currency.travel")
@@ -191,3 +195,61 @@ def _confirm_candidate(
         currency_code=scenario.destination_currency.code,
     )
     return render(request, "travel/camera_confirmed.html", context)
+
+
+@login_required
+@never_cache
+@require_http_methods(["POST"])
+def add_confirmed_camera_spend(
+    request: HttpRequest,
+    scenario_id: int,
+) -> HttpResponse:
+    """Persist an explicitly confirmed Camera amount through the trip-budget contract."""
+
+    scenario = _owned_budget_scenario(request, scenario_id)
+    form = CameraConfirmedSpendForm(request.POST)
+    if not form.is_valid():
+        messages.error(
+            request,
+            "This confirmed camera amount is no longer valid. Scan the price again.",
+        )
+        return redirect("camera_scan_saved_scenario", scenario_id=scenario.pk)
+
+    token = str(form.cleaned_data["confirmed_camera_token"])
+    try:
+        entry = record_confirmed_camera_spend(
+            scenario,
+            confirmed_camera_token=token,
+        )
+    except CameraSpendHandoffError as exc:
+        logger.warning(
+            "camera_confirmed_spend_rejected",
+            extra={
+                "scenario_id": scenario.pk,
+                "error_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "This confirmed camera amount could not be added. Scan the price again.",
+        )
+        return redirect("camera_scan_saved_scenario", scenario_id=scenario.pk)
+    except DatabaseError:
+        logger.exception(
+            "camera_confirmed_spend_persistence_unavailable",
+            extra={"scenario_id": scenario.pk},
+        )
+        messages.error(
+            request,
+            "Confirmed spend is temporarily unavailable. Your saved budget was not changed.",
+        )
+        return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+    messages.success(
+        request,
+        (
+            f"{_decimal_display_text(entry.amount)} "
+            f"{scenario.destination_currency.code} added to confirmed spend."
+        ),
+    )
+    return redirect("saved_scenario_detail", scenario_id=scenario.pk)

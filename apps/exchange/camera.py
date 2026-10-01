@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 from typing import Any, Protocol
+from uuid import UUID, uuid4
 from warnings import catch_warnings, simplefilter
 
 from django.core import signing
@@ -252,6 +253,7 @@ class ConfirmedCameraAmountSnapshot:
     scope: str
     amount: Decimal
     currency_code: str
+    confirmation_id: UUID
 
     def __post_init__(self) -> None:
         if not self.scope.strip() or len(self.scope) > 120:
@@ -267,6 +269,8 @@ class ConfirmedCameraAmountSnapshot:
             raise CameraTokenError(str(exc)) from exc
         if not self.currency_code:
             raise CameraTokenError("Confirmed camera amount requires a currency code.")
+        if not isinstance(self.confirmation_id, UUID):
+            raise CameraTokenError("Confirmed camera amount confirmation id is invalid.")
 
 
 def make_camera_candidate_token(
@@ -299,17 +303,20 @@ def make_confirmed_camera_amount_token(
     scope: str,
     amount: Decimal,
     currency_code: str,
+    confirmation_id: UUID | None = None,
 ) -> str:
     snapshot = ConfirmedCameraAmountSnapshot(
         scope=scope,
         amount=amount,
         currency_code=currency_code.upper().strip(),
+        confirmation_id=confirmation_id or uuid4(),
     )
     return signing.dumps(
         {
             "scope": snapshot.scope,
             "amount": format(snapshot.amount, "f"),
             "currency_code": snapshot.currency_code,
+            "confirmation_id": str(snapshot.confirmation_id),
         },
         salt=_CAMERA_CONFIRMED_TOKEN_SALT,
         compress=True,
@@ -342,13 +349,15 @@ def load_confirmed_camera_amount_token(
     try:
         amount = Decimal(str(payload["amount"]))
         currency_code = str(payload["currency_code"])
-    except (KeyError, InvalidOperation) as exc:
+        confirmation_id = UUID(str(payload["confirmation_id"]))
+    except (KeyError, InvalidOperation, ValueError) as exc:
         raise CameraTokenError("Confirmed camera amount token payload is invalid.") from exc
 
     return ConfirmedCameraAmountSnapshot(
         scope=expected_scope,
         amount=amount,
         currency_code=currency_code,
+        confirmation_id=confirmation_id,
     )
 
 
