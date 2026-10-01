@@ -570,6 +570,45 @@ def test_confirmed_spend_submission_key_is_idempotent(reference_data):
 
 
 @pytest.mark.django_db
+def test_spend_submission_key_is_scoped_to_scenario(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="spend-key-scope-owner", password="StrongPass-482!")
+    shared_key = uuid4()
+
+    scenarios = [
+        create_saved_scenario(
+            user,
+            spec=SavedScenarioSpec(
+                kind=SavedScenarioKind.BUDGET,
+                title=f"Budget {index}",
+                source_currency=eur,
+                destination_currency=jpy,
+                source_country=fi,
+                destination_country=jp,
+                destination_city=tokyo,
+                source_amount=Decimal("100"),
+            ),
+            conversion=_conversion(),
+        )
+        for index in range(2)
+    ]
+
+    first = record_scenario_spend(
+        scenarios[0],
+        amount=Decimal("100"),
+        submission_key=shared_key,
+    )
+    second = record_scenario_spend(
+        scenarios[1],
+        amount=Decimal("200"),
+        submission_key=shared_key,
+    )
+
+    assert first.submission_key == second.submission_key == shared_key
+    assert first.scenario_id != second.scenario_id
+
+
+@pytest.mark.django_db
 def test_confirmed_spend_source_is_normalized_and_validated(reference_data):
     eur, jpy, fi, jp, tokyo, _ = reference_data
     user = User.objects.create_user(username="spend-source-owner", password="StrongPass-482!")
