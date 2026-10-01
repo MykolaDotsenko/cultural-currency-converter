@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation, localcontext
 from typing import Any, Protocol
+from uuid import UUID, uuid4
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -152,6 +153,7 @@ def record_scenario_spend(
     *,
     amount: Decimal,
     source: str | None = None,
+    submission_key: UUID | None = None,
 ) -> SavedScenarioSpendEntry:
     """Persist one confirmed destination-currency spend entry.
 
@@ -166,6 +168,7 @@ def record_scenario_spend(
     normalized_source = source or "manual"
     if normalized_source not in SavedScenarioSpendSource.values:
         raise SavedScenarioError("Confirmed spend source is invalid.")
+    normalized_submission_key = submission_key or uuid4()
 
     with transaction.atomic():
         locked = (
@@ -175,6 +178,15 @@ def record_scenario_spend(
         )
         if locked.kind != SavedScenarioKind.BUDGET:
             raise SavedScenarioError("Confirmed spend requires a saved budget scenario.")
+
+        existing = locked.spend_entries.filter(submission_key=normalized_submission_key).first()
+        if existing is not None:
+            if existing.amount != amount or existing.source != normalized_source:
+                raise SavedScenarioError(
+                    "Confirmed spend submission key is already bound to a different entry."
+                )
+            return existing
+
         _validate_spend_amount(
             amount,
             minor_units=locked.destination_currency.minor_units,
@@ -186,6 +198,7 @@ def record_scenario_spend(
 
         entry = SavedScenarioSpendEntry(
             scenario=locked,
+            submission_key=normalized_submission_key,
             amount=amount,
             source=normalized_source,
         )
