@@ -176,6 +176,8 @@ It is deliberately separate from `FavouritePair` and `RecentConversion`:
 
 Current scenario identity includes source/destination currencies, optional source/destination countries, optional canonical destination city, source amount, optional trip dates, explicit duration and traveller count.
 
+Travel timing is explicit planning metadata, not inferred itinerary state. An end date cannot exist without a start date, and when both dates are present the end date cannot precede the start date. This invariant is enforced at form/domain and database boundaries. Date-aware readiness is derived at read time from the configured application-local date and does not mutate the scenario or trigger background work.
+
 Trip and budget scenarios require destination-country context. A destination city must belong to that country. Country/currency associations are validated against the current temporal mapping when the scenario is created.
 
 ### SavedScenarioBudgetItem
