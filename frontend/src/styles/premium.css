@@ -1674,7 +1674,8 @@ h3 {
 }
 
 /* Destination mode: a calm entry instrument, not a second converter. */
-.qa-destination-mode-intro {
+.qa-destination-mode-intro,
+.qa-destination-comparison-intro {
   max-width: 58rem;
   margin-block-end: clamp(2rem, 5vw, 3.75rem);
 }
@@ -1687,21 +1688,9 @@ h3 {
   gap: clamp(2rem, 6vw, 5rem);
 }
 
-.qa-destination-mode__instrument {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(1.5rem, 4vw, 2.75rem);
-  border: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-surface) 98%, var(--color-canvas)),
-    color-mix(in srgb, var(--color-surface) 94%, var(--color-canvas))
-  );
-  box-shadow: var(--qa-shadow-premium);
-}
-
-.qa-destination-mode__instrument::before {
+.qa-destination-mode__instrument,
+.qa-destination-mode__instrument::before,
+.qa-destination-comparison__instrument::before {
   position: absolute;
   inset: 0 0 auto;
   block-size: 1px;
@@ -1733,24 +1722,15 @@ h3 {
   gap: clamp(1.4rem, 3vw, 2rem);
 }
 
-.qa-destination-mode__money {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.65fr);
-  gap: var(--qa-space-5);
-}
-
+.qa-destination-mode__money,
 .qa-destination-mode__destination {
   padding-block: var(--qa-space-5);
   border-block: 1px solid var(--qa-hairline);
 }
 
-.qa-destination-mode__action {
-  display: flex;
-  align-items: center;
-  gap: var(--qa-space-5);
-}
-
-.qa-destination-mode__action p {
+.qa-destination-mode__action,
+.qa-destination-mode__action p,
+.qa-destination-comparison__action p {
   max-width: 34rem;
   margin: 0;
   color: var(--color-tertiary);
@@ -1798,16 +1778,20 @@ h3 {
     gap: var(--qa-space-8);
   }
 
-  .qa-destination-mode__money {
+  .qa-destination-mode__money,
+  .qa-destination-comparison__money,
+  .qa-destination-comparison__trip {
     grid-template-columns: 1fr;
   }
 
-  .qa-destination-mode__action {
+  .qa-destination-mode__action,
+  .qa-destination-comparison__action {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .qa-destination-mode__action .qa-primary-button {
+  .qa-destination-mode__action .qa-primary-button,
+  .qa-destination-comparison__action .qa-primary-button {
     width: 100%;
   }
 }
@@ -1823,7 +1807,6 @@ h3 {
 /* Destination comparison: same source budget, two independently trusted contexts. */
 .qa-destination-comparison-intro {
   max-width: 62rem;
-  margin-block-end: clamp(2rem, 5vw, 3.75rem);
 }
 
 .qa-destination-comparison,
@@ -1843,20 +1826,6 @@ h3 {
     color-mix(in srgb, var(--color-surface) 94%, var(--color-canvas))
   );
   box-shadow: var(--qa-shadow-premium);
-}
-
-.qa-destination-comparison__instrument::before {
-  position: absolute;
-  inset: 0 0 auto;
-  block-size: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--qa-accent-metal) 30%, transparent) 36%,
-    color-mix(in srgb, var(--color-brand) 18%, transparent) 72%,
-    transparent
-  );
-  content: "";
 }
 
 .qa-destination-comparison__heading {
@@ -1934,14 +1903,6 @@ h3 {
   display: flex;
   align-items: center;
   gap: var(--qa-space-5);
-}
-
-.qa-destination-comparison__action p {
-  max-width: 40rem;
-  margin: 0;
-  color: var(--color-tertiary);
-  font-size: 0.78rem;
-  line-height: 1.6;
 }
 
 .qa-destination-comparison__results {
@@ -2157,8 +2118,6 @@ h3 {
 }
 
 @media (max-width: 44rem) {
-  .qa-destination-comparison__money,
-  .qa-destination-comparison__trip,
   .qa-destination-comparison__destinations,
   .qa-destination-comparison__basket-grid {
     grid-template-columns: 1fr;
@@ -2175,16 +2134,11 @@ h3 {
     border-inline-start: 0;
   }
 
-  .qa-destination-comparison__action,
   .qa-destination-comparison__caveat,
   .qa-destination-comparison-side__heading,
   .qa-destination-comparison-side__budget-heading {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .qa-destination-comparison__action .qa-primary-button {
-    width: 100%;
   }
 
   .qa-destination-comparison-side__amount,
