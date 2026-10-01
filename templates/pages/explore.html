@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Explore travel money · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Explore reviewed city and country money context without rankings, hidden FX assumptions or generated price claims.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan by destination</a>
+  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare destinations</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro" aria-labelledby="explore-title">
+    <p class="qa-foundation-kicker">Explore · reviewed money context</p>
+    <h1 id="explore-title">Discover the money side of a place.</h1>
+    <p class="qa-foundation-lede">
+      Browse destinations only when reviewed current money context exists. Explore does not rank
+      places, request a live exchange rate or use AI to fill missing prices.
+    </p>
+  </section>
+
+  <section class="qa-saved-state" aria-labelledby="explore-destinations-title">
+    <div class="qa-saved-section">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Current coverage</p>
+          <h2 id="explore-destinations-title">Destinations with evidence you can inspect</h2>
+        </div>
+      </div>
+
+      {% if explore_error %}
+        <div class="qa-inline-alert" role="status">
+          <h3>{{ explore_error.title }}</h3>
+          <p>{{ explore_error.detail }}</p>
+        </div>
+      {% elif explore_destinations %}
+        <div class="qa-saved-list">
+          {% for card in explore_destinations %}
+            {% with destination=card.destination %}
+              <article class="qa-saved-row">
+                <div class="qa-saved-row__copy">
+                  <p class="qa-foundation-kicker">
+                    {% if destination.is_city_scope %}City scope{% else %}Country scope{% endif %}
+                    · {{ destination.currency_code }}
+                  </p>
+                  <h3>{{ destination.scope_label }}</h3>
+                  <p>
+                    {% if destination.city_price_anchor_count %}
+                      {{ destination.city_price_anchor_count }} city price anchor{{ destination.city_price_anchor_count|pluralize }}
+                    {% endif %}
+                    {% if destination.city_price_anchor_count and destination.national_price_anchor_count %}·{% endif %}
+                    {% if destination.national_price_anchor_count %}
+                      {{ destination.national_price_anchor_count }} national price anchor{{ destination.national_price_anchor_count|pluralize }}
+                    {% endif %}
+                    {% if destination.payment_available %}
+                      {% if destination.city_price_anchor_count or destination.national_price_anchor_count %}·{% endif %}
+                      reviewed payment guidance
+                    {% endif %}
+                  </p>
+                  <p class="qa-saved-row__meta">
+                    {% if destination.latest_price_observed_at %}
+                      Price evidence observed through {{ destination.latest_price_observed_at|date:"j M Y" }}
+                    {% endif %}
+                    {% if destination.latest_price_observed_at and destination.payment_verified_at %}·{% endif %}
+                    {% if destination.payment_verified_at %}
+                      payment guidance reviewed {{ destination.payment_verified_at|date:"j M Y" }}
+                    {% endif %}
+                  </p>
+                  {% if destination.is_city_scope and destination.national_price_anchor_count %}
+                    <p class="qa-saved-row__meta">
+                      Missing city categories may use clearly labelled national fallback already
+                      accepted by the Money Context Engine.
+                    </p>
+                  {% endif %}
+                </div>
+                <div class="qa-saved-row__actions">
+                  <a class="qa-primary-button" href="{{ card.converter_url }}">
+                    Open {{ destination.scope_label }}
+                  </a>
+                </div>
+              </article>
+            {% endwith %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="qa-saved-empty" role="status">
+          <h3>No reviewed destination context is published yet.</h3>
+          <p>
+            The converter remains available. Explore stays empty instead of inventing destination
+            prices or payment claims.
+          </p>
+          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+        </div>
+      {% endif %}
+
+      <p class="qa-saved-state__privacy">
+        Alphabetical discovery only. No “cheapest”, “best value” or purchasing-power ranking is
+        calculated from mixed city and country data.
+      </p>
+    </div>
+  </section>
+{% endblock %}
