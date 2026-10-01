@@ -43,7 +43,7 @@
           {% if returning_trip_home.trip_budget.remaining_per_day is not None %}
             <p class="qa-saved-row__meta">
               About {{ returning_trip_home.trip_budget.remaining_per_day|floatformat:"-12" }}
-              {{ returning_trip_home.scenario.destination_currency.code }} per remaining trip day
+              {{ returning_trip_home.scenario.destination_currency.code }} {{ returning_trip_home.budget_day_label }}
             </p>
           {% endif %}
         </div>
