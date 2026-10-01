@@ -127,9 +127,7 @@
                   {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
                 </p>
               {% else %}
-                <h3>
-                  {{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining
-                </h3>
+                <h3>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</h3>
                 <p>
                   Confirmed spend {{ trip_budget.confirmed_spend }}
                   {{ scenario.destination_currency.code }} of the saved
@@ -181,9 +179,7 @@
             {% for entry in spend_entries %}
               <article class="qa-saved-row">
                 <div class="qa-saved-row__copy">
-                  <h3>
-                    {{ entry.amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}
-                  </h3>
+                  <h3>{{ entry.amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}</h3>
                   <p class="qa-saved-row__meta">
                     {{ entry.get_source_display }} · recorded {{ entry.recorded_at|date:"j M Y, H:i" }}
                   </p>
