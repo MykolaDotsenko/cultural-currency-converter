@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("submission_key", models.UUIDField(unique=True)),
                 ("amount", models.DecimalField(decimal_places=12, max_digits=40)),
                 (
                     "source",
@@ -64,5 +65,13 @@ class Migration(migrations.Migration):
                     ),
                 ],
             },
+        ),
+        migrations.AddConstraint(
+            model_name="savedscenarioobservation",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("kind", "initial")),
+                fields=("scenario",),
+                name="unique_scenario_initial_observation",
+            ),
         ),
     ]
