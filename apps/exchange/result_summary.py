@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from decimal import ROUND_FLOOR, Decimal
 from enum import StrEnum
 
+from apps.culture.services import PurchaseEquivalent
 from apps.exchange.domain import ConversionResult
 from apps.exchange.money_context import MoneyContext, MoneyContextState
 
@@ -115,20 +116,17 @@ def _whole_count(value: Decimal) -> int:
     return int(value.to_integral_value(rounding=ROUND_FLOOR))
 
 
-def _purchase_phrase(equivalent: object) -> str:
-    status = getattr(equivalent, "status")
-    minimum_count = getattr(equivalent, "minimum_count")
-    maximum_count = getattr(equivalent, "maximum_count")
-
-    if status == "below_one":
+def _purchase_phrase(equivalent: PurchaseEquivalent) -> str:
+    if equivalent.status == "below_one":
         return "less than one typical purchase"
-    if status == "up_to":
-        return f"up to {_whole_count(maximum_count)} typical purchases"
-    if status == "single":
-        return f"about {_whole_count(maximum_count)} typical purchases"
-    if status == "range":
+    if equivalent.status == "up_to":
+        return f"up to {_whole_count(equivalent.maximum_count)} typical purchases"
+    if equivalent.status == "single":
+        return f"about {_whole_count(equivalent.maximum_count)} typical purchases"
+    if equivalent.status == "range":
         return (
-            f"about {_whole_count(minimum_count)}–{_whole_count(maximum_count)} "
+            f"about {_whole_count(equivalent.minimum_count)}–"
+            f"{_whole_count(equivalent.maximum_count)} "
             "typical purchases"
         )
     raise ValueError("Unsupported purchase-equivalent status for smart result summary.")
