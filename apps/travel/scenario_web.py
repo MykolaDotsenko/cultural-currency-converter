@@ -66,6 +66,8 @@ def _scenario_converter_url(scenario: SavedScenario) -> str:
         params["source_country"] = scenario.source_country.iso2
     if scenario.destination_country is not None:
         params["destination_country"] = scenario.destination_country.iso2
+    if scenario.destination_city is not None:
+        params["destination_city_slug"] = scenario.destination_city.slug
     return f"{reverse('converter')}?{urlencode(params)}"
 
 
