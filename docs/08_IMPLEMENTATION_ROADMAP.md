@@ -268,6 +268,7 @@ The retention strategy adds three non-duplicative capabilities that strengthen t
    - For users with an upcoming trip, replace repetitive setup with a compact continuity surface showing destination, dates, budget, rate change, context freshness and the next useful action.
    - Keep first-time/anonymous entry converter-first; only personalize the home surface when the user has saved relevant state.
    - Prefer quick actions such as Scan price, Check budget, Money tips and Open trip over a dense dashboard.
+   - **Current production slice:** a clean authenticated converter home now promotes one account-owned active/started/upcoming saved trip without performing a live FX request. Active travel wins, then started-without-end, then the nearest upcoming trip. The surface reuses stored trusted observations, immutable-baseline Trip Budget Remaining, reviewed city/country context freshness and explicit Camera/offline/detail actions. Anonymous/new users, explicit conversion deep links, loaded pairs, ended trips and unscheduled scenarios remain converter-first.
 
 37. **Mobile home-screen quick actions / widget — 80/100**
    - When native mobile is active, expose a minimal glanceable surface for an active trip, such as current reference conversion or remaining trip budget.
@@ -280,7 +281,7 @@ Retention work should follow the dependency order of the product, not engagement
 
 **P0 foundation sequence:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode. First production slices now exist through Destination Mode.
 
-**P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs ✅ first portable slice → Returning-user trip home. Camera confirmation and persistence remain separate explicit actions, and offline export now has explicit stored-FX/freshness semantics without introducing a second calculation path.
+**P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs ✅ first portable slice → Returning-user trip home ✅ first continuity slice. Camera confirmation and persistence remain separate explicit actions, and offline export now has explicit stored-FX/freshness semantics without introducing a second calculation path.
 
 **P2:** Scenario-based notifications → mobile quick actions/widget → saved-comparison continuity → Explore. The first destination-comparison web slice is already shipped.
 
