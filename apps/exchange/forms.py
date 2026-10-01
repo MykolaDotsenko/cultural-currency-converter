@@ -117,9 +117,7 @@ class DestinationModeForm(forms.Form):
                 currency = country_entry[2]
                 token = f"{city.country.iso2}:{city.slug}"
                 self._destination_by_token[token] = (city.country, city, currency)
-                city_choices.append(
-                    (token, f"{city.name}, {city.country.name} · {currency.code}")
-                )
+                city_choices.append((token, f"{city.name}, {city.country.name} · {currency.code}"))
 
         destination_choices: list[object] = [("", "Choose a country or city")]
         if city_choices:
