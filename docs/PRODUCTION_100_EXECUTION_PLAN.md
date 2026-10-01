@@ -264,6 +264,8 @@ Add a management/report command exposing, per city:
 
 The score is a data-maintenance diagnostic, not a user-facing cost-of-living score.
 
+**Current production slice:** `apps/culture/city_health.py` now derives deterministic health rows for active canonical cities using the #188 quality evaluator and current primary-currency mapping. `report_city_coverage` exposes stable text and `--json` output with optional country/city/as-of filters. Four core categories form the score denominator: fresh city evidence contributes 25 points per category, fresh national fallback contributes 15 only when direct fresh city evidence is absent, and stale/provenance-broken rows contribute zero while remaining visible as maintenance gaps. The score is operational only and must not be surfaced as affordability, value or destination ranking.
+
 ## PR #190 — Curated city dataset wave 1
 
 Prioritize depth over breadth.
