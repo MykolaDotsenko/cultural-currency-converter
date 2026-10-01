@@ -302,9 +302,11 @@ The first Camera extraction/confirmation slice now exists for saved budget scena
 - the provider is asked for monetary amount candidates only, not surrounding receipt/menu/account content;
 - an explicit detected currency that conflicts with the saved scenario currency cannot cross the confirmation boundary;
 - the user can correct the amount before confirmation;
-- confirmation produces only a short-lived signed amount/currency/scope token; it does **not** yet write a spend entry.
-
-The next Camera step may create the same confirmed-spend entry only after consuming that signed confirmation token through a separate explicit action. It must reuse the existing idempotent Trip Budget Remaining persistence contract instead of creating camera-specific spend storage.
+- confirmation produces only a short-lived signed amount/currency/scope token and still performs no write by itself;
+- a separate explicit **Add to trip budget** action consumes that token only after owner/scope/currency validation;
+- the handoff reuses the existing idempotent Trip Budget Remaining persistence contract with source `camera`, so double submission does not double-count spend;
+- only amount, source marker and timestamp enter spend persistence; image bytes, merchant identity, receipt text and provider/model response remain outside the stored trip state;
+- expired, tampered, wrong-scope or wrong-currency confirmations fail without changing the saved budget.
 
 
 ### After travel
@@ -400,5 +402,5 @@ The save handoff must preserve these boundaries:
 - owner scoping applies to view and delete operations;
 - anonymous users get an opt-in sign-in affordance rather than silent account persistence.
 
-The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness and explicit Trip Budget Remaining are now present; current local-value refresh, Camera-confirmed spend and deeper trip-day workflows remain later iterations.
+The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness, explicit Trip Budget Remaining and Camera-confirmed spend handoff are now present; current local-value refresh and deeper trip-day workflows remain later iterations.
 
