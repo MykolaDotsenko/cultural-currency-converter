@@ -47,6 +47,22 @@ def test_camera_image_is_decoded_resized_and_reencoded_without_persistence():
     assert result.data.startswith(b"\xff\xd8")
 
 
+def test_camera_image_reencode_strips_exif_metadata():
+    source = Image.new("RGB", (640, 480), "white")
+    exif = source.getexif()
+    exif[270] = "sensitive receipt context"
+    raw = io.BytesIO()
+    source.save(raw, format="JPEG", exif=exif)
+
+    result = sanitize_camera_image(
+        raw.getvalue(),
+        content_type="image/jpeg",
+    )
+
+    with Image.open(io.BytesIO(result.data)) as normalized:
+        assert len(normalized.getexif()) == 0
+
+
 @pytest.mark.parametrize(
     ("raw", "content_type", "message"),
     [
