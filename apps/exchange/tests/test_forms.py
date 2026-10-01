@@ -5,7 +5,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.forms import (
     BudgetInterpretationForm,
     CurrentConversionForm,
@@ -109,6 +109,47 @@ def test_form_rejects_country_currency_mismatch_before_provider(reference_data):
 
     assert not form.is_valid()
     assert "source_currency" in form.errors
+
+
+@pytest.mark.django_db
+def test_form_accepts_canonical_destination_city_for_selected_country(reference_data):
+    _fi, jp, _eur, _jpy = reference_data
+    City.objects.create(country=jp, slug="tokyo", name="Tokyo")
+
+    form = CurrentConversionForm(
+        {
+            "amount": "100",
+            "source_country": "FI",
+            "source_currency": "EUR",
+            "destination_country": "JP",
+            "destination_currency": "JPY",
+            "destination_city_slug": " TOKYO ",
+        }
+    )
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["destination_city_slug"] == "tokyo"
+
+
+@pytest.mark.django_db
+def test_form_rejects_destination_city_that_does_not_belong_to_country(reference_data):
+    fi, _jp, _eur, _jpy = reference_data
+    City.objects.create(country=fi, slug="helsinki", name="Helsinki")
+
+    form = CurrentConversionForm(
+        {
+            "amount": "100",
+            "source_country": "FI",
+            "source_currency": "EUR",
+            "destination_country": "JP",
+            "destination_currency": "JPY",
+            "destination_city_slug": "helsinki",
+        }
+    )
+
+    assert not form.is_valid()
+    assert "destination_country" in form.errors
+    assert "no longer available" in form.errors["destination_country"][0]
 
 
 @pytest.mark.django_db

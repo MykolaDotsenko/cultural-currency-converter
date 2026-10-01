@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_http_methods
 
-from apps.countries.models import CountryCurrency, Currency
+from apps.countries.models import City, CountryCurrency, Currency
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
@@ -68,6 +68,18 @@ def _loaded_pair_initial(query) -> dict[str, str]:
         )
         initial[f"{side}_country"] = country_code if associated.exists() else ""
 
+    destination_country = initial.get("destination_country", "")
+    city_slug = str(query.get("destination_city_slug") or "").strip().lower()
+    if destination_country and city_slug:
+        city_exists = City.objects.filter(
+            country__iso2=destination_country,
+            country__is_active=True,
+            slug=city_slug,
+            is_active=True,
+        ).exists()
+        if city_exists:
+            initial["destination_city_slug"] = city_slug
+
     return initial
 
 
@@ -103,6 +115,9 @@ def _canonical_conversion_url(form: CurrentConversionForm) -> str:
         "destination_country": cleaned.get("destination_country", ""),
         "destination_currency": cleaned["destination_currency"],
     }
+    destination_city_slug = str(cleaned.get("destination_city_slug") or "")
+    if destination_city_slug:
+        params["destination_city_slug"] = destination_city_slug
     if cleaned.get("rate_mode") == RATE_MODE_HISTORICAL:
         params["rate_mode"] = RATE_MODE_HISTORICAL
         params["requested_date"] = cleaned["requested_date"].isoformat()
@@ -117,6 +132,7 @@ def _converter_submission_command(form: CurrentConversionForm) -> ConverterSubmi
         source_currency=cleaned["source_currency"],
         destination_country=cleaned.get("destination_country", ""),
         destination_currency=cleaned["destination_currency"],
+        destination_city_slug=str(cleaned.get("destination_city_slug") or ""),
         historical=cleaned.get("rate_mode") == RATE_MODE_HISTORICAL,
         requested_date=cleaned.get("requested_date"),
     )
@@ -146,6 +162,7 @@ def _swap_payload(request: HttpRequest):
         payload.get("destination_currency", ""),
         payload.get("source_currency", ""),
     )
+    payload["destination_city_slug"] = ""
     return payload
 
 

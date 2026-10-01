@@ -29,6 +29,11 @@ function commitOption(dialog: HTMLDialogElement, option: HTMLElement): void {
   const currencyCode = option.dataset.currencyCode ?? "";
   if (!currencyCode) return;
 
+  if (side === "destination" && countrySelect.value !== countryCode) {
+    const city = form.querySelector<HTMLInputElement>('input[name="destination_city_slug"]');
+    if (city) city.value = "";
+  }
+
   countrySelect.value = countryCode;
   currencySelect.value = currencyCode;
 

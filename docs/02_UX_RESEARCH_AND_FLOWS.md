@@ -179,15 +179,23 @@ Do not turn range controls into a trading surface, and do not invent continuity 
 
 ## Destination mode
 
-A future **Destination mode** can let the user start from the place they are in or are travelling to rather than from a currency pair.
+The first **Destination mode** slice is implemented as a manual destination-first entry point.
 
-A simple explicit flow is:
+The current explicit flow is:
 
-**I’m in / I’m going to → country or city → local currency + money context**
+**Amount + source currency → country or canonical city → current primary local currency → canonical converter + Money Context**
 
-The product can then preselect the relevant current currency, everyday-value context, payment guidance and saved-trip actions while preserving the ability to change currency manually.
+Current UX rules:
 
-Do not require precise device location for this mode. Manual destination selection must always work. If location assistance is ever added, it should be opt-in, coarse enough for the task and never silently persisted as travel history.
+- manual destination selection is the baseline and requires no device location;
+- country choices resolve through current primary CountryCurrency relationships;
+- city choices use canonical active City records and preserve city scope into the converter;
+- the destination page itself does not request an FX rate;
+- the trusted conversion, provider attribution, effective date, stale state and downstream payment/budget semantics remain owned by the canonical converter/Money Context path;
+- changing the destination country or swapping sides clears stale city scope rather than applying a city to the wrong country;
+- users can still change currency manually once they reach the converter.
+
+Future work may add My Places, returning-user shortcuts or optional coarse location assistance. Any location assistance must remain opt-in and must never silently persist travel history.
 
 ## Discovery / Explore experience
 

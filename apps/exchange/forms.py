@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from django import forms
 from django.utils import timezone
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import TypicalPriceCategory
 from apps.exchange.budget import (
     BudgetAssumptions,
@@ -69,6 +69,122 @@ def parse_amount_text(value: str, *, minor_units: int) -> Decimal:
     return amount
 
 
+class DestinationModeForm(forms.Form):
+    """Destination-first entry point that resolves into the canonical converter."""
+
+    amount = forms.CharField(max_length=64, label="Amount")
+    source_currency = forms.ChoiceField(label="Your currency")
+    destination = forms.ChoiceField(label="Where are you going?")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        currencies = list(Currency.objects.filter(is_active=True).order_by("code"))
+        self._currency_by_code = {currency.code: currency for currency in currencies}
+        self.fields["source_currency"].choices = [
+            (currency.code, f"{currency.name} · {currency.code}") for currency in currencies
+        ]
+
+        primary_links = list(
+            CountryCurrency.objects.current()
+            .primary()
+            .select_related("country", "currency")
+            .order_by("country__name", "country__iso2")
+        )
+        self._destination_by_token: dict[str, tuple[Country, City | None, Currency]] = {}
+        country_choices: list[tuple[str, str]] = []
+        country_ids: list[int] = []
+        for link in primary_links:
+            token = link.country.iso2
+            self._destination_by_token[token] = (link.country, None, link.currency)
+            country_choices.append((token, f"{link.country.name} · {link.currency.code}"))
+            country_ids.append(link.country_id)
+
+        city_choices: list[tuple[str, str]] = []
+        if country_ids:
+            for city in (
+                City.objects.filter(
+                    is_active=True,
+                    country_id__in=country_ids,
+                    country__is_active=True,
+                )
+                .select_related("country")
+                .order_by("country__name", "name", "slug")
+            ):
+                country_entry = self._destination_by_token.get(city.country.iso2)
+                if country_entry is None:
+                    continue
+                currency = country_entry[2]
+                token = f"{city.country.iso2}:{city.slug}"
+                self._destination_by_token[token] = (city.country, city, currency)
+                city_choices.append((token, f"{city.name}, {city.country.name} · {currency.code}"))
+
+        destination_choices: list[object] = [("", "Choose a country or city")]
+        if city_choices:
+            destination_choices.append(("Cities", city_choices))
+        if country_choices:
+            destination_choices.append(("Countries", country_choices))
+        self.fields["destination"].choices = destination_choices
+
+        self.fields["amount"].widget.attrs.update(
+            {
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "autocomplete": "off",
+                "placeholder": "100",
+            }
+        )
+        self.fields["source_currency"].widget.attrs["class"] = "qa-native-select"
+        self.fields["destination"].widget.attrs["class"] = "qa-native-select"
+
+        if not self.is_bound:
+            self.initial.setdefault("amount", "100")
+            preferred_source = "EUR" if "EUR" in self._currency_by_code else ""
+            if not preferred_source and currencies:
+                preferred_source = currencies[0].code
+            if preferred_source:
+                self.initial.setdefault("source_currency", preferred_source)
+
+    @property
+    def reference_data_ready(self) -> bool:
+        return bool(self._currency_by_code and self._destination_by_token)
+
+    def add_error(self, field, error):
+        super().add_error(field, error)
+        if field and field in self.fields:
+            self.fields[field].widget.attrs.update(
+                {
+                    "aria-invalid": "true",
+                    "aria-describedby": f"{field}-error",
+                }
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+
+        source_code = str(cleaned.get("source_currency") or "").upper()
+        source_currency = self._currency_by_code.get(source_code)
+        raw_amount = cleaned.get("amount")
+        if source_currency is not None and raw_amount is not None:
+            try:
+                cleaned["amount_decimal"] = parse_amount_text(
+                    str(raw_amount),
+                    minor_units=source_currency.minor_units,
+                )
+            except forms.ValidationError as exc:
+                self.add_error("amount", exc)
+
+        destination_token = str(cleaned.get("destination") or "")
+        destination = self._destination_by_token.get(destination_token)
+        if destination is not None:
+            country, city, currency = destination
+            cleaned["destination_country"] = country.iso2
+            cleaned["destination_city_slug"] = city.slug if city is not None else ""
+            cleaned["destination_currency"] = currency.code
+
+        return cleaned
+
+
 class CurrentConversionForm(forms.Form):
     rate_mode = forms.ChoiceField(
         required=False,
@@ -87,6 +203,11 @@ class CurrentConversionForm(forms.Form):
     source_currency = forms.ChoiceField(label="Source currency")
     destination_country = forms.ChoiceField(required=False, label="Destination country")
     destination_currency = forms.ChoiceField(label="Destination currency")
+    destination_city_slug = forms.CharField(
+        required=False,
+        max_length=140,
+        widget=forms.HiddenInput(),
+    )
 
     def __init__(self, *args, **kwargs):
         if args and args[0] is not None and "rate_mode" not in args[0]:
@@ -220,6 +341,8 @@ class CurrentConversionForm(forms.Form):
             for side in ("source", "destination"):
                 if side not in archived_sides:
                     self._validate_country_currency(side, cleaned)
+
+        self._validate_destination_city(cleaned)
         return cleaned
 
     @property
@@ -227,6 +350,35 @@ class CurrentConversionForm(forms.Form):
         if self.is_bound:
             return self.data.get("rate_mode") == RATE_MODE_HISTORICAL
         return self.initial.get("rate_mode") == RATE_MODE_HISTORICAL
+
+    def _validate_destination_city(self, cleaned: dict[str, object]) -> None:
+        city_slug = str(cleaned.get("destination_city_slug") or "").strip().lower()
+        cleaned["destination_city_slug"] = city_slug
+        if not city_slug:
+            return
+
+        country_code = str(cleaned.get("destination_country") or "").upper()
+        if not country_code:
+            cleaned["destination_city_slug"] = ""
+            self.add_error(
+                "destination_country",
+                "Choose the destination country again to keep the selected city context.",
+            )
+            return
+
+        exists = City.objects.filter(
+            country__iso2=country_code,
+            country__is_active=True,
+            slug=city_slug,
+            is_active=True,
+        ).exists()
+        if not exists:
+            cleaned["destination_city_slug"] = ""
+            self.add_error(
+                "destination_country",
+                "The selected city is no longer available for this destination. "
+                "Choose the destination again.",
+            )
 
     def _validate_country_currency(self, side: str, cleaned: dict[str, object]) -> None:
         country_code = cleaned.get(f"{side}_country")

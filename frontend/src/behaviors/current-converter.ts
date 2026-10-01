@@ -53,6 +53,11 @@ function enhanceAutoRefresh(form: HTMLFormElement): void {
     const target = event.target;
     if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
 
+    if (target.name === "destination_country") {
+      const city = form.querySelector<HTMLInputElement>('input[name="destination_city_slug"]');
+      if (city) city.value = "";
+    }
+
     if (target.name === "rate_mode") {
       syncHistoricalDateField(form);
       if (form.dataset.hasResult !== "true") return;

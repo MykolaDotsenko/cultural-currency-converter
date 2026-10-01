@@ -10,6 +10,7 @@ from apps.exchange.services import (
 )
 from apps.exchange.web.budget import budget_interpretation_view
 from apps.exchange.web.converter import converter_view
+from apps.exchange.web.destination import destination_mode_view
 from apps.exchange.web.explanation import conversion_explanation_view
 from apps.exchange.web.gateways import (
     build_historical_quote_gateway,
@@ -33,6 +34,10 @@ def converter(request: HttpRequest) -> HttpResponse:
         record_recent_conversion_fn=record_recent_conversion,
         is_user_favourite_fn=is_user_favourite,
     )
+
+
+def destination_mode(request: HttpRequest) -> HttpResponse:
+    return destination_mode_view(request)
 
 
 def picker_options(request: HttpRequest) -> HttpResponse:
