@@ -17,6 +17,7 @@ from apps.exchange.ai.contracts import (
 from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
 from apps.exchange.ai.packets import build_explanation_packet
 from apps.exchange.ai.prompts import PROMPT_VERSION, SCHEMA_VERSION
+from apps.exchange.ai.providers.deterministic_test import DeterministicTestExplanationDrafter
 from apps.exchange.ai.providers.gemini import GeminiExplanationDrafter
 from apps.exchange.ai.validation import (
     ExplanationValidationError,
@@ -333,6 +334,13 @@ def build_runtime_explanation_service() -> RuntimeExplanationService:
             enabled=False,
             model=settings.AI_TEXT_MODEL,
             drafter=None,
+        )
+
+    if settings.AI_RUNTIME_TEST_FIXTURE_ENABLED:
+        return RuntimeExplanationService(
+            enabled=True,
+            model="deterministic-browser-fixture",
+            drafter=DeterministicTestExplanationDrafter(),
         )
 
     client = GeminiStructuredClient(
