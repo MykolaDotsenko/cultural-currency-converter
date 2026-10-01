@@ -8,6 +8,7 @@ from config.environment import ConfigurationError
 
 _DEFAULT_PROVIDER = "google"
 _DEFAULT_TEXT_MODEL = "gemini-3.1-flash-lite"
+_DEFAULT_CAMERA_MODEL = "gemini-3.1-flash-lite"
 _DEFAULT_FALLBACK_MODE = "deterministic"
 _TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 _FALSE_VALUES = frozenset({"0", "false", "no", "off"})
@@ -17,7 +18,9 @@ _FALSE_VALUES = frozenset({"0", "false", "no", "off"})
 class AIConfig:
     provider: str
     text_model: str
+    camera_model: str
     runtime_explanation_enabled: bool
+    camera_extraction_enabled: bool
     editorial_generation_enabled: bool
     image_generation_enabled: bool
     fallback_mode: str
@@ -28,6 +31,10 @@ class AIConfig:
     @property
     def has_live_runtime_explanation(self) -> bool:
         return self.runtime_explanation_enabled and bool(self.gemini_api_key)
+
+    @property
+    def has_live_camera_extraction(self) -> bool:
+        return self.camera_extraction_enabled and bool(self.gemini_api_key)
 
 
 def _optional(environ: Mapping[str, str], name: str) -> str | None:
@@ -81,10 +88,16 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
     values = os.environ if environ is None else environ
     provider = (_optional(values, "AI_PROVIDER") or _DEFAULT_PROVIDER).casefold()
     model = _optional(values, "AI_TEXT_MODEL") or _DEFAULT_TEXT_MODEL
+    camera_model = _optional(values, "AI_CAMERA_MODEL") or _DEFAULT_CAMERA_MODEL
     fallback_mode = (_optional(values, "AI_FALLBACK_MODE") or _DEFAULT_FALLBACK_MODE).casefold()
     runtime_enabled = _parse_bool(
         values,
         "AI_RUNTIME_EXPLANATION_ENABLED",
+        default=False,
+    )
+    camera_enabled = _parse_bool(
+        values,
+        "AI_CAMERA_EXTRACTION_ENABLED",
         default=False,
     )
     editorial_enabled = _parse_bool(
@@ -105,6 +118,10 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         raise ConfigurationError(
             "AI_TEXT_MODEL must remain gemini-3.1-flash-lite until a documented eval promotion."
         )
+    if camera_model != _DEFAULT_CAMERA_MODEL:
+        raise ConfigurationError(
+            "AI_CAMERA_MODEL must remain gemini-3.1-flash-lite until a documented camera eval promotion."
+        )
     if fallback_mode != _DEFAULT_FALLBACK_MODE:
         raise ConfigurationError("AI_FALLBACK_MODE must be 'deterministic'.")
     if editorial_enabled:
@@ -115,15 +132,17 @@ def load_ai_config(environ: Mapping[str, str] | None = None) -> AIConfig:
         raise ConfigurationError(
             "AI_IMAGE_GENERATION_ENABLED is disabled in the public runtime architecture."
         )
-    if runtime_enabled and not api_key:
+    if (runtime_enabled or camera_enabled) and not api_key:
         raise ConfigurationError(
-            "GEMINI_API_KEY is required when AI_RUNTIME_EXPLANATION_ENABLED=true."
+            "GEMINI_API_KEY is required when a live AI runtime capability is enabled."
         )
 
     return AIConfig(
         provider=provider,
         text_model=model,
+        camera_model=camera_model,
         runtime_explanation_enabled=runtime_enabled,
+        camera_extraction_enabled=camera_enabled,
         editorial_generation_enabled=editorial_enabled,
         image_generation_enabled=image_enabled,
         fallback_mode=fallback_mode,
