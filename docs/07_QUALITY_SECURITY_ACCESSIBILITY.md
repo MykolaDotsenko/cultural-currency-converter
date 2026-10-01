@@ -57,6 +57,82 @@ Prefer tests that protect:
 
 Avoid duplicating the implementation structure in tests when no user/domain risk is protected.
 
+## Production acceptance matrix
+
+The production-readiness program uses this matrix as an **index of evidence**, not as a second test suite. The implementation and tests remain authoritative. When a listed test moves or a risk dimension changes, update this matrix in the same PR so release readiness stays auditable.
+
+### Risk-dimension legend
+
+- **H — happy path:** the intended successful user outcome works.
+- **E — empty state:** zero-data or not-yet-used state is intentional.
+- **I — invalid input:** invalid, ambiguous or out-of-scope input fails safely and preserves useful state.
+- **P — partial data:** incomplete optional context stays explicit rather than being guessed.
+- **S — stale data:** freshness/effective-date meaning remains visible and stale data cannot masquerade as current.
+- **F — required-provider failure:** a dependency required for the requested result fails with a neutral recoverable state.
+- **O — optional-system failure:** optional context/media/AI failure does not invalidate financial truth.
+- **A — auth/ownership:** account-owned state is inaccessible across owners and anonymous boundaries remain explicit.
+- **D — duplicate/idempotency:** retried or replayed writes cannot silently duplicate durable state.
+- **K — keyboard:** the primary interaction is operable without a pointing device.
+- **X — automated accessibility:** axe/semantic checks cover the rendered surface where browser coverage exists.
+- **R — reflow:** narrow/mobile rendering has no horizontal overflow and preserves semantic order.
+- **N — no-JavaScript:** the workflow remains usable without JavaScript where the product contract requires a server fallback.
+- **C — Chromium:** required Chromium evidence exists.
+- **FF — Firefox:** dedicated or smoke Firefox evidence exists.
+- **W — WebKit:** dedicated or smoke WebKit evidence exists.
+- **PG — PostgreSQL:** persistence/domain behaviour is exercised in the PostgreSQL CI lane when applicable.
+
+A dimension omitted from a row is not silently waived. It is either not meaningful for that surface or belongs to a cross-cutting gate below. If that changes, add the dimension before shipping the behaviour.
+
+### Product-surface evidence
+
+| Surface | Required dimensions | Primary automated evidence | Browser evidence | Current release-readiness note |
+| --- | --- | --- | --- | --- |
+| Current converter | H E I S F O K X R N C FF W PG | `apps/exchange/tests/test_web.py`, `test_forms.py`, `test_application.py`, `test_frankfurter.py`, `test_cache.py` | `current-converter` is full Chromium + Firefox/WebKit smoke; full flow is exercised on the wide surface | Strong baseline. Final certification still re-runs provider-failure and constrained-network evidence. |
+| Historical conversion + rate series | H E I S F K X R C FF W PG | `apps/exchange/tests/test_domain.py`, `test_series.py`, `test_series_presentation.py`, `test_web.py` | `rate-series` is full Chromium + Firefox/WebKit smoke | Strong baseline; historical FX/purchasing-power wording remains a permanent semantic audit item. |
+| Real Payment Estimate | H I O K X R N C PG | `apps/exchange/tests/test_payment_estimate.py`, `test_payment_estimate_web.py` | exercised inside the full `current-converter` browser flow | Cross-engine surface smoke exists through current converter, but the estimate interaction itself is primarily Chromium + server-test evidence. |
+| Destination context / local value / culture | H E P S O K X R C FF W PG | `apps/culture/tests/test_destination_context.py`, `test_destination_empty_state.py`, `test_destination_media.py`, `test_story.py`, `test_web.py`, `test_provenance.py` | rendered through current converter; Explore also carries context evidence | Strong provenance/empty-state baseline. Broader city-data coverage is a product-depth gap, not a reason to fabricate context. |
+| Budget Interpretation | H E I P S O K X R N C PG | `apps/exchange/tests/test_budget.py`, `test_budget_snapshot.py`, `test_budget_web.py` | explicit budget flow inside full `current-converter` QA | Deterministic calculation and insufficient-data semantics are covered; richer presets/payment handoff remain future product work. |
+| Destination Mode | H E I P K X R N C PG | `apps/exchange/tests/test_destination_mode.py` | dedicated `destination-mode` surface in full Chromium | Firefox/WebKit dedicated smoke is not currently present; close if cross-engine evidence becomes required for final certification. |
+| Destination Comparison | H E I P S F O K X R N C FF W PG | `apps/exchange/tests/test_comparison.py`, `test_comparison_web.py` | dedicated full Chromium + Firefox/WebKit smoke surface | Strong baseline; saved-comparison continuity is future scope. |
+| Explore | H E P S O K X R C FF W PG | `apps/culture/tests/test_explore.py` | dedicated full Chromium + Firefox/WebKit smoke surface | First provider-free slice is covered. Future collections/AI must extend this row rather than create parallel acceptance rules. |
+| Optional AI explanation | H I F O K C PG | `apps/exchange/tests/test_ai_service.py`, `test_ai_validation.py`, `test_ai_web.py`, `test_ai_eval.py`, `test_ai_tokens.py` | rendered downstream of current converter when enabled; deterministic fallback is server-tested | Structured quick-prompt/insight UX is future scope. AI must remain optional and cannot become factual financial truth. |
+| Browser-local Saved & recent | H E I D K X R N C FF W | `apps/travel/tests/test_favourites.py`, `test_recent_history.py`, `test_web.py` | dedicated `saved-state` full Chromium + Firefox/WebKit smoke; corrupt local state is exercised | Strong local-state recovery baseline. |
+| Account auth + opt-in recent history | H E I A D K X R C PG | `apps/accounts/tests/test_web.py`, `apps/travel/tests/test_recent_history.py` | login/signup surfaces in full Chromium; account-history end-to-end runs from signup in Chromium | Firefox/WebKit do not currently execute the authenticated account-history mutation loop. |
+| Saved budget scenario detail / re-check | H E I P S F O A D K X R C PG | `apps/travel/tests/test_scenarios.py`, `test_scenario_web.py`, `test_scenario_schedule.py`, `test_scenario_comparison.py` | authenticated save/detail/reopen path is exercised in Chromium's account-history end-to-end flow | Strong server/persistence baseline; dedicated cross-engine authenticated coverage remains a final-certification decision. |
+| Trip Budget Remaining | H E I A D K X R C PG | `apps/travel/tests/test_trip_budget.py`, `test_trip_budget_web.py`, `test_scenarios.py` | add/remove/remaining-budget flow is exercised in authenticated Chromium end-to-end QA | Idempotency and immutable-baseline semantics are release-critical. |
+| Returning-user Trip Home | H E P S O A K X R C PG | `apps/travel/tests/test_home.py` | authenticated Chromium end-to-end returns to clean home and verifies saved-trip continuity | No live rate refresh is a trust invariant. Dedicated Firefox/WebKit auth coverage is not current. |
+| Camera extraction + confirmation + spend handoff | H E I F O A D K PG | `apps/exchange/tests/test_camera.py`, `test_camera_service.py`, `test_camera_gemini_provider.py`, `apps/travel/tests/test_camera_web.py` | no dedicated Camera Playwright surface yet | **Release gap for 100/100:** add browser/a11y evidence for upload → confirm → explicit spend handoff without persisting raw media. |
+| Offline Destination Pack | H E P S O A D PG | `apps/travel/tests/test_offline_pack_web.py` | no dedicated offline-pack browser surface; generated HTML is server-tested | **Release gap for 100/100:** browser-level download/open/freshness semantics and later PWA/offline lifecycle evidence. |
+
+### Cross-cutting gates
+
+These checks apply across surfaces and should not be copied into every row:
+
+| Gate | Executable evidence | Acceptance meaning |
+| --- | --- | --- |
+| Python/Django | `.github/workflows/required-merge-quality.yml`, `.github/workflows/django-tests.yml` | Ruff, mypy on typed boundaries, Django checks, migrations check, pytest/coverage and dependency audit remain green. |
+| PostgreSQL + Redis | required PostgreSQL lane | real PostgreSQL persistence, shared Redis behaviour, readiness semantics, migrations and full pytest suite pass. |
+| Backup/restore | required PostgreSQL lane + `scripts/postgres_backup.sh` / `scripts/postgres_restore.sh` | backup checksum/overwrite guards and clean-database restore are executable; deployment-specific RPO/RTO remains a later production-evidence requirement. |
+| Browser engines | `.github/workflows/browser-quality.yml` | Chromium runs full scope. Firefox/WebKit run smoke on current converter, comparison, Explore, saved state and rate series at wide/mobile viewports. |
+| Accessibility/reflow | `frontend/scripts/browser-quality.mjs` | axe, keyboard focus, overflow, reduced motion, forced colors and 320px text-expansion checks run according to browser scope. |
+| No-JavaScript | `frontend/scripts/browser-quality.mjs` + server web tests | workflows that promise a server fallback must not become inert when enhancement is absent. |
+| CSP/deploy security | required PostgreSQL lane + browser CSP enforcement check | production settings, secure cookies/HSTS/proxy assumptions and public CSP remain executable. |
+| Performance | `frontend/scripts/performance-budgets.mjs`, frontend quality, browser quality | JS/CSS/request/query budgets may grow only with measured justification. |
+| Optional dependency failure | provider/service tests + Money Context/AI/Camera tests | optional media/context/AI failures degrade locally and never corrupt conversion or saved financial state. |
+
+### How to use the matrix in a PR
+
+Before merging a meaningful product change:
+
+1. identify every affected surface row;
+2. identify every new or changed risk dimension;
+3. point the PR tests at the real risk instead of duplicating the implementation;
+4. add browser coverage when the interaction cannot be proven safely at the server/domain layer;
+5. update the matrix only when a durable acceptance obligation or evidence location changes;
+6. do not mark a future release gap as covered merely because a neighbouring surface has a test.
+
+The final 100/100 certification must close every row explicitly marked as a release gap or document why the dimension is no longer applicable.
+
 ## Security baseline
 
 Deployed HTTPS policy is explicit rather than inferred. Preview and production must declare whether Django receives HTTPS directly or trusts a TLS-terminating proxy. Production also requires a positive HSTS window; increase it gradually only after the real HTTPS topology is verified. Proxy mode trusts `X-Forwarded-Proto`, so it must only be used behind a proxy that overwrites that header rather than accepting it from arbitrary clients.
