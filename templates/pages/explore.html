@@ -19,7 +19,6 @@
       places, request a live exchange rate or use AI to fill missing prices.
     </p>
   </section>
-
   <section class="qa-saved-state" aria-labelledby="explore-destinations-title">
     <div class="qa-saved-section">
       <div class="qa-saved-section__heading">
@@ -28,7 +27,6 @@
           <h2 id="explore-destinations-title">Destinations with evidence you can inspect</h2>
         </div>
       </div>
-
       {% if explore_error %}
         <div class="qa-inline-alert" role="status">
           <h3>{{ explore_error.title }}</h3>
@@ -75,9 +73,7 @@
                   {% endif %}
                 </div>
                 <div class="qa-saved-row__actions">
-                  <a class="qa-primary-button" href="{{ card.converter_url }}">
-                    Open {{ destination.scope_label }}
-                  </a>
+                  <a class="qa-primary-button" href="{{ card.converter_url }}">Open {{ destination.scope_label }}</a>
                 </div>
               </article>
             {% endwith %}
@@ -93,7 +89,6 @@
           <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
         </div>
       {% endif %}
-
       <p class="qa-saved-state__privacy">
         Alphabetical discovery only. No “cheapest”, “best value” or purchasing-power ranking is
         calculated from mixed city and country data.
