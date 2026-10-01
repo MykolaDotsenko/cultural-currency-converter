@@ -160,8 +160,8 @@ class DestinationModeForm(forms.Form):
         if not self.is_bound:
             self.initial.setdefault("amount", "100")
             preferred_source = "EUR" if "EUR" in self._currency_by_code else ""
-            if not preferred_source and currencies:
-                preferred_source = currencies[0].code
+            if not preferred_source and self._currency_by_code:
+                preferred_source = next(iter(self._currency_by_code))
             if preferred_source:
                 self.initial.setdefault("source_currency", preferred_source)
 
