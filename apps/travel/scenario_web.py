@@ -251,11 +251,7 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     planning_form = SavedScenarioPlanningForm(request.POST)
     if not planning_form.is_valid():
         first_error = next(
-            (
-                str(message)
-                for errors in planning_form.errors.values()
-                for message in errors
-            ),
+            (str(message) for errors in planning_form.errors.values() for message in errors),
             "The saved trip details are invalid.",
         )
         messages.error(request, f"Could not save trip timing: {first_error}")
