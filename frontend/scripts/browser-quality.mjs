@@ -1081,10 +1081,29 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   const saveForm = page.locator(".qa-budget-interpretation__save-form");
   await saveForm.waitFor();
   await saveForm.locator('input[name="title"]').fill("QA Tokyo budget");
-  await Promise.all([
-    page.waitForURL((url) => /^\/saved\/scenarios\/\d+\/$/.test(url.pathname)),
-    saveForm.getByRole("button", { name: "Save budget" }).click(),
-  ]);
+  const saveScenarioResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/saved/scenarios/budget/create/",
+  );
+  await saveForm.getByRole("button", { name: "Save budget" }).click();
+  const saveScenarioResponse = await saveScenarioResponsePromise;
+  assert(
+    saveScenarioResponse.status() === 302,
+    `trip-budget/e2e: save scenario returned ${saveScenarioResponse.status()} instead of 302`,
+  );
+  const saveLocation = saveScenarioResponse.headers().location ?? "";
+  if (!/^\/saved\/scenarios\/\d+\/$/.test(saveLocation)) {
+    await page.waitForLoadState("domcontentloaded");
+    const flashMessages = await page
+      .locator(".qa-message, [role=\"alert\"]")
+      .allTextContents();
+    assert(
+      false,
+      `trip-budget/e2e: save scenario redirected to ${saveLocation || "(missing location)"}; messages=${flashMessages.join(" | ")}`,
+    );
+  }
+  await page.waitForURL((url) => /^\/saved\/scenarios\/\d+\/$/.test(url.pathname));
 
   await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
