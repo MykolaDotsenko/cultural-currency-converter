@@ -1103,6 +1103,17 @@
 }
 
 @media (max-width: 30rem) {
+  .qa-explore-region-nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .qa-explore-region-nav .qa-secondary-button {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+
   .qa-explore-city-row .qa-saved-row__actions > *,
   .qa-explore-country > .qa-saved-row__actions > *,
   .qa-explore-collection-item .qa-saved-row__actions > * {
