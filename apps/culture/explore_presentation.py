@@ -39,7 +39,8 @@ def _city_profile_url(*, country_code: str, city_slug: str) -> str:
 
 
 def _comparison_url(*, destination_token: str) -> str:
-    return f"{reverse('destination_comparison')}?{urlencode({'left_destination': destination_token})}"
+    params = {"left_destination": destination_token}
+    return f"{reverse('destination_comparison')}?{urlencode(params)}"
 
 
 def build_explore_destination_cards(
