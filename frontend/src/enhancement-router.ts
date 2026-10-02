@@ -16,16 +16,23 @@ function reportEnhancementFailure(label: string, error: unknown): void {
 }
 
 function loadCurrentConverter(root: EnhancementRoot): void {
-  if (contains(root, "[data-picker-dialog]")) {
+  const hasPicker = contains(root, "[data-picker-dialog]");
+  const hasCurrentForm = contains(root, "[data-current-conversion-form]");
+  if (!hasPicker && !hasCurrentForm) return;
+
+  currentConverterModule ??= import("./behaviors/current-converter");
+
+  if (hasPicker) {
     pickerModule ??= import("./behaviors/picker");
-    void pickerModule
-      .then((module) => module.enhanceCurrentConverter())
+    void Promise.all([currentConverterModule, pickerModule])
+      .then(([currentConverter, picker]) => {
+        currentConverter.enhanceCurrentConverterBehavior();
+        picker.enhanceCurrentConverter();
+      })
       .catch((error: unknown) => reportEnhancementFailure("Converter picker", error));
     return;
   }
 
-  if (!contains(root, "[data-current-conversion-form]")) return;
-  currentConverterModule ??= import("./behaviors/current-converter");
   void currentConverterModule
     .then((module) => module.enhanceCurrentConverterBehavior())
     .catch((error: unknown) => reportEnhancementFailure("Current converter", error));
