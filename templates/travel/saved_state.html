@@ -34,9 +34,7 @@
     <p class="qa-saved-state__storage-note"
        data-local-storage-status
        data-storage-tone="neutral"
-       aria-live="off">
-      Checking browser storage…
-    </p>
+       aria-live="off">Checking browser storage…</p>
     <noscript>
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
@@ -132,9 +130,7 @@
                 data-clear-places
                 hidden>Clear saved places</button>
       </div>
-      <p class="qa-saved-empty" data-places-empty>
-        Checking saved places in this browser…
-      </p>
+      <p class="qa-saved-empty" data-places-empty>Checking saved places in this browser…</p>
       <div class="qa-saved-list" data-places-list></div>
     </section>
     <section class="qa-saved-section" aria-labelledby="saved-pairs-title">
@@ -215,9 +211,7 @@
           </p>
         {% endif %}
       {% else %}
-        <p class="qa-saved-empty" data-favourites-empty>
-          Checking saved pairs in this browser…
-        </p>
+        <p class="qa-saved-empty" data-favourites-empty>Checking saved pairs in this browser…</p>
         <div class="qa-saved-list" data-favourites-list></div>
       {% endif %}
     </section>
@@ -321,9 +315,7 @@
                   data-clear-recents
                   hidden>Clear browser history</button>
         </div>
-        <p class="qa-saved-empty" data-recents-empty>
-          Checking browser-only recent conversions…
-        </p>
+        <p class="qa-saved-empty" data-recents-empty>Checking browser-only recent conversions…</p>
         <div class="qa-saved-list" data-recents-list></div>
       </section>
     {% else %}
@@ -339,9 +331,7 @@
                   data-clear-recents
                   hidden>Clear recent history</button>
         </div>
-        <p class="qa-saved-empty" data-recents-empty>
-          Checking recent conversions in this browser…
-        </p>
+        <p class="qa-saved-empty" data-recents-empty>Checking recent conversions in this browser…</p>
         <div class="qa-saved-list" data-recents-list></div>
       </section>
     {% endif %}
