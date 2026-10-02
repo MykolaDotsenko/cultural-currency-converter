@@ -370,7 +370,7 @@
   min-width: 0;
   padding: clamp(1.25rem, 3vw, 2rem);
   border: 1px solid var(--qa-hairline);
-  border-radius: var(--qa-radius-xl);
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--color-surface) 96%, transparent);
   box-shadow: 0 1rem 3rem color-mix(in srgb, var(--color-ink) 5%, transparent);
 }
