@@ -148,9 +148,7 @@ function toggleAnonymousFavourite(snapshot: HTMLElement): void {
   saveStatus(snapshot, toggled.saved ? "Saved in this browser." : "Removed from saved.");
 }
 
-function placeFromSurface(
-  surface: HTMLElement,
-): Omit<SavedPlace, "id" | "savedAt"> | null {
+function placeFromSurface(surface: HTMLElement): Omit<SavedPlace, "id" | "savedAt"> | null {
   const normalized = normalizePlace({
     countryCode: surface.dataset.placeCountryCode ?? "",
     countryName: surface.dataset.placeCountryName ?? "",
@@ -189,9 +187,7 @@ function setPlaceSurfaceState(
     return;
   }
 
-  const placeName = place.cityName
-    ? `${place.cityName}, ${place.countryName}`
-    : place.countryName;
+  const placeName = place.cityName ? `${place.cityName}, ${place.countryName}` : place.countryName;
   if (storageStatus === "unavailable") {
     button.hidden = true;
     return;
