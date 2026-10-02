@@ -1,7 +1,8 @@
 type EnhancementRoot = Document | Element;
 
-let currentConverterModule: Promise<typeof import("./behaviors/current-converter")> | null = null;
-let pickerModule: Promise<typeof import("./behaviors/picker")> | null = null;
+let converterEnhancementsModule:
+  | Promise<typeof import("./behaviors/converter-enhancements")>
+  | null = null;
 let aiExplanationModule: Promise<typeof import("./behaviors/ai-explanation")> | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
 let rateChartLoaderModule: Promise<typeof import("./behaviors/rate-chart-loader")> | null = null;
@@ -16,26 +17,12 @@ function reportEnhancementFailure(label: string, error: unknown): void {
 }
 
 function loadCurrentConverter(root: EnhancementRoot): void {
-  const hasPicker = contains(root, "[data-picker-dialog]");
-  const hasCurrentForm = contains(root, "[data-current-conversion-form]");
-  if (!hasPicker && !hasCurrentForm) return;
+  if (!contains(root, "[data-picker-dialog], [data-current-conversion-form]")) return;
 
-  currentConverterModule ??= import("./behaviors/current-converter");
-
-  if (hasPicker) {
-    pickerModule ??= import("./behaviors/picker");
-    void Promise.all([currentConverterModule, pickerModule])
-      .then(([currentConverter, picker]) => {
-        currentConverter.enhanceCurrentConverterBehavior();
-        picker.enhanceCurrentConverter();
-      })
-      .catch((error: unknown) => reportEnhancementFailure("Converter picker", error));
-    return;
-  }
-
-  void currentConverterModule
-    .then((module) => module.enhanceCurrentConverterBehavior())
-    .catch((error: unknown) => reportEnhancementFailure("Current converter", error));
+  converterEnhancementsModule ??= import("./behaviors/converter-enhancements");
+  void converterEnhancementsModule
+    .then((module) => module.enhanceConverterSurface())
+    .catch((error: unknown) => reportEnhancementFailure("Converter", error));
 }
 
 function loadAiExplanation(root: EnhancementRoot): void {
