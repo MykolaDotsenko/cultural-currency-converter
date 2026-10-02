@@ -119,9 +119,14 @@ def explore(request: HttpRequest) -> HttpResponse:
         requested_region=str(request.GET.get("region") or ""),
         requested_country=str(request.GET.get("country") or ""),
     )
+    collection_scope = (
+        navigation.scope_country_codes
+        if navigation.selected_region_slug or navigation.selected_country_code
+        else ()
+    )
     collection_sections = build_explore_collection_sections(
         collections,
-        scope_country_codes=navigation.scope_country_codes,
+        scope_country_codes=collection_scope,
     )
 
     return render(
