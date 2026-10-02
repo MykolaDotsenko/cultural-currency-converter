@@ -7,6 +7,7 @@ from django import forms
 from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
+from apps.culture.explore import build_explore_destinations
 from apps.culture.models import TypicalPriceCategory
 from apps.exchange.budget import (
     BudgetAssumptions,
@@ -699,8 +700,6 @@ class ExploreAmountForm(forms.Form):
         # Explore must expose only destination scopes that already survived the
         # reviewed freshness/provenance contract. Filtering the ChoiceField also
         # makes a manipulated POST fail before any rate request.
-        from apps.culture.explore import build_explore_destinations
-
         reviewed_destinations = build_explore_destinations(
             as_of=timezone.localdate(),
             limit=24,
