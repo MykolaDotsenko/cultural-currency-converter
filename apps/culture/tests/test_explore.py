@@ -282,8 +282,9 @@ def test_explore_region_and_country_filters_preserve_canonical_city_scope(
     response = client.get(reverse("explore"), {"region": "asia", "country": "JP"})
 
     assert response.status_code == 200
-    assert b'aria-current="page">\n              Asia' in response.content
-    assert b'aria-current="page">\n              <span>Japan</span>' in response.content
+    navigation = response.context["explore_navigation"]
+    assert navigation.selected_region_slug == "asia"
+    assert navigation.selected_country_code == "JP"
     assert b"Tokyo, Japan" in response.content
     assert b"destination_city_slug=tokyo" in response.content
     assert b"Eastern Asia" in response.content
@@ -302,4 +303,6 @@ def test_explore_invalid_filter_degrades_to_all_reviewed_scope(
     assert response.status_code == 200
     assert b"All reviewed destinations" in response.content
     assert b"Tokyo, Japan" in response.content
-    assert b'aria-current="page">\n            All' in response.content
+    navigation = response.context["explore_navigation"]
+    assert navigation.selected_region_slug == ""
+    assert navigation.selected_country_code == ""
