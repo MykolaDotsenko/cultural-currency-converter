@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from django.core.files.storage import default_storage
-from django.db import connection
+from django.db import IntegrityError, connection
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from PIL import Image
@@ -425,6 +425,42 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
     assert len(derivative.content_hash) == 64
     assert derivative.status == MediaStatus.NEEDS_REVIEW
     assert derivative.published_at is None
+
+    with pytest.raises(MediaPublicationError, match="already exists"):
+        create_responsive_derivative(source, width=16)
+
+    assert MediaAsset.objects.filter(derivative_of=source, variant_width=16).count() == 1
+
+
+@pytest.mark.django_db
+def test_database_rejects_duplicate_derivative_width_identity(media_root):
+    source = _publish_sourced(
+        _sourced_asset(title="Unique derivative source", role=MediaRole.STORY_COVER),
+        color=(71, 81, 91),
+    )
+    source.width = 32
+    source.height = 24
+    source.save(update_fields=("width", "height"))
+
+    first = MediaAsset.objects.create(
+        kind=source.kind,
+        source_kind=source.source_kind,
+        role=source.role,
+        title="First 16px derivative",
+        derivative_of=source,
+        variant_width=16,
+    )
+    assert first.pk is not None
+
+    with pytest.raises(IntegrityError):
+        MediaAsset.objects.create(
+            kind=source.kind,
+            source_kind=source.source_kind,
+            role=source.role,
+            title="Duplicate 16px derivative",
+            derivative_of=source,
+            variant_width=16,
+        )
 
 
 @pytest.mark.django_db
