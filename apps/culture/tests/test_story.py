@@ -63,6 +63,8 @@ def test_composer_builds_currency_eras_without_inventing_filler(context_data):
     ]
     assert "Finland records Euro" in story.chapters[0].body
     assert story.chapters[0].source_refs[0].url == "https://example.org/finland-euro"
+    assert story.currency_era_chapters == story.chapters
+    assert story.historical_moment_chapters == ()
 
 
 @pytest.mark.django_db
@@ -108,6 +110,11 @@ def test_composer_adds_reviewed_story_moment(context_data):
     chapter = next(c for c in story.chapters if c.title == "Finland adopted the euro")
     assert chapter.body == "Finland adopted the euro in a sourced transition."
     assert chapter.source_refs[0].label == "Official source"
+    assert [item.kind for item in story.currency_era_chapters] == [
+        "source_currency_era",
+        "destination_currency_era",
+    ]
+    assert story.historical_moment_chapters == (chapter,)
 
 
 @pytest.mark.django_db
