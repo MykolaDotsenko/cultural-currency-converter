@@ -27,7 +27,16 @@ class DeterministicTestExplanationDrafter:
 
         scope = facts.get("historical_scope") if packet.intent_id == "historical_context" else None
         scope = scope or facts.get("reference_scope") or primary
-        next_step_support = facts.get("reference_scope") or facts.get("effective_date") or primary
+        is_explore_context = packet.packet_version.startswith("explore-context:")
+        if is_explore_context:
+            scope = facts.get("evidence_scope") or facts.get("scope") or primary
+            next_step_support = facts.get("scope") or facts.get("evidence_scope") or primary
+            next_step_text = "Continue with the reviewed destination context in the product."
+        else:
+            next_step_support = (
+                facts.get("reference_scope") or facts.get("effective_date") or primary
+            )
+            next_step_text = "Use this reference observation as a comparison point."
 
         return ProviderExplanation(
             payload={
@@ -35,7 +44,7 @@ class DeterministicTestExplanationDrafter:
                 "key_factors": key_factors,
                 "watch_out_for": _grounded(scope),
                 "next_step": {
-                    "text": "Use this reference observation as a comparison point.",
+                    "text": next_step_text,
                     "supporting_fact_ids": [next_step_support.id],
                 },
             },
