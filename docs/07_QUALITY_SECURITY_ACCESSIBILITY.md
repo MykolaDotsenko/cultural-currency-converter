@@ -255,24 +255,23 @@ Structured operational events should expose only bounded fields needed for diagn
 
 Performance work is evidence-driven. Deterministic growth budgets are merge gates; noisy lab timings remain recorded evidence until the CI environment can support a stable threshold.
 
-The 2026-10-02 production build after demand-loaded enhancement routing measured:
+The 2026-10-02 green production build after the demand-loading and Saved-continuity passes measured:
 
-- core application JavaScript: about 19.48 kB gzip, down from 25.69 kB immediately before this pass;
+- core application JavaScript: about 19.50 kB gzip, down from 25.69 kB before demand-loading;
 - combined converter + picker enhancement: about 3.10 kB gzip;
-- local saved-state enhancement: about 3.79 kB gzip;
-- saved-state page renderer: about 2.55 kB gzip;
-- rate-chart loader: about 0.32 kB gzip;
-- historical chart chunk: about 54.70 kB gzip;
-- all JavaScript across core and lazy chunks: about 83.94 kB gzip;
-- application stylesheet: about 19.51 kB gzip.
+- consolidated local saved-state + Saved-page enhancement: about 5.94 kB gzip;
+- single rate-chart chunk: about 54.70 kB gzip;
+- all JavaScript across core and lazy chunks: about 83.24 kB gzip;
+- application stylesheet: about 20.66 kB gzip.
 
 Shared HTMX, typography, CSS and the small race-sensitive AI interaction controller stay in the
-core entry. Converter/picker, local saved-state and chart behaviour are demand-loaded from DOM
-contracts and rediscovered after HTMX swaps. Browser QA requires low-interaction shell, Same Amount
-and City Money Profile surfaces to avoid route-only dynamic JavaScript, while Current Converter,
-Explore, Saved and Rate Series must load their required enhancement chunks. Current Converter must
-additionally prove that result-only chunks arrive after interaction rather than in its initial
-payload.
+core entry. Converter/picker, consolidated local Saved behaviour and rate-chart behaviour are
+demand-loaded from DOM contracts and rediscovered after HTMX swaps. The former chart-loader wrapper
+and separate Saved-page renderer chunk have been removed so each capability has one lazy request.
+Browser QA requires low-interaction shell, Same Amount and City Money Profile surfaces to avoid
+route-only dynamic JavaScript, while Current Converter, Explore, Saved and Rate Series load only the
+enhancements required by their DOM contracts. Current Converter additionally proves that
+result-only chunks arrive after interaction rather than in its initial payload.
 
 Current frontend guardrail budgets intentionally leave generous capacity for continued visual refinement while preserving the demand-loaded architecture:
 
@@ -280,10 +279,8 @@ Current frontend guardrail budgets intentionally leave generous capacity for con
 - all JavaScript: <= 128 KiB gzip;
 - CSS: <= 32 KiB gzip;
 - chart chunk: <= 80 KiB gzip;
-- chart-loader chunk: <= 1 KiB gzip;
 - combined converter enhancement chunk: <= 12 KiB gzip;
-- local saved-state chunk: <= 16 KiB gzip;
-- saved-state page chunk: <= 16 KiB gzip;
+- consolidated local saved-state chunk: <= 16 KiB gzip;
 - initial browser surface: <= 8 requests;
 - initial Chromium layout shift: <= 0.15;
 - initial converter render: <= 6 SQL queries;
