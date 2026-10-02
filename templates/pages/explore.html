@@ -72,6 +72,64 @@
              href="{% url 'same_amount_destinations' %}">View the same amount</a>
         </div>
       </section>
+      {% if explore_ai_form %}
+        <section class="qa-saved-section qa-explore-ai"
+                 aria-labelledby="explore-ai-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">Optional AI · reviewed facts only</p>
+              <h2 id="explore-ai-title">Ask one bounded question.</h2>
+              <p>
+                Choose a reviewed destination, then ask one server-approved question. AI may explain
+                the structured context already shown by Explore; it cannot create rates, prices,
+                payment guidance, rankings or purchasing-power claims.
+              </p>
+            </div>
+          </div>
+          <form class="qa-explore-ai__form"
+                action="{% url 'explore_explanation' %}"
+                method="post"
+                data-ai-explanation-trigger
+                data-ai-explanation-label="Explore explanation"
+                hx-post="{% url 'explore_explanation' %}"
+                hx-target="#conversion-explanation-region"
+                hx-swap="innerHTML"
+                hx-indicator="#explanation-loading"
+                hx-sync="#conversion-explanation-region:replace">
+            {% csrf_token %}
+            <div class="qa-field">
+              <label for="{{ explore_ai_form.destination_token.id_for_label }}">Reviewed destination</label>
+              {{ explore_ai_form.destination_token }}
+            </div>
+            <div class="qa-explore-ai__prompts"
+                 role="group"
+                 aria-label="Suggested Explore questions">
+              {% for prompt in explore_ai_prompts %}
+                <button class="qa-secondary-button"
+                        type="submit"
+                        name="prompt_id"
+                        value="{{ prompt.intent.value }}"
+                        aria-controls="conversion-explanation-region">{{ prompt.label }}</button>
+              {% endfor %}
+            </div>
+            <p id="explanation-loading"
+               class="htmx-indicator qa-field__message"
+               role="status">Building a grounded explanation from reviewed facts…</p>
+            <p id="explanation-announcer"
+               class="qa-visually-hidden"
+               aria-live="polite"></p>
+            <p id="explanation-client-status"
+               class="qa-inline-alert qa-inline-alert--error"
+               aria-live="polite"
+               tabindex="-1"></p>
+          </form>
+          <div id="conversion-explanation-region"
+               class="qa-explore-ai__result"
+               data-ai-pending-requests="0"
+               aria-busy="false"
+               aria-live="polite"></div>
+        </section>
+      {% endif %}
       <section class="qa-saved-section qa-explore-directory"
                id="regional-directory"
                aria-labelledby="explore-regions-title">

@@ -1838,6 +1838,17 @@ async function assertNoJavaScriptExplore(browser) {
       (await page.locator("[data-save-place]:visible").count()) === 0,
       "explore/no-js: browser-only save controls became visible without JavaScript",
     );
+    const aiForm = page.locator(".qa-explore-ai__form");
+    if ((await aiForm.count()) === 1) {
+      assert(
+        (await aiForm.getAttribute("action")) === "/explore/explain/",
+        "explore/no-js: contextual AI form lost its standard POST fallback",
+      );
+      assert(
+        (await aiForm.getByRole("button", { name: "What should I notice here?" }).count()) === 1,
+        "explore/no-js: approved AI prompt disappeared without JavaScript",
+      );
+    }
     await assertNoHorizontalOverflow(page, "explore/no-js");
     return {
       collectionsVisible: true,
@@ -1977,6 +1988,50 @@ async function assertExploreFlow(page) {
     "explore: saved Tokyo did not expose a pressed saved state",
   );
   await tokyoRow.getByText("Place saved in this browser.", { exact: true }).waitFor();
+
+  const aiDestination = page.getByLabel("Reviewed destination", { exact: true });
+  if ((await aiDestination.count()) === 1) {
+    await aiDestination.selectOption("JP:tokyo");
+    const overviewPrompt = page.getByRole("button", {
+      name: "What should I notice here?",
+      exact: true,
+    });
+    const aiResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/explore/explain/") && response.request().method() === "POST",
+    );
+    await overviewPrompt.click();
+    const response = await aiResponse;
+    assert(response.ok(), `explore/ai: explanation returned ${response.status()}`);
+
+    const aiRegion = page.locator("#conversion-explanation-region");
+    await aiRegion.locator('[data-ai-generated="true"]').waitFor();
+    assert(
+      (await aiRegion.innerText()).includes("Tokyo, Japan"),
+      "explore/ai: response lost the selected reviewed destination",
+    );
+    assert(
+      (await aiRegion.getAttribute("aria-busy")) === "false" &&
+        (await aiRegion.getAttribute("data-ai-pending-requests")) === "0",
+      "explore/ai: result region did not return to idle state",
+    );
+    assert(
+      await aiRegion.evaluate((region) =>
+        region.textContent
+          ? !/cheapest|winner|best value|purchasing power|PPP/i.test(region.textContent)
+          : true,
+      ),
+      "explore/ai: bounded answer introduced ranking or purchasing-power language",
+    );
+    assert(
+      await page.evaluate(() =>
+        document.activeElement?.matches(
+          "#conversion-explanation-region [data-ai-explanation-focus]",
+        ),
+      ),
+      "explore/ai: swapped explanation did not receive focus",
+    );
+  }
 
   await assertAxe(page, "explore/interactive");
 }

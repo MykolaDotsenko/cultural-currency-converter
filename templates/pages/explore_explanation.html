@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Explore explanation · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Optional grounded explanation of reviewed destination money context.">
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro"
+           aria-labelledby="explore-explanation-page-title">
+    <p class="qa-foundation-kicker">Explore · optional AI</p>
+    <h1 id="explore-explanation-page-title">Reviewed context, explained narrowly.</h1>
+    <p class="qa-foundation-lede">
+      This explanation can only use the reviewed structured facts rebuilt by the application.
+      It cannot create exchange rates, local prices, payment guidance, rankings or purchasing-power claims.
+    </p>
+  </section>
+  {% include "components/culture/explore_explanation.html" %}
+  <p><a class="qa-secondary-button" href="{% url 'explore' %}">Back to Explore</a></p>
+{% endblock %}

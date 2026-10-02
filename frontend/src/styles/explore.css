@@ -223,6 +223,34 @@
   color: var(--color-brand-hover);
 }
 
+.qa-explore-ai__form {
+  display: grid;
+  gap: var(--qa-space-4);
+  max-width: 52rem;
+}
+
+.qa-explore-ai__form .qa-field {
+  max-width: 30rem;
+}
+
+.qa-explore-ai__prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qa-space-2);
+}
+
+.qa-explore-ai__result:empty {
+  display: none;
+}
+
+.qa-explore-ai__result:not(:empty) {
+  margin-block-start: var(--qa-space-5);
+}
+
+.qa-explore-ai #explanation-client-status:empty {
+  display: none;
+}
+
 .qa-explore-directory > .qa-saved-state__privacy {
   max-width: 62rem;
   padding-block: var(--qa-space-5);

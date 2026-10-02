@@ -3,16 +3,26 @@ from __future__ import annotations
 import logging
 from decimal import DecimalException
 
+from django.conf import settings
 from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.cache import patch_vary_headers
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
+from apps.culture.explore_ai import (
+    ExploreExplanationError,
+    available_explore_explanation_intents,
+    build_explore_explanation_service,
+    destination_token,
+    explain_reviewed_destination,
+    parse_explore_explanation_intent,
+    resolve_reviewed_explore_destination,
+)
 from apps.culture.explore_collections import build_explore_collections
 from apps.culture.explore_navigation import build_explore_regions
 from apps.culture.explore_presentation import (
@@ -20,7 +30,11 @@ from apps.culture.explore_presentation import (
     build_explore_destination_cards,
     build_explore_region_components,
 )
-from apps.culture.forms import CurrentDestinationContextForm, StoryRequestForm
+from apps.culture.forms import (
+    CurrentDestinationContextForm,
+    ExploreExplanationForm,
+    StoryRequestForm,
+)
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import build_destination_context
@@ -143,6 +157,14 @@ def explore(request: HttpRequest) -> HttpResponse:
         "region_count": len(region_components),
         "collection_count": len(collection_components),
     }
+    ai_destination_choices = tuple(
+        (destination_token(destination), destination.scope_label) for destination in destinations
+    )
+    explore_ai_form = (
+        ExploreExplanationForm(destination_choices=ai_destination_choices)
+        if settings.AI_RUNTIME_EXPLANATION_ENABLED and ai_destination_choices
+        else None
+    )
 
     return render(
         request,
@@ -156,8 +178,113 @@ def explore(request: HttpRequest) -> HttpResponse:
             "explore_collection_error": collection_error,
             "explore_navigation_error": navigation_error,
             "explore_as_of": selected_date,
+            "explore_ai_form": explore_ai_form,
+            "explore_ai_prompts": available_explore_explanation_intents(),
         },
     )
+
+
+@require_POST
+def explore_explanation(request: HttpRequest) -> HttpResponse:
+    """Explain one reviewed Explore destination using only rebuilt trusted context."""
+
+    if not settings.AI_RUNTIME_EXPLANATION_ENABLED:
+        raise Http404("Runtime AI explanation is disabled.")
+
+    selected_date = timezone.localdate()
+    explanation = None
+    explanation_error = None
+    response_status = 200
+
+    try:
+        destinations = build_explore_destinations(as_of=selected_date, limit=24)
+    except DatabaseError:
+        logger.exception(
+            "Explore AI destination resolution failed",
+            extra={"culture.capability": "explore_explanation"},
+        )
+        destinations = ()
+        response_status = 503
+        explanation_error = {
+            "title": "Reviewed destination context is temporarily unavailable.",
+            "detail": "Explore and the converter remain usable without this optional explanation.",
+        }
+
+    if explanation_error is None:
+        choices = tuple(
+            (destination_token(destination), destination.scope_label)
+            for destination in destinations
+        )
+        form = ExploreExplanationForm(request.POST, destination_choices=choices)
+        if not form.is_valid():
+            response_status = 422
+            explanation_error = {
+                "title": "This Explore explanation request is not valid.",
+                "detail": "Choose one reviewed destination and one of the suggested questions.",
+            }
+        else:
+            try:
+                destination = resolve_reviewed_explore_destination(
+                    form.cleaned_data["destination_token"],
+                    destinations=destinations,
+                )
+                intent = parse_explore_explanation_intent(form.cleaned_data["prompt_id"])
+                context, delivery = explain_reviewed_destination(
+                    destination,
+                    intent=intent,
+                    service=build_explore_explanation_service(),
+                )
+            except ExploreExplanationError:
+                response_status = 422
+                explanation_error = {
+                    "title": "This reviewed destination is no longer available.",
+                    "detail": "Refresh Explore and choose a destination that still has reviewed context.",
+                }
+            except (DatabaseError, ValueError):
+                logger.exception(
+                    "Explore AI trusted context composition failed",
+                    extra={"culture.capability": "explore_explanation"},
+                )
+                response_status = 503
+                explanation_error = {
+                    "title": "The optional explanation is temporarily unavailable.",
+                    "detail": "The reviewed Explore facts remain unchanged and available.",
+                }
+            else:
+                spec = next(
+                    spec
+                    for spec in available_explore_explanation_intents()
+                    if spec.intent is intent
+                )
+                explanation = {
+                    "result": delivery.result,
+                    "cache_status": delivery.cache_status,
+                    "question": spec.question,
+                    "destination_label": (
+                        f"{context.city_name}, {context.country_name}"
+                        if context.city_name
+                        else context.country_name
+                    ),
+                }
+
+    fragment = bool(request.htmx)
+    template = (
+        "components/culture/explore_explanation.html"
+        if fragment
+        else "pages/explore_explanation.html"
+    )
+    response = render(
+        request,
+        template,
+        {
+            "explanation": explanation,
+            "explanation_error": explanation_error,
+            "is_htmx_fragment": fragment,
+        },
+        status=response_status,
+    )
+    patch_vary_headers(response, ["HX-Request"])
+    return response
 
 
 @require_GET
