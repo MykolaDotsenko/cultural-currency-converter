@@ -25,7 +25,8 @@
       </div>
     </section>
   {% elif city_profile %}
-    <section class="qa-foundation-intro" aria-labelledby="city-profile-title">
+    <section class="qa-foundation-intro qa-city-profile__hero"
+             aria-labelledby="city-profile-title">
       <p class="qa-foundation-kicker">City money profile · reviewed current context</p>
       <h1 id="city-profile-title">{{ city_profile.scope_label }}</h1>
       <p class="qa-foundation-lede">
@@ -33,15 +34,17 @@
         This page uses reviewed price and payment context only. It does not request a live FX rate,
         calculate a cost-of-living score or rank this city against another place.
       </p>
-      <div class="qa-saved-row__actions" aria-label="City money profile actions">
+      <div class="qa-city-profile__hero-actions"
+           aria-label="City money profile actions">
         <a class="qa-primary-button"
            href="{{ city_profile.converter_url }}">Convert for {{ city_profile.city_name }}</a>
         <a class="qa-secondary-button" href="{{ city_profile.budget_url }}">Build a budget</a>
-        <a class="qa-secondary-button" href="{{ city_profile.compare_url }}">Compare this city</a>
-        <a class="qa-secondary-button" href="{{ city_profile.saved_url }}">Saved plans</a>
+        <a class="qa-city-profile__text-action"
+           href="{{ city_profile.compare_url }}">Compare this city</a>
       </div>
     </section>
-    <section class="qa-saved-state" aria-labelledby="city-profile-evidence-title">
+    <section class="qa-saved-state qa-city-profile"
+             aria-labelledby="city-profile-evidence-title">
       <div class="qa-saved-section">
         <div class="qa-saved-section__heading">
           <div>
@@ -58,17 +61,24 @@
         </div>
         <div class="qa-price-grid">
           {% for price in city_profile.prices %}
-            <article class="qa-price-card">
+            <article class="qa-price-card qa-city-profile__price-card">
               <div>
                 <p class="qa-price-card__label">{{ price.label }}</p>
                 <p class="qa-price-card__price">{{ price.price_text }} typical</p>
               </div>
-              <p class="qa-price-card__meta">
-                {% if price.is_city_scope %}City evidence{% else %}National fallback{% endif %}
-                · {{ price.scope }} · observed {{ price.observed }}
-                · {{ price.source_class }} · {{ price.confidence }} confidence
-              </p>
-              <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+              <div class="qa-city-profile__price-scope">
+                <span class="qa-city-profile__scope-badge{% if not price.is_city_scope %} qa-city-profile__scope-badge--fallback{% endif %}">
+                  {% if price.is_city_scope %}City evidence{% else %}National fallback{% endif %}
+                </span>
+                <span>Observed {{ price.observed }}</span>
+              </div>
+              <details class="qa-city-profile__evidence">
+                <summary>Evidence details</summary>
+                <div class="qa-city-profile__evidence-body">
+                  <p>{{ price.scope }} · {{ price.source_class }} · {{ price.confidence }} confidence</p>
+                  <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+                </div>
+              </details>
             </article>
           {% endfor %}
         </div>
@@ -98,10 +108,13 @@
               </div>
             {% endfor %}
           </dl>
-          <p class="qa-saved-row__meta">
-            Country-level payment guidance reviewed {{ city_profile.payment.verified }} ·
-            <a href="{{ city_profile.payment.source_url }}">Source: {{ city_profile.payment.source_name }}</a>
-          </p>
+          <details class="qa-city-profile__evidence qa-city-profile__payment-evidence">
+            <summary>Review &amp; source details</summary>
+            <div class="qa-city-profile__evidence-body">
+              <p>Country-level payment guidance reviewed {{ city_profile.payment.verified }}</p>
+              <a href="{{ city_profile.payment.source_url }}">Source: {{ city_profile.payment.source_name }}</a>
+            </div>
+          </details>
         {% else %}
           <p class="qa-saved-empty">
             Reviewed payment guidance is not available for this country yet. No payment behaviour
@@ -121,15 +134,16 @@
             </p>
           </div>
         </div>
-        <div class="qa-saved-row__actions">
-          <a class="qa-primary-button" href="{{ city_profile.converter_url }}">Convert</a>
-          <a class="qa-secondary-button" href="{{ city_profile.budget_url }}">Budget</a>
-          <a class="qa-secondary-button" href="{{ city_profile.compare_url }}">Compare</a>
-          <a class="qa-secondary-button" href="{{ city_profile.saved_url }}">Saved &amp; recent</a>
+        <div class="qa-city-profile__next-actions">
+          <a class="qa-primary-button" href="{{ city_profile.budget_url }}">Build a budget</a>
+          <a class="qa-city-profile__text-action"
+             href="{{ city_profile.compare_url }}">Compare this city</a>
+          <a class="qa-city-profile__text-action"
+             href="{{ city_profile.saved_url }}">Saved &amp; recent</a>
         </div>
         <p class="qa-saved-state__privacy">
-          My Places persistence is not created on this page. Today, explicit account saving remains
-          part of the existing budget/scenario flow.
+          This profile stays read-only: saving and scenario ownership remain in their canonical
+          Saved &amp; recent and budget workflows.
         </p>
       </div>
     </section>

@@ -339,7 +339,7 @@ def test_explore_get_exposes_only_server_approved_ai_prompts_without_calling_ai(
         response = client.get(reverse("explore"))
 
     assert response.status_code == 200
-    assert b"Ask one bounded question." in response.content
+    assert b"Ask about the facts already here." in response.content
     assert b"What should I notice here?" in response.content
     assert b"What about cash and cards?" in response.content
     assert b"How should I read these prices?" in response.content

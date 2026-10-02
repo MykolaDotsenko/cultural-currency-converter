@@ -28,6 +28,7 @@ const SURFACES = [
   { name: "destination-mode", path: "/destination/" },
   { name: "destination-comparison", path: "/compare/" },
   { name: "explore", path: "/explore/" },
+  { name: "same-amount", path: "/explore/same-amount/" },
   { name: "city-money-profile", path: "/city/JP/tokyo/" },
   { name: "saved-state", path: "/saved/" },
   { name: "account-login", path: "/accounts/login/" },
@@ -1899,10 +1900,218 @@ async function assertServerRenderedExploreAccessibility(browser) {
   }
 }
 
+async function assertPremiumResponsiveTargets(page, label, selector) {
+  const originalViewport = page.viewportSize();
+  for (const width of [430, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await waitForStableLayout(page);
+    await assertNoHorizontalOverflow(page, `${label}/${width}`);
+
+    const undersized = await page.locator(selector).evaluateAll((elements) =>
+      elements
+        .filter((element) => {
+          const style = window.getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          return (
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            rect.width > 0 &&
+            rect.height > 0 &&
+            rect.height < 44
+          );
+        })
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            text: element.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "",
+            height: Math.round(rect.height * 10) / 10,
+          };
+        }),
+    );
+    assert(
+      undersized.length === 0,
+      `${label}/${width}: interactive targets below 44px: ${JSON.stringify(undersized)}`,
+    );
+  }
+
+  if (originalViewport) {
+    await page.setViewportSize(originalViewport);
+    await waitForStableLayout(page);
+  }
+}
+
+async function assertSameAmountQuality(page) {
+  await page
+    .getByRole("heading", { name: "One amount. Several places. No artificial winner." })
+    .waitFor();
+
+  const form = page.locator(".qa-same-amount__form");
+  await form.locator('input[name="amount"]').fill("100");
+  await form.locator('select[name="source_currency"]').selectOption("EUR");
+  for (const destination of await form.locator('input[name="destinations"]').all()) {
+    if (await destination.isChecked()) {
+      await destination.uncheck();
+    }
+  }
+  await form.locator('input[name="destinations"][value="FI:helsinki"]').check();
+  await form.locator('input[name="destinations"][value="JP:tokyo"]').check();
+  const selectedOrder = await form
+    .locator('input[name="destinations"]:checked')
+    .evaluateAll((elements) => elements.map((element) => element.value));
+
+  const requestPromise = page.waitForRequest(
+    (request) => request.url().endsWith("/explore/same-amount/") && request.method() === "POST",
+  );
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/explore/same-amount/") && response.request().method() === "POST",
+  );
+  await form.getByRole("button", { name: "View across destinations", exact: true }).click();
+  const [request, response] = await Promise.all([requestPromise, responsePromise]);
+  assert(response.ok(), `same-amount: form submission returned ${response.status()}`);
+  const submittedOrder = new URLSearchParams(request.postData() ?? "").getAll("destinations");
+  assert(
+    submittedOrder.length === 2,
+    `same-amount: expected two submitted destinations, got ${JSON.stringify(submittedOrder)}`,
+  );
+
+  await page.getByRole("heading", { name: /across your selected destinations/ }).waitFor();
+  const cards = page.locator(".qa-same-amount-card");
+  assert(
+    (await cards.count()) === 2,
+    `same-amount: expected 2 result cards, found ${await cards.count()}`,
+  );
+
+  assert(
+    JSON.stringify(selectedOrder) === JSON.stringify(["FI:helsinki", "JP:tokyo"]),
+    `same-amount: deterministic checkbox selection drifted: ${JSON.stringify(selectedOrder)}`,
+  );
+  const renderedOrder = await cards.evaluateAll((elements) =>
+    elements.map((element) => element.dataset.destinationToken ?? ""),
+  );
+  assert(
+    JSON.stringify(renderedOrder) === JSON.stringify(submittedOrder),
+    `same-amount: submitted destination order drifted: submitted=${JSON.stringify(submittedOrder)} rendered=${JSON.stringify(renderedOrder)}`,
+  );
+  assert(
+    (await page.getByText("No winner is calculated.", { exact: true }).count()) === 1,
+    "same-amount: neutral no-ranking boundary disappeared",
+  );
+
+  const availableCards = page.locator(
+    ".qa-same-amount-card:not(.qa-same-amount-card--unavailable)",
+  );
+  const unavailableCards = page.locator(".qa-same-amount-card--unavailable");
+  assert(
+    (await availableCards.count()) > 0,
+    "same-amount: expected at least one successful destination observation",
+  );
+
+  for (const card of await availableCards.all()) {
+    assert(
+      (await card.getByRole("link", { name: "Open conversion", exact: true }).count()) === 1,
+      "same-amount: canonical conversion action is missing",
+    );
+    assert(
+      (await card.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
+      "same-amount: canonical budget action is missing",
+    );
+    assert(
+      (await card.getByRole("link", { name: "City money profile", exact: true }).count()) === 1,
+      "same-amount: city profile action is missing or duplicated",
+    );
+  }
+
+  if ((await unavailableCards.count()) > 0) {
+    assert(
+      (await page.getByText("Part of the view is unavailable.", { exact: true }).count()) === 1,
+      "same-amount: partial-result status disappeared",
+    );
+    for (const card of await unavailableCards.all()) {
+      assert(
+        (await card.locator(".qa-same-amount-card__amount").count()) === 0,
+        "same-amount: unavailable destination must not display an inferred amount",
+      );
+      assert(
+        (await card.getByText("Reference rate unavailable", { exact: true }).count()) === 1,
+        "same-amount: unavailable destination lost its fail-closed explanation",
+      );
+    }
+  }
+
+  const context = availableCards.first().locator(".qa-same-amount-card__context");
+  if ((await context.count()) === 1) {
+    assert(
+      !(await context.evaluate((element) => element.hasAttribute("open"))),
+      "same-amount: reviewed local context should be collapsed by default",
+    );
+    await context.locator("summary").click();
+    assert(
+      await context.evaluate((element) => element.hasAttribute("open")),
+      "same-amount: reviewed local context did not open",
+    );
+    assert(
+      (await context.locator("a[href^='https://']").count()) > 0,
+      "same-amount: opened local context lost provenance links",
+    );
+  }
+
+  await assertPremiumResponsiveTargets(
+    page,
+    "same-amount/responsive",
+    ".qa-same-amount-card__actions a, .qa-same-amount-card__context summary",
+  );
+  await assertAxe(page, "same-amount/interactive");
+}
+async function assertCityProfileQuality(page) {
+  await page.getByRole("heading", { level: 1 }).waitFor();
+
+  const priceCards = page.locator(".qa-city-profile__price-card");
+  assert((await priceCards.count()) > 0, "city-profile: expected at least one reviewed price card");
+  assert(
+    (await page.locator(".qa-city-profile__hero-actions .qa-primary-button").count()) === 1,
+    "city-profile: hero must expose exactly one primary action",
+  );
+  assert(
+    (await page.locator(".qa-city-profile__hero-actions .qa-secondary-button").count()) <= 1,
+    "city-profile: hero action hierarchy regressed into button soup",
+  );
+
+  const evidence = priceCards.first().locator(".qa-city-profile__evidence");
+  assert(
+    !(await evidence.evaluate((element) => element.hasAttribute("open"))),
+    "city-profile: provenance disclosure should be collapsed by default",
+  );
+  await evidence.locator("summary").click();
+  assert(
+    await evidence.evaluate((element) => element.hasAttribute("open")),
+    "city-profile: provenance disclosure did not open",
+  );
+  assert(
+    (await evidence.locator("a[href^='https://']").count()) === 1,
+    "city-profile: provenance disclosure lost its canonical source link",
+  );
+
+  await assertPremiumResponsiveTargets(
+    page,
+    "city-profile/responsive",
+    ".qa-city-profile__hero-actions a, .qa-city-profile__next-actions a, .qa-city-profile__evidence summary",
+  );
+  await assertAxe(page, "city-profile/interactive");
+}
 async function assertExploreFlow(page) {
   await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
   await page.getByRole("heading", { name: "Start with what matters to you." }).waitFor();
   await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
+
+  const jumpNav = page.locator(".qa-explore-jump-nav");
+  assert(
+    (await jumpNav.getByRole("link", { name: "Same amount", exact: true }).count()) === 1 &&
+      (await jumpNav.getByRole("link", { name: "Curated collections", exact: true }).count()) ===
+        1 &&
+      (await jumpNav.getByRole("link", { name: "Regions & cities", exact: true }).count()) === 1,
+    "explore: compact section navigation is incomplete",
+  );
 
   const collectionCount = await page.locator(".qa-explore-collection").count();
   assert(
@@ -1912,6 +2121,10 @@ async function assertExploreFlow(page) {
 
   const evidence = page.locator(".qa-explore-evidence").first();
   const evidenceSummary = evidence.locator("summary");
+  assert(
+    !(await evidence.evaluate((element) => element.hasAttribute("open"))),
+    "explore: provenance disclosure should be collapsed by default",
+  );
   await evidenceSummary.click();
   assert(
     await evidence.evaluate((element) => element.hasAttribute("open")),
@@ -1989,6 +2202,28 @@ async function assertExploreFlow(page) {
   );
   await tokyoRow.getByText("Place saved in this browser.", { exact: true }).waitFor();
 
+  const aiSection = page.locator("#explore-ai");
+  const collectionsSection = page.locator("#explore-collections");
+  if ((await aiSection.count()) === 1) {
+    const aiFollowsDeterministicContent = await page.evaluate(() => {
+      const collections = document.getElementById("explore-collections");
+      const ai = document.getElementById("explore-ai");
+      return Boolean(
+        collections &&
+          ai &&
+          collections.compareDocumentPosition(ai) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
+    assert(
+      aiFollowsDeterministicContent,
+      "explore: optional AI became more prominent than deterministic discovery",
+    );
+    assert(
+      (await collectionsSection.count()) === 1,
+      "explore: curated collections section is missing",
+    );
+  }
+
   const aiDestination = page.getByLabel("Reviewed destination", { exact: true });
   if ((await aiDestination.count()) === 1) {
     await aiDestination.selectOption("JP:tokyo");
@@ -2033,6 +2268,11 @@ async function assertExploreFlow(page) {
     );
   }
 
+  await assertPremiumResponsiveTargets(
+    page,
+    "explore/responsive",
+    ".qa-explore-jump-link, .qa-explore-region-nav a, .qa-explore-city-row .qa-saved-row__actions a, .qa-explore-city-row .qa-saved-row__actions button, .qa-explore-country > .qa-saved-row__actions a, .qa-explore-country > .qa-saved-row__actions button, .qa-explore-prompt",
+  );
   await assertAxe(page, "explore/interactive");
 }
 
@@ -2129,6 +2369,14 @@ try {
 
       if (surface.name === "explore" && viewport.name === "wide-1440") {
         await assertExploreFlow(page);
+      }
+
+      if (surface.name === "same-amount" && viewport.name === "wide-1440") {
+        await assertSameAmountQuality(page);
+      }
+
+      if (surface.name === "city-money-profile" && viewport.name === "wide-1440") {
+        await assertCityProfileQuality(page);
       }
 
       if (viewport.name === "mobile-390") {

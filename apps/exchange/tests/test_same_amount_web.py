@@ -204,10 +204,12 @@ def test_same_amount_partial_provider_failure_keeps_successful_destinations(
 
     assert response.status_code == 200
     assert gateway.calls == [("EUR", "CAD"), ("EUR", "JPY"), ("EUR", "NOK")]
-    assert b"Toronto, Canada" in response.content
-    assert b"Norway" in response.content
-    assert b"Tokyo, Japan" in response.content
-    assert b"Reference rate unavailable" in response.content
+    body = response.content
+    toronto_index = body.index(b"Toronto, Canada")
+    tokyo_index = body.index(b"Tokyo, Japan")
+    norway_index = body.index(b"Norway")
+    assert toronto_index < tokyo_index < norway_index
+    assert b"Reference rate unavailable" in body
     assert b"The other selected destinations remain valid." in response.content
     assert b"upstream same-amount test failure" not in response.content
     assert b"Part of the view is unavailable." in response.content
@@ -309,4 +311,4 @@ def test_explore_links_to_same_amount_surface(client, same_amount_reference_data
     assert response.status_code == 200
     assert reverse("same_amount_destinations").encode() in response.content
     assert b"One amount" in response.content
-    assert b"View the same amount" in response.content
+    assert b"Compare one amount" in response.content

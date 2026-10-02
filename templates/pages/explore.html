@@ -57,7 +57,16 @@
           </article>
         </div>
       </section>
+      <nav class="qa-explore-jump-nav" aria-label="Explore sections">
+        <a class="qa-explore-jump-link" href="#decision-view">Same amount</a>
+        <a class="qa-explore-jump-link" href="#explore-collections">Curated collections</a>
+        <a class="qa-explore-jump-link" href="#regional-directory">Regions &amp; cities</a>
+        {% if explore_ai_form %}
+          <a class="qa-explore-jump-link" href="#explore-ai">Ask about reviewed facts</a>
+        {% endif %}
+      </nav>
       <section class="qa-saved-section qa-explore-decision"
+               id="decision-view"
                aria-labelledby="explore-same-amount-title">
         <div class="qa-saved-section__heading">
           <div>
@@ -69,67 +78,9 @@
             </p>
           </div>
           <a class="qa-primary-button"
-             href="{% url 'same_amount_destinations' %}">View the same amount</a>
+             href="{% url 'same_amount_destinations' %}">Compare one amount</a>
         </div>
       </section>
-      {% if explore_ai_form %}
-        <section class="qa-saved-section qa-explore-ai"
-                 aria-labelledby="explore-ai-title">
-          <div class="qa-saved-section__heading">
-            <div>
-              <p class="qa-foundation-kicker">Optional AI · reviewed facts only</p>
-              <h2 id="explore-ai-title">Ask one bounded question.</h2>
-              <p>
-                Choose a reviewed destination, then ask one server-approved question. AI may explain
-                the structured context already shown by Explore; it cannot create rates, prices,
-                payment guidance, rankings or purchasing-power claims.
-              </p>
-            </div>
-          </div>
-          <form class="qa-explore-ai__form"
-                action="{% url 'explore_explanation' %}"
-                method="post"
-                data-ai-explanation-trigger
-                data-ai-explanation-label="Explore explanation"
-                hx-post="{% url 'explore_explanation' %}"
-                hx-target="#conversion-explanation-region"
-                hx-swap="innerHTML"
-                hx-indicator="#explanation-loading"
-                hx-sync="#conversion-explanation-region:replace">
-            {% csrf_token %}
-            <div class="qa-field">
-              <label for="{{ explore_ai_form.destination_token.id_for_label }}">Reviewed destination</label>
-              {{ explore_ai_form.destination_token }}
-            </div>
-            <div class="qa-explore-ai__prompts"
-                 role="group"
-                 aria-label="Suggested Explore questions">
-              {% for prompt in explore_ai_prompts %}
-                <button class="qa-secondary-button"
-                        type="submit"
-                        name="prompt_id"
-                        value="{{ prompt.intent.value }}"
-                        aria-controls="conversion-explanation-region">{{ prompt.label }}</button>
-              {% endfor %}
-            </div>
-            <p id="explanation-loading"
-               class="htmx-indicator qa-field__message"
-               role="status">Building a grounded explanation from reviewed facts…</p>
-            <p id="explanation-announcer"
-               class="qa-visually-hidden"
-               aria-live="polite"></p>
-            <p id="explanation-client-status"
-               class="qa-inline-alert qa-inline-alert--error"
-               aria-live="polite"
-               tabindex="-1"></p>
-          </form>
-          <div id="conversion-explanation-region"
-               class="qa-explore-ai__result"
-               data-ai-pending-requests="0"
-               aria-busy="false"
-               aria-live="polite"></div>
-        </section>
-      {% endif %}
       <section class="qa-saved-section qa-explore-directory"
                id="regional-directory"
                aria-labelledby="explore-regions-title">
@@ -196,11 +147,11 @@
                                   <p class="qa-saved-row__meta">{{ city.currency_code }} · city money profile</p>
                                 </div>
                                 <div class="qa-saved-row__actions">
-                                  <a class="qa-secondary-button"
+                                  <a class="qa-explore-action qa-explore-action--primary"
                                      href="{{ city.converter_url }}">Convert</a>
-                                  <a class="qa-secondary-button"
+                                  <a class="qa-explore-action"
                                      href="{{ city.comparison_url }}">Compare</a>
-                                  <button class="qa-secondary-button"
+                                  <button class="qa-explore-save-button"
                                           type="button"
                                           data-save-place
                                           hidden>
@@ -227,11 +178,14 @@
                              data-place-city-slug=""
                              data-place-city-name=""
                              data-place-currency-code="{{ country.currency_code }}">
-                          <a class="qa-secondary-button"
+                          <a class="qa-explore-action qa-explore-action--primary"
                              href="{{ country.converter_url }}">Open country context</a>
-                          <a class="qa-secondary-button"
+                          <a class="qa-explore-action"
                              href="{{ country.comparison_url }}">Compare</a>
-                          <button class="qa-secondary-button" type="button" data-save-place hidden>
+                          <button class="qa-explore-save-button"
+                                  type="button"
+                                  data-save-place
+                                  hidden>
                             <span data-save-place-label>Save</span>
                           </button>
                           <span class="qa-visually-hidden"
@@ -273,14 +227,14 @@
                   </div>
                   <div class="qa-saved-row__actions">
                     {% if card.profile_url %}
-                      <a class="qa-secondary-button"
+                      <a class="qa-explore-action qa-explore-action--primary"
                          href="{{ card.profile_url }}">View city money profile</a>
                     {% else %}
-                      <a class="qa-secondary-button"
+                      <a class="qa-explore-action qa-explore-action--primary"
                          href="{{ card.converter_url }}">Open destination</a>
                     {% endif %}
-                    <a class="qa-secondary-button" href="{{ card.comparison_url }}">Compare</a>
-                    <button class="qa-secondary-button" type="button" data-save-place hidden>
+                    <a class="qa-explore-action" href="{{ card.comparison_url }}">Compare</a>
+                    <button class="qa-explore-save-button" type="button" data-save-place hidden>
                       <span data-save-place-label>Save</span>
                     </button>
                     <span class="qa-visually-hidden"
@@ -305,6 +259,7 @@
         </p>
       </section>
       <section class="qa-saved-section qa-explore-collections"
+               id="explore-collections"
                aria-labelledby="explore-collections-title">
         <div class="qa-saved-section__heading">
           <div>
@@ -362,11 +317,11 @@
                       {% if item.action_url or item.comparison_url %}
                         <div class="qa-saved-row__actions">
                           {% if item.action_url %}
-                            <a class="qa-secondary-button"
+                            <a class="qa-explore-action qa-explore-action--primary"
                                href="{{ item.action_url }}">{{ item.action_label }}</a>
                           {% endif %}
                           {% if item.comparison_url %}
-                            <a class="qa-secondary-button"
+                            <a class="qa-explore-action"
                                href="{{ item.comparison_url }}">Compare</a>
                           {% endif %}
                         </div>
@@ -384,6 +339,64 @@
           </div>
         {% endif %}
       </section>
+      {% if explore_ai_form %}
+        <section class="qa-saved-section qa-explore-ai"
+                 id="explore-ai"
+                 aria-labelledby="explore-ai-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">Optional AI · reviewed facts only</p>
+              <h2 id="explore-ai-title">Ask about the facts already here.</h2>
+              <p>
+                Optional explanation only. Choose a reviewed destination and one bounded question;
+                rates, prices, payment guidance and evidence remain application-owned.
+              </p>
+            </div>
+          </div>
+          <form class="qa-explore-ai__form"
+                action="{% url 'explore_explanation' %}"
+                method="post"
+                data-ai-explanation-trigger
+                data-ai-explanation-label="Explore explanation"
+                hx-post="{% url 'explore_explanation' %}"
+                hx-target="#conversion-explanation-region"
+                hx-swap="innerHTML"
+                hx-indicator="#explanation-loading"
+                hx-sync="#conversion-explanation-region:replace">
+            {% csrf_token %}
+            <div class="qa-field">
+              <label for="{{ explore_ai_form.destination_token.id_for_label }}">Reviewed destination</label>
+              {{ explore_ai_form.destination_token }}
+            </div>
+            <div class="qa-explore-ai__prompts"
+                 role="group"
+                 aria-label="Suggested Explore questions">
+              {% for prompt in explore_ai_prompts %}
+                <button class="qa-explore-prompt"
+                        type="submit"
+                        name="prompt_id"
+                        value="{{ prompt.intent.value }}"
+                        aria-controls="conversion-explanation-region">{{ prompt.label }}</button>
+              {% endfor %}
+            </div>
+            <p id="explanation-loading"
+               class="htmx-indicator qa-field__message"
+               role="status">Building a grounded explanation from reviewed facts…</p>
+            <p id="explanation-announcer"
+               class="qa-visually-hidden"
+               aria-live="polite"></p>
+            <p id="explanation-client-status"
+               class="qa-inline-alert qa-inline-alert--error"
+               aria-live="polite"
+               tabindex="-1"></p>
+          </form>
+          <div id="conversion-explanation-region"
+               class="qa-explore-ai__result"
+               data-ai-pending-requests="0"
+               aria-busy="false"
+               aria-live="polite"></div>
+        </section>
+      {% endif %}
     </div>
   {% endif %}
 {% endblock %}
