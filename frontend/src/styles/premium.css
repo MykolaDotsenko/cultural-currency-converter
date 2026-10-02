@@ -2255,6 +2255,7 @@ h3 {
 .qa-explore-text-link:focus-visible,
 .qa-explore-region-nav a:focus-visible,
 .qa-explore-city-link:focus-visible,
+.qa-explore-city-convert:focus-visible,
 .qa-explore-evidence summary:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 4px;
@@ -2377,6 +2378,14 @@ h3 {
   border-block-start: 1px solid color-mix(in srgb, var(--color-ink) 7%, transparent);
 }
 
+.qa-explore-city-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border-block-end: 1px solid color-mix(in srgb, var(--color-ink) 7%, transparent);
+}
+
 .qa-explore-city-link {
   display: flex;
   min-height: 4.25rem;
@@ -2384,9 +2393,19 @@ h3 {
   justify-content: space-between;
   gap: 1rem;
   padding-block: 0.85rem;
-  border-block-end: 1px solid color-mix(in srgb, var(--color-ink) 7%, transparent);
   color: var(--color-ink);
   text-decoration: none;
+}
+
+.qa-explore-city-convert {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+  text-underline-offset: 0.28em;
+}
+
+.qa-explore-city-convert:hover {
+  color: var(--color-brand);
 }
 
 .qa-explore-city-link strong,
@@ -2477,6 +2496,7 @@ h3 {
   .qa-explore-country-grid,
   .qa-explore-country,
   .qa-explore-city-list,
+  .qa-explore-city-row,
   .qa-explore-city-link,
   .qa-explore-integrity {
     border-color: CanvasText;
@@ -2489,7 +2509,8 @@ h3 {
 
   .qa-explore-text-link,
   .qa-explore-evidence a,
-  .qa-explore-city-link {
+  .qa-explore-city-link,
+  .qa-explore-city-convert {
     color: LinkText;
   }
 }
