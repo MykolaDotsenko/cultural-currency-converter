@@ -114,6 +114,21 @@ function actionButton(text: string, action: () => void, accessibleName = text): 
   return element;
 }
 
+function setEmptyState(
+  element: HTMLElement,
+  message: string,
+  actionText: string,
+  href: string,
+): void {
+  const copy = document.createElement("span");
+  copy.textContent = message;
+  const action = document.createElement("a");
+  action.className = "qa-saved-empty__action";
+  action.href = href;
+  action.textContent = actionText;
+  element.replaceChildren(copy, action);
+}
+
 function persistAndRender(state: LocalPreferencesV1, successMessage: string): void {
   renderSavedPage(writeState(state) ? successMessage : WRITE_FAILURE_MESSAGE);
 }
@@ -130,7 +145,12 @@ function renderFavourites(
 
   list.replaceChildren();
   empty.removeAttribute("data-local-pending");
-  empty.textContent = "No saved pairs yet. Save a pair after a conversion for quicker access.";
+  setEmptyState(
+    empty,
+    "No saved pairs yet. Save a pair after a conversion for quicker access.",
+    "Convert a pair",
+    converterUrl,
+  );
   empty.hidden = state.favourites.length > 0;
 
   for (const favourite of state.favourites) {
@@ -229,7 +249,12 @@ function renderPlaces(
 
   list.replaceChildren();
   empty.removeAttribute("data-local-pending");
-  empty.textContent = "No saved places yet. Save a reviewed country or city from Explore.";
+  setEmptyState(
+    empty,
+    "No saved places yet. Save a reviewed country or city from Explore.",
+    "Explore destinations",
+    page.dataset.exploreUrl ?? "/explore/",
+  );
   empty.hidden = state.places.length > 0;
 
   for (const place of state.places) {
@@ -311,10 +336,14 @@ function renderRecents(page: HTMLElement, state: LocalPreferencesV1, converterUr
 
   list.replaceChildren();
   empty.removeAttribute("data-local-pending");
-  empty.textContent =
+  setEmptyState(
+    empty,
     page.dataset.accountMode === "true"
       ? "No browser-only recent conversions here."
-      : "No recent conversions in this browser yet.";
+      : "No recent conversions in this browser yet.",
+    "Start a conversion",
+    converterUrl,
+  );
   empty.hidden = state.recent.length > 0;
   let activeDay = "";
 
