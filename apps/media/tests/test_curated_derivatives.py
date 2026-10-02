@@ -182,7 +182,6 @@ def test_curated_derivative_build_is_idempotent_and_preserves_review_contract(
     assert "UNCHANGED:" in second.getvalue()
 
 
-
 @pytest.mark.django_db
 def test_curated_media_coverage_strict_fails_before_derivatives_are_published(
     reviewed_source,
@@ -202,7 +201,6 @@ def test_curated_media_coverage_strict_fails_before_derivatives_are_published(
     assert f"NOT_READY: slug={curated_destination.slug}" in output.getvalue()
     assert "published=()" in output.getvalue()
     assert "ready=0 total=1 not_ready=1" in output.getvalue()
-
 
 
 @pytest.mark.django_db
