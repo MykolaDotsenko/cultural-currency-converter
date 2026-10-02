@@ -1197,7 +1197,9 @@ async function assertSavedStateFlow(page) {
     .click();
   await page.getByText("Place removed from this browser.", { exact: true }).waitFor();
   await page
-    .getByText("No saved places yet. Save a reviewed country or city from Explore.", { exact: true })
+    .getByText("No saved places yet. Save a reviewed country or city from Explore.", {
+      exact: true,
+    })
     .waitFor();
   assert(
     await page.getByRole("button", { name: "Clear saved places" }).isHidden(),
@@ -1960,13 +1962,10 @@ async function assertExploreFlow(page) {
     "explore: unsaved Tokyo did not expose an unpressed save toggle",
   );
   await savePlace.click();
-  await page.waitForFunction(
-    (key) => {
-      const state = JSON.parse(localStorage.getItem(key) ?? "{}");
-      return state.places?.some((place) => place.token === "JP:tokyo") === true;
-    },
-    LOCAL_STATE_KEY,
-  );
+  await page.waitForFunction((key) => {
+    const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+    return state.places?.some((place) => place.token === "JP:tokyo") === true;
+  }, LOCAL_STATE_KEY);
   const savedPlace = tokyoRow.getByRole("button", {
     name: "Remove saved place: Tokyo, Japan",
     exact: true,
