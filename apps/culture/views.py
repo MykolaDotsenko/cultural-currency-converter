@@ -8,12 +8,18 @@ from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
+from apps.culture.explore_collections import build_explore_collections
+from apps.culture.explore_presentation import (
+    build_explore_collection_sections,
+    build_explore_navigation,
+)
 from apps.culture.forms import CurrentDestinationContextForm, StoryRequestForm
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
@@ -72,57 +78,61 @@ def city_money_profile(
 
 @require_GET
 def explore(request: HttpRequest) -> HttpResponse:
-    """Discover reviewed current money context without requesting FX or AI."""
+    """Discover reviewed money context through a provider-free regional Explore surface."""
 
+    selected_date = timezone.localdate()
     explore_error = None
+    collections_error = None
     destinations = ()
+    collections = ()
+
     try:
-        destinations = build_explore_destinations()
+        destinations = build_explore_destinations(as_of=selected_date, limit=24)
     except DatabaseError as exc:
         logger.warning(
             "Explore destination composition failed",
             extra={"error_code": exc.__class__.__name__},
         )
         explore_error = {
-            "title": "Explore is temporarily unavailable.",
+            "title": "Explore destinations are temporarily unavailable.",
             "detail": "The converter and saved travel-money tools remain available.",
         }
-
-    destination_cards = []
-    for destination in destinations:
-        params = {
-            "load": "1",
-            "destination_country": destination.country_code,
-            "destination_currency": destination.currency_code,
-        }
-        if destination.city_slug:
-            params["destination_city_slug"] = destination.city_slug
-        converter_url = f"{reverse('converter')}?{urlencode(params)}"
-        profile_url = (
-            reverse(
-                "city_money_profile",
-                kwargs={
-                    "country_code": destination.country_code,
-                    "city_slug": destination.city_slug,
-                },
+    else:
+        try:
+            collections = build_explore_collections(
+                as_of=selected_date,
+                item_limit=12,
+                destinations=destinations,
             )
-            if destination.city_slug
-            else ""
-        )
-        destination_cards.append(
-            {
-                "destination": destination,
-                "converter_url": converter_url,
-                "profile_url": profile_url,
+        except DatabaseError as exc:
+            logger.warning(
+                "Explore collection composition failed",
+                extra={"error_code": exc.__class__.__name__},
+            )
+            collections_error = {
+                "title": "Curated collections are temporarily unavailable.",
+                "detail": "Regional destination discovery is still available.",
             }
-        )
+
+    navigation = build_explore_navigation(
+        destinations,
+        requested_region=str(request.GET.get("region") or ""),
+        requested_country=str(request.GET.get("country") or ""),
+    )
+    collection_sections = build_explore_collection_sections(
+        collections,
+        scope_country_codes=navigation.scope_country_codes,
+    )
 
     return render(
         request,
         "pages/explore.html",
         {
-            "explore_destinations": tuple(destination_cards),
+            "explore_navigation": navigation,
+            "explore_collections": collection_sections,
             "explore_error": explore_error,
+            "explore_collections_error": collections_error,
+            "explore_as_of": selected_date,
         },
     )
 
