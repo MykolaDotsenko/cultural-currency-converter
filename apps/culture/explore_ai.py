@@ -146,7 +146,9 @@ def build_explore_explanation_context(destination: ExploreDestination) -> Destin
         price_limit=3,
     )
     if context is None or not context.has_content:
-        raise ExploreExplanationError("Reviewed money context is not available for this destination.")
+        raise ExploreExplanationError(
+            "Reviewed money context is not available for this destination."
+        )
     return context
 
 
@@ -276,9 +278,7 @@ def build_explore_explanation_packet(
             )
             if fact_id in {fact.id for fact in facts}
         )
-        if not available_payment_fact_ids and "payment_absence" not in {
-            fact.id for fact in facts
-        }:
+        if not available_payment_fact_ids and "payment_absence" not in {fact.id for fact in facts}:
             facts.append(
                 GroundedFact(
                     id="payment_absence",
@@ -288,9 +288,7 @@ def build_explore_explanation_packet(
                 )
             )
         required_fact_ids = (
-            (available_payment_fact_ids[0],)
-            if available_payment_fact_ids
-            else ("payment_absence",)
+            (available_payment_fact_ids[0],) if available_payment_fact_ids else ("payment_absence",)
         )
     elif intent is ExploreExplanationIntent.PRICE_EVIDENCE:
         required_fact_ids = ("price_1",) if context.prices else ("price_absence",)
@@ -335,26 +333,34 @@ def build_explore_fallback_result(
         primary_id = "payment_summary" if "payment_summary" in facts else "payment_absence"
         factor_ids = [
             fact_id
-            for fact_id in ("cash_usage", "payment_customs", "atm_notes", "dcc_warning", "payment_verified")
+            for fact_id in (
+                "cash_usage",
+                "payment_customs",
+                "atm_notes",
+                "dcc_warning",
+                "payment_verified",
+            )
             if fact_id in facts
         ][:3]
     elif intent is ExploreExplanationIntent.PRICE_EVIDENCE:
         primary_id = "price_1" if "price_1" in facts else "price_absence"
-        factor_ids = [fact_id for fact_id in ("price_2", "price_3", "as_of") if fact_id in facts][:3]
+        factor_ids = [fact_id for fact_id in ("price_2", "price_3", "as_of") if fact_id in facts][
+            :3
+        ]
     else:
         primary_id = "destination_scope"
         factor_ids = [
-            fact_id
-            for fact_id in ("payment_summary", "price_1", "as_of")
-            if fact_id in facts
+            fact_id for fact_id in ("payment_summary", "price_1", "as_of") if fact_id in facts
         ][:3]
 
     if not factor_ids:
         factor_ids = ["review_scope"]
 
-    watch_id = "national_fallback" if (
-        intent is ExploreExplanationIntent.PRICE_EVIDENCE and "national_fallback" in facts
-    ) else "trust_boundary"
+    watch_id = (
+        "national_fallback"
+        if (intent is ExploreExplanationIntent.PRICE_EVIDENCE and "national_fallback" in facts)
+        else "trust_boundary"
+    )
 
     return ExplanationResult(
         short_answer=_fact_insight(facts, primary_id),
