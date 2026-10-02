@@ -9,7 +9,11 @@ from django.utils.text import slugify
 
 from apps.countries.models import Country
 from apps.culture.explore import ExploreDestination
-from apps.culture.explore_collections import ExploreCollection, ExploreCollectionKind
+from apps.culture.explore_collections import (
+    ExploreCollection,
+    ExploreCollectionEvidence,
+    ExploreCollectionKind,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,7 +102,7 @@ class ExploreCollectionItemCard:
     title: str
     summary: str
     reviewed_on: date | None
-    evidence: tuple
+    evidence: tuple[ExploreCollectionEvidence, ...]
     primary_label: str
     primary_url: str
     primary_external: bool = False
@@ -322,7 +326,7 @@ def build_explore_collection_sections(
                 }
                 primary_label = "Open money context"
                 primary_url = f"{reverse('converter')}?{urlencode(params)}"
-            elif collection.kind is ExploreCollectionKind.CURRENCY_STORIES and item.evidence:
+            elif collection.kind == ExploreCollectionKind.CURRENCY_STORIES and item.evidence:
                 primary_label = "Read reviewed source"
                 primary_url = item.evidence[0].source_url
                 primary_external = True
