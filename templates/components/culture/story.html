@@ -13,15 +13,11 @@
         </p>
         <h2 id="money-culture-story-title">The sourced story behind this currency context</h2>
         {% if story.status == "partial" %}
-          <p>
-            Only the reviewed context currently available is shown. Missing facts are not filled in.
-          </p>
+          <p>Only the reviewed context currently available is shown. Missing facts are not filled in.</p>
         {% elif story.status == "unavailable" %}
           <p>No reviewed story facts are available for this context yet.</p>
         {% else %}
-          <p>
-            Reviewed currency eras and published money-history facts, assembled without invented filler.
-          </p>
+          <p>Reviewed currency eras and published money-history facts, assembled without invented filler.</p>
         {% endif %}
       </div>
       <p class="qa-story-surface__scope">
@@ -32,7 +28,6 @@
         {% endif %}
       </p>
     </div>
-
     {% if story.status != "unavailable" %}
       {% if story_media %}
         {% include "components/media/image_frame.html" with image=story_media.image loading="lazy" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
@@ -72,7 +67,8 @@
         </section>
       {% endif %}
       {% if story.historical_moment_chapters %}
-        <section class="qa-story-section" aria-labelledby="reviewed-money-history-title">
+        <section class="qa-story-section"
+                 aria-labelledby="reviewed-money-history-title">
           <div class="qa-story-section__heading">
             <p class="qa-foundation-kicker">Reviewed history</p>
             <h3 id="reviewed-money-history-title">Published money-history moments</h3>
