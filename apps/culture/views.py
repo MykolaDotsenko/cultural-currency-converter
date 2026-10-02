@@ -158,8 +158,7 @@ def explore(request: HttpRequest) -> HttpResponse:
         "collection_count": len(collection_components),
     }
     ai_destination_choices = tuple(
-        (destination_token(destination), destination.scope_label)
-        for destination in destinations
+        (destination_token(destination), destination.scope_label) for destination in destinations
     )
     explore_ai_form = (
         ExploreExplanationForm(destination_choices=ai_destination_choices)
@@ -286,7 +285,6 @@ def explore_explanation(request: HttpRequest) -> HttpResponse:
     )
     patch_vary_headers(response, ["HX-Request"])
     return response
-
 
 
 @require_GET
