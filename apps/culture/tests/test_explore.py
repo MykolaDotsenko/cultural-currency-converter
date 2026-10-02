@@ -220,12 +220,12 @@ def test_explore_page_is_provider_free_and_links_back_to_canonical_converter(
         response = client.get(reverse("explore"))
 
     assert response.status_code == 200
-    assert b"Discover the money side of a place." in response.content
-    assert b"Tokyo, Japan" in response.content
-    assert b"reviewed country payment guidance" in response.content
-    assert b"national price anchor" in response.content
-    assert b"shown" in response.content
-    assert b"Alphabetical discovery only" in response.content
+    assert b"Know the money before you know the place." in response.content
+    assert b"Start with what matters to you." in response.content
+    assert "Region → country → city.".encode() in response.content
+    assert b"Tokyo" in response.content
+    assert b"city money profile" in response.content
+    assert b"No popularity list" in response.content
     assert b"destination_city_slug=tokyo" in response.content
     assert b"load=1" in response.content
     latest_gateway_factory.assert_not_called()
@@ -254,3 +254,37 @@ def test_explore_programming_error_is_not_silenced(client):
         pytest.raises(RuntimeError, match="programming bug"),
     ):
         client.get(reverse("explore"))
+
+
+@pytest.mark.django_db
+def test_explore_collection_failure_degrades_without_hiding_regional_navigation(
+    client,
+    explore_reference_data,
+):
+    with patch(
+        "apps.culture.views.build_explore_collections",
+        side_effect=DatabaseError("collection unavailable"),
+    ):
+        response = client.get(reverse("explore"))
+
+    assert response.status_code == 200
+    assert b"Curated collections are temporarily unavailable." in response.content
+    assert "Region → country → city.".encode() in response.content
+    assert b"Tokyo" in response.content
+
+
+@pytest.mark.django_db
+def test_explore_navigation_failure_degrades_to_reviewed_flat_destination_list(
+    client,
+    explore_reference_data,
+):
+    with patch(
+        "apps.culture.views.build_explore_regions",
+        side_effect=DatabaseError("navigation unavailable"),
+    ):
+        response = client.get(reverse("explore"))
+
+    assert response.status_code == 200
+    assert b"Regional navigation is temporarily unavailable." in response.content
+    assert b"Tokyo, Japan" in response.content
+    assert b"View city money profile" in response.content
