@@ -239,7 +239,7 @@ def test_curated_derivative_build_rejects_drifted_existing_width(
     derivative.focal_x = Decimal("0.500")
     derivative.save(update_fields=("focal_x", "updated_at"))
 
-    with pytest.raises(CommandError, match="derivative metadata drift"):
+    with pytest.raises(CommandError, match="derivative metadata/provenance drift"):
         call_command(
             "build_curated_media_derivatives",
             "--slug",
@@ -357,7 +357,7 @@ def test_curated_derivative_build_fails_closed_on_manifest_source_drift(
     reviewed_source.focal_x = Decimal("0.500")
     reviewed_source.save(update_fields=("focal_x", "updated_at"))
 
-    with pytest.raises(CommandError, match="metadata drift"):
+    with pytest.raises(CommandError, match="metadata/provenance drift"):
         call_command(
             "build_curated_media_derivatives",
             "--slug",
