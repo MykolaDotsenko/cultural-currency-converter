@@ -3,6 +3,7 @@ import {
   saveFavouriteToAccount,
   syncLocalFavouritesToAccount,
 } from "./account-favourites";
+import { wireSavedPage } from "./local-saved-state-page";
 import {
   isFavourite,
   isPlaceSaved,
@@ -21,7 +22,6 @@ import {
   writeState,
 } from "./local-saved-state-store";
 
-let savedPageModulePromise: Promise<typeof import("./local-saved-state-page")> | null = null;
 
 function pairFromSnapshot(element: HTMLElement): PairContext | null {
   return normalizePair({
@@ -278,31 +278,13 @@ function enhanceConversionSnapshots(): void {
   }
 }
 
-function showSavedPageEnhancementFailure(error: unknown): void {
-  console.error("Saved & recent enhancement failed to load.", error);
-  const status = document.querySelector<HTMLElement>("[data-local-storage-status]");
-  if (!status) return;
-
-  status.dataset.storageTone = "warning";
-  status.setAttribute("aria-live", "polite");
-  status.textContent =
-    "Saved state could not be loaded in this browser. Reload to try again; conversion still works.";
-}
-
 function enhanceSavedPage(): void {
   const page = document.querySelector<HTMLElement>("[data-local-saved-state-page]");
   if (!page) return;
 
   const status = page.querySelector<HTMLElement>("[data-local-storage-status]");
   if (status) status.hidden = false;
-
-  savedPageModulePromise ??= import("./local-saved-state-page");
-  void savedPageModulePromise
-    .then(({ wireSavedPage }) => wireSavedPage())
-    .catch((error: unknown) => {
-      savedPageModulePromise = null;
-      showSavedPageEnhancementFailure(error);
-    });
+  wireSavedPage();
 }
 
 function syncLocalAccountFavourites(): void {
