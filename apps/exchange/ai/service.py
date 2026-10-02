@@ -69,12 +69,14 @@ class RuntimeExplanationService:
         packet = build_explanation_packet(snapshot, intent=intent, locale=locale)
         return self.explain_packet(
             packet,
-            fallback_factory=lambda reason: _fallback_delivery(
-                snapshot,
-                intent=intent,
-                packet_hash=packet.packet_hash,
-                reason=reason,
-            ).result,
+            fallback_factory=lambda reason: (
+                _fallback_delivery(
+                    snapshot,
+                    intent=intent,
+                    packet_hash=packet.packet_hash,
+                    reason=reason,
+                ).result
+            ),
             locale=locale,
             prompt_version=PROMPT_VERSION,
             schema_version=SCHEMA_VERSION,
