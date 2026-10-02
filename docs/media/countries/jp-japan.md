@@ -165,6 +165,19 @@ Create a restrained Japanese urban still life: a ceramic cup, folded paper recei
 
 Treat this as a premium editorial insert: tactile materials, quiet composition, a small number of meaningful local cues and excellent light. No souvenir arrangement, flag palette, postcard montage or overloaded prop styling.
 
+## Reviewed responsive crop contract
+
+The existing sourced P01–P04 selections now have executable crop/delivery metadata in the curated manifest:
+
+| Role | Slug | Focal point | Responsive widths |
+| --- | --- | ---: | --- |
+| P01 hero | `japan-tokyo-street-night-2019` | 50% × 52% | 640 / 960 / 1440 px |
+| P02 everyday value | `japan-shoyu-ramen-everyday-value-2025` | 52% × 51% | 480 / 800 / 1200 px |
+| P03 payment culture | `japan-suica-vending-payment-2020` | 50% × 47% | 480 / 800 / 1200 px |
+| P04 local detail | `japan-tokyo-metro-local-detail-2021` | 50% × 47% | 480 / 800 / 1200 px |
+
+These widths are derivative candidates only. Managed source approval, derivative review and explicit publication remain mandatory before runtime rendering.
+
 ## P05 — Desktop Interface Concept
 
 **Target:** `docs/assets/country-interface-concepts/jp/desktop/jp-interface-desktop-v01.webp`
