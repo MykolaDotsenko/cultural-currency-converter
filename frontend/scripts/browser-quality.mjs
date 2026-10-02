@@ -713,6 +713,45 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   );
   await assertAxe(page, "current-converter/budget-interpretation");
 
+  const budgetAiRegion = page.locator("#budget-explanation-region");
+  const budgetAiPrompt = page.getByRole("button", { name: "Explain this budget", exact: true });
+  await budgetAiPrompt.waitFor();
+  const budgetResultBeforeAi = await page.locator(".qa-budget-interpretation__result").innerText();
+  const budgetAiResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/explain/",
+  );
+  await budgetAiPrompt.click();
+  const budgetAiResponse = await budgetAiResponsePromise;
+  assert(
+    budgetAiResponse.status() === 200,
+    `current-converter/budget-ai: explanation returned ${budgetAiResponse.status()}`,
+  );
+  await budgetAiRegion.locator('[data-ai-generated="true"]').waitFor();
+  assert(
+    (await budgetAiRegion.getAttribute("aria-busy")) === "false" &&
+      (await budgetAiRegion.getAttribute("data-ai-pending-requests")) === "0",
+    "current-converter/budget-ai: explanation region did not return to idle state",
+  );
+  assert(
+    await page.evaluate(() =>
+      document.activeElement?.matches("#budget-explanation-region [data-ai-explanation-focus]"),
+    ),
+    "current-converter/budget-ai: swapped explanation did not receive focus",
+  );
+  assert(
+    (await page.locator(".qa-budget-interpretation__result").innerText()) === budgetResultBeforeAi,
+    "current-converter/budget-ai: explanation changed the deterministic budget result",
+  );
+  assert(
+    !/cheapest|winner|best value|more affordable|less affordable/i.test(
+      (await budgetAiRegion.innerText()) ?? "",
+    ),
+    "current-converter/budget-ai: explanation introduced ranking or affordability language",
+  );
+  await assertAxe(page, "current-converter/budget-ai");
+
   await page.evaluate((key) => localStorage.removeItem(key), LOCAL_STATE_KEY);
   await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
 
@@ -2681,6 +2720,83 @@ async function assertExploreFlow(page) {
   await assertAxe(page, "explore/interactive");
 }
 
+async function assertDestinationComparisonQuality(page) {
+  const form = page.locator(".qa-destination-comparison__form");
+  await form.waitFor();
+
+  await form.locator('input[name="amount"]').fill("500");
+  await form.locator('select[name="source_currency"]').selectOption("EUR");
+  await form.locator('select[name="left_destination"]').selectOption("JP:tokyo");
+  await form.locator('select[name="right_destination"]').selectOption("NO");
+  await form.locator("#id_duration_days").fill("3");
+  await form.locator("#id_travelers").fill("1");
+
+  const comparisonResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/compare/",
+  );
+  await form.getByRole("button", { name: "Compare destinations", exact: true }).click();
+  const comparisonResponse = await comparisonResponsePromise;
+  assert(
+    comparisonResponse.status() === 200,
+    `destination-comparison: comparison returned ${comparisonResponse.status()}`,
+  );
+
+  const results = page.locator(".qa-destination-comparison__results");
+  await results.waitFor();
+  await results.getByText("No winner is calculated.", { exact: true }).waitFor();
+  const deterministicBeforeAi = await results
+    .locator(".qa-destination-comparison__grid")
+    .innerText();
+
+  const aiRegion = page.locator("#comparison-explanation-region");
+  const aiPrompt = page.getByRole("button", {
+    name: "Explain this comparison",
+    exact: true,
+  });
+  await aiPrompt.waitFor();
+  const aiResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/compare/explain/",
+  );
+  await aiPrompt.click();
+  const aiResponse = await aiResponsePromise;
+  assert(
+    aiResponse.status() === 200,
+    `destination-comparison/ai: explanation returned ${aiResponse.status()}`,
+  );
+  await aiRegion.locator('[data-ai-generated="true"]').waitFor();
+  assert(
+    (await aiRegion.getAttribute("aria-busy")) === "false" &&
+      (await aiRegion.getAttribute("data-ai-pending-requests")) === "0",
+    "destination-comparison/ai: explanation region did not return to idle state",
+  );
+  assert(
+    await page.evaluate(() =>
+      document.activeElement?.matches(
+        "#comparison-explanation-region [data-ai-explanation-focus]",
+      ),
+    ),
+    "destination-comparison/ai: swapped explanation did not receive focus",
+  );
+  assert(
+    (await results.locator(".qa-destination-comparison__grid").innerText()) ===
+      deterministicBeforeAi,
+    "destination-comparison/ai: explanation changed the deterministic comparison result",
+  );
+  assert(
+    !/cheapest|best value|more affordable|less affordable|you should choose/i.test(
+      (await aiRegion.innerText()) ?? "",
+    ),
+    "destination-comparison/ai: explanation introduced ranking or affordability language",
+  );
+
+  await assertNoHorizontalOverflow(page, "destination-comparison/interactive");
+  await assertAxe(page, "destination-comparison/interactive");
+}
+
 async function openSurface(page, surface) {
   const response = await page.goto(`${BASE_URL}${surface.path}`, { waitUntil: "networkidle" });
   await waitForStableLayout(page);
@@ -2774,6 +2890,10 @@ try {
           (BROWSER_SCOPE === "full" && viewport.name === "mobile-390"))
       ) {
         await assertCurrentConverterFlow(page, consoleErrors);
+      }
+
+      if (surface.name === "destination-comparison" && viewport.name === "wide-1440") {
+        await assertDestinationComparisonQuality(page);
       }
 
       if (surface.name === "saved-state" && viewport.name === "wide-1440") {
