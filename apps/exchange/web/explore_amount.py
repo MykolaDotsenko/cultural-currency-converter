@@ -105,6 +105,7 @@ def explore_same_amount_view(
 
     form = ExploreAmountForm(request.POST if request.method == "POST" else None)
     cards: tuple[dict[str, object], ...] = ()
+    comparison_url = ""
     response_status = 200
 
     if request.method == "POST":
@@ -134,6 +135,17 @@ def explore_same_amount_view(
                 )
                 built.append(_result_card(resolution=resolution, submission=submission))
             cards = tuple(built)
+            resolutions = cleaned["destination_resolutions"]
+            if len(resolutions) >= 2:
+                comparison_params = {
+                    "amount": format(cleaned["amount_decimal"], "f"),
+                    "source_currency": cleaned["source_currency"],
+                    "left_destination": resolutions[0]["token"],
+                    "right_destination": resolutions[1]["token"],
+                }
+                comparison_url = (
+                    f"{reverse('destination_comparison')}?{urlencode(comparison_params)}"
+                )
 
     return render(
         request,
@@ -143,6 +155,7 @@ def explore_same_amount_view(
             "cards": cards,
             "reference_data_ready": form.reference_data_ready,
             "successful_card_count": sum(bool(card.get("available")) for card in cards),
+            "comparison_url": comparison_url,
         },
         status=response_status,
     )
