@@ -161,6 +161,7 @@ def explore(request: HttpRequest) -> HttpResponse:
         },
     )
 
+
 @require_GET
 def money_culture_story(request: HttpRequest) -> HttpResponse:
     form = StoryRequestForm(request.GET)
