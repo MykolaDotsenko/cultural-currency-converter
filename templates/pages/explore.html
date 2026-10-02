@@ -2,7 +2,7 @@
 {% block title %}Explore travel money · Cultural Currency Converter{% endblock %}
 {% block head_meta %}
   <meta name="description"
-        content="Explore reviewed travel-money context by region, country, city and sourced collection.">
+        content="Explore reviewed travel-money context by region, country, city and sources.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
@@ -144,15 +144,17 @@
                           {{ destination.city_price_anchor_count }} direct city
                           anchor{{ destination.city_price_anchor_count|pluralize }}
                         {% endif %}
-                        {% if destination.city_price_anchor_count and destination.national_price_anchor_count %}
-                          ·
+                        {% if destination.city_price_anchor_count %}
+                          {% if destination.national_price_anchor_count %}·{% endif %}
                         {% endif %}
                         {% if destination.national_price_anchor_count %}
                           {{ destination.national_price_anchor_count }} national
                           anchor{{ destination.national_price_anchor_count|pluralize }}
                         {% endif %}
                         {% if destination.payment_available %}
-                          {% if destination.city_price_anchor_count or destination.national_price_anchor_count %}
+                          {% if destination.city_price_anchor_count %}
+                            ·
+                          {% elif destination.national_price_anchor_count %}
                             ·
                           {% endif %}
                           payment guidance
@@ -163,8 +165,8 @@
                           Prices observed through
                           {{ destination.latest_price_observed_at|date:"j M Y" }}
                         {% endif %}
-                        {% if destination.latest_price_observed_at and destination.payment_verified_at %}
-                          ·
+                        {% if destination.latest_price_observed_at %}
+                          {% if destination.payment_verified_at %}·{% endif %}
                         {% endif %}
                         {% if destination.payment_verified_at %}
                           payments reviewed {{ destination.payment_verified_at|date:"j M Y" }}
