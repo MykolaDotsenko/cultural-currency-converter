@@ -111,16 +111,7 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for country in region.countries %}
-                    <article class="qa-saved-row qa-explore-country"
-                             {% if country.converter_url %}
-                               data-local-saved-place
-                               data-place-token="{{ country.token }}"
-                               data-place-country-code="{{ country.country_code }}"
-                               data-place-country-name="{{ country.country_name }}"
-                               data-place-city-slug=""
-                               data-place-city-name=""
-                               data-place-currency-code="{{ country.currency_code }}"
-                             {% endif %}>
+                    <article class="qa-saved-row qa-explore-country">
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {{ country.currency_code }}
@@ -170,7 +161,14 @@
                         {% endif %}
                       </div>
                       {% if country.converter_url %}
-                        <div class="qa-saved-row__actions">
+                        <div class="qa-saved-row__actions"
+                             data-local-saved-place
+                             data-place-token="{{ country.token }}"
+                             data-place-country-code="{{ country.country_code }}"
+                             data-place-country-name="{{ country.country_name }}"
+                             data-place-city-slug=""
+                             data-place-city-name=""
+                             data-place-currency-code="{{ country.currency_code }}">
                           <a class="qa-secondary-button"
                              href="{{ country.converter_url }}">Open country context</a>
                           <a class="qa-secondary-button"
