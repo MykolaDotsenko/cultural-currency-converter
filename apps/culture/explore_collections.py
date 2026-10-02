@@ -333,12 +333,14 @@ def _recent_destination_items(
     items: list[ExploreCollectionItem] = []
     for destination in destinations:
         evidence = _destination_evidence(destination, as_of=as_of)
-        dated_evidence = tuple(
-            item.evidence_date for item in evidence if item.evidence_date is not None
-        )
-        if not evidence or not dated_evidence:
+        if not evidence:
             continue
-        reviewed_on = max(dated_evidence)
+        reviewed_on = (
+            destination.latest_price_observed_at
+            or destination.payment_verified_at
+        )
+        if reviewed_on is None:
+            continue
         items.append(
             ExploreCollectionItem(
                 key=(
