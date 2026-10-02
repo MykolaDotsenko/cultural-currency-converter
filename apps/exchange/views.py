@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.http import HttpRequest, HttpResponse
 
+from apps.exchange.ai.contextual import build_contextual_explanation_service
 from apps.exchange.ai.service import build_runtime_explanation_service
 from apps.exchange.services import (
     compare_historical_to_latest,
@@ -10,6 +11,10 @@ from apps.exchange.services import (
 )
 from apps.exchange.web.budget import budget_interpretation_view
 from apps.exchange.web.comparison import destination_comparison_view
+from apps.exchange.web.contextual_explanation import (
+    budget_explanation_view,
+    comparison_explanation_view,
+)
 from apps.exchange.web.converter import converter_view
 from apps.exchange.web.destination import destination_mode_view
 from apps.exchange.web.explanation import conversion_explanation_view
@@ -79,6 +84,20 @@ def payment_estimate(request: HttpRequest) -> HttpResponse:
 
 def budget_interpretation(request: HttpRequest) -> HttpResponse:
     return budget_interpretation_view(request)
+
+
+def budget_explanation(request: HttpRequest) -> HttpResponse:
+    return budget_explanation_view(
+        request,
+        explanation_service_factory=build_contextual_explanation_service,
+    )
+
+
+def comparison_explanation(request: HttpRequest) -> HttpResponse:
+    return comparison_explanation_view(
+        request,
+        explanation_service_factory=build_contextual_explanation_service,
+    )
 
 
 def conversion_explanation(request: HttpRequest) -> HttpResponse:
