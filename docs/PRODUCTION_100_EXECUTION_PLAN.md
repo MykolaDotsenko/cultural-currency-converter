@@ -694,7 +694,7 @@ Do not add imagery for density alone.
 
 Ensure appropriate image dimensions, responsive sources and loading policy.
 
-**Current production slice:** curated destination specs declare deterministic width families. `build_curated_media_derivatives` preflights reviewed managed sources, creates only missing planned WebP widths, preserves provenance/focal metadata, is safe to rerun and never auto-publishes. Presentation continues to emit `srcset` only from published members of one derivative family.
+**Current production slice:** curated destination specs declare deterministic width families. `build_curated_media_derivatives` preflights reviewed managed sources against manifest scope/provenance/dimensions, creates only missing planned WebP widths, validates existing derivative pixels/provenance on rerun and never auto-publishes. The database enforces one derivative per source/width with a fail-closed legacy-duplicate preflight. Runtime selection prefers reviewed derivatives over full-size roots, and presentation excludes the root original from `srcset` once a published derivative family exists.
 
 ## PR #232 — Focal-point and crop audit
 
