@@ -56,8 +56,9 @@ export function loadEnhancements(root: EnhancementRoot = document): void {
 
 loadEnhancements();
 
-document.addEventListener("htmx:afterSwap", (event) => {
-  const detail = (event as CustomEvent<{ target?: Element }>).detail;
-  const target = detail?.target ?? (event.target instanceof Element ? event.target : document);
-  loadEnhancements(target);
+document.addEventListener("htmx:afterSwap", () => {
+  // HTMX event targets may refer to the triggering/swapped element rather than
+  // every newly rendered progressive fragment. A document-level marker scan is
+  // cheap and keeps demand-loaded enhancement discovery deterministic.
+  loadEnhancements(document);
 });
