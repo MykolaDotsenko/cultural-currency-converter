@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Never
+from urllib.parse import urlencode
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -51,6 +53,26 @@ def _comparison_initial_from_query(request: HttpRequest) -> dict[str, str] | Non
     return initial or None
 
 
+def _comparison_reopen_url(
+    form: DestinationComparisonForm,
+    cleaned: dict[str, object],
+) -> str:
+    params = {
+        "amount": str(cleaned["amount"]).strip(),
+        "source_currency": str(cleaned["source_currency"]),
+        "left_destination": str(cleaned["left_destination"]),
+        "right_destination": str(cleaned["right_destination"]),
+        "duration_days": str(cleaned["duration_days"]),
+        "travelers": str(cleaned["travelers"]),
+    }
+    for category in form.comparison_categories:
+        field_name = form.units_field_name(category)
+        value = cleaned.get(field_name)
+        if value is not None:
+            params[field_name] = format(value, "f")
+    return f"{reverse('destination_comparison')}?{urlencode(params)}"
+
+
 def _historical_gateway_not_allowed() -> Never:
     raise AssertionError("Destination comparison must never request a historical quote.")
 
@@ -81,6 +103,7 @@ def destination_comparison_view(
     comparison_component = None
     comparison_error = None
     comparison_save_token = ""
+    comparison_reopen_url = ""
     status = 200
 
     if request.method == "POST":
@@ -159,6 +182,7 @@ def destination_comparison_view(
                             right_destination=cleaned["right_destination"],
                             assumptions=cleaned["budget_assumptions"],
                         )
+                        comparison_reopen_url = _comparison_reopen_url(form, cleaned)
 
     return render(
         request,
@@ -169,6 +193,7 @@ def destination_comparison_view(
             "comparison": comparison_component,
             "comparison_error": comparison_error,
             "comparison_save_token": comparison_save_token,
+            "comparison_reopen_url": comparison_reopen_url,
             "reference_data_ready": form.reference_data_ready,
         },
         status=status,
