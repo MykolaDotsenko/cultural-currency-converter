@@ -118,7 +118,7 @@ def explore(request: HttpRequest) -> HttpResponse:
         try:
             collections = build_explore_collections(
                 as_of=selected_date,
-                item_limit=6,
+                item_limit=3,
                 destinations=destinations,
             )
             collection_components = build_explore_collection_components(
