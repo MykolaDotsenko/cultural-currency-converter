@@ -57,80 +57,6 @@
           </article>
         </div>
       </section>
-      <section class="qa-saved-section qa-explore-collections"
-               aria-labelledby="explore-collections-title">
-        <div class="qa-saved-section__heading">
-          <div>
-            <p class="qa-foundation-kicker">Curated ways in</p>
-            <h2 id="explore-collections-title">Start with what matters to you.</h2>
-            <p>
-              Collections reuse reviewed evidence already used elsewhere in the product. They never
-              change the underlying financial truth.
-            </p>
-          </div>
-        </div>
-        {% if explore_collection_error %}
-          <div class="qa-inline-alert" role="status">
-            <h3>{{ explore_collection_error.title }}</h3>
-            <p>{{ explore_collection_error.detail }}</p>
-          </div>
-        {% elif explore_collections %}
-          <div class="qa-saved-state">
-            {% for collection in explore_collections %}
-              <section class="qa-saved-section qa-explore-collection"
-                       id="collection-{{ collection.slug }}"
-                       aria-labelledby="collection-{{ collection.slug }}-title">
-                <div class="qa-saved-section__heading">
-                  <div>
-                    <p class="qa-foundation-kicker">{{ forloop.counter|stringformat:"02d" }}</p>
-                    <h3 id="collection-{{ collection.slug }}-title">{{ collection.title }}</h3>
-                    <p>{{ collection.description }}</p>
-                  </div>
-                </div>
-                <div class="qa-saved-list">
-                  {% for item in collection.items %}
-                    <article class="qa-saved-row qa-explore-collection-item">
-                      <div class="qa-saved-row__copy">
-                        <p class="qa-foundation-kicker">
-                          {% if item.currency_codes %}{{ item.currency_codes|join:" · " }}{% endif %}
-                          {% if item.reviewed_on %}
-                            {% if item.currency_codes %}·{% endif %}
-                            reviewed {{ item.reviewed_on|date:"j M Y" }}
-                          {% endif %}
-                        </p>
-                        <h4>{{ item.title }}</h4>
-                        <p>{{ item.summary }}</p>
-                        <details class="qa-saved-state__privacy qa-explore-evidence">
-                          <summary>Evidence · {{ item.evidence|length }} source{{ item.evidence|length|pluralize }}</summary>
-                          <ul>
-                            {% for source in item.evidence %}
-                              <li>
-                                <a href="{{ source.source_url }}">{{ source.source_name }}</a>
-                                {% if source.evidence_date %}<span>{{ source.evidence_date|date:"j M Y" }}</span>{% endif %}
-                              </li>
-                            {% endfor %}
-                          </ul>
-                        </details>
-                      </div>
-                      {% if item.action_url %}
-                        <div class="qa-saved-row__actions">
-                          <a class="qa-secondary-button"
-                             href="{{ item.action_url }}">{{ item.action_label }}</a>
-                        </div>
-                      {% endif %}
-                    </article>
-                  {% endfor %}
-                </div>
-              </section>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="qa-saved-empty" role="status">
-            <h3>No curated collections are available yet.</h3>
-            <p>Regional discovery remains available wherever reviewed evidence exists.</p>
-          </div>
-        {% endif %}
-      </section>
       <section class="qa-saved-section qa-explore-directory"
                id="regional-directory"
                aria-labelledby="explore-regions-title">
@@ -254,6 +180,80 @@
           Reviewed as of {{ explore_as_of|date:"j M Y" }}. Explore is descriptive, not a
           purchasing-power index: city and country evidence keep their original scope, freshness and provenance.
         </p>
+      </section>
+      <section class="qa-saved-section qa-explore-collections"
+               aria-labelledby="explore-collections-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Curated ways in</p>
+            <h2 id="explore-collections-title">Start with what matters to you.</h2>
+            <p>
+              Concise previews reuse reviewed evidence already used elsewhere in the product. Open
+              provenance only when you want the detail; the underlying financial truth never changes.
+            </p>
+          </div>
+        </div>
+        {% if explore_collection_error %}
+          <div class="qa-inline-alert" role="status">
+            <h3>{{ explore_collection_error.title }}</h3>
+            <p>{{ explore_collection_error.detail }}</p>
+          </div>
+        {% elif explore_collections %}
+          <div class="qa-saved-state">
+            {% for collection in explore_collections %}
+              <section class="qa-saved-section qa-explore-collection"
+                       id="collection-{{ collection.slug }}"
+                       aria-labelledby="collection-{{ collection.slug }}-title">
+                <div class="qa-saved-section__heading">
+                  <div>
+                    <p class="qa-foundation-kicker">{{ forloop.counter|stringformat:"02d" }}</p>
+                    <h3 id="collection-{{ collection.slug }}-title">{{ collection.title }}</h3>
+                    <p>{{ collection.description }}</p>
+                  </div>
+                </div>
+                <div class="qa-saved-list">
+                  {% for item in collection.items %}
+                    <article class="qa-saved-row qa-explore-collection-item">
+                      <div class="qa-saved-row__copy">
+                        <p class="qa-foundation-kicker">
+                          {% if item.currency_codes %}{{ item.currency_codes|join:" · " }}{% endif %}
+                          {% if item.reviewed_on %}
+                            {% if item.currency_codes %}·{% endif %}
+                            reviewed {{ item.reviewed_on|date:"j M Y" }}
+                          {% endif %}
+                        </p>
+                        <h4>{{ item.title }}</h4>
+                        <p>{{ item.summary }}</p>
+                        <details class="qa-saved-state__privacy qa-explore-evidence">
+                          <summary>Evidence · {{ item.evidence|length }} source{{ item.evidence|length|pluralize }}</summary>
+                          <ul>
+                            {% for source in item.evidence %}
+                              <li>
+                                <a href="{{ source.source_url }}">{{ source.source_name }}</a>
+                                {% if source.evidence_date %}<span>{{ source.evidence_date|date:"j M Y" }}</span>{% endif %}
+                              </li>
+                            {% endfor %}
+                          </ul>
+                        </details>
+                      </div>
+                      {% if item.action_url %}
+                        <div class="qa-saved-row__actions">
+                          <a class="qa-secondary-button"
+                             href="{{ item.action_url }}">{{ item.action_label }}</a>
+                        </div>
+                      {% endif %}
+                    </article>
+                  {% endfor %}
+                </div>
+              </section>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="qa-saved-empty" role="status">
+            <h3>No curated collections are available yet.</h3>
+            <p>Regional discovery remains available wherever reviewed evidence exists.</p>
+          </div>
+        {% endif %}
       </section>
     </div>
   {% endif %}
