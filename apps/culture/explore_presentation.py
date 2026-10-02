@@ -14,6 +14,12 @@ from apps.culture.explore_collections import (
 from apps.culture.explore_navigation import ExploreRegionNode
 
 
+def _destination_token(*, country_code: str, city_slug: str = "") -> str:
+    code = country_code.upper().strip()
+    slug = city_slug.strip().lower()
+    return f"{code}:{slug}" if slug else code
+
+
 def _converter_url(*, country_code: str, currency_code: str, city_slug: str = "") -> str:
     params = {
         "load": "1",
@@ -40,6 +46,10 @@ def build_explore_destination_cards(
         cards.append(
             {
                 "destination": destination,
+                "token": _destination_token(
+                    country_code=destination.country_code,
+                    city_slug=destination.city_slug,
+                ),
                 "converter_url": _converter_url(
                     country_code=destination.country_code,
                     currency_code=destination.currency_code,
@@ -67,6 +77,12 @@ def build_explore_region_components(
         for country in region.countries:
             cities = tuple(
                 {
+                    "token": _destination_token(
+                        country_code=country.country_code,
+                        city_slug=city.slug,
+                    ),
+                    "country_code": country.country_code,
+                    "country_name": country.country_name,
                     "slug": city.slug,
                     "name": city.name,
                     "scope_label": city.scope_label,
@@ -85,6 +101,7 @@ def build_explore_region_components(
             )
             countries.append(
                 {
+                    "token": _destination_token(country_code=country.country_code),
                     "country_code": country.country_code,
                     "country_name": country.country_name,
                     "subregion": country.subregion,
