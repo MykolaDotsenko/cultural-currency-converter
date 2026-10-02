@@ -276,7 +276,7 @@ def test_anonymous_comparison_result_offers_sign_in_without_auto_persistence(
     assert "amount=500.00" in reopen_url
     assert "left_destination=JP%3Atokyo" in reopen_url
     assert "right_destination=NO" in reopen_url
-    expected_href = f'{reverse("login")}?next={quote(reopen_url)}'
+    expected_href = f"{reverse('login')}?next={quote(reopen_url)}"
     assert f'href="{expected_href}"' in body
 
 
