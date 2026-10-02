@@ -264,9 +264,32 @@ def build_explore_explanation_packet(
             )
 
     if intent is ExploreExplanationIntent.CASH_CARD:
+        available_payment_fact_ids = tuple(
+            fact_id
+            for fact_id in (
+                "payment_summary",
+                "cash_usage",
+                "payment_customs",
+                "atm_notes",
+                "dcc_warning",
+                "payment_verified",
+            )
+            if fact_id in {fact.id for fact in facts}
+        )
+        if not available_payment_fact_ids and "payment_absence" not in {
+            fact.id for fact in facts
+        }:
+            facts.append(
+                GroundedFact(
+                    id="payment_absence",
+                    statement=(
+                        "No reviewed current payment-guidance detail is available for this destination."
+                    ),
+                )
+            )
         required_fact_ids = (
-            ("payment_summary",)
-            if "payment_summary" in {fact.id for fact in facts}
+            (available_payment_fact_ids[0],)
+            if available_payment_fact_ids
             else ("payment_absence",)
         )
     elif intent is ExploreExplanationIntent.PRICE_EVIDENCE:
