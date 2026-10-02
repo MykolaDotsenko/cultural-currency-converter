@@ -157,6 +157,16 @@
                                           hidden>
                                     <span data-save-place-label>Save</span>
                                   </button>
+                                  {% if user.is_authenticated %}
+                                    <noscript>
+                                      <form method="post" action="{% url 'save_place' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="country_code" value="{{ city.country_code }}">
+                                        <input type="hidden" name="city_slug" value="{{ city.slug }}">
+                                        <button class="qa-explore-save-button" type="submit">Save to account</button>
+                                      </form>
+                                    </noscript>
+                                  {% endif %}
                                   <span class="qa-visually-hidden"
                                         role="status"
                                         aria-live="polite"
@@ -188,6 +198,16 @@
                                   hidden>
                             <span data-save-place-label>Save</span>
                           </button>
+                          {% if user.is_authenticated %}
+                            <noscript>
+                              <form method="post" action="{% url 'save_place' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="country_code" value="{{ country.country_code }}">
+                                <input type="hidden" name="city_slug" value="">
+                                <button class="qa-explore-save-button" type="submit">Save to account</button>
+                              </form>
+                            </noscript>
+                          {% endif %}
                           <span class="qa-visually-hidden"
                                 role="status"
                                 aria-live="polite"
@@ -237,6 +257,16 @@
                     <button class="qa-explore-save-button" type="button" data-save-place hidden>
                       <span data-save-place-label>Save</span>
                     </button>
+                    {% if user.is_authenticated %}
+                      <noscript>
+                        <form method="post" action="{% url 'save_place' %}">
+                          {% csrf_token %}
+                          <input type="hidden" name="country_code" value="{{ destination.country_code }}">
+                          <input type="hidden" name="city_slug" value="{{ destination.city_slug }}">
+                          <button class="qa-explore-save-button" type="submit">Save to account</button>
+                        </form>
+                      </noscript>
+                    {% endif %}
                     <span class="qa-visually-hidden"
                           role="status"
                           aria-live="polite"
