@@ -38,18 +38,24 @@ def _city_profile_url(*, country_code: str, city_slug: str) -> str:
     )
 
 
+def _comparison_url(*, destination_token: str) -> str:
+    return f"{reverse('destination_comparison')}?{urlencode({'left_destination': destination_token})}"
+
+
 def build_explore_destination_cards(
     destinations: tuple[ExploreDestination, ...],
 ) -> tuple[dict[str, object], ...]:
     cards: list[dict[str, object]] = []
     for destination in destinations:
+        token = _destination_token(
+            country_code=destination.country_code,
+            city_slug=destination.city_slug,
+        )
         cards.append(
             {
                 "destination": destination,
-                "token": _destination_token(
-                    country_code=destination.country_code,
-                    city_slug=destination.city_slug,
-                ),
+                "token": token,
+                "comparison_url": _comparison_url(destination_token=token),
                 "converter_url": _converter_url(
                     country_code=destination.country_code,
                     currency_code=destination.currency_code,
@@ -96,6 +102,12 @@ def build_explore_region_components(
                         currency_code=city.currency_code,
                         city_slug=city.slug,
                     ),
+                    "comparison_url": _comparison_url(
+                        destination_token=_destination_token(
+                            country_code=country.country_code,
+                            city_slug=city.slug,
+                        )
+                    ),
                 }
                 for city in country.cities
             )
@@ -111,6 +123,15 @@ def build_explore_region_components(
                         _converter_url(
                             country_code=country.country_code,
                             currency_code=country.currency_code,
+                        )
+                        if country.has_country_scope
+                        else ""
+                    ),
+                    "comparison_url": (
+                        _comparison_url(
+                            destination_token=_destination_token(
+                                country_code=country.country_code,
+                            )
                         )
                         if country.has_country_scope
                         else ""
@@ -184,6 +205,22 @@ def build_explore_collection_components(
                 item=item,
                 selected_date=selected_date,
             )
+            comparison_url = ""
+            if (
+                collection.kind
+                in {
+                    ExploreCollectionKind.CITY_MONEY_PROFILES,
+                    ExploreCollectionKind.CASH_CARD_BEHAVIOUR,
+                    ExploreCollectionKind.RECENTLY_REVIEWED_DESTINATIONS,
+                }
+                and len(item.country_codes) == 1
+            ):
+                comparison_url = _comparison_url(
+                    destination_token=_destination_token(
+                        country_code=item.country_codes[0],
+                        city_slug=item.city_slug,
+                    )
+                )
             items.append(
                 {
                     "key": item.key,
@@ -196,6 +233,7 @@ def build_explore_collection_components(
                     "evidence": item.evidence,
                     "action_url": action_url,
                     "action_label": action_label,
+                    "comparison_url": comparison_url,
                 }
             )
         components.append(
