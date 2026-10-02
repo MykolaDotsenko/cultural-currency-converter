@@ -3,6 +3,10 @@ import {
   saveFavouriteToAccount,
   syncLocalFavouritesToAccount,
 } from "./account-favourites";
+import {
+  accountPlaceSyncAvailable,
+  savePlaceToAccount,
+} from "./account-places";
 import { wireSavedPage } from "./local-saved-state-page";
 import {
   isFavourite,
@@ -234,16 +238,24 @@ function enhanceExploreSavedPlaces(): void {
   const surfaces = document.querySelectorAll<HTMLElement>("[data-local-saved-place]");
   if (surfaces.length === 0) return;
 
+  const accountMode = accountPlaceSyncAvailable();
   const read = readState();
   for (const surface of surfaces) {
-    setPlaceSurfaceState(surface, read.state, read.status);
+    if (accountMode) {
+      setAccountPlaceSurfaceState(surface, surface.dataset.accountSaved === "true");
+    } else {
+      setPlaceSurfaceState(surface, read.state, read.status);
+    }
     if (surface.dataset.savePlaceWired === "true") continue;
 
     const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
     if (!button) continue;
 
     surface.dataset.savePlaceWired = "true";
-    button.addEventListener("click", () => toggleSavedPlace(surface));
+    button.addEventListener("click", () => {
+      if (accountMode) void saveAccountPlace(surface);
+      else toggleSavedPlace(surface);
+    });
   }
 }
 
