@@ -42,6 +42,14 @@ class StoryComposition:
     selected_date: date
     historical: bool
 
+    @property
+    def currency_era_chapters(self) -> tuple[StoryChapter, ...]:
+        return tuple(chapter for chapter in self.chapters if chapter.kind.endswith("_currency_era"))
+
+    @property
+    def historical_moment_chapters(self) -> tuple[StoryChapter, ...]:
+        return tuple(chapter for chapter in self.chapters if chapter.kind == "historical_moment")
+
 
 def compose_story(request: StoryRequest) -> StoryComposition:
     country_codes = tuple(
