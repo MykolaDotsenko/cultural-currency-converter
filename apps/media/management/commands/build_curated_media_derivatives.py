@@ -103,10 +103,7 @@ def _derivative_contract_error(
         derivative.attribution_text,
     )
     if actual != expected:
-        return (
-            f"Curated derivative metadata drift for {spec.slug} at "
-            f"{derivative.variant_width}px."
-        )
+        return f"Curated derivative metadata drift for {spec.slug} at {derivative.variant_width}px."
     if derivative.status in {MediaStatus.REJECTED, MediaStatus.RETIRED}:
         return (
             f"Curated derivative {spec.slug} at {derivative.variant_width}px is "
