@@ -2147,3 +2147,68 @@ h3 {
     color: LinkText;
   }
 }
+
+
+/* Frontend system quality batch. */
+.qa-product-intro h1,
+.qa-foundation-intro h1 {
+  max-width: 19ch;
+}
+
+.qa-product-intro .qa-foundation-lede,
+.qa-foundation-intro .qa-foundation-lede {
+  max-width: 64ch;
+}
+
+.qa-degraded-panel {
+  min-width: 0;
+  display: grid;
+  gap: var(--qa-space-3);
+  max-width: 48rem;
+  padding: var(--qa-space-5);
+  border: 1px dashed var(--color-border-control);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-soft) 68%, transparent);
+  color: var(--color-muted);
+}
+
+.qa-degraded-panel h3,
+.qa-degraded-panel p {
+  margin: 0;
+}
+
+.qa-degraded-panel h3 {
+  color: var(--color-ink);
+  font-size: var(--text-heading-3);
+}
+
+.qa-degraded-panel p {
+  max-width: 60ch;
+  line-height: 1.65;
+}
+
+.qa-degraded-panel .qa-secondary-button {
+  width: fit-content;
+}
+
+@media (hover: hover) {
+  .qa-media__caption a:hover {
+    color: var(--color-brand-hover);
+    text-decoration-thickness: 0.12em;
+  }
+}
+
+@media (max-width: 30rem) {
+  .qa-degraded-panel .qa-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-degraded-panel {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}

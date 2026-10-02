@@ -364,8 +364,15 @@
 
   .qa-header-actions {
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch;
-    flex-direction: column;
+    gap: var(--qa-space-2);
+  }
+
+  .qa-header-actions > *,
+  .qa-header-actions form {
+    min-width: 0;
   }
 
   .qa-header-actions form {
@@ -373,12 +380,16 @@
   }
 
   .qa-header-link {
+    min-width: 0;
+    min-block-size: 3.5rem;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    padding-inline: var(--qa-space-2);
     justify-content: center;
-    text-align: center;
     overflow-wrap: anywhere;
+    text-align: center;
+    white-space: normal;
   }
 
   .qa-foundation-spec > div {
@@ -439,6 +450,19 @@
   color: var(--color-ink);
   font-size: var(--text-body-sm);
   font-weight: 650;
+  transition:
+    background-color var(--qa-duration-fast) var(--qa-ease-enter),
+    border-color var(--qa-duration-fast) var(--qa-ease-enter),
+    color var(--qa-duration-fast) var(--qa-ease-enter);
+}
+
+@media (hover: hover) {
+  .qa-header-link:hover {
+    border-color: color-mix(in srgb, var(--color-brand) 35%, var(--color-border-control));
+    background: var(--color-surface-soft);
+    color: var(--color-brand-hover);
+    text-decoration: none;
+  }
 }
 
 .qa-header-button {
@@ -473,29 +497,3 @@
   }
 }
 
-@media (max-width: 30rem) {
-  .qa-header-actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--qa-space-2);
-  }
-
-  .qa-header-actions > *,
-  .qa-header-actions form {
-    min-width: 0;
-  }
-
-  .qa-header-actions form {
-    width: 100%;
-  }
-
-  .qa-header-link {
-    min-width: 0;
-    width: 100%;
-    padding-inline: var(--qa-space-2);
-    justify-content: center;
-    overflow-wrap: anywhere;
-    text-align: center;
-    white-space: normal;
-  }
-}

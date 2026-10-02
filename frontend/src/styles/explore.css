@@ -723,6 +723,40 @@
   .qa-same-amount-card__trust > div:first-child {
     border-block-start: 0;
   }
+
+  .qa-same-amount-card {
+    gap: var(--qa-space-5);
+    padding-block: var(--qa-space-6);
+  }
+
+  .qa-same-amount-card__amount > p:first-child {
+    font-size: clamp(2.2rem, 12vw, 3.4rem);
+  }
+
+  .qa-same-amount-card__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--qa-space-2);
+  }
+
+  .qa-same-amount-card__actions .qa-primary-button,
+  .qa-same-amount-card__actions .qa-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .qa-same-amount-card__context summary {
+    width: 100%;
+  }
+
+  .qa-same-amount-card__text-action {
+    width: fit-content;
+    margin-inline-start: 0;
+  }
+
+  .qa-same-amount__results {
+    margin-block-start: var(--qa-space-12);
+  }
 }
 
 @media (forced-colors: active) {

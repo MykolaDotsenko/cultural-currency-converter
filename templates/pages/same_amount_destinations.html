@@ -97,7 +97,7 @@
           </div>
         </form>
       {% else %}
-        <div class="qa-inline-alert" role="status">
+        <div class="qa-inline-alert qa-degraded-panel" role="status">
           <h3>Destination reference data is unavailable.</h3>
           <p>This view needs at least two current destination scopes.</p>
           <a class="qa-secondary-button" href="{% url 'explore' %}">Back to Explore</a>
@@ -122,7 +122,7 @@
         </p>
       </div>
       {% if same_amount.partial %}
-        <div class="qa-inline-alert" role="status">
+        <div class="qa-inline-alert qa-degraded-panel" role="status">
           <h3>Part of the view is unavailable.</h3>
           <p>Successful destination observations remain valid and are shown below.</p>
         </div>
@@ -217,7 +217,7 @@
                 {% endif %}
               </div>
             {% else %}
-              <div class="qa-inline-alert" role="status">
+              <div class="qa-inline-alert qa-degraded-panel" role="status">
                 <h4>{{ item.title }}</h4>
                 <p>{{ item.detail }}</p>
               </div>
