@@ -2147,7 +2147,7 @@ async function assertExploreFlow(page) {
   await assertPremiumResponsiveTargets(
     page,
     "explore/responsive",
-    ".qa-explore-jump-link, .qa-explore-region-nav a, .qa-explore-city-row a, .qa-explore-city-row button, .qa-explore-country > .qa-saved-row__actions a, .qa-explore-country > .qa-saved-row__actions button, .qa-explore-prompt",
+    ".qa-explore-jump-link, .qa-explore-region-nav a, .qa-explore-city-row .qa-saved-row__actions a, .qa-explore-city-row .qa-saved-row__actions button, .qa-explore-country > .qa-saved-row__actions a, .qa-explore-country > .qa-saved-row__actions button, .qa-explore-prompt",
   );
   await assertAxe(page, "explore/interactive");
 }
