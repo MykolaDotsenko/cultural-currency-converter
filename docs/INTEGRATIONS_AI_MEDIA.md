@@ -110,6 +110,8 @@ Then:
 
 The runtime selector remains local/database-backed. If no reviewed published derivative exists, the product intentionally renders no destination hero.
 
+The current converter result can compose reviewed destination hero/supporting media beside deterministic financial/context content. This is presentation-only: focal-point crops, intrinsic dimensions, attribution and licence disclosure come from managed-media metadata, while missing media leaves the result complete and image-free. Source/destination identity styling never turns imagery into FX, price or payment evidence.
+
 ## File formats
 
 Managed media validation accepts JPEG, PNG and WebP and rejects SVG ingestion.
@@ -187,7 +189,9 @@ AI must not invent rates, price anchors, payment prevalence, fees, historical ob
 
 For quick prompts and insight panels, use bounded structured output rather than open-ended prose. The current runtime contract is schema-versioned and contains `short_answer`, `key_factors`, `watch_out_for` and `next_step`. Every section is a grounded text object with one or more supporting fact IDs; generated prose without a valid factual support path is rejected. The deterministic fallback returns the same structure, so AI availability cannot change the surrounding UI contract.
 
-The first quick-prompt slice is conversion-snapshot-only. The UI never accepts an arbitrary chatbot prompt: it posts a server-defined `prompt_id`, the endpoint re-validates whether that intent is available for the signed snapshot, and the selected intent becomes part of the canonical packet hash/cache identity. Each intent declares required grounded fact IDs, and provider output is rejected if its structured sections fail to cite those facts. This keeps rate meaning, reference-vs-payment limitations, historical-date meaning and stale-cache explanations bounded by deterministic application facts. Destination, budget, cash and comparison questions must not appear until their trusted structured facts are explicitly added to the packet.
+The conversion quick-prompt slice remains signed-conversion-snapshot based. The UI never accepts an arbitrary chatbot prompt: it posts a server-defined `prompt_id`, the endpoint re-validates whether that intent is available for the signed snapshot, and the selected intent becomes part of the canonical packet hash/cache identity. Each intent declares required grounded fact IDs, and provider output is rejected if its structured sections fail to cite those facts. This keeps rate meaning, reference-vs-payment limitations, historical-date meaning and stale-cache explanations bounded by deterministic application facts.
+
+Explore now adds a second trusted packet shape without weakening that rule. The user explicitly selects one currently reviewed canonical destination plus one server-approved intent (overview, cash/card or price evidence). The server revalidates the destination against current Explore discovery, rebuilds trusted DestinationContext, preserves city-versus-national evidence boundaries and sends only bounded structured facts to the existing validated explanation stack. Explore GET itself remains provider-free, raw prompt text is not trusted, and AI cannot create rates, prices, payment guidance, rankings, affordability or PPP truth. Budget- and comparison-specific AI prompts remain future work until those surfaces expose equivalent trusted bounded server packets.
 
 A model failure, timeout or validation failure must leave the deterministic result and sourced context intact.
 
