@@ -292,3 +292,134 @@
     background: Canvas;
   }
 }
+
+
+.qa-explore-overview__actions,
+.qa-explore-amount-results__actions {
+  margin-block: var(--qa-space-5);
+}
+
+.qa-explore-amount-page {
+  gap: clamp(3rem, 7vw, 6rem);
+}
+
+.qa-explore-amount-form {
+  display: grid;
+  gap: var(--qa-space-6);
+  max-width: 68rem;
+}
+
+.qa-explore-amount-form__core {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(14rem, 0.85fr);
+  gap: var(--qa-space-4);
+}
+
+.qa-explore-amount-form__core > div {
+  display: grid;
+  gap: var(--qa-space-2);
+}
+
+.qa-explore-amount-destinations {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.qa-explore-amount-destinations legend {
+  margin-block-end: var(--qa-space-2);
+  color: var(--color-ink);
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 620;
+  letter-spacing: -0.025em;
+}
+
+.qa-explore-amount-destinations > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--qa-space-2) var(--qa-space-5);
+  margin-block-start: var(--qa-space-4);
+}
+
+.qa-explore-amount-destinations label {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: var(--qa-space-3);
+  padding-block: var(--qa-space-2);
+  border-block-end: 1px solid var(--qa-hairline);
+  color: var(--color-secondary);
+}
+
+.qa-explore-amount-destinations input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--color-brand);
+}
+
+.qa-explore-amount-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2.5vw, 2rem);
+}
+
+.qa-explore-amount-card {
+  display: grid;
+  align-content: start;
+  gap: var(--qa-space-5);
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--qa-radius-xl);
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  box-shadow: 0 1rem 3rem color-mix(in srgb, var(--color-ink) 5%, transparent);
+}
+
+.qa-explore-amount-card h3,
+.qa-explore-amount-card h4,
+.qa-explore-amount-card p {
+  margin-block: 0;
+}
+
+.qa-explore-amount-card__value {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 480;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.qa-explore-amount-card__anchors {
+  display: grid;
+  gap: var(--qa-space-3);
+  padding-block-start: var(--qa-space-4);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-explore-amount-anchor {
+  display: grid;
+  gap: var(--qa-space-1);
+}
+
+.qa-selected-place-intent {
+  margin-block: clamp(2rem, 5vw, 4rem);
+}
+
+@media (max-width: 48rem) {
+  .qa-explore-amount-form__core,
+  .qa-explore-amount-grid,
+  .qa-explore-amount-destinations > div {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-explore-amount-card {
+    padding: var(--qa-space-5);
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-explore-amount-card,
+  .qa-explore-amount-destinations label,
+  .qa-explore-amount-card__anchors {
+    border-color: CanvasText;
+  }
+}
