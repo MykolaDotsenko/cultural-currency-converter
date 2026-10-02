@@ -52,8 +52,16 @@ def destination_comparison_view(
 
     initial = None
     if request.method == "GET":
-        left_destination = str(request.GET.get("left_destination") or "").strip()
-        initial = {"left_destination": left_destination} if left_destination else None
+        requested_initial = {
+            field_name: str(request.GET.get(field_name) or "").strip()
+            for field_name in (
+                "amount",
+                "source_currency",
+                "left_destination",
+                "right_destination",
+            )
+        }
+        initial = {key: value for key, value in requested_initial.items() if value} or None
     form = DestinationComparisonForm(
         request.POST if request.method == "POST" else None,
         initial=initial,
