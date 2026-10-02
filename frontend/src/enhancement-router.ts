@@ -29,7 +29,7 @@ function loadAiExplanation(root: EnhancementRoot): void {
   if (
     !contains(
       root,
-      "[data-ai-explanation-trigger], #conversion-explanation-region, #explanation-client-status",
+      "[data-current-conversion-form], [data-ai-explanation-trigger], #conversion-explanation-region, #explanation-client-status",
     )
   ) {
     return;
