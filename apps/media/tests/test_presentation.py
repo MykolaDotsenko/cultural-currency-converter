@@ -184,9 +184,7 @@ def test_published_full_size_source_is_excluded_from_derivative_srcset():
 
     image = build_media_asset_image_view_model(small)
 
-    assert image.srcset == (
-        f"{small.storage_file.url} 800w, {large.storage_file.url} 1600w"
-    )
+    assert image.srcset == (f"{small.storage_file.url} 800w, {large.storage_file.url} 1600w")
     assert source.storage_file.url not in image.srcset
 
 
