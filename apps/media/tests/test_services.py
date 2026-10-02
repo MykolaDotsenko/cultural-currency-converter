@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 from django.core.files.storage import default_storage
-from django.db import IntegrityError, connection
+from django.db import IntegrityError, connection, transaction
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from PIL import Image
@@ -452,7 +452,7 @@ def test_database_rejects_duplicate_derivative_width_identity(media_root):
     )
     assert first.pk is not None
 
-    with pytest.raises(IntegrityError):
+    with pytest.raises(IntegrityError), transaction.atomic():
         MediaAsset.objects.create(
             kind=source.kind,
             source_kind=source.source_kind,
