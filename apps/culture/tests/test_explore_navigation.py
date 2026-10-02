@@ -46,9 +46,7 @@ def test_regional_explore_groups_only_reviewed_destination_scopes(seeded_explore
         "Japan",
         "Singapore",
     ]
-    assert [country.country_name for country in by_name["Oceania"].countries] == [
-        "New Zealand"
-    ]
+    assert [country.country_name for country in by_name["Oceania"].countries] == ["New Zealand"]
 
     europe = by_name["Europe"]
     assert {country.country_name for country in europe.countries} == {
@@ -66,11 +64,7 @@ def test_regional_explore_groups_only_reviewed_destination_scopes(seeded_explore
     assert japan.cities[0].slug == "tokyo"
 
     # The reference seed contains the US, but Explore has no reviewed US context yet.
-    assert all(
-        country.country_code != "US"
-        for region in regions
-        for country in region.countries
-    )
+    assert all(country.country_code != "US" for region in regions for country in region.countries)
 
 
 @pytest.mark.django_db
@@ -125,11 +119,7 @@ def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_expl
 
     assert len(components) == 5
     assert all(component["items"] for component in components)
-    assert all(
-        item["evidence"]
-        for component in components
-        for item in component["items"]
-    )
+    assert all(item["evidence"] for component in components for item in component["items"])
 
     city_profiles = next(
         component for component in components if component["kind"] == "city_money_profiles"
@@ -137,9 +127,7 @@ def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_expl
     assert city_profiles["items"][0]["action_label"] == "View city profile"
     assert str(city_profiles["items"][0]["action_url"]).startswith("/city/")
 
-    stories = next(
-        component for component in components if component["kind"] == "currency_stories"
-    )
+    stories = next(component for component in components if component["kind"] == "currency_stories")
     assert stories["items"][0]["action_label"] == "Read money story"
     story_url = urlparse(str(stories["items"][0]["action_url"]))
     assert story_url.path == reverse("money_culture_story")
@@ -148,8 +136,6 @@ def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_expl
     assert story_query["selected_date"] == [AS_OF.isoformat()]
 
     shared = next(
-        component
-        for component in components
-        if component["kind"] == "shared_currency_countries"
+        component for component in components if component["kind"] == "shared_currency_countries"
     )
     assert shared["items"][0]["action_url"] == "#regional-directory"
