@@ -13,8 +13,8 @@ from apps.culture.services import (
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
 from apps.exchange.same_amount import (
-    SameAmountDestinationSnapshot,
     SameAmountDestinationsError,
+    SameAmountDestinationSnapshot,
     compose_same_amount_across_destinations,
 )
 
