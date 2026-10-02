@@ -226,8 +226,8 @@
               </p>
               <p class="qa-field__message">
                 Your explicit {{ suggestion.selected_currency_code }} selection has not been changed.
-                Choose the historical currency only if you want this side of the conversion to use
-                the canonical currency era for that date.
+                Choose the historical currency only if you want this side of the conversion to use the
+                canonical currency era for that date.
               </p>
             </div>
             <div class="qa-historical-suggestion__actions">
@@ -235,7 +235,8 @@
                       type="submit"
                       name="historical_currency_action"
                       value="{{ side }}:{{ suggestion.suggested_currency_code }}">
-                Use {{ suggestion.suggested_currency_code }} for {{ suggestion.selected_date|date:"j M Y" }}
+                Use {{ suggestion.suggested_currency_code }} for
+                {{ suggestion.selected_date|date:"j M Y" }}
               </button>
               <details class="qa-source-details">
                 <summary>Era source &amp; scope</summary>
