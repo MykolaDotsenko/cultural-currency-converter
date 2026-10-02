@@ -40,10 +40,10 @@
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
           Account-saved scenarios, pairs and account recent history remain available. JavaScript is
-          required only to read browser-only recent history on this device.
+          required to read browser-only saved places and browser-only recent history on this device.
         {% else %}
-          JavaScript is required to read browser-local saved pairs and recent history. The converter
-          still works without JavaScript.
+          JavaScript is required to read browser-local saved places, saved pairs and recent history.
+          The converter still works without JavaScript.
         {% endif %}
       </p>
     </noscript>
@@ -115,6 +115,27 @@
         {% endif %}
       </section>
     {% endif %}
+    <section class="qa-saved-section" aria-labelledby="saved-places-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Places</p>
+          <h2 id="saved-places-title">My places</h2>
+          <p>
+            Saved destinations stay only in this browser for now. Country/city scope and current
+            primary currency are retained so you can reopen the canonical converter or city profile.
+            Account sync is introduced only when durable SavedPlace ownership ships.
+          </p>
+        </div>
+        <button class="qa-secondary-button qa-destructive-button"
+                type="button"
+                data-clear-places
+                hidden>Clear saved places</button>
+      </div>
+      <p class="qa-saved-empty"
+         data-places-empty
+         hidden>No saved places yet. Save a reviewed country or city from Explore.</p>
+      <div class="qa-saved-list" data-places-list></div>
+    </section>
     <section class="qa-saved-section" aria-labelledby="saved-pairs-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -325,12 +346,13 @@
     {% endif %}
     <p class="qa-saved-state__privacy">
       {% if user.is_authenticated %}
-        Browser-only history is never uploaded automatically. Saved scenarios are created only by
+        Browser-only places and history are never uploaded automatically. Saved scenarios are created only by
         an explicit account action. Turning account history off stops future recent-history
         recording but keeps existing rows until you remove or clear them. Deleting your account
         removes account-owned scenarios, favourites and recent history.
       {% else %}
-        Clearing browser site data also removes these items. Sign in only if you want saved pairs
+        Clearing browser site data also removes these items. Saved places remain browser-local even
+        after sign-in until durable My Places sync is introduced. Sign in only if you want saved pairs
         to sync across devices.
       {% endif %}
     </p>
