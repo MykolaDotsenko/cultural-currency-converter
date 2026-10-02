@@ -1960,8 +1960,7 @@ async function assertSameAmountQuality(page) {
     .evaluateAll((elements) => elements.map((element) => element.value));
 
   const requestPromise = page.waitForRequest(
-    (request) =>
-      request.url().endsWith("/explore/same-amount/") && request.method() === "POST",
+    (request) => request.url().endsWith("/explore/same-amount/") && request.method() === "POST",
   );
   const responsePromise = page.waitForResponse(
     (response) =>
