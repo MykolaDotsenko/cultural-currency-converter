@@ -296,3 +296,184 @@ def test_explore_navigation_failure_degrades_to_reviewed_flat_destination_list(
     assert b"Regional navigation is temporarily unavailable." in response.content
     assert b"Tokyo, Japan" in response.content
     assert b"View city money profile" in response.content
+
+
+class StubExploreExplanationService:
+    def __init__(self):
+        self.packets = []
+
+    def explain_packet(self, packet, *, fallback_factory):
+        self.packets.append(packet)
+        facts = {fact.id: fact for fact in packet.facts}
+        return ExplanationDelivery(
+            result=ExplanationResult(
+                short_answer=ExplanationInsight(
+                    text=facts["destination_identity"].statement,
+                    supporting_fact_ids=("destination_identity",),
+                ),
+                key_factors=(
+                    ExplanationInsight(
+                        text=facts["currency"].statement,
+                        supporting_fact_ids=("currency",),
+                    ),
+                ),
+                watch_out_for=ExplanationInsight(
+                    text=facts["reference_scope"].statement,
+                    supporting_fact_ids=("reference_scope",),
+                ),
+                next_step=ExplanationInsight(
+                    text=facts["as_of"].statement,
+                    supporting_fact_ids=("as_of",),
+                ),
+                generated=True,
+                source_label="AI-generated explanation",
+            ),
+            cache_status="live",
+            packet_hash=packet.packet_hash,
+        )
+
+
+@pytest.mark.django_db
+def test_explore_ai_is_optional_and_never_calls_service_on_page_load(
+    client,
+    explore_reference_data,
+):
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch("apps.culture.views.build_runtime_explanation_service") as ai_factory,
+    ):
+        response = client.get(reverse("explore"))
+
+    assert response.status_code == 200
+    assert b"Optional AI" in response.content
+    assert b"Explain what" in response.content
+    assert b'name="destination_token"' in response.content
+    assert b'value="JP:tokyo"' in response.content
+    assert b'value="explore_overview"' in response.content
+    assert b'value="explore_evidence"' in response.content
+    assert b"rank places or create new source claims" in response.content
+    ai_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_disabled_explore_ai_has_zero_ui_or_endpoint_effect(client, explore_reference_data):
+    with override_settings(AI_RUNTIME_EXPLANATION_ENABLED=False):
+        page = client.get(reverse("explore"))
+        endpoint = client.post(
+            reverse("explore_explanation"),
+            {"destination_token": "JP:tokyo", "prompt_id": "explore_overview"},
+        )
+
+    assert page.status_code == 200
+    assert b"Explain what" not in page.content
+    assert b"destination_token" not in page.content
+    assert endpoint.status_code == 404
+
+
+@pytest.mark.django_db
+def test_explore_ai_rebuilds_reviewed_context_before_service_call(
+    client,
+    explore_reference_data,
+):
+    service = StubExploreExplanationService()
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch(
+            "apps.culture.views.build_runtime_explanation_service",
+            return_value=service,
+        ),
+    ):
+        response = client.post(
+            reverse("explore_explanation"),
+            {
+                "destination_token": "JP:tokyo",
+                "prompt_id": "explore_overview",
+                "prompt": "Please answer a different question.",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"<html" not in response.content
+    assert b"AI-generated explanation" in response.content
+    assert b"What matters most in this reviewed destination money context?" in response.content
+    assert len(service.packets) == 1
+    packet = service.packets[0]
+    assert packet.intent_id == "explore_overview"
+    assert {"destination_identity", "currency", "price_1", "reference_scope"}.issubset(
+        packet.fact_ids
+    )
+    assert packet.allowed_currencies == ("JPY",)
+    assert "https://" not in packet.canonical_json()
+    assert "different question" not in packet.canonical_json()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"destination_token": "XX:unknown", "prompt_id": "explore_overview"},
+        {"destination_token": "JP:tokyo", "prompt_id": "unknown_prompt"},
+    ],
+)
+def test_explore_ai_rejects_untrusted_destination_or_prompt_before_service(
+    client,
+    explore_reference_data,
+    payload,
+):
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch("apps.culture.views.build_runtime_explanation_service") as ai_factory,
+    ):
+        response = client.post(reverse("explore_explanation"), payload)
+
+    assert response.status_code == 422
+    ai_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_explore_ai_database_failure_fails_closed_before_service(
+    client,
+    explore_reference_data,
+):
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch(
+            "apps.culture.ai_web.build_explore_destinations",
+            side_effect=DatabaseError("reviewed context unavailable"),
+        ),
+        patch("apps.culture.views.build_runtime_explanation_service") as ai_factory,
+    ):
+        response = client.post(
+            reverse("explore_explanation"),
+            {"destination_token": "JP:tokyo", "prompt_id": "explore_overview"},
+        )
+
+    assert response.status_code == 503
+    assert b"temporarily unavailable" in response.content
+    ai_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_explore_ai_no_javascript_post_returns_full_page(
+    client,
+    explore_reference_data,
+):
+    service = StubExploreExplanationService()
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch(
+            "apps.culture.views.build_runtime_explanation_service",
+            return_value=service,
+        ),
+    ):
+        response = client.post(
+            reverse("explore_explanation"),
+            {"destination_token": "JP:tokyo", "prompt_id": "explore_evidence"},
+        )
+
+    assert response.status_code == 200
+    assert b"<html" in response.content
+    assert b"Reviewed destination context, explained." in response.content
+    assert b"How should I read the scope and freshness" in response.content
+    assert b"Back to Explore" in response.content
