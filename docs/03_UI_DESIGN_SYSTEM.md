@@ -184,6 +184,6 @@ Prefer:
 - source/destination as one bilateral instrument rather than two independent cards;
 - contextual sections that read like an editorial spread rather than a dashboard.
 
-The project keeps Inter as the self-hosted UI/display typeface for now. Premium hierarchy comes from scale, weight, spacing and composition rather than an unbundled external font dependency.
+The project uses a platform-native sans stack so first-paint metrics stay stable and no runtime webfont activation can move navigation or financial UI. Premium hierarchy comes from scale, weight, spacing and composition rather than a downloaded typeface.
 
 The free-tier Gemini runtime explanation remains part of the product. Premium visual direction does not imply paid AI infrastructure.
