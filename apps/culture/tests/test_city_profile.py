@@ -179,7 +179,10 @@ def test_explore_city_card_links_to_city_money_profile(client, seeded_city_conte
 
     assert response.status_code == 200
     assert reverse("city_money_profile", args=("JP", "tokyo")).encode() in response.content
-    assert b"View Tokyo money profile" in response.content
+    assert b"Tokyo" in response.content
+    assert b"JPY" in response.content
+    assert b"city money profile" in response.content
+    assert b"Convert" in response.content
 
 
 @pytest.mark.django_db
