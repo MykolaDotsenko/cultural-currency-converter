@@ -7,6 +7,7 @@
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
   <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan</a>
+  <a class="qa-header-link" href="{% url 'explore_same_amount' %}">Same amount</a>
   <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare</a>
   <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
 {% endblock %}
@@ -37,6 +38,10 @@
             <h2 id="explore-coverage-title">Reviewed, scoped, current.</h2>
             <p>Only destinations and collections that survive the same evidence rules as the converter appear here.</p>
           </div>
+        </div>
+        <div class="qa-saved-row__actions qa-explore-overview__actions">
+          <a class="qa-primary-button" href="{% url 'explore_same_amount' %}">View one amount across places</a>
+          <a class="qa-secondary-button" href="{% url 'destination_comparison' %}">Compare two destinations</a>
         </div>
         <div class="qa-price-grid" aria-label="Explore coverage">
           <article class="qa-price-card">
@@ -116,8 +121,9 @@
                                   <p class="qa-saved-row__meta">{{ city.currency_code }} · city money profile</p>
                                 </div>
                                 <div class="qa-saved-row__actions">
-                                  <a class="qa-secondary-button"
-                                     href="{{ city.converter_url }}">Convert</a>
+                                  <a class="qa-secondary-button" href="{{ city.converter_url }}">Convert</a>
+                                  <a class="qa-secondary-button" href="{{ city.compare_url }}">Compare</a>
+                                  <a class="qa-secondary-button" href="{{ city.save_place_url }}">Save</a>
                                 </div>
                               </div>
                             {% endfor %}
@@ -126,12 +132,13 @@
                           <p class="qa-saved-row__meta">No city-level profile is published yet.</p>
                         {% endif %}
                       </div>
-                      {% if country.converter_url %}
-                        <div class="qa-saved-row__actions">
-                          <a class="qa-secondary-button"
-                             href="{{ country.converter_url }}">Open country context</a>
-                        </div>
-                      {% endif %}
+                      <div class="qa-saved-row__actions">
+                        {% if country.converter_url %}
+                          <a class="qa-secondary-button" href="{{ country.converter_url }}">Open context</a>
+                        {% endif %}
+                        <a class="qa-secondary-button" href="{{ country.compare_url }}">Compare</a>
+                        <a class="qa-secondary-button" href="{{ country.save_place_url }}">Save</a>
+                      </div>
                     </article>
                   {% endfor %}
                 </div>
@@ -158,12 +165,12 @@
                   </div>
                   <div class="qa-saved-row__actions">
                     {% if card.profile_url %}
-                      <a class="qa-secondary-button"
-                         href="{{ card.profile_url }}">View city money profile</a>
+                      <a class="qa-secondary-button" href="{{ card.profile_url }}">View city profile</a>
                     {% else %}
-                      <a class="qa-secondary-button"
-                         href="{{ card.converter_url }}">Open destination</a>
+                      <a class="qa-secondary-button" href="{{ card.converter_url }}">Open destination</a>
                     {% endif %}
+                    <a class="qa-secondary-button" href="{{ card.compare_url }}">Compare</a>
+                    <a class="qa-secondary-button" href="{{ card.save_place_url }}">Save</a>
                   </div>
                 </article>
               {% endwith %}
