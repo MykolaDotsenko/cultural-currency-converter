@@ -5,6 +5,7 @@ import {
 } from "./account-favourites";
 import {
   accountPlaceSyncAvailable,
+  loadAccountSavedPlaceTokens,
   savePlaceToAccount,
 } from "./account-places";
 import { wireSavedPage } from "./local-saved-state-page";
@@ -256,6 +257,22 @@ function enhanceExploreSavedPlaces(): void {
       if (accountMode) void saveAccountPlace(surface);
       else toggleSavedPlace(surface);
     });
+  }
+
+  if (accountMode) {
+    void loadAccountSavedPlaceTokens()
+      .then((tokens) => {
+        for (const surface of surfaces) {
+          const place = placeFromSurface(surface);
+          if (!place) continue;
+          const saved = tokens.has(place.token) || surface.dataset.accountSaved === "true";
+          surface.dataset.accountSaved = saved ? "true" : "false";
+          setAccountPlaceSurfaceState(surface, saved);
+        }
+      })
+      .catch(() => {
+        // Saving remains available and idempotent even if the read-state probe fails.
+      });
   }
 }
 
