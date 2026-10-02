@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import CulturalProfile, TypicalPrice
+from apps.exchange.ai.packet_tokens import GroundedPacketTokenError
 from apps.exchange.ai.service import RuntimeExplanationService
 from apps.exchange.comparison_snapshot import load_saved_comparison_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
@@ -522,3 +523,28 @@ def test_comparison_ai_has_no_javascript_full_page_fallback(
     assert b"<html" in response.content
     assert b"Trusted facts first. Explanation second." in response.content
     assert b"Built-in explanation" in response.content
+
+
+@pytest.mark.django_db
+def test_comparison_result_survives_optional_ai_packet_contract_failure(
+    client,
+    comparison_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    gateway = ComparisonGateway()
+
+    with (
+        patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway),
+        patch(
+            "apps.exchange.comparison_presentation.build_grounded_packet_token",
+            side_effect=GroundedPacketTokenError("bounded packet unavailable"),
+        ),
+    ):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    assert b"No winner is calculated." in response.content
+    assert response.context["comparison"]["ai_explanation"] is None
+    assert b"signed comparison facts only" not in response.content
+    assert gateway.calls == [("EUR", "JPY"), ("EUR", "NOK")]
