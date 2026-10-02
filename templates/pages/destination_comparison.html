@@ -227,7 +227,7 @@
           </form>
         {% else %}
           <a class="qa-secondary-button"
-             href="{% url 'login' %}?next={% url 'destination_comparison' %}">
+             href="{% url 'login' %}?next={{ comparison_reopen_url|urlencode }}">
             Sign in to save comparisons
           </a>
         {% endif %}
