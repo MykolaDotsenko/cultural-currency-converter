@@ -218,6 +218,12 @@
 }
 
 .qa-explore-directory [data-save-place][data-saved="true"] {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+}
+
+.qa-explore-directory [data-save-place][data-saved="true"] {
   border-color: color-mix(in srgb, var(--color-brand) 42%, var(--color-border-control));
   background: var(--color-brand-soft);
   color: var(--color-brand-hover);
