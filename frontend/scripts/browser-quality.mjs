@@ -1948,6 +1948,11 @@ async function assertSameAmountQuality(page) {
   const form = page.locator(".qa-same-amount__form");
   await form.locator('input[name="amount"]').fill("100");
   await form.locator('select[name="source_currency"]').selectOption("EUR");
+  for (const destination of await form.locator('input[name="destinations"]').all()) {
+    if (await destination.isChecked()) {
+      await destination.uncheck();
+    }
+  }
   await form.locator('input[name="destinations"][value="CA:toronto"]').check();
   await form.locator('input[name="destinations"][value="JP:tokyo"]').check();
 
