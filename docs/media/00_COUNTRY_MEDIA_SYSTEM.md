@@ -227,12 +227,25 @@ Update the **Generation Log** in the country's documentation with:
 
 Before production use:
 
-- crop to the role's intended ratio;
-- export to high-quality WebP;
+- record the reviewed focal point in the curated manifest for sourced destination media;
+- declare a deterministic responsive-width family smaller than the reviewed source;
+- use managed-media derivative generation rather than hand-exporting unrelated copies;
+- export responsive derivatives to high-quality WebP;
 - remove unnecessary metadata;
-- verify dimensions;
-- visually inspect at desktop and mobile sizes;
+- verify intrinsic dimensions and source provenance;
+- visually inspect the focal crop at mobile, tablet and desktop sizes;
 - add meaningful alt text when the image is informative.
+
+For curated sourced P01–P04, focal coordinates and responsive widths are executable manifest data, not prose-only review notes. Destination curated specs fail validation when that crop/delivery contract is incomplete.
+
+After the managed source is ingested and explicitly approved:
+
+```bash
+python manage.py build_curated_media_derivatives --slug <curated-slug> --dry-run
+python manage.py build_curated_media_derivatives --slug <curated-slug>
+```
+
+The builder preflights source status/scope/focal metadata, skips already-created widths on rerun and leaves every new derivative in review. Use `--all-destination` only after every selected source has been ingested and approved; the whole batch is preflighted before the first write.
 
 ### 7. Publish deliberately
 
@@ -258,7 +271,7 @@ This keeps context small and makes the result reproducible.
 
 ## Completion definition
 
-A country media pack is **core-complete** when P01–P04 each have one approved prompt output and the generation log is current. This describes the media-production pack, not runtime publication status.
+A country media pack is **core-complete** when P01–P04 each have one approved visual/source selection and the generation log is current. For sourced production destination media, the curated manifest must also carry reviewed focal coordinates and a responsive-width plan. This describes the media-production pack, not runtime publication status; runtime display still requires managed ingestion, explicit source/derivative review and publication.
 
 A country media pack is **showcase-complete** when P01–P06 are approved. Runtime eligibility is still governed by managed-media review/publication rules and the role-specific authenticity policy.
 
