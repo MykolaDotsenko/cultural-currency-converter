@@ -109,9 +109,7 @@
                         type="submit"
                         name="prompt_id"
                         value="{{ prompt.intent.value }}"
-                        aria-controls="conversion-explanation-region"
-                        formaction="{% url 'explore_explanation' %}"
-                        formmethod="post">{{ prompt.label }}</button>
+                        aria-controls="conversion-explanation-region">{{ prompt.label }}</button>
               {% endfor %}
             </div>
             <p id="explanation-loading"
