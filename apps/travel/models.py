@@ -302,6 +302,24 @@ class SavedComparison(models.Model):
                 name="saved_cmp_amount_nonnegative",
             ),
             models.CheckConstraint(
+                condition=Q(source_amount__lte=1_000_000_000),
+                name="saved_cmp_amount_max",
+            ),
+            models.CheckConstraint(
+                condition=~(
+                    Q(left_country=models.F("right_country"))
+                    & Q(left_city__isnull=True, right_city__isnull=True)
+                ),
+                name="saved_cmp_country_scopes_differ",
+            ),
+            models.CheckConstraint(
+                condition=~(
+                    Q(left_city=models.F("right_city"))
+                    & Q(left_city__isnull=False, right_city__isnull=False)
+                ),
+                name="saved_cmp_city_scopes_differ",
+            ),
+            models.CheckConstraint(
                 condition=Q(duration_days__gte=1, duration_days__lte=365),
                 name="saved_cmp_duration_range",
             ),
@@ -372,6 +390,10 @@ class SavedComparisonBudgetItem(models.Model):
                 condition=Q(units_per_person_per_day__gt=0)
                 & Q(units_per_person_per_day__lte=100),
                 name="saved_cmp_units_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(category__in=("coffee", "casual_meal", "transit")),
+                name="saved_cmp_category_allowed",
             ),
         ]
 
