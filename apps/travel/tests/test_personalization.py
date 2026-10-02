@@ -423,5 +423,6 @@ def test_signed_in_saved_page_exposes_explicit_local_place_import_not_auto_migra
 
     assert response.status_code == 200
     assert b"Import browser places to account" in response.content
-    assert b"Import is always explicit" in response.content
+    assert b"Sign-in never uploads these automatically." in response.content
+    assert b"Import is an explicit, idempotent action" in response.content
     assert not SavedPlace.objects.filter(user=user).exists()
