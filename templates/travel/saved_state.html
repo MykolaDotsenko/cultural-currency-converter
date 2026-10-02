@@ -189,8 +189,7 @@
                         </button>
                       </form>
                     {% endif %}
-                    <form method="post"
-                          action="{% url 'delete_saved_comparison' saved.pk %}">
+                    <form method="post" action="{% url 'delete_saved_comparison' saved.pk %}">
                       {% csrf_token %}
                       <button class="qa-secondary-button qa-destructive-button"
                               type="submit"
@@ -277,7 +276,8 @@
                       <a class="qa-secondary-button" href="{{ row.budget_url }}">Budget</a>
                       <a class="qa-secondary-button" href="{{ row.compare_url }}">Compare</a>
                       {% if row.profile_url %}
-                        <a class="qa-saved-row__text-action" href="{{ row.profile_url }}">City profile</a>
+                        <a class="qa-saved-row__text-action"
+                           href="{{ row.profile_url }}">City profile</a>
                       {% else %}
                         <a class="qa-saved-row__text-action"
                            href="{% url 'explore' %}#regional-directory">Explore</a>
@@ -305,9 +305,7 @@
         <div class="qa-continuity-note" data-local-place-migration>
           <div>
             <strong>This device</strong>
-            <span data-local-place-migration-summary data-local-pending>
-              Checking browser-only places…
-            </span>
+            <span data-local-place-migration-summary data-local-pending>Checking browser-only places…</span>
           </div>
           <button class="qa-secondary-button"
                   type="button"
