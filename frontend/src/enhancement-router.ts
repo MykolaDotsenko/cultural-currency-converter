@@ -1,8 +1,8 @@
 type EnhancementRoot = Document | Element;
 
-let converterEnhancementsModule:
-  | Promise<typeof import("./behaviors/converter-enhancements")>
-  | null = null;
+let converterEnhancementsModule: Promise<
+  typeof import("./behaviors/converter-enhancements")
+> | null = null;
 let aiExplanationModule: Promise<typeof import("./behaviors/ai-explanation")> | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
 let rateChartLoaderModule: Promise<typeof import("./behaviors/rate-chart-loader")> | null = null;
