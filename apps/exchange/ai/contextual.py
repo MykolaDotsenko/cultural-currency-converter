@@ -6,6 +6,7 @@ from enum import StrEnum
 
 from django.conf import settings
 
+from apps.culture.services import PaymentContext
 from apps.exchange.ai.contracts import (
     ExplanationInsight,
     ExplanationPacket,
@@ -17,7 +18,7 @@ from apps.exchange.ai.providers.deterministic_test import DeterministicTestExpla
 from apps.exchange.ai.providers.gemini import GeminiExplanationDrafter
 from apps.exchange.ai.service import ExplanationDelivery, RuntimeExplanationService
 from apps.exchange.budget import BudgetBand, BudgetInterpretation, BudgetInterpretationState
-from apps.exchange.comparison import DestinationComparison
+from apps.exchange.comparison import DestinationComparison, DestinationComparisonSide
 from apps.exchange.money_context import MoneyContext
 from integrations.gemini.client import GeminiStructuredClient
 
@@ -519,7 +520,11 @@ def _budget_band_statement(interpretation: BudgetInterpretation) -> str:
     return f"The deterministic available-amount comparison is {label}."
 
 
-def _comparison_conversion_fact(prefix: str, name: str, side) -> GroundedFact:
+def _comparison_conversion_fact(
+    prefix: str,
+    name: str,
+    side: DestinationComparisonSide,
+) -> GroundedFact:
     quote = side.conversion.quote
     return GroundedFact(
         id=f"{prefix}_conversion",
@@ -533,7 +538,11 @@ def _comparison_conversion_fact(prefix: str, name: str, side) -> GroundedFact:
     )
 
 
-def _comparison_budget_fact(prefix: str, name: str, side) -> GroundedFact:
+def _comparison_budget_fact(
+    prefix: str,
+    name: str,
+    side: DestinationComparisonSide,
+) -> GroundedFact:
     budget = side.budget
     return GroundedFact(
         id=f"{prefix}_budget",
@@ -554,10 +563,14 @@ def _comparison_coverage_statement(name: str, budget: BudgetInterpretation) -> s
     return f"For {name}, sourced basket coverage is partial; missing categories are: {missing}."
 
 
-def _payment_statement(name: str, payment) -> str:
+def _payment_statement(name: str, payment: PaymentContext | None) -> str:
     if payment is None:
         return f"No reviewed current payment-guidance record is available for {name}."
-    parts = [payment.summary.strip(), payment.cash_usage.strip(), payment.dcc_warning.strip()]
+    parts = [
+        (payment.summary or "").strip(),
+        (payment.cash_usage or "").strip(),
+        (payment.dcc_warning or "").strip(),
+    ]
     detail = " ".join(part for part in parts if part)
     return (
         f"For {name}, the reviewed payment context says: {detail}"
