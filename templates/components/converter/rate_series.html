@@ -97,6 +97,37 @@
     <span id="historical-trend-loading"
           class="qa-loading-indicator htmx-indicator"
           aria-live="polite">Updating historical trend…</span>
+    {% if series_component.timeline_landmarks %}
+      <section class="qa-rate-timeline"
+               aria-labelledby="historical-rate-timeline-title">
+        <div class="qa-rate-timeline__heading">
+          <div>
+            <p class="qa-foundation-kicker">Reference timeline</p>
+            <h3 id="historical-rate-timeline-title">Range anchors</h3>
+            <p>Chronological anchors from the published observations loaded for this range.</p>
+          </div>
+          <p class="qa-rate-timeline__scope">Reference FX only · no historical purchasing-power inference</p>
+        </div>
+        <ol class="qa-rate-timeline__list">
+          {% for landmark in series_component.timeline_landmarks %}
+            <li class="qa-rate-timeline__item{% if landmark.selected %} is-selected{% endif %}">
+              <span class="qa-rate-timeline__step" aria-hidden="true">{{ forloop.counter }}</span>
+              <div>
+                <p class="qa-rate-timeline__role">{{ landmark.label }}</p>
+                <time datetime="{{ landmark.date_iso }}">{{ landmark.date_label }}</time>
+                <p class="qa-rate-timeline__rate">
+                  {{ landmark.rate }} {{ series_component.quote_currency }}
+                  per {{ series_component.base_currency }}
+                </p>
+                {% if landmark.provider_keys %}
+                  <p class="qa-rate-timeline__source">Source: {{ landmark.provider_keys }}</p>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endif %}
     {% if series_component.points %}
       <section class="qa-rate-chart" aria-labelledby="historical-rate-chart-title">
         <div class="qa-rate-chart__heading">
@@ -201,11 +232,13 @@
             <div>
               <p class="qa-foundation-kicker">Then &amp; now</p>
               <h3 id="then-now-title">Same amount, two reference observations</h3>
+              <p>A direct FX reference comparison using the same source amount on both dates.</p>
             </div>
+            <p class="qa-then-now__scope">Reference FX only · not purchasing power</p>
           </div>
           <div class="qa-then-now__grid">
             <article>
-              <p class="qa-workspace__role">Then</p>
+              <p class="qa-workspace__role">Selected historical observation</p>
               <h4>{{ comparison.then.date_label }}</h4>
               {% if series_component.then_media %}
                 <div class="qa-then-now__media">

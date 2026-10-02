@@ -5,14 +5,17 @@
         content="Inspect a bounded historical reference-rate series with source, grouping and accessible tabular data.">
 {% endblock %}
 {% block content %}
-  <section class="qa-foundation-intro qa-product-intro"
+  <section class="qa-foundation-intro qa-product-intro qa-historical-page__intro"
            aria-labelledby="historical-series-page-title">
     <p class="qa-foundation-kicker">Historical reference data</p>
     <h1 id="historical-series-page-title">Historical rate trend</h1>
     <p class="qa-foundation-lede">
       Inspect published reference-rate observations without turning the converter into a trading tool.
     </p>
-    <p><a href="{% url 'converter' %}">Back to converter</a></p>
+    <div class="qa-historical-page__actions">
+      <a class="qa-primary-button" href="{% url 'converter' %}">Back to converter</a>
+      <a class="qa-historical-page__text-action" href="{% url 'explore' %}">Explore destinations</a>
+    </div>
   </section>
   {% include "components/converter/rate_series.html" %}
 {% endblock %}
