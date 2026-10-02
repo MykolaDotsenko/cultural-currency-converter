@@ -534,10 +534,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     (await bilateralRoute.locator(".qa-bilateral-result__side").count()) === 2,
     "current-converter: bilateral result must expose exactly two contextual sides",
   );
-  const routeCurrencies = (await bilateralRoute
-    .locator(".qa-bilateral-result__currency")
-    .allTextContents())
-    .map((value) => value.trim());
+  const routeCurrencies = (
+    await bilateralRoute.locator(".qa-bilateral-result__currency").allTextContents()
+  ).map((value) => value.trim());
   assert(
     JSON.stringify(routeCurrencies) ===
       JSON.stringify([
@@ -551,7 +550,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     "current-converter: bilateral identity must not introduce flag or decorative image chrome",
   );
   assert(
-    (await bilateralRoute.locator(".qa-bilateral-result__connector[aria-hidden='true']").count()) === 1,
+    (await bilateralRoute
+      .locator(".qa-bilateral-result__connector[aria-hidden='true']")
+      .count()) === 1,
     "current-converter: bilateral connector must remain decorative for assistive technology",
   );
   await assertAiExplanationReliability(page, consoleErrors);
@@ -860,7 +861,8 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
       const image = mediaRole.locator(".qa-media__image");
       await image.waitFor();
       assert(
-        Number(await image.getAttribute("width")) > 0 && Number(await image.getAttribute("height")) > 0,
+        Number(await image.getAttribute("width")) > 0 &&
+          Number(await image.getAttribute("height")) > 0,
         "current-converter/media: managed photography lost intrinsic dimensions",
       );
       const frame = mediaRole.locator(".qa-media__frame");
