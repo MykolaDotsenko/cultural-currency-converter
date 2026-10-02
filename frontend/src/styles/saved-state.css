@@ -168,11 +168,6 @@
 }
 
 @media (hover: hover) {
-  .qa-saved-row__text-action:hover {
-    color: var(--color-brand-hover);
-    text-decoration: underline;
-  }
-
   .qa-destructive-button:hover {
     border-color: var(--color-danger);
     background: var(--color-danger-soft);
