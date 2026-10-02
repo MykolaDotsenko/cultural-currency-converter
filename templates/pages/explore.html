@@ -88,14 +88,7 @@
           </div>
           <form class="qa-explore-ai__form"
                 action="{% url 'explore_explanation' %}"
-                method="post"
-                data-ai-explanation-trigger
-                data-ai-explanation-label="Explore explanation"
-                hx-post="{% url 'explore_explanation' %}"
-                hx-target="#conversion-explanation-region"
-                hx-swap="innerHTML"
-                hx-indicator="#explanation-loading"
-                hx-sync="#conversion-explanation-region:replace">
+                method="post">
             {% csrf_token %}
             <div class="qa-field">
               <label for="{{ explore_ai_form.destination_token.id_for_label }}">Reviewed destination</label>
@@ -109,7 +102,15 @@
                         type="submit"
                         name="prompt_id"
                         value="{{ prompt.intent.value }}"
-                        aria-controls="conversion-explanation-region">{{ prompt.label }}</button>
+                        data-ai-explanation-trigger
+                        aria-controls="conversion-explanation-region"
+                        hx-post="{% url 'explore_explanation' %}"
+                        hx-include="closest form"
+                        hx-target="#conversion-explanation-region"
+                        hx-swap="innerHTML"
+                        hx-sync="#conversion-explanation-region:replace"
+                        hx-disabled-elt="this"
+                        hx-indicator="#explanation-loading">{{ prompt.label }}</button>
               {% endfor %}
             </div>
             <p id="explanation-loading"
