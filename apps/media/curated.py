@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 
 from apps.media.models import (
     DatePrecision,
@@ -20,6 +21,11 @@ _DESTINATION_SUPPORTING_ROLES = {
     MediaRole.EVERYDAY_VALUE,
     MediaRole.PAYMENT_CULTURE,
     MediaRole.LOCAL_DETAIL,
+}
+_DESTINATION_PHOTOGRAPHIC_ROLES = {
+    MediaRole.COUNTRY_HERO,
+    MediaRole.COUNTRY_TEASER,
+    *_DESTINATION_SUPPORTING_ROLES,
 }
 
 
@@ -49,6 +55,9 @@ class CuratedMediaSpec:
     attribution_text: str
     expected_width: int
     expected_height: int
+    focal_x: Decimal | None = None
+    focal_y: Decimal | None = None
+    responsive_widths: tuple[int, ...] = ()
 
 
 FINLAND_HELSINKI_TRAM_HERO = CuratedMediaSpec(
@@ -85,6 +94,116 @@ FINLAND_HELSINKI_TRAM_HERO = CuratedMediaSpec(
     attribution_text="JIP · CC BY-SA 4.0",
     expected_width=4608,
     expected_height=3456,
+    focal_x=Decimal("0.540"),
+    focal_y=Decimal("0.500"),
+    responsive_widths=(640, 960, 1440),
+)
+
+
+FINLAND_HELSINKI_COFFEE_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
+    slug="finland-helsinki-coffee-everyday-value-2025",
+    country_code="FI",
+    currency_code="",
+    city="Helsinki",
+    valid_from=date(2025, 1, 30),
+    valid_to=date(2025, 1, 30),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.EVERYDAY_VALUE,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Cup_of_coffee_at_The_Rook.jpg",
+    title="Coffee at The Rook in Helsinki, January 2025",
+    alt_text="A cup of coffee on a ceramic saucer at a restaurant table in Helsinki.",
+    caption="Coffee at The Rook in Punavuori, Helsinki, photographed 30 January 2025.",
+    source_name="Wikimedia Commons",
+    source_url="https://commons.wikimedia.org/wiki/File:Cup_of_coffee_at_The_Rook.jpg",
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/4/41/"
+        "Cup_of_coffee_at_The_Rook.jpg"
+    ),
+    creator="JIP",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="JIP · CC BY-SA 4.0",
+    expected_width=4608,
+    expected_height=3456,
+    focal_x=Decimal("0.520"),
+    focal_y=Decimal("0.500"),
+    responsive_widths=(480, 800, 1200),
+)
+
+
+FINLAND_HELSINKI_TICKET_MACHINE_PAYMENT_2023 = CuratedMediaSpec(
+    slug="finland-helsinki-ticket-machine-payment-2023",
+    country_code="FI",
+    currency_code="",
+    city="Helsinki",
+    valid_from=date(2023, 4, 27),
+    valid_to=date(2023, 4, 27),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.PAYMENT_CULTURE,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Helsinki_Regional_Transport_Authority_ticket_vending_machine_01.jpg",
+    title="HSL ticket vending machine in Helsinki, April 2023",
+    alt_text="An HSL ticket vending machine at the Viking Line ferry terminal in Helsinki.",
+    caption="HSL ticket vending machine at the Viking Line terminal, photographed 27 April 2023.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Helsinki_Regional_Transport_Authority%27s_ticket_vending_machine_01.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/7/7e/"
+        "Helsinki_Regional_Transport_Authority%27s_ticket_vending_machine_01.jpg"
+    ),
+    creator="Sinikka Halme",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="Sinikka Halme · CC BY-SA 4.0",
+    expected_width=3256,
+    expected_height=2406,
+    focal_x=Decimal("0.600"),
+    focal_y=Decimal("0.500"),
+    responsive_widths=(480, 800, 1200),
+)
+
+
+FINLAND_HELSINKI_TRAM_INTERIOR_LOCAL_DETAIL_2024 = CuratedMediaSpec(
+    slug="finland-helsinki-tram-interior-local-detail-2024",
+    country_code="FI",
+    currency_code="",
+    city="Helsinki",
+    valid_from=date(2024, 10, 26),
+    valid_to=date(2024, 10, 26),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.LOCAL_DETAIL,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Interior_of_Helsinki_tram_on_line_13.jpg",
+    title="Interior of Helsinki tram line 13, October 2024",
+    alt_text="The interior of a Helsinki tram on line 13 at Kalasatama.",
+    caption="Interior of Helsinki tram line 13 at Kalasatama, photographed 26 October 2024.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/File:Interior_of_Helsinki_tram_on_line_13.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/f/f5/"
+        "Interior_of_Helsinki_tram_on_line_13.jpg"
+    ),
+    creator="JIP",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="JIP · CC BY-SA 4.0",
+    expected_width=4608,
+    expected_height=3456,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.450"),
+    responsive_widths=(480, 800, 1200),
 )
 
 
@@ -119,6 +238,9 @@ FRANCE_RUE_LAURISTON_HERO_2024 = CuratedMediaSpec(
     attribution_text="Chabe01 · CC BY-SA 4.0",
     expected_width=4032,
     expected_height=3024,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.500"),
+    responsive_widths=(640, 960, 1440),
 )
 
 
@@ -152,6 +274,85 @@ FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
     attribution_text="Wyslijp16 · CC BY 4.0",
     expected_width=6000,
     expected_height=4000,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.520"),
+    responsive_widths=(480, 800, 1200),
+)
+
+
+FRANCE_PARIS_NAVIGO_MACHINE_PAYMENT_2023 = CuratedMediaSpec(
+    slug="france-paris-navigo-machine-payment-2023",
+    country_code="FR",
+    currency_code="",
+    city="Paris",
+    valid_from=date(2023, 3, 28),
+    valid_to=date(2023, 3, 28),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.PAYMENT_CULTURE,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:SNCF_Ile-de-France_ticket_vending_machine_Navigo_Easy_Saint_Lazare.jpg",
+    title="Navigo Easy ticket vending machine at Paris Saint-Lazare, March 2023",
+    alt_text="A ticket vending machine at Paris Saint-Lazare advertising Navigo Easy pass sales.",
+    caption="Ticket vending machine at Paris Saint-Lazare, photographed 28 March 2023.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:SNCF_Ile-de-France_ticket_vending_machine_supporting_issuing_Navigo_Easy_"
+        "at_Gare_Saint_Lazare.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/4/4f/"
+        "SNCF_Ile-de-France_ticket_vending_machine_supporting_issuing_Navigo_Easy_"
+        "at_Gare_Saint_Lazare.jpg"
+    ),
+    creator="DominikPeters",
+    licence_id="CC0 1.0",
+    licence_url="https://creativecommons.org/publicdomain/zero/1.0/",
+    rights_statement="Creative Commons CC0 1.0 Universal Public Domain Dedication",
+    attribution_text="DominikPeters · CC0 1.0",
+    expected_width=1660,
+    expected_height=2214,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.500"),
+    responsive_widths=(480, 800, 1200),
+)
+
+
+FRANCE_PARIS_METRO_INTERIOR_LOCAL_DETAIL_2024 = CuratedMediaSpec(
+    slug="france-paris-metro-interior-local-detail-2024",
+    country_code="FR",
+    currency_code="",
+    city="Paris",
+    valid_from=date(2024, 11, 9),
+    valid_to=date(2024, 11, 9),
+    date_precision=DatePrecision.EXACT_DAY,
+    role=MediaRole.LOCAL_DETAIL,
+    kind=MediaKind.CONTEMPORARY_PHOTO,
+    source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+    external_id="commons:Interieur_rame_MP05_ligne_1_metro_parisien.jpg",
+    title="Interior of a Paris Metro line 1 MP 05 train, November 2024",
+    alt_text="The interior of an MP 05 train on line 1 of the Paris Metro.",
+    caption="Interior of a Paris Metro line 1 MP 05 train, photographed 9 November 2024.",
+    source_name="Wikimedia Commons",
+    source_url=(
+        "https://commons.wikimedia.org/wiki/"
+        "File:Int%C3%A9rieur_d%27une_rame_MP_05_de_la_ligne_1_du_m%C3%A9tro_parisien.jpg"
+    ),
+    source_media_url=(
+        "https://upload.wikimedia.org/wikipedia/commons/3/35/"
+        "Int%C3%A9rieur_d%27une_rame_MP_05_de_la_ligne_1_du_m%C3%A9tro_parisien.jpg"
+    ),
+    creator="Remontees",
+    licence_id="CC BY-SA 4.0",
+    licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+    rights_statement="Creative Commons Attribution-ShareAlike 4.0 International",
+    attribution_text="Remontees · CC BY-SA 4.0",
+    expected_width=5971,
+    expected_height=3981,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.500"),
+    responsive_widths=(480, 800, 1200),
 )
 
 
@@ -182,6 +383,9 @@ JAPAN_TOKYO_STREET_HERO_2019 = CuratedMediaSpec(
     attribution_text="Another Believer · CC BY-SA 4.0",
     expected_width=4000,
     expected_height=3000,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.520"),
+    responsive_widths=(640, 960, 1440),
 )
 
 
@@ -213,6 +417,9 @@ JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
     attribution_text="Quercus acuta · CC BY-SA 4.0",
     expected_width=3299,
     expected_height=2474,
+    focal_x=Decimal("0.520"),
+    focal_y=Decimal("0.510"),
+    responsive_widths=(480, 800, 1200),
 )
 
 
@@ -247,6 +454,9 @@ JAPAN_SUICA_VENDING_PAYMENT_2020 = CuratedMediaSpec(
     attribution_text="Real Estate Japan / Scott Kouchi · CC BY 2.0",
     expected_width=6240,
     expected_height=4160,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.470"),
+    responsive_widths=(480, 800, 1200),
 )
 
 
@@ -280,6 +490,9 @@ JAPAN_TOKYO_METRO_LOCAL_DETAIL_2021 = CuratedMediaSpec(
     attribution_text="MaedaAkihiko · CC BY-SA 4.0",
     expected_width=5004,
     expected_height=3336,
+    focal_x=Decimal("0.500"),
+    focal_y=Decimal("0.470"),
+    responsive_widths=(480, 800, 1200),
 )
 
 
@@ -360,8 +573,13 @@ JAPAN_SERIES_D_1000_YEN_1984_2007 = CuratedMediaSpec(
 
 CURATED_MEDIA: dict[str, CuratedMediaSpec] = {
     FINLAND_HELSINKI_TRAM_HERO.slug: FINLAND_HELSINKI_TRAM_HERO,
+    FINLAND_HELSINKI_COFFEE_EVERYDAY_VALUE_2025.slug: FINLAND_HELSINKI_COFFEE_EVERYDAY_VALUE_2025,
+    FINLAND_HELSINKI_TICKET_MACHINE_PAYMENT_2023.slug: FINLAND_HELSINKI_TICKET_MACHINE_PAYMENT_2023,
+    FINLAND_HELSINKI_TRAM_INTERIOR_LOCAL_DETAIL_2024.slug: FINLAND_HELSINKI_TRAM_INTERIOR_LOCAL_DETAIL_2024,
     FRANCE_RUE_LAURISTON_HERO_2024.slug: FRANCE_RUE_LAURISTON_HERO_2024,
     FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025.slug: FRANCE_PARIS_CROISSANT_EVERYDAY_VALUE_2025,
+    FRANCE_PARIS_NAVIGO_MACHINE_PAYMENT_2023.slug: FRANCE_PARIS_NAVIGO_MACHINE_PAYMENT_2023,
+    FRANCE_PARIS_METRO_INTERIOR_LOCAL_DETAIL_2024.slug: FRANCE_PARIS_METRO_INTERIOR_LOCAL_DETAIL_2024,
     JAPAN_TOKYO_STREET_HERO_2019.slug: JAPAN_TOKYO_STREET_HERO_2019,
     JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025.slug: JAPAN_SHOYU_RAMEN_EVERYDAY_VALUE_2025,
     JAPAN_SUICA_VENDING_PAYMENT_2020.slug: JAPAN_SUICA_VENDING_PAYMENT_2020,
@@ -393,6 +611,28 @@ def validate_curated_media_spec(spec: CuratedMediaSpec) -> CuratedMediaSpec:
         raise ValueError("Curated media expected dimensions must be positive.")
     if spec.valid_from and spec.valid_to and spec.valid_from > spec.valid_to:
         raise ValueError("Curated media valid_from cannot be after valid_to.")
+
+    if (spec.focal_x is None) != (spec.focal_y is None):
+        raise ValueError("Curated media focal coordinates must be provided together.")
+    for coordinate in (spec.focal_x, spec.focal_y):
+        if coordinate is not None and not Decimal("0") <= coordinate <= Decimal("1"):
+            raise ValueError("Curated media focal coordinates must be normalized to 0..1.")
+
+    if spec.responsive_widths:
+        if tuple(sorted(set(spec.responsive_widths))) != spec.responsive_widths:
+            raise ValueError("Curated responsive widths must be unique and strictly increasing.")
+        if any(width < 1 or width >= spec.expected_width for width in spec.responsive_widths):
+            raise ValueError(
+                "Curated responsive widths must be positive and smaller than the source width."
+            )
+
+    if spec.role in _DESTINATION_PHOTOGRAPHIC_ROLES:
+        if spec.focal_x is None or spec.focal_y is None:
+            raise ValueError("Destination curated media requires a reviewed focal point.")
+        if len(spec.responsive_widths) < 2:
+            raise ValueError(
+                "Destination curated media requires at least two reviewed responsive widths."
+            )
 
     if spec.role in {MediaRole.COUNTRY_HERO, MediaRole.COUNTRY_TEASER}:
         if not spec.country_code:
