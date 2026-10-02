@@ -45,6 +45,7 @@ from apps.travel.views import (
     delete_saved_comparison,
     delete_saved_place,
     save_comparison,
+    save_place,
     saved_places_status,
     saved_state,
     sync_favourites,
@@ -126,6 +127,7 @@ urlpatterns = [
     ),
     path("saved/favourites/sync/", sync_favourites, name="sync_favourites"),
     path("saved/places/sync/", sync_saved_places, name="sync_saved_places"),
+    path("saved/places/create/", save_place, name="save_place"),
     path("saved/places/state/", saved_places_status, name="saved_places_status"),
     path(
         "saved/places/<int:place_id>/delete/",
