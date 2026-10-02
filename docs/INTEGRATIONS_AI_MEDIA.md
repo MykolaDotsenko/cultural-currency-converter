@@ -107,7 +107,7 @@ python manage.py build_curated_media_derivatives --slug <curated-slug>
 
 The curated derivative builder fails closed when the managed source status, semantic scope or focal coordinates drift from the reviewed manifest. It uses only manifest-declared widths, preflights a multi-item `--all-destination` run before the first write, is safe to rerun when planned derivative records already exist and never auto-publishes a derivative.
 
-Then review each generated WebP derivative at the intended mobile/tablet/desktop crop and publish the appropriate family explicitly. Presentation creates `srcset` only when at least two members of that family are published; templates keep surface-specific `sizes` hints and intrinsic dimensions.
+Then review each generated WebP derivative at the intended mobile/tablet/desktop crop and publish the appropriate family explicitly. When a reviewed derivative and its full-size source are both published, runtime selection prefers the derivative so an accidentally published original cannot outrank the delivery-optimized family merely by being newer. Presentation creates `srcset` only when at least two members of that family are published; templates keep surface-specific `sizes` hints and intrinsic dimensions.
 
 The runtime selector remains local/database-backed. If no reviewed published derivative exists, the product intentionally renders no destination image.
 
