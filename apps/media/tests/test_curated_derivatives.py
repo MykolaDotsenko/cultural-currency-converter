@@ -22,7 +22,8 @@ from apps.media.models import (
     MediaSourceKind,
     MediaStatus,
 )
-from apps.media.services import approve_media_asset, attach_media_bytes
+from apps.media.presentation import build_media_asset_image_view_model
+from apps.media.services import approve_media_asset, attach_media_bytes, publish_media_asset
 
 
 def _png(*, size=(64, 48), color=(40, 70, 100)) -> bytes:
@@ -148,6 +149,15 @@ def test_curated_derivative_build_is_idempotent_and_preserves_review_contract(
     assert all(asset.licence_id == curated_destination.licence_id for asset in derivatives)
     assert first.getvalue().count("CREATED:") == 2
     assert "were not auto-published" in first.getvalue()
+
+    for derivative in derivatives:
+        approve_media_asset(derivative)
+        publish_media_asset(derivative)
+
+    responsive_image = build_media_asset_image_view_model(derivatives[0])
+    assert f"{derivatives[0].storage_file.url} 16w" in responsive_image.srcset
+    assert f"{derivatives[1].storage_file.url} 32w" in responsive_image.srcset
+    assert responsive_image.focal_position == "25% 62.5%"
 
     second = io.StringIO()
     call_command(
