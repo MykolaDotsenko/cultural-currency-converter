@@ -7,13 +7,14 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetAssumptions, BudgetBasis, BudgetCategoryAssumption
 from apps.exchange.comparison_snapshot import build_saved_comparison_token
-from apps.travel.models import SavedComparison, SavedPlace
+from apps.travel.models import SavedComparison, SavedComparisonBudgetItem, SavedPlace
 from apps.travel.personalization import sync_user_saved_places
 
 User = get_user_model()
@@ -275,6 +276,63 @@ def test_saved_comparison_save_is_explicit_idempotent_and_input_only(
     ]
     assert not hasattr(saved, "rate")
     assert not hasattr(saved, "result")
+
+
+@pytest.mark.django_db
+def test_saved_comparison_database_rejects_same_country_scope(
+    personalization_reference_data,
+):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        SavedComparison.objects.create(
+            user=user,
+            fingerprint="a" * 64,
+            source_currency=personalization_reference_data["eur"],
+            source_amount=Decimal("500"),
+            left_country=personalization_reference_data["jp"],
+            right_country=personalization_reference_data["jp"],
+            duration_days=5,
+            travelers=1,
+        )
+
+
+@pytest.mark.django_db
+def test_saved_comparison_database_rejects_out_of_contract_amount_and_category(
+    personalization_reference_data,
+):
+    user = User.objects.create_user(username="owner", password="StrongPass-482!")
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        SavedComparison.objects.create(
+            user=user,
+            fingerprint="b" * 64,
+            source_currency=personalization_reference_data["eur"],
+            source_amount=Decimal("1000000000.01"),
+            left_country=personalization_reference_data["jp"],
+            left_city=personalization_reference_data["tokyo"],
+            right_country=personalization_reference_data["no"],
+            duration_days=5,
+            travelers=1,
+        )
+
+    valid = SavedComparison.objects.create(
+        user=user,
+        fingerprint="c" * 64,
+        source_currency=personalization_reference_data["eur"],
+        source_amount=Decimal("500"),
+        left_country=personalization_reference_data["jp"],
+        left_city=personalization_reference_data["tokyo"],
+        right_country=personalization_reference_data["no"],
+        duration_days=5,
+        travelers=1,
+    )
+    with pytest.raises(IntegrityError), transaction.atomic():
+        SavedComparisonBudgetItem.objects.create(
+            comparison=valid,
+            category="hotel",
+            units_per_person_per_day=Decimal("1"),
+        )
 
 
 @pytest.mark.django_db
