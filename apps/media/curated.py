@@ -118,8 +118,7 @@ FINLAND_HELSINKI_COFFEE_EVERYDAY_VALUE_2025 = CuratedMediaSpec(
     source_name="Wikimedia Commons",
     source_url="https://commons.wikimedia.org/wiki/File:Cup_of_coffee_at_The_Rook.jpg",
     source_media_url=(
-        "https://upload.wikimedia.org/wikipedia/commons/4/41/"
-        "Cup_of_coffee_at_The_Rook.jpg"
+        "https://upload.wikimedia.org/wikipedia/commons/4/41/Cup_of_coffee_at_The_Rook.jpg"
     ),
     creator="JIP",
     licence_id="CC BY-SA 4.0",
@@ -187,9 +186,7 @@ FINLAND_HELSINKI_TRAM_INTERIOR_LOCAL_DETAIL_2024 = CuratedMediaSpec(
     alt_text="The interior of a Helsinki tram on line 13 at Kalasatama.",
     caption="Interior of Helsinki tram line 13 at Kalasatama, photographed 26 October 2024.",
     source_name="Wikimedia Commons",
-    source_url=(
-        "https://commons.wikimedia.org/wiki/File:Interior_of_Helsinki_tram_on_line_13.jpg"
-    ),
+    source_url=("https://commons.wikimedia.org/wiki/File:Interior_of_Helsinki_tram_on_line_13.jpg"),
     source_media_url=(
         "https://upload.wikimedia.org/wikipedia/commons/f/f5/"
         "Interior_of_Helsinki_tram_on_line_13.jpg"
