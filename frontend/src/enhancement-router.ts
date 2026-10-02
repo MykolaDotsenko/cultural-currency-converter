@@ -4,7 +4,7 @@ let converterEnhancementsModule: Promise<
   typeof import("./behaviors/converter-enhancements")
 > | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
-let rateChartLoaderModule: Promise<typeof import("./behaviors/rate-chart-loader")> | null = null;
+let rateChartModule: Promise<typeof import("./behaviors/rate-chart")> | null = null;
 
 function contains(root: EnhancementRoot, selector: string): boolean {
   if (root instanceof Element && root.matches(selector)) return true;
@@ -42,10 +42,10 @@ function loadLocalSavedState(root: EnhancementRoot): void {
 function loadRateCharts(root: EnhancementRoot): void {
   if (!contains(root, "[data-rate-chart]")) return;
 
-  rateChartLoaderModule ??= import("./behaviors/rate-chart-loader");
-  void rateChartLoaderModule.catch((error: unknown) =>
-    reportEnhancementFailure("Rate chart", error),
-  );
+  rateChartModule ??= import("./behaviors/rate-chart");
+  void rateChartModule
+    .then((module) => module.enhanceRateCharts(document))
+    .catch((error: unknown) => reportEnhancementFailure("Rate chart", error));
 }
 
 export function loadEnhancements(root: EnhancementRoot = document): void {
@@ -61,4 +61,15 @@ document.addEventListener("htmx:afterSwap", () => {
   // every newly rendered progressive fragment. A document-level marker scan is
   // cheap and keeps demand-loaded enhancement discovery deterministic.
   loadEnhancements(document);
+});
+
+
+document.addEventListener("htmx:beforeCleanupElement", (event) => {
+  if (!rateChartModule) return;
+
+  const detail = (event as CustomEvent<{ elt?: Element }>).detail;
+  const target = detail?.elt ?? (event.target instanceof Element ? event.target : null);
+  if (!target) return;
+
+  void rateChartModule.then((module) => module.destroyRateCharts(target));
 });
