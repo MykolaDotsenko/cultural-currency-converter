@@ -308,6 +308,10 @@ def create_responsive_derivative(
         raise MediaPublicationError(
             "Derivative width must be positive and smaller than the source."
         )
+    if MediaAsset.objects.filter(derivative_of=source, variant_width=width).exists():
+        raise MediaPublicationError(
+            "A responsive derivative already exists for this source and width."
+        )
 
     with source.storage_file.open("rb") as source_file:
         raw = source_file.read()
