@@ -72,6 +72,12 @@
             <p>Read across the cards, but do not treat them as a cost-of-living ranking.</p>
           </div>
         </div>
+        {% if comparison_url %}
+          <div class="qa-saved-row__actions qa-explore-amount-results__actions">
+            <a class="qa-primary-button" href="{{ comparison_url }}">Compare the first two in detail</a>
+            <a class="qa-secondary-button" href="{% url 'explore' %}">Back to Explore</a>
+          </div>
+        {% endif %}
         <div class="qa-explore-amount-grid">
           {% for card in cards %}
             <article class="qa-explore-amount-card">
