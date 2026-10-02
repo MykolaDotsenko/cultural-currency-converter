@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
+from urllib.parse import quote
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -270,10 +271,13 @@ def test_anonymous_comparison_result_offers_sign_in_without_auto_persistence(
     assert b"Sign in to save comparisons" in response.content
     assert b'action="/saved/comparisons/create/"' not in response.content
     body = response.content.decode()
-    assert "next=%2Fcompare%2F%3F" in body
-    assert "left_destination%3DJP%253Atokyo" in body
-    assert "right_destination%3DNO" in body
-    assert "amount%3D500.00" in body
+    reopen_url = response.context["comparison_reopen_url"]
+    assert reopen_url.startswith(f"{reverse('destination_comparison')}?")
+    assert "amount=500.00" in reopen_url
+    assert "left_destination=JP%3Atokyo" in reopen_url
+    assert "right_destination=NO" in reopen_url
+    expected_href = f'{reverse("login")}?next={quote(reopen_url)}'
+    assert f'href="{expected_href}"' in body
 
 
 @pytest.mark.django_db
