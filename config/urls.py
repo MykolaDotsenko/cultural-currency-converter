@@ -20,6 +20,7 @@ from apps.exchange.views import (
     converter,
     destination_comparison,
     destination_mode,
+    explore_same_amount,
     historical_series,
     payment_estimate,
     picker_options,
@@ -48,6 +49,7 @@ urlpatterns = [
     path("destination/", destination_mode, name="destination_mode"),
     path("compare/", destination_comparison, name="destination_comparison"),
     path("explore/", explore, name="explore"),
+    path("explore/same-amount/", explore_same_amount, name="explore_same_amount"),
     path(
         "city/<str:country_code>/<slug:city_slug>/",
         city_money_profile,
