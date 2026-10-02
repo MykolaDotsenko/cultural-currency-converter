@@ -2063,7 +2063,9 @@ async function assertMoneyCultureStoryQuality(page) {
     "money-culture-story: source/destination era identity is incomplete",
   );
   assert(
-    (await story.locator(".qa-story-surface__scope").innerText()).includes("Current reviewed context"),
+    (await story.locator(".qa-story-surface__scope").innerText()).includes(
+      "Current reviewed context",
+    ),
     "money-culture-story: current temporal scope is not explicit",
   );
   const storyText = await story.innerText();
