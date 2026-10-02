@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import date
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
-from unittest.mock import patch
 
 from apps.countries.models import CountryCurrency
 from apps.culture.explore_collections import (
