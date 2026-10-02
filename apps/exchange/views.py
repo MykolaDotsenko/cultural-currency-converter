@@ -13,6 +13,7 @@ from apps.exchange.web.comparison import destination_comparison_view
 from apps.exchange.web.converter import converter_view
 from apps.exchange.web.destination import destination_mode_view
 from apps.exchange.web.explanation import conversion_explanation_view
+from apps.exchange.web.explore_amount import explore_same_amount_view
 from apps.exchange.web.gateways import (
     build_historical_quote_gateway,
     build_historical_series_gateway,
@@ -43,6 +44,13 @@ def destination_mode(request: HttpRequest) -> HttpResponse:
 
 def destination_comparison(request: HttpRequest) -> HttpResponse:
     return destination_comparison_view(
+        request,
+        latest_gateway_factory=build_latest_quote_gateway,
+    )
+
+
+def explore_same_amount(request: HttpRequest) -> HttpResponse:
+    return explore_same_amount_view(
         request,
         latest_gateway_factory=build_latest_quote_gateway,
     )
