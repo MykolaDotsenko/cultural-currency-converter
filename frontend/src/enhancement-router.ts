@@ -3,7 +3,6 @@ type EnhancementRoot = Document | Element;
 let converterEnhancementsModule: Promise<
   typeof import("./behaviors/converter-enhancements")
 > | null = null;
-let aiExplanationModule: Promise<typeof import("./behaviors/ai-explanation")> | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
 let rateChartLoaderModule: Promise<typeof import("./behaviors/rate-chart-loader")> | null = null;
 
@@ -23,22 +22,6 @@ function loadCurrentConverter(root: EnhancementRoot): void {
   void converterEnhancementsModule
     .then((module) => module.enhanceConverterSurface())
     .catch((error: unknown) => reportEnhancementFailure("Converter", error));
-}
-
-function loadAiExplanation(root: EnhancementRoot): void {
-  if (
-    !contains(
-      root,
-      "[data-current-conversion-form], [data-ai-explanation-trigger], #conversion-explanation-region, #explanation-client-status",
-    )
-  ) {
-    return;
-  }
-
-  aiExplanationModule ??= import("./behaviors/ai-explanation");
-  void aiExplanationModule.catch((error: unknown) =>
-    reportEnhancementFailure("AI explanation", error),
-  );
 }
 
 function loadLocalSavedState(root: EnhancementRoot): void {
@@ -67,7 +50,6 @@ function loadRateCharts(root: EnhancementRoot): void {
 
 export function loadEnhancements(root: EnhancementRoot = document): void {
   loadCurrentConverter(root);
-  loadAiExplanation(root);
   loadLocalSavedState(root);
   loadRateCharts(root);
 }
