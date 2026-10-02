@@ -1998,8 +1998,7 @@ async function assertExploreFlow(page) {
     });
     const aiResponse = page.waitForResponse(
       (response) =>
-        response.url().endsWith("/explore/explain/") &&
-        response.request().method() === "POST",
+        response.url().endsWith("/explore/explain/") && response.request().method() === "POST",
     );
     await overviewPrompt.click();
     const response = await aiResponse;
