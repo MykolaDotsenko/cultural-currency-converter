@@ -237,18 +237,18 @@ function enhanceExploreSavedPlaces(): void {
   }
 }
 
-function placeFromButton(
-  button: HTMLButtonElement,
+function placeFromSurface(
+  surface: HTMLElement,
 ): Omit<SavedPlace, "id" | "savedAt"> | null {
   const normalized = normalizePlace({
-    countryCode: button.dataset.countryCode ?? "",
-    countryName: button.dataset.countryName ?? "",
-    citySlug: button.dataset.citySlug ?? "",
-    cityName: button.dataset.cityName ?? "",
-    currencyCode: button.dataset.currencyCode ?? "",
+    countryCode: surface.dataset.placeCountryCode ?? "",
+    countryName: surface.dataset.placeCountryName ?? "",
+    citySlug: surface.dataset.placeCitySlug ?? "",
+    cityName: surface.dataset.placeCityName ?? "",
+    currencyCode: surface.dataset.placeCurrencyCode ?? "",
     savedAt: new Date().toISOString(),
   });
-  if (!normalized || normalized.token !== button.dataset.placeToken) return null;
+  if (!normalized || normalized.token !== surface.dataset.placeToken) return null;
 
   return {
     token: normalized.token,
@@ -260,20 +260,21 @@ function placeFromButton(
   };
 }
 
-function placeStatus(message: string): void {
-  const status = document.querySelector<HTMLElement>("[data-save-place-status]");
+function placeStatus(surface: HTMLElement, message: string): void {
+  const status = surface.querySelector<HTMLElement>("[data-save-place-status]");
   if (status) status.textContent = message;
 }
 
-function setPlaceButtonState(
-  button: HTMLButtonElement,
+function setPlaceSurfaceState(
+  surface: HTMLElement,
   state: LocalPreferencesV1,
   storageStatus: ReadStatus,
 ): void {
-  const label = button.querySelector<HTMLElement>("[data-save-place-label]");
-  const place = placeFromButton(button);
-  if (!label || !place) {
-    button.hidden = true;
+  const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+  const label = surface.querySelector<HTMLElement>("[data-save-place-label]");
+  const place = placeFromSurface(surface);
+  if (!button || !label || !place) {
+    if (button) button.hidden = true;
     return;
   }
 
@@ -303,27 +304,29 @@ function setPlaceButtonState(
   label.textContent = saved ? "Saved" : "Save";
 }
 
-function toggleSavedPlace(button: HTMLButtonElement): void {
-  const place = placeFromButton(button);
-  if (!place) return;
+function toggleSavedPlace(surface: HTMLElement): void {
+  const place = placeFromSurface(surface);
+  const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+  if (!place || !button) return;
 
   const read = readState();
   if (read.status === "unavailable") {
-    setPlaceButtonState(button, read.state, read.status);
-    placeStatus("My places is unavailable because browser storage is blocked.");
+    setPlaceSurfaceState(surface, read.state, read.status);
+    placeStatus(surface, "My places is unavailable because browser storage is blocked.");
     return;
   }
 
   const toggled = togglePlaceInState(read.state, place);
   if (!writeState(toggled.state)) {
-    setPlaceButtonState(button, read.state, "unavailable");
-    placeStatus("This place could not be saved because browser storage is unavailable.");
+    setPlaceSurfaceState(surface, read.state, "unavailable");
+    placeStatus(surface, "This place could not be saved because browser storage is unavailable.");
     return;
   }
 
   enhanceExploreSavedPlaces();
   const placeName = place.cityName || place.countryName;
   placeStatus(
+    surface,
     toggled.saved
       ? `${placeName} saved to My places on this browser.`
       : `${placeName} removed from My places.`,
@@ -331,16 +334,19 @@ function toggleSavedPlace(button: HTMLButtonElement): void {
 }
 
 function enhanceExploreSavedPlaces(): void {
-  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-save-place]");
-  if (buttons.length === 0) return;
+  const surfaces = document.querySelectorAll<HTMLElement>("[data-local-saved-place]");
+  if (surfaces.length === 0) return;
 
   const read = readState();
-  for (const button of buttons) {
-    setPlaceButtonState(button, read.state, read.status);
-    if (button.dataset.savePlaceWired === "true") continue;
+  for (const surface of surfaces) {
+    setPlaceSurfaceState(surface, read.state, read.status);
+    if (surface.dataset.savePlaceWired === "true") continue;
 
-    button.dataset.savePlaceWired = "true";
-    button.addEventListener("click", () => toggleSavedPlace(button));
+    const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+    if (!button) continue;
+
+    surface.dataset.savePlaceWired = "true";
+    button.addEventListener("click", () => toggleSavedPlace(surface));
   }
 }
 
