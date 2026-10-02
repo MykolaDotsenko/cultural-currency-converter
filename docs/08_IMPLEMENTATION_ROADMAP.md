@@ -51,7 +51,8 @@ The following previously planned items are now part of the current product basel
 The large October 2026 frontend quality pass has already shipped:
 
 - premium hierarchy/CTA cleanup across Explore, City Money Profile, Same Amount and Saved continuity;
-- 320/360/390/430 mobile hardening plus 640px/320px reflow evidence (~200%/~400% equivalents);
+- final frontend-system cleanup with a CSS custom-property integrity gate, normalized narrow-layout spacing tokens and page-level 430/390/360/320 Chromium regression coverage;
+- 640px/320px reflow evidence (~200%/~400% equivalents) with additional 200% text expansion;
 - stable mobile-header geometry, reduced-motion/forced-colors handling and broader browser QA;
 - demand-loaded converter/picker, consolidated Saved-state and rate-chart enhancements with HTMX re-discovery;
 - restrained source → destination result identity inside one Quiet Atlas Premium system;
@@ -63,7 +64,7 @@ The remaining premium/product priorities are narrower:
 
 - expand reviewed contemporary destination photography beyond the existing curated coverage rather than adding placeholder imagery;
 - continue focal-point/crop review with real media at mobile/tablet/desktop sizes;
-- finish residual CSS/spacing/typography cleanup only where it improves hierarchy or reflow;
+- treat further CSS/spacing/typography edits as evidence-driven refinements rather than a separate cleanup phase;
 - keep account-owned SavedPlace persistence/sync separate until its ownership/migration contract is deliberately implemented;
 - add durable saved comparisons only if they provide value beyond the current one-sided canonical Compare handoffs;
 - add Budget AI / Comparison AI only after each surface has a trusted bounded server packet equivalent to the current conversion/Explore AI contracts;
