@@ -223,6 +223,8 @@ The Camera boundary is intentionally stricter than ordinary destination context:
 
 Provider failure, safety blocking, timeout or invalid structured output must leave the saved scenario untouched. No live multimodal provider call is allowed inside a database transaction.
 
+Browser/release-quality CI exercises the complete upload → candidate → confirmation → spend handoff with a deterministic Camera extractor enabled only by `AI_CAMERA_TEST_FIXTURE_ENABLED=true` under `APP_ENV=test`. The image still passes the production decode/re-encode sanitizer and signed confirmation boundary. Configuration rejects that fixture outside the test environment, so it cannot become a production extraction provider or bypass the live-provider trust boundary.
+
 The implemented Camera-confirmed spend handoff consumes the signed confirmation token through the existing idempotent `SavedScenarioSpendEntry` service. It persists no raw media and creates no parallel receipt ledger.
 
 Voice, if introduced later, requires an equivalent explicit capture/minimized-retention contract.
