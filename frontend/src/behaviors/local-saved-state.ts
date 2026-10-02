@@ -332,7 +332,7 @@ function syncLocalAccountFavourites(): void {
     });
 }
 
-function enhanceLocalSavedState(): void {
+export function enhanceLocalSavedState(): void {
   enhanceConversionSnapshots();
   enhanceExploreSavedPlaces();
   enhanceSavedPage();
