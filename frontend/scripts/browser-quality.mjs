@@ -1753,6 +1753,43 @@ async function assertNoJavaScriptSavedStateFallback(browser) {
   }
 }
 
+async function assertNoJavaScriptExplore(browser) {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  try {
+    const page = await context.newPage();
+    const response = await page.goto(`${BASE_URL}/explore/`, { waitUntil: "load" });
+    assert(response?.ok(), `explore/no-js: request failed with ${response?.status() ?? "no response"}`);
+
+    await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
+    await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
+    assert(
+      (await page.locator(".qa-explore-collection").count()) >= 4,
+      "explore/no-js: curated collections disappeared without JavaScript",
+    );
+    assert(
+      (await page.locator(".qa-explore-region-nav a").count()) >= 4,
+      "explore/no-js: regional navigation disappeared without JavaScript",
+    );
+    assert(
+      (await page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).count()) === 1,
+      "explore/no-js: reviewed Tokyo city row disappeared without JavaScript",
+    );
+    await assertNoHorizontalOverflow(page, "explore/no-js");
+    await assertAxe(page, "explore/no-js");
+    return {
+      collectionsVisible: true,
+      regionalNavigationVisible: true,
+      canonicalCityHandoffVisible: true,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+
 async function assertExploreFlow(page) {
   await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
   await page.getByRole("heading", { name: "Start with what matters to you." }).waitFor();
@@ -1949,6 +1986,7 @@ try {
   if (BROWSER_SCOPE === "full") {
     evidence.csp = await assertCspEnforcement(browser);
     evidence.noJavaScript = await assertNoJavaScriptSavedStateFallback(browser);
+    evidence.noJavaScriptExplore = await assertNoJavaScriptExplore(browser);
     evidence.compressedAssets = await measureBuildAssets();
     assertBuildPerformanceBudgets(evidence.compressedAssets);
 
