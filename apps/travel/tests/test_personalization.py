@@ -512,4 +512,3 @@ class DurablePersonalizationConcurrencyTests(TransactionTestCase):
         comparison = SavedComparison.objects.get(user=self.user)
         self.assertEqual(SavedComparison.objects.filter(user=self.user).count(), 1)
         self.assertEqual(comparison.budget_items.count(), 3)
-
