@@ -11,7 +11,7 @@ from apps.exchange.ai.contextual import (
     available_budget_explanation_intents,
     build_budget_explanation_packet,
 )
-from apps.exchange.ai.packet_tokens import build_grounded_packet_token
+from apps.exchange.ai.packet_tokens import GroundedPacketTokenError, build_grounded_packet_token
 from apps.exchange.budget import (
     BudgetAssumptions,
     BudgetBand,
@@ -172,25 +172,29 @@ def build_budget_component(
 
     ai_explanation = None
     if interpretation is not None and settings.AI_RUNTIME_EXPLANATION_ENABLED:
-        prompts = []
-        for spec in available_budget_explanation_intents():
-            packet = build_budget_explanation_packet(
-                context,
-                interpretation,
-                intent=BudgetExplanationIntent(spec.intent_id),
-            )
-            prompts.append(
-                {
-                    "id": spec.intent_id,
-                    "label": spec.label,
-                    "question": spec.question,
-                    "token": build_grounded_packet_token(
-                        packet,
-                        capability=BUDGET_AI_CAPABILITY,
-                    ),
-                }
-            )
-        ai_explanation = {"prompts": tuple(prompts)}
+        try:
+            prompts = []
+            for spec in available_budget_explanation_intents():
+                packet = build_budget_explanation_packet(
+                    context,
+                    interpretation,
+                    intent=BudgetExplanationIntent(spec.intent_id),
+                )
+                prompts.append(
+                    {
+                        "id": spec.intent_id,
+                        "label": spec.label,
+                        "question": spec.question,
+                        "token": build_grounded_packet_token(
+                            packet,
+                            capability=BUDGET_AI_CAPABILITY,
+                        ),
+                    }
+                )
+        except GroundedPacketTokenError:
+            prompts = []
+        if prompts:
+            ai_explanation = {"prompts": tuple(prompts)}
 
     return {
         "token": budget_token,
