@@ -147,8 +147,11 @@ def test_htmx_story_returns_fragment_with_deterministic_currency_eras(client, re
     assert response.status_code == 200
     assert b"<html" not in response.content
     assert b"The sourced story behind this currency context" in response.content
+    assert b"Which currency relationship applies here" in response.content
     assert b"Finland" in response.content
     assert b"Japan" in response.content
+    assert b"Temporal scope:" in response.content
+    assert b"historical purchasing power" in response.content
     assert b"Missing facts are not filled in" not in response.content
 
 
@@ -158,8 +161,10 @@ def test_no_javascript_story_returns_full_page(client, reference_data):
 
     assert response.status_code == 200
     assert b"<html" in response.content
-    assert b"The story behind the currency context" in response.content
+    assert b"Currency history, without invented meaning." in response.content
+    assert b"Which currency relationship applies here" in response.content
     assert b"Back to converter" in response.content
+    assert b"Explore destinations" in response.content
 
 
 @pytest.mark.django_db
