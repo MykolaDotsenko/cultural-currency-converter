@@ -691,12 +691,41 @@ class ExploreAmountForm(forms.Form):
         super().__init__(*args, **kwargs)
         (
             self._currency_by_code,
-            self._destination_by_token,
+            all_destinations_by_token,
             currency_choices,
-            destination_choices,
+            _destination_choices,
         ) = _destination_reference_choices()
+
+        # Explore must expose only destination scopes that already survived the
+        # reviewed freshness/provenance contract. Filtering the ChoiceField also
+        # makes a manipulated POST fail before any rate request.
+        from apps.culture.explore import build_explore_destinations
+
+        reviewed_destinations = build_explore_destinations(
+            as_of=timezone.localdate(),
+            limit=24,
+        )
+        reviewed_choices: list[tuple[str, str]] = []
+        self._destination_by_token = {}
+        for destination in reviewed_destinations:
+            token = (
+                f"{destination.country_code}:{destination.city_slug}"
+                if destination.city_slug
+                else destination.country_code
+            )
+            resolved = all_destinations_by_token.get(token)
+            if resolved is None:
+                continue
+            self._destination_by_token[token] = resolved
+            reviewed_choices.append(
+                (
+                    token,
+                    f"{destination.scope_label} · {destination.currency_code}",
+                )
+            )
+
         self.fields["source_currency"].choices = currency_choices
-        self.fields["destinations"].choices = destination_choices
+        self.fields["destinations"].choices = reviewed_choices
         self.fields["amount"].widget.attrs.update(
             {
                 "class": "qa-text-input",
