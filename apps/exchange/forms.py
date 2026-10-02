@@ -677,6 +677,93 @@ _COMPARISON_CATEGORY_OPTIONS: tuple[tuple[str, str], ...] = (
 )
 
 
+class ExploreAmountForm(forms.Form):
+    """View one explicit source amount across 2–4 canonical destination scopes."""
+
+    amount = forms.CharField(max_length=64, label="Amount")
+    source_currency = forms.ChoiceField(label="Your currency")
+    destinations = forms.MultipleChoiceField(
+        label="Destinations",
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        (
+            self._currency_by_code,
+            self._destination_by_token,
+            currency_choices,
+            destination_choices,
+        ) = _destination_reference_choices()
+        self.fields["source_currency"].choices = currency_choices
+        self.fields["destinations"].choices = destination_choices
+        self.fields["amount"].widget.attrs.update(
+            {
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "autocomplete": "off",
+                "placeholder": "100",
+            }
+        )
+        self.fields["source_currency"].widget.attrs["class"] = "qa-native-select"
+
+        if not self.is_bound:
+            self.initial.setdefault("amount", "100")
+            preferred_source = "EUR" if "EUR" in self._currency_by_code else ""
+            if not preferred_source and self._currency_by_code:
+                preferred_source = next(iter(self._currency_by_code))
+            if preferred_source:
+                self.initial.setdefault("source_currency", preferred_source)
+
+    @property
+    def reference_data_ready(self) -> bool:
+        return bool(self._currency_by_code and len(self._destination_by_token) >= 2)
+
+    def clean(self):
+        cleaned = super().clean()
+        source_code = str(cleaned.get("source_currency") or "").upper()
+        source_currency = self._currency_by_code.get(source_code)
+        raw_amount = cleaned.get("amount")
+        if source_currency is not None and raw_amount is not None:
+            cleaned["source_minor_units"] = source_currency.minor_units
+            try:
+                cleaned["amount_decimal"] = parse_amount_text(
+                    str(raw_amount),
+                    minor_units=source_currency.minor_units,
+                )
+            except forms.ValidationError as exc:
+                self.add_error("amount", exc)
+
+        tokens = tuple(dict.fromkeys(str(token) for token in cleaned.get("destinations") or ()))
+        if len(tokens) < 2:
+            self.add_error("destinations", "Choose at least two destination scopes.")
+        elif len(tokens) > 4:
+            self.add_error("destinations", "Choose no more than four destination scopes.")
+
+        resolved = []
+        for token in tokens:
+            destination = self._destination_by_token.get(token)
+            if destination is None:
+                continue
+            country, city, currency = destination
+            resolved.append(
+                {
+                    "token": token,
+                    "country_code": country.iso2,
+                    "country_name": country.name,
+                    "city_slug": city.slug if city is not None else "",
+                    "city_name": city.name if city is not None else "",
+                    "currency_code": currency.code,
+                    "minor_units": currency.minor_units,
+                    "scope_label": (
+                        f"{city.name}, {country.name}" if city is not None else country.name
+                    ),
+                }
+            )
+        cleaned["destination_resolutions"] = tuple(resolved)
+        return cleaned
+
+
 class DestinationComparisonForm(BudgetInterpretationForm):
     """Compare one explicit source budget across two current destination scopes."""
 
