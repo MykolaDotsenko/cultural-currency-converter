@@ -128,7 +128,7 @@ def test_live_explanation_is_validated_persisted_reused_and_observable(snapshot,
     assert stored.output_tokens == 60
     assert stored.total_tokens == 180
     assert stored.provider_response_id == "response-1"
-    assert stored.prompt_version == "exchange.runtime_explanation:v3"
+    assert stored.prompt_version == "runtime_explanation:v4"
     assert stored.schema_version == "runtime-explanation:v2"
 
     success = next(
