@@ -16,6 +16,7 @@ from apps.culture.models import (
     TypicalPriceSourceClass,
 )
 from apps.culture.services import DestinationContext
+from apps.exchange.ai.service import RuntimeExplanationService
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
@@ -320,3 +321,143 @@ def test_budget_interpretation_preserves_requested_category_when_source_row_disa
     assert b"Insufficient current data" in response.content
     assert b"Missing: Casual Meal" in response.content
     assert b"Within this reference range" not in response.content
+
+
+@pytest.mark.django_db
+def test_budget_result_exposes_only_signed_grounded_ai_prompts(
+    client,
+    reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "4",
+            "travelers": "2",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    ai = response.context["budget_interpretation"]["ai_explanation"]
+    assert tuple(prompt["id"] for prompt in ai["prompts"]) == (
+        "budget_overview",
+        "budget_basket",
+        "budget_coverage",
+    )
+    assert b"Optional AI" in response.content
+    assert b"signed budget facts only" in response.content
+    assert b'name="grounded_explanation_token"' in response.content
+    assert b'name="prompt_id"' not in response.content
+
+
+@pytest.mark.django_db
+def test_budget_ai_builtin_fallback_uses_signed_deterministic_result(
+    client,
+    reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    result_response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "4",
+            "travelers": "2",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    token = result_response.context["budget_interpretation"]["ai_explanation"]["prompts"][0][
+        "token"
+    ]
+    disabled_service = RuntimeExplanationService(
+        enabled=False,
+        model="disabled-test",
+        drafter=None,
+    )
+
+    with patch(
+        "apps.exchange.views.build_contextual_explanation_service",
+        return_value=disabled_service,
+    ):
+        response = client.post(
+            reverse("budget_explanation"),
+            {"grounded_explanation_token": token},
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"Built-in explanation" in response.content
+    assert b"17450 JPY" in response.content
+    assert b"4 days" in response.content
+    assert b"2 travelers" in response.content
+    assert b"Live AI is unavailable" in response.content
+    assert b"deterministic result above is unchanged" in response.content
+
+
+@pytest.mark.django_db
+def test_budget_ai_rejects_tampered_packet_before_service_creation(
+    client,
+    reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+
+    with patch("apps.exchange.views.build_contextual_explanation_service") as service_factory:
+        response = client.post(
+            reverse("budget_explanation"),
+            {"grounded_explanation_token": "tampered"},
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 422
+    assert b"no longer valid" in response.content
+    service_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_budget_ai_has_no_javascript_full_page_fallback(
+    client,
+    reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    result_response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    token = result_response.context["budget_interpretation"]["ai_explanation"]["prompts"][0][
+        "token"
+    ]
+    disabled_service = RuntimeExplanationService(
+        enabled=False,
+        model="disabled-test",
+        drafter=None,
+    )
+
+    with patch(
+        "apps.exchange.views.build_contextual_explanation_service",
+        return_value=disabled_service,
+    ):
+        response = client.post(
+            reverse("budget_explanation"),
+            {"grounded_explanation_token": token},
+        )
+
+    assert response.status_code == 200
+    assert b"<html" in response.content
+    assert b"Trusted facts first. Explanation second." in response.content
+    assert b"Built-in explanation" in response.content
