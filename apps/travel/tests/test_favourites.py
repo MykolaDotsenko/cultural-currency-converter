@@ -195,6 +195,8 @@ class FavouriteSyncWebTests(TestCase):
         self.assertIn(f'data-account-favourite-id="{own.pk}"', content)
         self.assertNotIn(f'data-account-favourite-id="{hidden.pk}"', content)
         self.assertIn('aria-label="Use pair: EUR to JPY"', content)
+        self.assertIn('aria-label="Compare destination: Japan"', content)
+        self.assertIn('href="/compare/?left_destination=JP"', content)
         self.assertIn('aria-label="Reverse pair: EUR to JPY"', content)
         self.assertIn('aria-label="Remove saved pair: EUR to JPY"', content)
         self.assertIn("qa-destructive-button", content)
