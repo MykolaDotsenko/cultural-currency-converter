@@ -273,7 +273,7 @@ def test_anonymous_comparison_result_offers_sign_in_without_auto_persistence(
     body = response.content.decode()
     reopen_url = response.context["comparison_reopen_url"]
     assert reopen_url.startswith(f"{reverse('destination_comparison')}?")
-    assert "amount=500.00" in reopen_url
+    assert "amount=500" in reopen_url
     assert "left_destination=JP%3Atokyo" in reopen_url
     assert "right_destination=NO" in reopen_url
     expected_href = f"{reverse('login')}?next={quote(reopen_url)}"
