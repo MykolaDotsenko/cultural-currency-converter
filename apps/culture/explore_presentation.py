@@ -56,6 +56,16 @@ def _save_place_url(*, country_code: str, city_slug: str = "") -> str:
     return f"{reverse('saved_state')}?{urlencode(params)}"
 
 
+def _ask_url(*, country_code: str, city_slug: str = "") -> str:
+    params = {
+        "destination": _destination_token(
+            country_code=country_code,
+            city_slug=city_slug,
+        )
+    }
+    return f"{reverse('explore_context_ai')}?{urlencode(params)}"
+
+
 def build_explore_destination_cards(
     destinations: tuple[ExploreDestination, ...],
 ) -> tuple[dict[str, object], ...]:
@@ -82,6 +92,10 @@ def build_explore_destination_cards(
                     city_slug=destination.city_slug,
                 ),
                 "save_place_url": _save_place_url(
+                    country_code=destination.country_code,
+                    city_slug=destination.city_slug,
+                ),
+                "ask_url": _ask_url(
                     country_code=destination.country_code,
                     city_slug=destination.city_slug,
                 ),
@@ -120,6 +134,10 @@ def build_explore_region_components(
                         country_code=country.country_code,
                         city_slug=city.slug,
                     ),
+                    "ask_url": _ask_url(
+                        country_code=country.country_code,
+                        city_slug=city.slug,
+                    ),
                 }
                 for city in country.cities
             )
@@ -140,6 +158,7 @@ def build_explore_region_components(
                     ),
                     "compare_url": _compare_url(country_code=country.country_code),
                     "save_place_url": _save_place_url(country_code=country.country_code),
+                    "ask_url": _ask_url(country_code=country.country_code),
                     "cities": cities,
                 }
             )
