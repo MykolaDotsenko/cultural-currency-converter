@@ -295,8 +295,10 @@ def test_same_amount_get_deep_link_prefills_destinations_without_provider_call(
     assert response.status_code == 200
     body = response.content
     assert b'value="250"' in body
-    assert b'value="JP:tokyo" checked' in body or b'checked value="JP:tokyo"' in body
-    assert b'value="CA:toronto" checked' in body or b'checked value="CA:toronto"' in body
+    assert tuple(response.context["form"]["destinations"].value()) == (
+        "JP:tokyo",
+        "CA:toronto",
+    )
     provider_factory.assert_not_called()
 
 
