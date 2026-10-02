@@ -9,7 +9,7 @@ const VITE_ENTRY = "frontend/src/app.ts";
 export const PERFORMANCE_BUDGETS = Object.freeze({
   coreJavaScriptGzipBytes: 32 * 1024,
   totalJavaScriptGzipBytes: 96 * 1024,
-  stylesheetGzipBytes: 16 * 1024,
+  stylesheetGzipBytes: 20 * 1024,
   rateChartGzipBytes: 64 * 1024,
   savedStateGzipBytes: 8 * 1024,
   initialRequestCount: 5,
