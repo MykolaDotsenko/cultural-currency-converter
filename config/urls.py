@@ -12,6 +12,7 @@ from apps.culture.views import (
     city_money_profile,
     current_destination_context,
     explore,
+    explore_explanation,
     money_culture_story,
 )
 from apps.exchange.views import (
@@ -54,6 +55,7 @@ urlpatterns = [
         name="same_amount_destinations",
     ),
     path("explore/", explore, name="explore"),
+    path("explore/explain/", explore_explanation, name="explore_explanation"),
     path(
         "city/<str:country_code>/<slug:city_slug>/",
         city_money_profile,
