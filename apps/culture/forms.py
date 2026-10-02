@@ -10,9 +10,6 @@ from apps.culture.explore_ai import available_explore_explanation_intents
 from apps.culture.story import StoryRequest
 
 
-
-
-
 class ExploreExplanationForm(forms.Form):
     destination_token = forms.ChoiceField(label="Reviewed destination")
     prompt_id = forms.ChoiceField(
