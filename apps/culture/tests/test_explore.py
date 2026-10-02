@@ -23,8 +23,20 @@ def use_vite_dev_mode(settings):
 @pytest.fixture
 def explore_reference_data(db):
     today = timezone.localdate()
-    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
-    finland = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    japan = Country.objects.create(
+        iso2="JP",
+        iso3="JPN",
+        name="Japan",
+        region="Asia",
+        subregion="Eastern Asia",
+    )
+    finland = Country.objects.create(
+        iso2="FI",
+        iso3="FIN",
+        name="Finland",
+        region="Europe",
+        subregion="Northern Europe",
+    )
     jpy = Currency.objects.create(code="JPY", name="Japanese yen", minor_units=0)
     eur = Currency.objects.create(code="EUR", name="Euro", minor_units=2)
     CountryCurrency.objects.create(
@@ -220,12 +232,18 @@ def test_explore_page_is_provider_free_and_links_back_to_canonical_converter(
         response = client.get(reverse("explore"))
 
     assert response.status_code == 200
-    assert b"Discover the money side of a place." in response.content
+    assert b"Understand a place before you spend there." in response.content
+    assert b"Region" in response.content
+    assert b"Asia" in response.content
+    assert b"Japan" in response.content
+    assert b"City money profiles" in response.content
+    assert b"Cash and card behaviour" in response.content
+    assert b"Sources" in response.content
     assert b"Tokyo, Japan" in response.content
     assert b"reviewed country payment guidance" in response.content
     assert b"national price anchor" in response.content
     assert b"shown" in response.content
-    assert b"Alphabetical discovery only" in response.content
+    assert b"No \xe2\x80\x9ccheapest\xe2\x80\x9d" in response.content
     assert b"destination_city_slug=tokyo" in response.content
     assert b"load=1" in response.content
     latest_gateway_factory.assert_not_called()
@@ -240,7 +258,7 @@ def test_explore_database_failure_degrades_locally(client):
         response = client.get(reverse("explore"))
 
     assert response.status_code == 200
-    assert b"Explore is temporarily unavailable." in response.content
+    assert b"Explore destinations are temporarily unavailable." in response.content
     assert b"The converter and saved travel-money tools remain available." in response.content
 
 
@@ -254,3 +272,34 @@ def test_explore_programming_error_is_not_silenced(client):
         pytest.raises(RuntimeError, match="programming bug"),
     ):
         client.get(reverse("explore"))
+
+
+@pytest.mark.django_db
+def test_explore_region_and_country_filters_preserve_canonical_city_scope(
+    client,
+    explore_reference_data,
+):
+    response = client.get(reverse("explore"), {"region": "asia", "country": "JP"})
+
+    assert response.status_code == 200
+    assert b'aria-current="page">\n              Asia' in response.content
+    assert b'aria-current="page">\n              <span>Japan</span>' in response.content
+    assert b"Tokyo, Japan" in response.content
+    assert b"destination_city_slug=tokyo" in response.content
+    assert b"Eastern Asia" in response.content
+
+
+@pytest.mark.django_db
+def test_explore_invalid_filter_degrades_to_all_reviewed_scope(
+    client,
+    explore_reference_data,
+):
+    response = client.get(
+        reverse("explore"),
+        {"region": "made-up-region", "country": "ZZ"},
+    )
+
+    assert response.status_code == 200
+    assert b"All reviewed destinations" in response.content
+    assert b"Tokyo, Japan" in response.content
+    assert b'aria-current="page">\n            All' in response.content
