@@ -7,6 +7,10 @@
   gap: var(--qa-space-10);
 }
 
+[data-local-pending] {
+  visibility: hidden;
+}
+
 .qa-saved-state__storage-note {
   min-block-size: 2.75rem;
   width: fit-content;
