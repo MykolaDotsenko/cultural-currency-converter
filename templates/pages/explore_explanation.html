@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Explore explanation · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="Optional plain-language explanation of reviewed Explore destination money context.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro" aria-labelledby="explore-explanation-page-title">
+    <p class="qa-foundation-kicker">Optional AI · reviewed facts only</p>
+    <h1 id="explore-explanation-page-title">Reviewed destination context, explained.</h1>
+    <p class="qa-foundation-lede">
+      This explanation can only use the current reviewed destination facts accepted by Explore.
+      It cannot fetch an exchange rate, create a price, rank destinations or replace source evidence.
+    </p>
+  </section>
+  {% include "components/converter/explanation.html" %}
+  <p><a class="qa-secondary-button" href="{% url 'explore' %}">Back to Explore</a></p>
+{% endblock %}
