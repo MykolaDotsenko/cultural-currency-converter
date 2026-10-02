@@ -8,7 +8,13 @@ from django.urls import reverse
 
 from apps.accounts.models import AccountPreferences
 from apps.countries.models import Country, CountryCurrency, Currency
-from apps.travel.models import FavouritePair, RecentConversion
+from apps.travel.models import (
+    FavouritePair,
+    RecentConversion,
+    SavedComparison,
+    SavedComparisonBudgetItem,
+    SavedPlace,
+)
 
 User = get_user_model()
 PASSWORD = "StrongPass-482!"
@@ -129,7 +135,7 @@ class AccountWebTests(TestCase):
         self.assertTrue(User.objects.filter(pk=user.pk).exists())
         self.assertContains(response, "The password is incorrect.")
 
-    def test_account_deletion_cascades_account_owned_favourites(self):
+    def test_account_deletion_cascades_all_account_owned_personalization(self):
         user = User.objects.create_user(username="member", password=PASSWORD)
         eur = Currency.objects.create(code="EUR", name="Euro")
         jpy = Currency.objects.create(code="JPY", name="Japanese yen")
@@ -169,6 +175,25 @@ class AccountWebTests(TestCase):
             effective_date=date(2026, 9, 22),
             converted_at=datetime(2026, 9, 22, 12, tzinfo=UTC),
         )
+        SavedPlace.objects.create(
+            user=user,
+            country=jp,
+        )
+        comparison = SavedComparison.objects.create(
+            user=user,
+            fingerprint="b" * 64,
+            source_currency=eur,
+            source_amount="500",
+            left_country=fi,
+            right_country=jp,
+            duration_days=5,
+            travelers=2,
+        )
+        SavedComparisonBudgetItem.objects.create(
+            comparison=comparison,
+            category="coffee",
+            units_per_person_per_day="1",
+        )
         self.client.force_login(user)
 
         response = self.client.post(reverse("delete_account"), {"password": PASSWORD})
@@ -177,5 +202,8 @@ class AccountWebTests(TestCase):
         self.assertFalse(User.objects.filter(pk=user.pk).exists())
         self.assertEqual(FavouritePair.objects.count(), 0)
         self.assertEqual(RecentConversion.objects.count(), 0)
+        self.assertEqual(SavedPlace.objects.count(), 0)
+        self.assertEqual(SavedComparison.objects.count(), 0)
+        self.assertEqual(SavedComparisonBudgetItem.objects.count(), 0)
         self.assertEqual(AccountPreferences.objects.count(), 0)
         self.assertNotIn("_auth_user_id", self.client.session)
