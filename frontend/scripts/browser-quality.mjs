@@ -1099,6 +1099,12 @@ async function assertSavedStateFlow(page) {
     (await neutralStatus.getAttribute("data-storage-tone")) === "neutral",
     "saved-state/empty: ordinary local-storage metadata should remain visually neutral",
   );
+  for (const label of ["Explore destinations", "Convert a pair", "Start a conversion"]) {
+    assert(
+      (await page.getByRole("link", { name: label, exact: true }).count()) === 1,
+      `saved-state/empty: missing bounded next action ${label}`,
+    );
+  }
 
   const sampleState = {
     version: 1,
