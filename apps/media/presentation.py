@@ -53,14 +53,31 @@ def _responsive_srcsets(assets: tuple[MediaAsset, ...]) -> dict[int, str]:
         .order_by("variant_width", "-published_at", "-pk")
     )
 
-    families: dict[int, dict[int, str]] = {source_id: {} for source_id in source_ids}
+    derivatives: dict[int, dict[int, str]] = {source_id: {} for source_id in source_ids}
+    roots: dict[int, tuple[int, str]] = {}
     for variant in variants:
         source_id = variant.derivative_of_id or variant.pk
-        if source_id not in families:
+        if source_id not in derivatives:
             continue
+
         width = variant.variant_width or variant.width
-        if width and width not in families[source_id]:
-            families[source_id][width] = variant.storage_file.url
+        if not width:
+            continue
+
+        if variant.derivative_of_id:
+            if width not in derivatives[source_id]:
+                derivatives[source_id][width] = variant.storage_file.url
+        elif source_id not in roots:
+            roots[source_id] = (width, variant.storage_file.url)
+
+    families: dict[int, dict[int, str]] = {}
+    for source_id in source_ids:
+        family = derivatives[source_id]
+        if family:
+            families[source_id] = family
+        elif source_id in roots:
+            width, url = roots[source_id]
+            families[source_id] = {width: url}
 
     return {
         source_id: ", ".join(f"{url} {width}w" for width, url in sorted(sources.items()))

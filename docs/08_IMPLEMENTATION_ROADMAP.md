@@ -46,9 +46,9 @@ The following previously planned items are now part of the current product basel
 - **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope travels through the same contract instead of using a parallel path. Budget, destination comparison, saved-trip, Camera, offline-pack, returning-home and Explore slices now consume this shared meaning; native/mobile consumers remain future work.
 - **#34 Destination mode — shipped first production slice.** Manual country/canonical-city selection resolves the current primary local currency, preserves explicit city scope where available and redirects into the canonical converter. The destination entry surface makes no FX-provider call and uses no device location.
 
-## Now: finish premium media breadth and durable personalization
+## Now: finish durable personalization and trusted contextual AI
 
-The large October 2026 frontend quality pass has already shipped:
+The large October 2026 frontend/media quality pass has already shipped:
 
 - premium hierarchy/CTA cleanup across Explore, City Money Profile, Same Amount and Saved continuity;
 - final frontend-system cleanup with a CSS custom-property integrity gate, normalized narrow-layout spacing tokens and page-level 430/390/360/320 Chromium regression coverage;
@@ -57,14 +57,16 @@ The large October 2026 frontend quality pass has already shipped:
 - demand-loaded converter/picker, consolidated Saved-state and rate-chart enhancements with HTMX re-discovery;
 - restrained source → destination result identity inside one Quiet Atlas Premium system;
 - reviewed managed destination-media composition with provenance, focal crops, intrinsic dimensions and graceful no-media rendering;
+- sourced showcase P01–P04 selections for Finland, Japan and France, each with executable reviewed focal coordinates and deterministic responsive-width plans;
+- idempotent curated derivative generation plus read-only strict readiness reporting, while keeping ingestion/review/publication separate and explicit;
 - stronger Historical Series chronology/Then & Now and Money & culture currency-era/story exploration;
 - browser-local My Places, one-sided Compare handoffs and a bounded Saved & recent action hierarchy.
 
 The remaining premium/product priorities are narrower:
 
-- expand reviewed contemporary destination photography beyond the existing curated coverage rather than adding placeholder imagery;
-- continue focal-point/crop review with real media at mobile/tablet/desktop sizes;
-- treat further CSS/spacing/typography edits as evidence-driven refinements rather than a separate cleanup phase;
+- extend sourced photography beyond the Finland/Japan/France showcase wave only when a reviewed destination earns the visual slot; do not add placeholder imagery for coverage statistics;
+- treat deployment publication of curated source/derivative families as explicit operational evidence: source selection in Git is not runtime readiness, and `report_curated_media_coverage --strict` is the auditable check;
+- treat further focal/crop and CSS/spacing/typography edits as evidence-driven refinements rather than separate cleanup phases;
 - keep account-owned SavedPlace persistence/sync separate until its ownership/migration contract is deliberately implemented;
 - add durable saved comparisons only if they provide value beyond the current one-sided canonical Compare handoffs;
 - add Budget AI / Comparison AI only after each surface has a trusted bounded server packet equivalent to the current conversion/Explore AI contracts;
@@ -109,7 +111,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Give source and destination distinct but restrained visual identity inside the same Quiet Atlas Premium system.
    - Prefer typography, tonal atmosphere, reviewed photography and material cues over flags, decorative skins or split-screen theme gimmicks.
    - Ensure the bilateral treatment still works with missing media, narrow screens, large text and reduced motion.
-   - **Current production slice:** the converter result now uses one source/destination identity rail, country-theme tonal accents and managed destination media composition without flags or split-screen skins. Browser QA covers narrow/reflow states, forced colors and reduced motion; broader photography coverage remains the main unfinished visual breadth.
+   - **Current production slice:** the converter result now uses one source/destination identity rail, country-theme tonal accents and managed destination media composition without flags or split-screen skins. Finland, Japan and France have sourced P01–P04 showcase selections with reviewed focal/derivative plans; runtime rendering still requires explicit managed-media approval/publication. Browser QA covers narrow/reflow states, forced colors and reduced motion.
 
 8. **Favourite currencies — 67/100**
    - Allow users to save currencies independently of full source/destination pairs where this improves repeat conversion.

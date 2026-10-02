@@ -91,24 +91,25 @@ Curated manifests carry explicit semantic scope rather than relying on filenames
 - `comparison_then` manifests must use sourced historical-evidence media, never generated imagery;
 - country/currency reference data is resolved before any download begins, so an unknown scope fails without network I/O.
 
-Finland is the first production vertical slice. Its selected hero source is a 24 May 2026 Helsinki tram photograph by JIP from Wikimedia Commons, available under CC BY-SA 4.0. The source is 4608×3456 and fits under the managed-media byte cap. Ingestion validates the host, media type, response size, redirect target and expected dimensions before the existing sanitizer stores a managed copy.
+The current showcase sourced-media slice covers P01–P04 for Finland, Japan and France. Each destination item remains an explicitly selected external source with preserved provenance; manifest inclusion never means runtime publication. The manifest now also records reviewed focal coordinates and a deterministic responsive-width family for every curated destination photograph. Finland's hero remains the 24 May 2026 Helsinki tram photograph by JIP; additional Finland sources cover a Helsinki coffee scene, an HSL ticket machine and a tram interior. France adds sourced Saint-Lazare ticket-machine and Paris Metro-interior detail alongside the existing street/pastry sources. Japan retains its sourced P01–P04 set.
+
+Ingestion validates the allowlisted host, media type, response size, redirect target and expected upstream dimensions before the sanitizer stores a managed copy. It persists the manifest focal point on unreviewed candidates while protected reviewed/published assets remain immutable to re-ingestion.
 
 Operator flow:
 
 ```bash
-python manage.py ingest_curated_media --slug finland-helsinki-tram-2026 --dry-run
-python manage.py ingest_curated_media --slug finland-helsinki-tram-2026
+python manage.py ingest_curated_media --slug <curated-slug> --dry-run
+python manage.py ingest_curated_media --slug <curated-slug>
+# review source metadata/bytes/focal crop, then explicitly approve the source
+python manage.py build_curated_media_derivatives --slug <curated-slug> --dry-run
+python manage.py build_curated_media_derivatives --slug <curated-slug>
 ```
 
-Then:
+The curated derivative builder fails closed when the managed source status, semantic scope, capture interval, provenance/licence metadata, intrinsic dimensions or focal coordinates drift from the reviewed manifest. Existing derivatives are also checked for actual pixel dimensions, managed bytes/content identity and inherited provenance before an idempotent rerun may skip them. It uses only manifest-declared widths, preflights a multi-item `--all-destination` run before the first write and never auto-publishes a derivative. A database constraint enforces one derivative record per `(source, variant_width)`; its migration first detects legacy duplicates and fails explicitly rather than deleting records.
 
-1. review source metadata, composition, rights and managed bytes in admin;
-2. approve the high-resolution managed source;
-3. create reviewed-width candidates explicitly, for example `python manage.py build_media_derivative --asset-id <source-id> --width 640 --width 1200 --width 1600`;
-4. review each derivative and publish the appropriate responsive widths, not the high-resolution source;
-5. verify the Finland destination context in browser QA.
+Then review each generated WebP derivative at the intended mobile/tablet/desktop crop and publish the appropriate family explicitly. When a reviewed derivative and its full-size source are both published, runtime selection prefers the derivative so an accidentally published original cannot outrank the delivery-optimized family merely by being newer. Once published derivatives exist, presentation also excludes the full-size root from the responsive `srcset`; the original remains a provenance/source asset rather than a browser delivery candidate. Presentation creates `srcset` only when at least two derivative widths are published; templates keep surface-specific `sizes` hints and intrinsic dimensions.
 
-The runtime selector remains local/database-backed. If no reviewed published derivative exists, the product intentionally renders no destination hero.
+The runtime selector remains local/database-backed. If no reviewed published derivative exists, the product intentionally renders no destination image.
 
 The current converter result can compose reviewed destination hero/supporting media beside deterministic financial/context content. This is presentation-only: focal-point crops, intrinsic dimensions, attribution and licence disclosure come from managed-media metadata, while missing media leaves the result complete and image-free. Source/destination identity styling never turns imagery into FX, price or payment evidence.
 

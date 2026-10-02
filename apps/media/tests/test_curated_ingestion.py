@@ -4,6 +4,7 @@ import io
 import tempfile
 from dataclasses import replace
 from datetime import date
+from decimal import Decimal
 from email.message import Message
 from pathlib import Path
 
@@ -106,6 +107,9 @@ def curated_spec(monkeypatch):
         attribution_text="Creator · CC BY-SA 4.0",
         expected_width=64,
         expected_height=48,
+        focal_x=Decimal("0.250"),
+        focal_y=Decimal("0.625"),
+        responsive_widths=(16, 32),
     )
     monkeypatch.setitem(CURATED_MEDIA, spec.slug, spec)
     return spec
@@ -570,6 +574,8 @@ def test_curated_metadata_only_creates_review_candidate_without_bytes(
     assert asset.valid_from == date(2026, 5, 24)
     assert asset.valid_to == date(2026, 5, 24)
     assert asset.date_precision == DatePrecision.EXACT_DAY
+    assert asset.focal_x == Decimal("0.250")
+    assert asset.focal_y == Decimal("0.625")
     assert asset.generated_by_ai is False
 
 
@@ -593,6 +599,124 @@ def test_curated_comparison_metadata_is_countryless_currency_and_time_scoped(
     assert asset.date_precision == DatePrecision.YEAR
     assert not asset.storage_file
     assert asset.status == MediaStatus.NEEDS_REVIEW
+
+
+def test_all_curated_manifest_entries_validate() -> None:
+    validated = {slug: validate_curated_media_spec(spec) for slug, spec in CURATED_MEDIA.items()}
+
+    assert validated.keys() == CURATED_MEDIA.keys()
+    destination_specs = [
+        spec
+        for spec in validated.values()
+        if spec.role
+        in {
+            MediaRole.COUNTRY_HERO,
+            MediaRole.COUNTRY_TEASER,
+            MediaRole.EVERYDAY_VALUE,
+            MediaRole.PAYMENT_CULTURE,
+            MediaRole.LOCAL_DETAIL,
+        }
+    ]
+    assert destination_specs
+    assert all(spec.focal_x is not None and spec.focal_y is not None for spec in destination_specs)
+    assert all(len(spec.responsive_widths) >= 2 for spec in destination_specs)
+
+
+@pytest.mark.parametrize(
+    ("slug", "country_code", "city", "role", "widths"),
+    [
+        (
+            "finland-helsinki-coffee-everyday-value-2025",
+            "FI",
+            "Helsinki",
+            MediaRole.EVERYDAY_VALUE,
+            (480, 800, 1200),
+        ),
+        (
+            "finland-helsinki-ticket-machine-payment-2023",
+            "FI",
+            "Helsinki",
+            MediaRole.PAYMENT_CULTURE,
+            (480, 800, 1200),
+        ),
+        (
+            "finland-helsinki-tram-interior-local-detail-2024",
+            "FI",
+            "Helsinki",
+            MediaRole.LOCAL_DETAIL,
+            (480, 800, 1200),
+        ),
+        (
+            "france-paris-navigo-machine-payment-2023",
+            "FR",
+            "Paris",
+            MediaRole.PAYMENT_CULTURE,
+            (480, 800, 1200),
+        ),
+        (
+            "france-paris-metro-interior-local-detail-2024",
+            "FR",
+            "Paris",
+            MediaRole.LOCAL_DETAIL,
+            (480, 800, 1200),
+        ),
+    ],
+)
+def test_new_destination_media_sources_have_reviewed_runtime_contract(
+    slug,
+    country_code,
+    city,
+    role,
+    widths,
+) -> None:
+    spec = get_curated_media_spec(slug)
+
+    assert spec.country_code == country_code
+    assert spec.city == city
+    assert spec.currency_code == ""
+    assert spec.role == role
+    assert spec.kind == MediaKind.CONTEMPORARY_PHOTO
+    assert spec.source_kind == MediaSourceKind.WIKIMEDIA_COMMONS
+    assert spec.source_url.startswith("https://commons.wikimedia.org/wiki/File:")
+    assert spec.source_media_url.startswith("https://upload.wikimedia.org/")
+    assert spec.focal_x is not None
+    assert spec.focal_y is not None
+    assert spec.responsive_widths == widths
+
+
+def test_curated_destination_media_requires_complete_focal_contract(curated_spec) -> None:
+    missing_focal = replace(curated_spec, focal_y=None)
+    out_of_range = replace(curated_spec, focal_x=Decimal("1.001"))
+
+    with pytest.raises(ValueError, match="provided together"):
+        validate_curated_media_spec(missing_focal)
+
+    with pytest.raises(ValueError, match="normalized"):
+        validate_curated_media_spec(out_of_range)
+
+
+@pytest.mark.parametrize(
+    "widths",
+    [
+        (),
+        (32,),
+        (32, 16),
+        (16, 16),
+        (16, 64),
+    ],
+)
+def test_curated_destination_media_requires_safe_responsive_plan(curated_spec, widths) -> None:
+    invalid = replace(curated_spec, responsive_widths=widths)
+
+    message = (
+        "at least two"
+        if len(widths) < 2
+        else "unique and strictly increasing"
+        if widths in {(32, 16), (16, 16)}
+        else "smaller than the source width"
+    )
+    with pytest.raises(ValueError, match=message):
+        validate_curated_media_spec(invalid)
 
 
 def test_curated_country_hero_manifest_requires_country_scope(curated_spec) -> None:

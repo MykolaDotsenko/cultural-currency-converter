@@ -143,6 +143,52 @@ def test_published_media_family_builds_width_descriptor_srcset():
 
 
 @pytest.mark.django_db
+def test_published_full_size_source_is_excluded_from_derivative_srcset():
+    source = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.COUNTRY_HERO,
+        title="Helsinki source",
+        alt_text="A Helsinki tram on a central city street.",
+        storage_file="sourced/source.webp",
+        width=2400,
+        height=1800,
+        status=MediaStatus.PUBLISHED,
+    )
+    small = MediaAsset.objects.create(
+        kind=source.kind,
+        source_kind=source.source_kind,
+        role=source.role,
+        title="Helsinki 800",
+        alt_text=source.alt_text,
+        storage_file="sourced/helsinki-800.webp",
+        width=800,
+        height=600,
+        derivative_of=source,
+        variant_width=800,
+        status=MediaStatus.PUBLISHED,
+    )
+    large = MediaAsset.objects.create(
+        kind=source.kind,
+        source_kind=source.source_kind,
+        role=source.role,
+        title="Helsinki 1600",
+        alt_text=source.alt_text,
+        storage_file="sourced/helsinki-1600.webp",
+        width=1600,
+        height=1200,
+        derivative_of=source,
+        variant_width=1600,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    image = build_media_asset_image_view_model(small)
+
+    assert image.srcset == (f"{small.storage_file.url} 800w, {large.storage_file.url} 1600w")
+    assert source.storage_file.url not in image.srcset
+
+
+@pytest.mark.django_db
 def test_single_published_derivative_does_not_force_a_srcset_candidate():
     source = MediaAsset.objects.create(
         kind=MediaKind.CONTEMPORARY_PHOTO,

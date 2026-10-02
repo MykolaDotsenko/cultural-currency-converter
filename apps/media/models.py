@@ -187,6 +187,11 @@ class MediaAsset(models.Model):
                 condition=~Q(content_hash=""),
                 name="media_unique_content_hash",
             ),
+            models.UniqueConstraint(
+                fields=("derivative_of", "variant_width"),
+                condition=Q(derivative_of__isnull=False, variant_width__isnull=False),
+                name="media_unique_derivative_width",
+            ),
         ]
 
     def clean(self) -> None:

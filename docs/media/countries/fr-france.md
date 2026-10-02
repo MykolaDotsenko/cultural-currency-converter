@@ -106,6 +106,21 @@ Create a sophisticated everyday Paris purchase: espresso or café crème with on
 
 Frame at table/counter/hand level rather than as a product advertisement. Do not print an invented price as a focal element. Any signage should be incidental and plausible, not AI-generated gibberish dominating the scene.
 
+## Production payment-culture source
+
+The sourced P03 selection documents a real ticket vending machine at Paris Saint-Lazare advertising Navigo Easy issuance. It is useful payment/ticketing atmosphere, not evidence that one payment method is universal or preferred.
+
+- slug: `france-paris-navigo-machine-payment-2023`
+- role: `payment_culture`
+- city: Paris
+- captured: 28 March 2023
+- source: Wikimedia Commons, `SNCF Ile-de-France ticket vending machine supporting issuing Navigo Easy at Gare Saint Lazare.jpg`
+- creator: DominikPeters
+- licence: CC0 1.0
+- upstream raster: 1660 × 2214 JPEG
+- reviewed focal point: 50% × 50%
+- responsive plan: 480 / 800 / 1200 px WebP derivatives
+
 ## P03 — Payment Culture
 
 **Target:** `static/images/country-media/fr/payment-culture/fr-payment-culture-v01.webp`
@@ -115,6 +130,22 @@ Frame at table/counter/hand level rather than as a product advertisement. Do not
 Show a subtle contactless card/phone payment at a contemporary Paris boulangerie or café counter. Include warm bread/pastry textures, stone/metal counter and understated urban depth, while keeping the terminal neutral and the interaction natural.
 
 Show the transaction naturally inside a real-feeling setting. Keep hands anatomically correct, device geometry plausible and the payment terminal/phone secondary to the human context. No visible bank/app logos unless they are incidental and accurate; preferably use neutral interfaces.
+
+## Production local-detail source
+
+The sourced P04 selection uses an ordinary Paris Métro line 1 interior rather than postcard landmark imagery.
+
+- slug: `france-paris-metro-interior-local-detail-2024`
+- role: `local_detail`
+- city: Paris
+- captured: 9 November 2024
+- source: Wikimedia Commons, `Intérieur d'une rame MP 05 de la ligne 1 du métro parisien.jpg`
+- creator: Remontees
+- licence: CC BY-SA 4.0
+- upstream raster: 5971 × 3981 JPEG
+- reviewed focal point: 50% × 50%
+- responsive plan: 480 / 800 / 1200 px WebP derivatives
+- evidence boundary: editorial transit context only; people/signage in the scene create no product fact
 
 ## P04 — Local Detail
 
@@ -148,7 +179,9 @@ Create a 9:16 premium mobile design concept for Cultural Currency Converter focu
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | source selected | 2026-09-29 | Wikimedia Commons / Chabe01 | managed-media curated manifest | sourced candidate | Contemporary Rue Lauriston street source selected; ingestion/review/publication remain separate. |
 | P02 | source selected | 2026-09-29 | Wikimedia Commons / Wyslijp16 | managed-media curated manifest | sourced candidate | Paris croissant and pain-au-chocolat source selected; image remains atmosphere, not price evidence. |
-| P03 | v01 | 2026-09-30 | Higgsfield Z Image + reviewed crop | `static/images/country-media/fr/payment-culture/fr-payment-culture-v01.webp` | ✅ trial-approved | Synthetic Paris café/boulangerie contactless-payment atmosphere; landmark/flag cues remain secondary under softened review; supporting media only, never evidence for payment prevalence or merchant acceptance. |
-| P04 | v01 | 2026-09-30 | Higgsfield Z Image + reviewed crop | `static/images/country-media/fr/local-detail/fr-local-detail-v01.webp` | ✅ trial-approved | Synthetic café-detail study with espresso cups, paper slip and brass/zinc-like counter; blurred Paris landmark cue accepted as secondary; not evidence for pricing or venue facts. |
+| P03 | source selected | 2026-10-02 | Wikimedia Commons / DominikPeters | managed-media curated manifest | sourced candidate | Paris Saint-Lazare Navigo Easy ticket-machine source selected with reviewed focal point and responsive derivative plan; never payment-prevalence evidence. |
+| P03 | v01 | 2026-09-30 | Higgsfield Z Image + reviewed crop | `static/images/country-media/fr/payment-culture/fr-payment-culture-v01.webp` | historical trial | Synthetic payment-atmosphere study retained only as a historical visual trial. |
+| P04 | source selected | 2026-10-02 | Wikimedia Commons / Remontees | managed-media curated manifest | sourced candidate | Paris Métro line 1 interior selected with reviewed focal point and responsive derivative plan. |
+| P04 | v01 | 2026-09-30 | Higgsfield Z Image + reviewed crop | `static/images/country-media/fr/local-detail/fr-local-detail-v01.webp` | historical trial | Synthetic café-detail study retained only as a historical visual trial. |
 | P05 | v01 | 2026-09-30 | Deterministic Pillow UI composition + synthetic France image block | `docs/assets/country-interface-concepts/fr/desktop/fr-interface-desktop-v01.webp` | ✅ trial-approved | 16:10 desktop concept; 100 GBP → €116.00 is explicitly illustrative/non-live; one restrained Paris café image panel. |
 | P06 | v01 | 2026-09-30 | Deterministic Pillow UI composition + synthetic France image block | `docs/assets/country-interface-concepts/fr/mobile/fr-interface-mobile-v01.webp` | ✅ trial-approved | 9:16 single-column mobile concept; dominant EUR result, one Paris café image block and believable tap-target scale; illustrative/non-live amount. |

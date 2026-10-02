@@ -56,6 +56,22 @@ Photograph Helsinki at blue hour or a soft overcast late afternoon from pedestri
 
 Composition: one coherent contemporary scene, not a collage. Keep the main visual interest away from at least one outer third so product UI can coexist with the crop. Preserve architectural lines and realistic scale. People, if present, should feel incidental and unposed.
 
+## Production everyday-value source
+
+The sourced P02 selection is a real Helsinki café/restaurant scene rather than a generated price illustration.
+
+- slug: `finland-helsinki-coffee-everyday-value-2025`
+- role: `everyday_value`
+- city: Helsinki
+- captured: 30 January 2025
+- source: Wikimedia Commons, `Cup of coffee at The Rook.jpg`
+- creator: JIP
+- licence: CC BY-SA 4.0
+- upstream raster: 4608 × 3456 JPEG
+- reviewed focal point: 52% × 50%
+- responsive plan: 480 / 800 / 1200 px WebP derivatives
+- evidence boundary: atmosphere only; the photograph is not a price observation
+
 ## P02 — Everyday Value
 
 **Target:** `static/images/country-media/fi/everyday-value/fi-everyday-value-v01.webp`
@@ -66,6 +82,21 @@ Build an intimate Helsinki café moment around a ceramic coffee cup, a fresh kor
 
 Frame at table/counter/hand level rather than as a product advertisement. Do not print an invented price as a focal element. Any signage should be incidental and plausible, not AI-generated gibberish dominating the scene.
 
+## Production payment-culture source
+
+The sourced P03 selection documents an HSL ticket vending machine at the Viking Line terminal in Helsinki. The source description notes that the machine supports multiple payment methods; the product still treats the image as atmosphere rather than evidence of payment prevalence.
+
+- slug: `finland-helsinki-ticket-machine-payment-2023`
+- role: `payment_culture`
+- city: Helsinki
+- captured: 27 April 2023
+- source: Wikimedia Commons, `Helsinki Regional Transport Authority's ticket vending machine 01.jpg`
+- creator: Sinikka Halme
+- licence: CC BY-SA 4.0
+- upstream raster: 3256 × 2406 JPEG
+- reviewed focal point: 60% × 50%
+- responsive plan: 480 / 800 / 1200 px WebP derivatives
+
 ## P03 — Payment Culture
 
 **Target:** `static/images/country-media/fi/payment-culture/fi-payment-culture-v01.webp`
@@ -75,6 +106,22 @@ Frame at table/counter/hand level rather than as a product advertisement. Do not
 Show a normal contactless card or phone payment in a contemporary Helsinki café, bakery or small design shop. Include subtle Finnish environmental cues through materials, window light or tram/street context beyond the counter rather than flags. The cashier/customer interaction should feel efficient and ordinary, with the terminal readable as a terminal but not brand-prominent.
 
 Show the transaction naturally inside a real-feeling setting. Keep hands anatomically correct, device geometry plausible and the payment terminal/phone secondary to the human context. No visible bank/app logos unless they are incidental and accurate; preferably use neutral interfaces.
+
+## Production local-detail source
+
+The sourced P04 selection uses contemporary Helsinki tram interior texture rather than a synthetic still life.
+
+- slug: `finland-helsinki-tram-interior-local-detail-2024`
+- role: `local_detail`
+- city: Helsinki
+- captured: 26 October 2024
+- source: Wikimedia Commons, `Interior of Helsinki tram on line 13.jpg`
+- creator: JIP
+- licence: CC BY-SA 4.0
+- upstream raster: 4608 × 3456 JPEG
+- reviewed focal point: 50% × 45%
+- responsive plan: 480 / 800 / 1200 px WebP derivatives
+- evidence boundary: visual transit context only; visible signage/ticketing is not parsed into product facts
 
 ## P04 — Local Detail
 
@@ -123,8 +170,11 @@ The synthetic P01/P02 assets below remain historical trial artifacts only. They 
 | Prompt | Version | Date | Generator/model | Repository path | Status | Review note |
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | v01 | 2026-09-23 | OpenAI image generation (ChatGPT) | `static/images/country-media/fi/hero/fi-hero-v01.webp` | historical trial | Synthetic 16:9 Helsinki proof-of-flow only. It must not be used as the production country hero; the curated Wikimedia workflow above supersedes it for production. |
-| P02 | v01 | 2026-09-23 | OpenAI image generation (ChatGPT) + crop/inpaint cleanup | `static/images/country-media/fi/everyday-value/fi-everyday-value-v01.webp` | ✅ trial-approved | Helsinki café everyday-value scene: coffee + korvapuusti, text overlays removed, 4:5 WebP trial asset. Replace only with a clearly stronger v02 after review. |
-| P03 | v01 | 2026-09-30 | OpenAI image generation (ChatGPT) + reviewed crop | `static/images/country-media/fi/payment-culture/fi-payment-culture-v01.webp` | ✅ trial-approved | Synthetic Helsinki café contactless-payment atmosphere; supporting media only, not evidence for payment prevalence or merchant acceptance. |
-| P04 | v01 | 2026-09-30 | OpenAI image generation (ChatGPT) + reviewed crop | `static/images/country-media/fi/local-detail/fi-local-detail-v01.webp` | ✅ trial-approved | Everyday Helsinki market detail, softened acceptance threshold; 750×500 WebP trial asset. Supporting atmosphere only; replace with a stronger 1500×1000 derivative when available. |
+| P02 | source selected | 2026-10-02 | Wikimedia Commons / JIP | managed-media curated manifest | sourced candidate | Helsinki coffee source selected with reviewed focal point and 480/800/1200 derivative plan; never price evidence. |
+| P02 | v01 | 2026-09-23 | OpenAI image generation (ChatGPT) + crop/inpaint cleanup | `static/images/country-media/fi/everyday-value/fi-everyday-value-v01.webp` | historical trial | Superseded for production selection by the sourced Helsinki coffee candidate. |
+| P03 | source selected | 2026-10-02 | Wikimedia Commons / Sinikka Halme | managed-media curated manifest | sourced candidate | Helsinki HSL ticket-machine source selected with reviewed focal point and responsive derivative plan; never payment-prevalence evidence. |
+| P03 | v01 | 2026-09-30 | OpenAI image generation (ChatGPT) + reviewed crop | `static/images/country-media/fi/payment-culture/fi-payment-culture-v01.webp` | historical trial | Synthetic supporting study retained only as a historical visual trial. |
+| P04 | source selected | 2026-10-02 | Wikimedia Commons / JIP | managed-media curated manifest | sourced candidate | Helsinki tram-interior source selected with reviewed focal point and responsive derivative plan. |
+| P04 | v01 | 2026-09-30 | OpenAI image generation (ChatGPT) + reviewed crop | `static/images/country-media/fi/local-detail/fi-local-detail-v01.webp` | historical trial | Synthetic market-detail study retained only as a historical visual trial. |
 | P05 | v01 | 2026-09-30 | OpenAI-assisted deterministic UI render | `docs/assets/country-interface-concepts/fi/desktop/fi-interface-desktop-v01.webp` | ✅ trial-approved | 16:10 Finland desktop interface concept. Uses an illustrative, explicitly non-live 100 USD → EUR result and the Finland local-detail trial image; 640×400 WebP preview, replace with a higher-resolution derivative if needed. |
 | P06 | v01 | 2026-09-30 | OpenAI-assisted deterministic UI render | `docs/assets/country-interface-concepts/fi/mobile/fi-interface-mobile-v01.webp` | ✅ trial-approved | 9:16 Finland mobile interface concept with single-column conversion hierarchy and one local-context image. Displayed result is explicitly illustrative/non-live; 400×711 WebP preview, replace with a higher-resolution derivative if needed. |
