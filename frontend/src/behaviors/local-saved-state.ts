@@ -285,7 +285,7 @@ function setPlaceSurfaceState(
     button.removeAttribute("aria-pressed");
     button.setAttribute(
       "aria-label",
-      `Saving ${placeName} is unavailable because browser storage is blocked`,
+      `Saving place is unavailable: ${placeName}`,
     );
     button.dataset.storageUnavailable = "true";
     label.textContent = "Save unavailable";
@@ -297,7 +297,7 @@ function setPlaceSurfaceState(
   button.setAttribute("aria-pressed", saved ? "true" : "false");
   button.setAttribute(
     "aria-label",
-    saved ? `Remove ${placeName} from My places` : `Save ${placeName} to My places`,
+    saved ? `Remove saved place: ${placeName}` : `Save place: ${placeName}`,
   );
   button.dataset.saved = saved ? "true" : "false";
   delete button.dataset.storageUnavailable;
@@ -319,7 +319,7 @@ function toggleSavedPlace(surface: HTMLElement): void {
   const toggled = togglePlaceInState(read.state, place);
   if (!writeState(toggled.state)) {
     setPlaceSurfaceState(surface, read.state, "unavailable");
-    placeStatus(surface, "This place could not be saved because browser storage is unavailable.");
+    placeStatus(surface, "Place could not be saved because browser storage is unavailable.");
     return;
   }
 
@@ -327,9 +327,7 @@ function toggleSavedPlace(surface: HTMLElement): void {
   const placeName = place.cityName || place.countryName;
   placeStatus(
     surface,
-    toggled.saved
-      ? `${placeName} saved to My places on this browser.`
-      : `${placeName} removed from My places.`,
+    toggled.saved ? "Place saved in this browser." : "Place removed from this browser.",
   );
 }
 
