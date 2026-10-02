@@ -8,6 +8,7 @@ import {
   isPlaceSaved,
   type LocalPreferencesV1,
   normalizePair,
+  normalizePlace,
   normalizeRecent,
   type PairContext,
   type ReadStatus,
@@ -21,24 +22,6 @@ import {
 } from "./local-saved-state-store";
 
 let savedPageModulePromise: Promise<typeof import("./local-saved-state-page")> | null = null;
-
-type PlaceContext = Omit<SavedPlace, "id" | "savedAt">;
-
-function placeFromElement(element: HTMLElement): PlaceContext | null {
-  const token = element.dataset.placeToken ?? "";
-  const countryCode = element.dataset.placeCountryCode ?? "";
-  const countryName = element.dataset.placeCountryName ?? "";
-  const citySlug = element.dataset.placeCitySlug ?? "";
-  const cityName = element.dataset.placeCityName ?? "";
-  const currencyCode = element.dataset.placeCurrencyCode ?? "";
-
-  if (!token || !countryCode || !countryName || !currencyCode) return null;
-  return { token, countryCode, countryName, citySlug, cityName, currencyCode };
-}
-
-function placeLabel(place: PlaceContext): string {
-  return place.cityName ? `${place.cityName}, ${place.countryName}` : place.countryName;
-}
 
 function pairFromSnapshot(element: HTMLElement): PairContext | null {
   return normalizePair({
@@ -165,78 +148,6 @@ function toggleAnonymousFavourite(snapshot: HTMLElement): void {
   saveStatus(snapshot, toggled.saved ? "Saved in this browser." : "Removed from saved.");
 }
 
-function setExplorePlaceButtonState(
-  element: HTMLElement,
-  state: LocalPreferencesV1,
-  storageStatus: ReadStatus,
-): void {
-  const button = element.querySelector<HTMLButtonElement>("[data-save-place]");
-  const label = element.querySelector<HTMLElement>("[data-save-place-label]");
-  const place = placeFromElement(element);
-  if (!button || !label || !place) return;
-
-  if (storageStatus === "unavailable") {
-    button.hidden = true;
-    return;
-  }
-
-  const saved = isPlaceSaved(place.token, state);
-  button.hidden = false;
-  button.disabled = false;
-  button.setAttribute("aria-pressed", saved ? "true" : "false");
-  button.setAttribute(
-    "aria-label",
-    saved ? `Remove saved place: ${placeLabel(place)}` : `Save place: ${placeLabel(place)}`,
-  );
-  button.dataset.saved = saved ? "true" : "false";
-  label.textContent = saved ? "Saved" : "Save";
-}
-
-function setExplorePlaceStatus(element: HTMLElement, message: string): void {
-  const status = element.querySelector<HTMLElement>("[data-save-place-status]");
-  if (status) status.textContent = message;
-}
-
-function toggleExplorePlace(element: HTMLElement): void {
-  const place = placeFromElement(element);
-  if (!place) return;
-
-  const read = readState();
-  if (read.status === "unavailable") {
-    setExplorePlaceButtonState(element, read.state, read.status);
-    return;
-  }
-
-  const toggled = togglePlaceInState(read.state, place);
-  if (!writeState(toggled.state)) {
-    setExplorePlaceStatus(element, "This place could not be saved in this browser.");
-    return;
-  }
-
-  for (const matching of document.querySelectorAll<HTMLElement>(
-    `[data-local-saved-place][data-place-token="${CSS.escape(place.token)}"]`,
-  )) {
-    setExplorePlaceButtonState(matching, toggled.state, "ok");
-  }
-  setExplorePlaceStatus(
-    element,
-    toggled.saved ? "Place saved in this browser." : "Place removed from this browser.",
-  );
-}
-
-function enhanceExploreSavedPlaces(): void {
-  const read = readState();
-  for (const element of document.querySelectorAll<HTMLElement>("[data-local-saved-place]")) {
-    setExplorePlaceButtonState(element, read.state, read.status);
-    if (element.dataset.localPlaceWired === "true") continue;
-
-    element.dataset.localPlaceWired = "true";
-    element.querySelector<HTMLButtonElement>("[data-save-place]")?.addEventListener("click", () => {
-      toggleExplorePlace(element);
-    });
-  }
-}
-
 function placeFromSurface(
   surface: HTMLElement,
 ): Omit<SavedPlace, "id" | "savedAt"> | null {
@@ -278,20 +189,15 @@ function setPlaceSurfaceState(
     return;
   }
 
-  button.hidden = false;
-  const placeName = place.cityName || place.countryName;
+  const placeName = place.cityName
+    ? `${place.cityName}, ${place.countryName}`
+    : place.countryName;
   if (storageStatus === "unavailable") {
-    button.disabled = true;
-    button.removeAttribute("aria-pressed");
-    button.setAttribute(
-      "aria-label",
-      `Saving place is unavailable: ${placeName}`,
-    );
-    button.dataset.storageUnavailable = "true";
-    label.textContent = "Save unavailable";
+    button.hidden = true;
     return;
   }
 
+  button.hidden = false;
   const saved = isPlaceSaved(place.token, state);
   button.disabled = false;
   button.setAttribute("aria-pressed", saved ? "true" : "false");
@@ -300,7 +206,6 @@ function setPlaceSurfaceState(
     saved ? `Remove saved place: ${placeName}` : `Save place: ${placeName}`,
   );
   button.dataset.saved = saved ? "true" : "false";
-  delete button.dataset.storageUnavailable;
   label.textContent = saved ? "Saved" : "Save";
 }
 
@@ -324,7 +229,6 @@ function toggleSavedPlace(surface: HTMLElement): void {
   }
 
   enhanceExploreSavedPlaces();
-  const placeName = place.cityName || place.countryName;
   placeStatus(
     surface,
     toggled.saved ? "Place saved in this browser." : "Place removed from this browser.",
