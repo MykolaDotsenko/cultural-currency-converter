@@ -9,18 +9,18 @@ from apps.media.curated import (
     CuratedMediaSpec,
     get_curated_media_spec,
 )
-from apps.media.models import MediaAsset, MediaStatus
+from apps.media.curated_runtime import (
+    REVIEWED_SOURCE_STATUSES,
+    curated_derivative_contract_error,
+    curated_source_contract_error,
+)
+from apps.media.models import MediaAsset
 from apps.media.services import (
     DuplicateMediaContentError,
     MediaPublicationError,
     create_responsive_derivative,
 )
 from apps.media.validation import MediaValidationError
-
-_REVIEWED_SOURCE_STATUSES = {
-    MediaStatus.APPROVED,
-    MediaStatus.PUBLISHED,
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,87 +29,6 @@ class _DerivativePlan:
     source: MediaAsset
     existing_widths: tuple[int, ...]
     missing_widths: tuple[int, ...]
-
-
-def _source_scope_error(source: MediaAsset, spec: CuratedMediaSpec) -> str:
-    country_code = source.country.iso2 if source.country_id else ""
-    currency_code = source.currency.code if source.currency_id else ""
-    expected = (
-        spec.role,
-        spec.kind,
-        spec.country_code,
-        spec.currency_code,
-        spec.city,
-        spec.focal_x,
-        spec.focal_y,
-    )
-    actual = (
-        source.role,
-        source.kind,
-        country_code,
-        currency_code,
-        source.city,
-        source.focal_x,
-        source.focal_y,
-    )
-    if actual != expected:
-        return (
-            f"Curated source metadata drift for {spec.slug}: "
-            f"expected={expected!r} actual={actual!r}."
-        )
-    return ""
-
-
-def _derivative_contract_error(
-    derivative: MediaAsset,
-    *,
-    source: MediaAsset,
-    spec: CuratedMediaSpec,
-) -> str:
-    country_code = derivative.country.iso2 if derivative.country_id else ""
-    currency_code = derivative.currency.code if derivative.currency_id else ""
-    expected = (
-        source.pk,
-        spec.role,
-        spec.kind,
-        spec.country_code,
-        spec.currency_code,
-        spec.city,
-        spec.focal_x,
-        spec.focal_y,
-        source.source_name,
-        source.source_url,
-        source.source_media_url,
-        source.licence_id,
-        source.licence_url,
-        source.rights_statement,
-        source.attribution_text,
-    )
-    actual = (
-        derivative.derivative_of_id,
-        derivative.role,
-        derivative.kind,
-        country_code,
-        currency_code,
-        derivative.city,
-        derivative.focal_x,
-        derivative.focal_y,
-        derivative.source_name,
-        derivative.source_url,
-        derivative.source_media_url,
-        derivative.licence_id,
-        derivative.licence_url,
-        derivative.rights_statement,
-        derivative.attribution_text,
-    )
-    if actual != expected:
-        return f"Curated derivative metadata drift for {spec.slug} at {derivative.variant_width}px."
-    if derivative.status in {MediaStatus.REJECTED, MediaStatus.RETIRED}:
-        return (
-            f"Curated derivative {spec.slug} at {derivative.variant_width}px is "
-            f"{derivative.status}; resolve the reviewed record explicitly."
-        )
-    return ""
 
 
 def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
@@ -129,7 +48,7 @@ def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
         raise CommandError(
             f"Curated source {spec.slug} is not ingested. Run ingest_curated_media first."
         )
-    if source.status not in _REVIEWED_SOURCE_STATUSES:
+    if source.status not in REVIEWED_SOURCE_STATUSES:
         raise CommandError(
             f"Curated source {spec.slug} must be explicitly approved before derivatives "
             f"are built; current status={source.status}."
@@ -137,9 +56,9 @@ def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
     if not source.storage_file:
         raise CommandError(f"Curated source {spec.slug} has no managed source bytes.")
 
-    scope_error = _source_scope_error(source, spec)
-    if scope_error:
-        raise CommandError(scope_error)
+    source_error = curated_source_contract_error(source, spec)
+    if source_error:
+        raise CommandError(source_error)
 
     source_width = source.width or 0
     if any(width >= source_width for width in spec.responsive_widths):
@@ -169,7 +88,7 @@ def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
             "resolve the media records before continuing."
         )
     for derivative in existing_derivatives:
-        derivative_error = _derivative_contract_error(
+        derivative_error = curated_derivative_contract_error(
             derivative,
             source=source,
             spec=spec,
