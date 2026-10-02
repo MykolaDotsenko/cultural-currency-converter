@@ -23,6 +23,7 @@ from apps.exchange.views import (
     historical_series,
     payment_estimate,
     picker_options,
+    same_amount_destinations,
 )
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
 from apps.travel.offline_pack_web import download_offline_destination_pack
@@ -47,6 +48,11 @@ urlpatterns = [
     path("", converter, name="converter"),
     path("destination/", destination_mode, name="destination_mode"),
     path("compare/", destination_comparison, name="destination_comparison"),
+    path(
+        "explore/same-amount/",
+        same_amount_destinations,
+        name="same_amount_destinations",
+    ),
     path("explore/", explore, name="explore"),
     path(
         "city/<str:country_code>/<slug:city_slug>/",

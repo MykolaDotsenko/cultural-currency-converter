@@ -1729,7 +1729,7 @@ async function assertNoJavaScriptSavedStateFallback(browser) {
     const savedPageText = await page.locator("body").innerText();
     assert(
       savedPageText.includes(
-        "JavaScript is required to read browser-local saved pairs and recent history.",
+        "JavaScript is required to read browser-local saved places, saved pairs and recent history.",
       ),
       "no-js Saved page did not expose the browser-local storage explanation",
     );

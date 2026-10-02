@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}One amount across destinations · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="View one source amount across several explicit destinations with independent reference FX, effective dates and reviewed local money context.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-product-intro qa-same-amount-intro"
+           aria-labelledby="same-amount-title">
+    <p class="qa-foundation-kicker">Explore · same amount</p>
+    <h1 id="same-amount-title">One amount. Several places. No artificial winner.</h1>
+    <p class="qa-foundation-lede">
+      See the same source amount through each destination's own current currency, reference-rate
+      observation and reviewed local money context. Nothing is normalized into a hidden
+      cost-of-living or purchasing-power score.
+    </p>
+  </section>
+  <section class="qa-same-amount" aria-labelledby="same-amount-form-title">
+    <div class="qa-same-amount__instrument">
+      <div class="qa-same-amount__heading">
+        <div>
+          <p class="qa-foundation-kicker">Build the view</p>
+          <h2 id="same-amount-form-title">Choose two to four destinations.</h2>
+        </div>
+        <p>
+          Your selection order is preserved. Results are never re-sorted by converted amount,
+          local prices or any inferred notion of value.
+        </p>
+      </div>
+      {% if form.errors %}
+        <div class="qa-inline-alert qa-inline-alert--error"
+             id="same-amount-errors"
+             role="alert"
+             tabindex="-1">
+          <h3>Check these details</h3>
+          <ul class="qa-error-summary">
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      {% if reference_data_ready %}
+        <form method="post"
+              action="{% url 'same_amount_destinations' %}"
+              class="qa-same-amount__form">
+          {% csrf_token %}
+          <div class="qa-same-amount__money">
+            <label class="qa-field{% if form.amount.errors %} qa-field--error{% endif %}">
+              <span class="qa-field__label">{{ form.amount.label }}</span>
+              {{ form.amount }}
+              {% if form.amount.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="amount-error">{{ form.amount.errors.0 }}</span>
+              {% else %}
+                <span class="qa-field__message">The same source amount is used for every destination.</span>
+              {% endif %}
+            </label>
+            <label class="qa-field{% if form.source_currency.errors %} qa-field--error{% endif %}">
+              <span class="qa-field__label">{{ form.source_currency.label }}</span>
+              {{ form.source_currency }}
+              {% if form.source_currency.errors %}
+                <span class="qa-field__message qa-field__message--error"
+                      id="source_currency-error">{{ form.source_currency.errors.0 }}</span>
+              {% endif %}
+            </label>
+          </div>
+          <fieldset class="qa-same-amount__destination-fieldset{% if form.destinations.errors %} qa-field--error{% endif %}">
+            <legend class="qa-field__label">{{ form.destinations.label }}</legend>
+            <p class="qa-field__message">
+              Choose explicit city scope when reviewed city evidence exists; country and city
+              evidence remain separate throughout the result.
+            </p>
+            <div class="qa-same-amount__choice-panel">{{ form.destinations }}</div>
+            {% if form.destinations.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="destinations-error">{{ form.destinations.errors.0 }}</p>
+            {% endif %}
+          </fieldset>
+          <div class="qa-same-amount__action">
+            <button class="qa-primary-button" type="submit">View across destinations</button>
+            <p>
+              Current FX is requested only after you submit. Each destination keeps its own provider,
+              effective date, stale state and context provenance.
+            </p>
+          </div>
+        </form>
+      {% else %}
+        <div class="qa-inline-alert" role="status">
+          <h3>Destination reference data is unavailable.</h3>
+          <p>This view needs at least two current destination scopes.</p>
+          <a class="qa-secondary-button" href="{% url 'explore' %}">Back to Explore</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+  {% if same_amount %}
+    <section class="qa-same-amount__results"
+             aria-labelledby="same-amount-results-title">
+      <div class="qa-same-amount__results-heading">
+        <div>
+          <p class="qa-foundation-kicker">Reference view</p>
+          <h2 id="same-amount-results-title">
+            {{ same_amount.source_amount }} {{ same_amount.source_currency_code }}
+            across your selected destinations
+          </h2>
+        </div>
+        <p>
+          Each card is independent. A provider failure on one destination never invalidates
+          successful observations on the others.
+        </p>
+      </div>
+      {% if same_amount.partial %}
+        <div class="qa-inline-alert" role="status">
+          <h3>Part of the view is unavailable.</h3>
+          <p>Successful destination observations remain valid and are shown below.</p>
+        </div>
+      {% endif %}
+      <div class="qa-same-amount__grid">
+        {% for item in same_amount.destinations %}
+          <article class="qa-same-amount-card">
+            <header class="qa-same-amount-card__header">
+              <div>
+                <p class="qa-foundation-kicker">{{ item.currency_code }} · current reference</p>
+                <h3>{{ item.scope_label }}</h3>
+              </div>
+              {% if item.stale %}
+                <span class="qa-status-badge qa-status-badge--cached">Cached reference</span>
+              {% else %}
+                <span class="qa-status-badge qa-status-badge--reference">Reference rate</span>
+              {% endif %}
+            </header>
+            <div class="qa-same-amount-card__amount">
+              <p>{{ item.output_amount }} <span>{{ item.currency_code }}</span></p>
+              <p>
+                {{ same_amount.source_amount }} {{ same_amount.source_currency_code }}
+                · 1 {{ same_amount.source_currency_code }} = {{ item.rate }} {{ item.currency_code }}
+              </p>
+            </div>
+            <dl class="qa-same-amount-card__trust">
+              <div>
+                <dt>Effective</dt>
+                <dd>
+                  {{ item.effective_date }}
+                </dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>
+                  {{ item.provider }}
+                </dd>
+              </div>
+              <div>
+                <dt>Fetched</dt>
+                <dd>
+                  {{ item.fetched_at }}
+                </dd>
+              </div>
+            </dl>
+            {% if item.prices or item.payment_summary %}
+              <details class="qa-same-amount-card__context">
+                <summary>
+                  Reviewed local context
+                  {% if item.price_count %}· {{ item.price_count }} price anchor{{ item.price_count|pluralize }}{% endif %}
+                </summary>
+                <div class="qa-same-amount-card__context-body">
+                  {% if item.prices %}
+                    <div class="qa-same-amount-card__prices">
+                      {% for price in item.prices %}
+                        <div>
+                          <p><strong>{{ price.label }}</strong></p>
+                          <p>{{ price.amount }} {{ price.currency_code }} · {{ price.scope }}</p>
+                          <p>
+                            observed {{ price.observed }} ·
+                            <a href="{{ price.source_url }}">{{ price.source_name }}</a>
+                          </p>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  {% if item.payment_summary %}
+                    <div class="qa-same-amount-card__payment">
+                      <p class="qa-field__label">Payment context</p>
+                      <p>{{ item.payment_summary }}</p>
+                      {% if item.payment_source_url %}
+                        <p><a href="{{ item.payment_source_url }}">Source: {{ item.payment_source_name }}</a></p>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                </div>
+              </details>
+            {% endif %}
+            <div class="qa-same-amount-card__actions">
+              <a class="qa-primary-button" href="{{ item.converter_url }}">Open conversion</a>
+              <a class="qa-secondary-button" href="{{ item.budget_url }}">Build budget</a>
+              {% if item.city_profile_url %}
+                <a class="qa-secondary-button" href="{{ item.city_profile_url }}">City profile</a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+        {% for item in same_amount.failed_destinations %}
+          <article class="qa-same-amount-card qa-same-amount-card--unavailable">
+            <header class="qa-same-amount-card__header">
+              <div>
+                <p class="qa-foundation-kicker">{{ item.currency_code }} · unavailable</p>
+                <h3>{{ item.scope_label }}</h3>
+              </div>
+            </header>
+            <div class="qa-inline-alert" role="status">
+              <h4>{{ item.title }}</h4>
+              <p>{{ item.detail }}</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+      <div class="qa-same-amount__caveat">
+        <strong>No winner is calculated.</strong>
+        <span>
+          Converted amounts, city prices and country payment context are different kinds of evidence.
+          This surface does not turn them into a cost-of-living index, PPP estimate or recommendation.
+        </span>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}
