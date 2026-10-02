@@ -393,6 +393,29 @@ def _place_json_error(message: str, *, status: int) -> JsonResponse:
     )
 
 
+@never_cache
+@require_GET
+def saved_places_status(request: HttpRequest) -> JsonResponse:
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {
+                "error": {
+                    "code": "authentication_required",
+                    "message": "Sign in to read account-saved places.",
+                }
+            },
+            status=401,
+        )
+
+    tokens = [
+        place.token
+        for place in SavedPlace.objects.filter(user=request.user)
+        .select_related("country", "city")
+        .order_by("id")
+    ]
+    return JsonResponse({"tokens": tokens})
+
+
 @require_POST
 def sync_saved_places(request: HttpRequest) -> JsonResponse:
     if not request.user.is_authenticated:
