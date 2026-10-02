@@ -579,11 +579,9 @@ def _payment_facts(
         GroundedFact(
             id=f"{prefix}_payment",
             statement=_bounded_fact_statement(
-                (
-                    f"For {name}, the reviewed payment context summary says: {summary}"
-                    if summary
-                    else f"A reviewed current payment-guidance record exists for {name}."
-                )
+                f"For {name}, the reviewed payment context summary says: {summary}"
+                if summary
+                else f"A reviewed current payment-guidance record exists for {name}."
             ),
         )
     ]
