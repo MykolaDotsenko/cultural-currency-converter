@@ -1955,6 +1955,9 @@ async function assertSameAmountQuality(page) {
   }
   await form.locator('input[name="destinations"][value="CA:toronto"]').check();
   await form.locator('input[name="destinations"][value="JP:tokyo"]').check();
+  const selectedOrder = await form
+    .locator('input[name="destinations"]:checked')
+    .evaluateAll((elements) => elements.map((element) => element.value));
 
   const responsePromise = page.waitForResponse(
     (response) =>
@@ -1972,9 +1975,14 @@ async function assertSameAmountQuality(page) {
   );
 
   const headings = await cards.locator("h3").allTextContents();
+  const expectedHeadings = selectedOrder.map((token) => {
+    if (token === "JP:tokyo") return "Tokyo, Japan";
+    if (token === "CA:toronto") return "Toronto, Canada";
+    throw new Error(`same-amount: unexpected selected destination token ${token}`);
+  });
   assert(
-    headings[0]?.includes("Toronto") && headings[1]?.includes("Tokyo"),
-    `same-amount: explicit destination order drifted: ${JSON.stringify(headings)}`,
+    JSON.stringify(headings) === JSON.stringify(expectedHeadings),
+    `same-amount: explicit destination order drifted: selected=${JSON.stringify(selectedOrder)} rendered=${JSON.stringify(headings)}`,
   );
   assert(
     (await page.getByText("No winner is calculated.", { exact: true }).count()) === 1,
