@@ -278,7 +278,7 @@ Current hard budgets intentionally leave measured headroom while preserving that
 
 - core JavaScript: <= 22 KiB gzip;
 - all JavaScript: <= 92 KiB gzip;
-- CSS: <= 20 KiB gzip;
+- CSS: <= 22 KiB gzip;
 - chart chunk: <= 64 KiB gzip;
 - chart-loader chunk: <= 1 KiB gzip;
 - combined converter enhancement chunk: <= 6 KiB gzip;
@@ -304,7 +304,7 @@ Watch:
 - large images;
 - slow request-path enrichment.
 
-Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold. The October 2026 Explore 2.0 editorial atlas raised measured CSS from the prior ~13 KiB baseline to ~16.85 KiB gzip; the CSS cap was therefore moved to 20 KiB while JS, request and query budgets remained unchanged.
+Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold. The October 2026 Explore 2.0 editorial atlas raised measured CSS from the prior ~13 KiB baseline to ~16.85 KiB gzip; the CSS cap was later moved to 22 KiB after the Saved continuity UI measured 20.68 KiB gzip; JS, request and query budgets remain independently constrained.
 
 ## Documentation quality
 
