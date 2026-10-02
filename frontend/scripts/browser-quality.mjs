@@ -1761,9 +1761,14 @@ async function assertNoJavaScriptExplore(browser) {
   try {
     const page = await context.newPage();
     const response = await page.goto(`${BASE_URL}/explore/`, { waitUntil: "load" });
-    assert(response?.ok(), `explore/no-js: request failed with ${response?.status() ?? "no response"}`);
+    assert(
+      response?.ok(),
+      `explore/no-js: request failed with ${response?.status() ?? "no response"}`,
+    );
 
-    await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
+    await page
+      .getByRole("heading", { name: "Know the money before you know the place." })
+      .waitFor();
     await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
     assert(
       (await page.locator(".qa-explore-collection").count()) >= 4,
@@ -1789,14 +1794,16 @@ async function assertNoJavaScriptExplore(browser) {
   }
 }
 
-
 async function assertExploreFlow(page) {
   await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
   await page.getByRole("heading", { name: "Start with what matters to you." }).waitFor();
   await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
 
   const collectionCount = await page.locator(".qa-explore-collection").count();
-  assert(collectionCount >= 4, `explore: expected at least four curated collections, found ${collectionCount}`);
+  assert(
+    collectionCount >= 4,
+    `explore: expected at least four curated collections, found ${collectionCount}`,
+  );
 
   const evidence = page.locator(".qa-explore-evidence").first();
   const evidenceSummary = evidence.locator("summary");
@@ -1818,15 +1825,13 @@ async function assertExploreFlow(page) {
     );
   }
   await regionNav.getByRole("link", { name: "Asia", exact: true }).click();
-  assert(new URL(page.url()).hash === "#region-asia", "explore: region anchor did not update location");
+  assert(
+    new URL(page.url()).hash === "#region-asia",
+    "explore: region anchor did not update location",
+  );
 
-  const tokyoRow = page
-    .locator(".qa-explore-city-row")
-    .filter({ hasText: "Tokyo" })
-    .first();
-  const profileHref = await tokyoRow
-    .getByRole("link", { name: /Tokyo/ })
-    .getAttribute("href");
+  const tokyoRow = page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).first();
+  const profileHref = await tokyoRow.getByRole("link", { name: /Tokyo/ }).getAttribute("href");
   assert(profileHref === "/city/JP/tokyo/", `explore: Tokyo profile URL drifted: ${profileHref}`);
 
   const convertHref = await tokyoRow
