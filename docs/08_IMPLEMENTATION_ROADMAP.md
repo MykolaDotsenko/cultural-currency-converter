@@ -26,7 +26,7 @@ The web product already includes:
 - canonical one-sided Destination Comparison handoffs from Explore and Saved continuity surfaces;
 - deterministic culture/story content plus currency-era / historical-series timeline exploration;
 - managed raster media with provenance/review and restrained destination-media composition;
-- optional AI explanation with deterministic fallback, including explicit reviewed-destination Explore intents;
+- optional grounded AI explanation with deterministic fallback for conversion, reviewed Explore destinations, Budget Interpretation and Destination Comparison;
 - browser-local favourites/recent conversions/My Places plus account-owned favourites/scenarios and opt-in account recent history;
 - Saved & recent continuity with primary/secondary/tertiary re-entry actions and exact city-scope preservation where available;
 - demand-loaded converter/picker, Saved and rate-chart enhancements with HTMX re-discovery and route-isolation checks;
@@ -46,7 +46,7 @@ The following previously planned items are now part of the current product basel
 - **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope travels through the same contract instead of using a parallel path. Budget, destination comparison, saved-trip, Camera, offline-pack, returning-home and Explore slices now consume this shared meaning; native/mobile consumers remain future work.
 - **#34 Destination mode — shipped first production slice.** Manual country/canonical-city selection resolves the current primary local currency, preserves explicit city scope where available and redirects into the canonical converter. The destination entry surface makes no FX-provider call and uses no device location.
 
-## Now: finish trusted contextual AI and final release evidence
+## Now: final release evidence
 
 The large October 2026 frontend/media quality pass has already shipped:
 
@@ -60,7 +60,8 @@ The large October 2026 frontend/media quality pass has already shipped:
 - sourced showcase P01–P04 selections for Finland, Japan and France, each with executable reviewed focal coordinates and deterministic responsive-width plans;
 - idempotent curated derivative generation plus read-only strict readiness reporting, while keeping ingestion/review/publication separate and explicit;
 - stronger Historical Series chronology/Then & Now and Money & culture currency-era/story exploration;
-- browser-local plus owner-scoped My Places, explicit local→account migration, durable input-only SavedComparison and canonical provider-free Reopen / explicit Re-check semantics.
+- browser-local plus owner-scoped My Places, explicit local→account migration, durable input-only SavedComparison and canonical provider-free Reopen / explicit Re-check semantics;
+- trusted Budget AI and Comparison AI over server-signed bounded fact packets derived only from already-deterministic results; AI cannot recalculate rates/prices/basket totals, fill missing coverage or rank destinations.
 
 The remaining premium/product priorities are narrower:
 
@@ -68,7 +69,7 @@ The remaining premium/product priorities are narrower:
 - treat deployment publication of curated source/derivative families as explicit operational evidence: source selection in Git is not runtime readiness, and `report_curated_media_coverage --strict` is the auditable check;
 - treat further focal/crop and CSS/spacing/typography edits as evidence-driven refinements rather than separate cleanup phases;
 - extend durable personalization only through evidence-backed use cases; do not turn saved inputs into hidden financial truth;
-- add Budget AI / Comparison AI only after each surface has a trusted bounded server packet equivalent to the current conversion/Explore AI contracts;
+- keep Budget AI / Comparison AI bounded to their shipped signed fact-packet contracts; extend intents only when the deterministic surface already owns every required fact;
 - continue profiling real-media performance within the current frontend guardrails.
 
 Do not add images simply to increase visual density, and do not duplicate backend truth in frontend-only state.

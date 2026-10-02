@@ -76,3 +76,14 @@ def test_deterministic_test_provider_rejects_unknown_currency():
 
     with pytest.raises(FxProviderUnsupportedPair):
         provider.latest_quote("EUR", "CAD", FxSourcePolicy())
+
+
+def test_deterministic_test_provider_supports_comparison_fixture_currency():
+    provider = DeterministicTestFxProvider()
+
+    quote = provider.latest_quote("EUR", "NOK", FxSourcePolicy())
+
+    assert quote.rate == Decimal("11.8")
+    assert quote.base_currency == "EUR"
+    assert quote.quote_currency == "NOK"
+    assert quote.provider_keys == ("browser-quality-fixture",)

@@ -26,8 +26,18 @@ class DeterministicTestExplanationDrafter:
         key_factors = [_grounded(fact) for fact in _dedupe_facts(factor_candidates)][:3]
 
         scope = facts.get("historical_scope") if packet.intent_id == "historical_context" else None
-        scope = scope or facts.get("reference_scope") or primary
-        next_step_support = facts.get("reference_scope") or facts.get("effective_date") or primary
+        scope = scope or facts.get("trust_boundary") or facts.get("reference_scope") or primary
+        next_step_support = (
+            facts.get("provenance_scope")
+            or facts.get("reference_scope")
+            or facts.get("effective_date")
+            or primary
+        )
+        next_step_text = (
+            next_step_support.statement
+            if "provenance_scope" in facts
+            else "Use this reference observation as a comparison point."
+        )
 
         return ProviderExplanation(
             payload={
@@ -35,7 +45,7 @@ class DeterministicTestExplanationDrafter:
                 "key_factors": key_factors,
                 "watch_out_for": _grounded(scope),
                 "next_step": {
-                    "text": "Use this reference observation as a comparison point.",
+                    "text": next_step_text,
                     "supporting_fact_ids": [next_step_support.id],
                 },
             },

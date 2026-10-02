@@ -12,6 +12,8 @@ from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import CulturalProfile, TypicalPrice
+from apps.exchange.ai.packet_tokens import GroundedPacketTokenError
+from apps.exchange.ai.service import RuntimeExplanationService
 from apps.exchange.comparison_snapshot import load_saved_comparison_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
 from apps.exchange.providers.base import FxProviderUnavailable
@@ -400,3 +402,149 @@ def test_comparison_field_descriptions_have_rendered_targets(
     assert b'id="units_coffee-hint"' in response.content
     assert b'id="duration_days-hint"' in response.content
     assert b'id="travelers-hint"' in response.content
+
+
+@pytest.mark.django_db
+def test_comparison_result_exposes_only_signed_grounded_ai_prompts(
+    client,
+    comparison_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    gateway = ComparisonGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    ai = response.context["comparison"]["ai_explanation"]
+    assert tuple(prompt["id"] for prompt in ai["prompts"]) == (
+        "comparison_overview",
+        "comparison_coverage",
+        "comparison_payment",
+    )
+    assert b"signed comparison facts only" in response.content
+    assert b'name="grounded_explanation_token"' in response.content
+    assert b'name="prompt_id"' not in response.content
+    assert gateway.calls == [("EUR", "JPY"), ("EUR", "NOK")]
+
+
+@pytest.mark.django_db
+def test_comparison_ai_builtin_fallback_never_requests_another_fx_quote(
+    client,
+    comparison_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    gateway = ComparisonGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        result_response = client.post(reverse("destination_comparison"), _payload())
+
+    token = result_response.context["comparison"]["ai_explanation"]["prompts"][0]["token"]
+    disabled_service = RuntimeExplanationService(
+        enabled=False,
+        model="disabled-test",
+        drafter=None,
+    )
+
+    with (
+        patch(
+            "apps.exchange.views.build_contextual_explanation_service",
+            return_value=disabled_service,
+        ),
+        patch("apps.exchange.views.build_latest_quote_gateway") as fx_factory,
+    ):
+        response = client.post(
+            reverse("comparison_explanation"),
+            {"grounded_explanation_token": token},
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"Built-in explanation" in response.content
+    assert b"500 EUR" in response.content
+    assert b"Tokyo, Japan" in response.content
+    assert b"Norway" in response.content
+    assert b"Live AI is unavailable" in response.content
+    assert b"no winner" in response.content.lower()
+    fx_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_comparison_ai_rejects_tampered_packet_before_service_creation(
+    client,
+    comparison_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+
+    with patch("apps.exchange.views.build_contextual_explanation_service") as service_factory:
+        response = client.post(
+            reverse("comparison_explanation"),
+            {"grounded_explanation_token": "tampered"},
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 422
+    assert b"no longer valid" in response.content
+    service_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_comparison_ai_has_no_javascript_full_page_fallback(
+    client,
+    comparison_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    gateway = ComparisonGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        result_response = client.post(reverse("destination_comparison"), _payload())
+
+    token = result_response.context["comparison"]["ai_explanation"]["prompts"][1]["token"]
+    disabled_service = RuntimeExplanationService(
+        enabled=False,
+        model="disabled-test",
+        drafter=None,
+    )
+
+    with patch(
+        "apps.exchange.views.build_contextual_explanation_service",
+        return_value=disabled_service,
+    ):
+        response = client.post(
+            reverse("comparison_explanation"),
+            {"grounded_explanation_token": token},
+        )
+
+    assert response.status_code == 200
+    assert b"<html" in response.content
+    assert b"Trusted facts first. Explanation second." in response.content
+    assert b"Built-in explanation" in response.content
+
+
+@pytest.mark.django_db
+def test_comparison_result_survives_optional_ai_packet_contract_failure(
+    client,
+    comparison_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    gateway = ComparisonGateway()
+
+    with (
+        patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway),
+        patch(
+            "apps.exchange.comparison_presentation.build_grounded_packet_token",
+            side_effect=GroundedPacketTokenError("bounded packet unavailable"),
+        ),
+    ):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    assert b"No winner is calculated." in response.content
+    assert response.context["comparison"]["ai_explanation"] is None
+    assert b"signed comparison facts only" not in response.content
+    assert gateway.calls == [("EUR", "JPY"), ("EUR", "NOK")]

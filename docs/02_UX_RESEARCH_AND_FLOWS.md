@@ -149,6 +149,8 @@ The first Smart result summary slice is now shipped as a deterministic part of t
 
 Explore now reuses the same trust boundary for destination-level AI: there is no empty chatbot and no arbitrary prompt. The user selects one reviewed destination plus a bounded intent such as overview, cash/card or price evidence. The server revalidates that destination against current Explore state, rebuilds trusted DestinationContext and sends only structured fact IDs/values to the existing validated explanation stack. Provider failure falls back deterministically and does not weaken discovery truth.
 
+Budget Interpretation and Destination Comparison now follow a stricter post-result pattern. After the deterministic calculation finishes, the server creates one bounded structured fact packet per suggested question and signs the entire packet plus its capability. The browser sends only that signed packet to the explanation endpoint; it cannot edit the intent, rate, converted amount, basket totals, coverage or destination scopes. Budget and comparison explanations therefore remain optional interpretation layers over an unchanged deterministic result, with no additional FX request and no destination-ranking or affordability verdict.
+
 AI answers must remain downstream of trusted structured data. The interface should make it easy to dismiss or ignore AI without weakening the core conversion experience.
 
 ## Cultural-history portal
@@ -221,7 +223,7 @@ UX rules:
 - a provider failure on either required side produces a neutral recoverable state rather than silently comparing one real side with one inferred side;
 - the surface remains usable without JavaScript and has browser QA coverage.
 
-Saved comparisons remain future work. Explore, My Places, saved scenarios, favourites and recent conversions can now seed exactly one canonical Destination Comparison side when they already know a destination; the second side and all comparison assumptions remain explicit user choices.
+SavedComparison continuity is now shipped for authenticated users as input-only persistence: amount, source currency, two canonical destination scopes, duration, travelers and basket assumptions are saved, while rates, local-price results and rankings are not. Reopen restores those inputs provider-free; Re-check explicitly reruns the canonical comparison path. Explore, My Places, saved scenarios, favourites and recent conversions can seed exactly one canonical Destination Comparison side when they already know a destination; the second side and all comparison assumptions remain explicit user choices.
 
 ## Discovery / Explore experience
 

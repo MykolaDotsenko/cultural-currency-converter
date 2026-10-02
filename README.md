@@ -78,7 +78,7 @@ The provider boundary keeps external payloads out of the rest of the application
 - **UI:** Django templates, HTMX 2, TypeScript, Vite 8, Tailwind 4
 - **Data:** PostgreSQL in production-oriented environments; SQLite for lightweight local development
 - **FX provider:** Frankfurter
-- **Optional AI:** Gemini, behind server-side configuration
+- **Optional AI:** Gemini behind server-side configuration, with validated structured output, deterministic fallback and signed grounded packets for post-result Budget/Comparison explanations
 - **Quality:** pytest/Django tests, coverage, Ruff, mypy, djlint, Playwright and axe
 
 ## Quality checks

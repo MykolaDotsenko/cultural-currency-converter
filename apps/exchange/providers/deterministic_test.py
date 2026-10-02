@@ -20,6 +20,7 @@ from apps.exchange.providers.base import FxProviderUnsupportedPair
 _REFERENCE_PER_EUR = {
     "EUR": Decimal("1"),
     "JPY": Decimal("174.5"),
+    "NOK": Decimal("11.8"),
     "USD": Decimal("1.08"),
     "FIM": Decimal("5.94573"),
 }

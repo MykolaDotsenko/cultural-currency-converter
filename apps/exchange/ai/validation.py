@@ -48,6 +48,25 @@ _FORBIDDEN_MARKET_INTERPRETATIONS = (
     "loss",
     "return on",
 )
+_FORBIDDEN_RANKING_PHRASES = (
+    "cheaper destination",
+    "cheapest destination",
+    "more affordable destination",
+    "less affordable destination",
+    "better value destination",
+    "best value destination",
+    "best destination",
+    "you should choose",
+    "recommended destination",
+)
+_FORBIDDEN_RANKING_PATTERNS = (
+    re.compile(
+        r"\b(?:is|looks|seems|appears)\s+(?:the\s+)?"
+        r"(?:cheaper|cheapest|more affordable|less affordable|unaffordable|"
+        r"better value|best value|winner|loser)\b"
+    ),
+    re.compile(r"\b(?:recommend|recommended|recommends)\s+(?:choosing\s+)?(?:this|that|the)\b"),
+)
 
 
 class ExplanationValidationError(ValueError):
@@ -175,6 +194,12 @@ def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
         raise ExplanationValidationError("Explanation contains financial or timing advice.")
     if _contains_forbidden_phrase(lowered, _FORBIDDEN_MARKET_INTERPRETATIONS):
         raise ExplanationValidationError("Explanation adds unsupported market interpretation.")
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_RANKING_PHRASES) or any(
+        pattern.search(lowered) for pattern in _FORBIDDEN_RANKING_PATTERNS
+    ):
+        raise ExplanationValidationError(
+            "Explanation adds an unsupported ranking or affordability claim."
+        )
     if "%" in text:
         raise ExplanationValidationError("Explanation introduces an unsupported percentage.")
 

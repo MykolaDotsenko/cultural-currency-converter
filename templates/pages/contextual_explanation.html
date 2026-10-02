@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Grounded explanation · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex">
+  <meta name="description"
+        content="A bounded explanation generated only from server-signed travel-money facts.">
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro"
+           aria-labelledby="contextual-explanation-page-title">
+    <p class="qa-foundation-kicker">{{ surface_label }} · optional AI</p>
+    <h1 id="contextual-explanation-page-title">Trusted facts first. Explanation second.</h1>
+    <p class="qa-foundation-lede">
+      This optional explanation can only use the server-signed structured facts from the
+      deterministic result. It cannot change rates, prices, basket totals, coverage or destination scope.
+    </p>
+  </section>
+  {% include "components/ai/contextual_explanation.html" %}
+  <p><a class="qa-secondary-button" href="{{ back_url }}">Back to {{ surface_label|lower }}</a></p>
+{% endblock %}

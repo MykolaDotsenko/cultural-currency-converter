@@ -1,0 +1,53 @@
+{% if explanation_error %}
+  <section class="qa-inline-alert qa-inline-alert--error"
+           role="alert"
+           tabindex="-1"
+           data-ai-explanation-focus>
+    <h3>{{ explanation_error.title }}</h3>
+    <p>{{ explanation_error.detail }}</p>
+  </section>
+{% elif explanation %}
+  <section class="qa-ai-explanation"
+           data-ai-generated="{% if explanation.result.generated %}true{% else %}false{% endif %}"
+           data-ai-explanation-focus
+           tabindex="-1"
+           aria-labelledby="contextual-explanation-title">
+    <div>
+      <p class="qa-foundation-kicker">
+        {% if explanation.result.generated %}AI explanation{% else %}Built-in explanation{% endif %}
+        · {{ explanation.surface_label }}
+      </p>
+      <p class="qa-field__message">{{ explanation.question }}</p>
+      <h3 id="contextual-explanation-title">{{ explanation.result.short_answer.text }}</h3>
+    </div>
+    <div>
+      <p class="qa-foundation-kicker">What matters most</p>
+      <ul class="qa-ai-explanation__bullets">
+        {% for factor in explanation.result.key_factors %}
+          <li>{{ factor.text }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <p class="qa-foundation-kicker">Trust boundary</p>
+      <p>{{ explanation.result.watch_out_for.text }}</p>
+    </div>
+    <div>
+      <p class="qa-foundation-kicker">Check the source context</p>
+      <p>{{ explanation.result.next_step.text }}</p>
+    </div>
+    <p class="qa-ai-explanation__meta">
+      {{ explanation.result.source_label }}.
+      {% if not explanation.result.generated %}
+        Live AI is unavailable; the deterministic result above is unchanged.
+        {% if is_htmx_fragment %}
+          Choose the same question again to retry.
+        {% else %}
+          Return to {{ explanation.surface_label|lower }} and choose the same question again to retry.
+        {% endif %}
+      {% elif explanation.cache_status == "persistent_hit" %}
+        Reused from the validated explanation cache.
+      {% endif %}
+    </p>
+  </section>
+{% endif %}

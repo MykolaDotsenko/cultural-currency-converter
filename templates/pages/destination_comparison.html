@@ -209,6 +209,64 @@
           This is not a universal cost-of-living index, purchasing-power-parity measure or financial advice.
         </span>
       </div>
+      {% if comparison.ai_explanation %}
+        <section class="qa-ai-explanation-entry" aria-labelledby="comparison-ai-title">
+          <div>
+            <p class="qa-foundation-kicker">Optional AI · signed comparison facts only</p>
+            <h3 id="comparison-ai-title">Ask about this exact comparison</h3>
+            <p>
+              AI can explain the trusted side-by-side result, evidence coverage or reviewed payment
+              context. It cannot rank destinations, create missing prices or change either rate.
+            </p>
+          </div>
+          <div class="qa-result-actions"
+               aria-label="Suggested comparison explanation questions">
+            {% for prompt in comparison.ai_explanation.prompts %}
+              <form method="post"
+                    action="{% url 'comparison_explanation' %}"
+                    data-ai-explanation-trigger
+                    data-ai-explanation-label="{{ prompt.label }}"
+                    data-ai-explanation-region="comparison-explanation-region"
+                    data-ai-client-status="comparison-explanation-client-status"
+                    data-ai-announcer="comparison-explanation-announcer"
+                    hx-post="{% url 'comparison_explanation' %}"
+                    hx-target="#comparison-explanation-region"
+                    hx-swap="innerHTML"
+                    hx-sync="#comparison-explanation-region:replace"
+                    hx-disabled-elt="button"
+                    hx-indicator="#comparison-explanation-loading">
+                {% csrf_token %}
+                <input type="hidden"
+                       name="grounded_explanation_token"
+                       value="{{ prompt.token }}">
+                <button class="qa-secondary-button"
+                        type="submit"
+                        aria-controls="comparison-explanation-region">{{ prompt.label }}</button>
+              </form>
+            {% endfor %}
+          </div>
+          <div class="qa-ai-explanation-status">
+            <span id="comparison-explanation-loading"
+                  class="qa-loading-indicator htmx-indicator"
+                  aria-hidden="true">Explaining signed comparison facts…</span>
+            <p id="comparison-explanation-client-status"
+               class="qa-field__message"
+               tabindex="-1"></p>
+            <span id="comparison-explanation-announcer"
+                  class="qa-visually-hidden"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"></span>
+          </div>
+          <div id="comparison-explanation-region"
+               class="qa-ai-explanation-region"
+               data-ai-pending-requests="0"
+               data-ai-client-status="comparison-explanation-client-status"
+               data-ai-announcer="comparison-explanation-announcer"
+               aria-busy="false"
+               aria-live="polite"></div>
+        </section>
+      {% endif %}
       <div class="qa-continuity-note" aria-label="Saved comparison continuity">
         <div>
           <strong>Save the inputs, not today’s answer.</strong>

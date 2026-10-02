@@ -152,6 +152,29 @@ def test_market_interpretation_filter_still_rejects_standalone_gain(packet):
         validate_provider_payload(payload, packet=packet)
 
 
+def test_contextual_ranking_guard_rejects_positive_destination_ranking(packet):
+    payload = _valid_payload()
+    payload["next_step"] = _insight(
+        "This destination is cheaper.",
+        ["reference_scope"],
+    )
+
+    with pytest.raises(ExplanationValidationError, match="ranking or affordability"):
+        validate_provider_payload(payload, packet=packet)
+
+
+def test_contextual_ranking_guard_allows_explicit_no_ranking_guardrail(packet):
+    payload = _valid_payload()
+    payload["next_step"] = _insight(
+        "No winner is calculated by this explanation.",
+        ["reference_scope"],
+    )
+
+    result = validate_provider_payload(payload, packet=packet)
+
+    assert result.next_step.text == "No winner is calculated by this explanation."
+
+
 def test_validator_rejects_extra_schema_fields_even_if_provider_schema_would_normally_block_them(
     packet,
 ):

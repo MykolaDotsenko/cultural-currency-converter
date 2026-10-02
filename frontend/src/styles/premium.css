@@ -1374,6 +1374,11 @@ h3 {
   line-height: 1.65;
 }
 
+.qa-budget-interpretation .qa-ai-explanation-entry p:not(.qa-foundation-kicker),
+.qa-budget-interpretation .qa-ai-explanation p {
+  color: var(--color-ink);
+}
+
 .qa-budget-interpretation__reference,
 .qa-budget-interpretation__daily {
   flex: 0 0 auto;
