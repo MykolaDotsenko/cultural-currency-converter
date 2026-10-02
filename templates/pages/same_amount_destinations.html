@@ -129,8 +129,7 @@
       {% endif %}
       <div class="qa-same-amount__grid">
         {% for item in same_amount.destinations %}
-          <article class="qa-same-amount-card"
-                   data-destination-token="{{ item.token }}">
+          <article class="qa-same-amount-card" data-destination-token="{{ item.token }}">
             <header class="qa-same-amount-card__header">
               <div>
                 <p class="qa-foundation-kicker">{{ item.currency_code }} · current reference</p>
