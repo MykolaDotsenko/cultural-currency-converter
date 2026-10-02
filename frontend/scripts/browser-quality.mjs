@@ -2489,10 +2489,7 @@ try {
         }
       }
 
-      if (
-        BROWSER_SCOPE === "full" &&
-        ["reflow-640", "reflow-320"].includes(viewport.name)
-      ) {
+      if (BROWSER_SCOPE === "full" && ["reflow-640", "reflow-320"].includes(viewport.name)) {
         await assertTextExpansion(page, `${surface.name}/${viewport.name}`);
       }
 
