@@ -143,6 +143,8 @@ Motion should explain a state change, not decorate a static screen.
 
 Prefer flexible layout rules over fixed replicas.
 
+Use the shared `--qa-space-*` scale for repeated structural spacing. Add a token when a spacing value is intentionally reused across product surfaces; keep one-off optical adjustments local and documented by context. Frontend quality checks reject references to undefined CSS custom properties.
+
 Components should survive:
 
 - narrow screens;
