@@ -176,6 +176,23 @@ def test_comparison_get_is_provider_free(client, comparison_reference_data):
 
 
 @pytest.mark.django_db
+def test_comparison_get_prefills_one_canonical_destination_without_provider_call(
+    client,
+    comparison_reference_data,
+):
+    with patch("apps.exchange.views.build_latest_quote_gateway") as provider_factory:
+        response = client.get(
+            reverse("destination_comparison"),
+            {"left_destination": "JP:tokyo"},
+        )
+
+    assert response.status_code == 200
+    assert response.context["form"]["left_destination"].value() == "JP:tokyo"
+    assert response.context["form"]["right_destination"].value() in (None, "")
+    provider_factory.assert_not_called()
+
+
+@pytest.mark.django_db
 def test_comparison_post_uses_two_trusted_conversions_and_preserves_scope(
     client,
     comparison_reference_data,
