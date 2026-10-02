@@ -99,6 +99,64 @@
         </div>
       {% endwith %}
     {% endif %}
+    {% if budget_interpretation.result and budget_interpretation.ai_explanation %}
+      <section class="qa-ai-explanation-entry"
+               aria-labelledby="budget-ai-title">
+        <div>
+          <p class="qa-foundation-kicker">Optional AI · signed budget facts only</p>
+          <h4 id="budget-ai-title">Ask about this exact interpretation</h4>
+          <p>
+            Each question is bound to the deterministic result above. AI cannot change the
+            conversion, basket totals, evidence coverage or destination scope.
+          </p>
+        </div>
+        <div class="qa-result-actions" aria-label="Suggested budget explanation questions">
+          {% for prompt in budget_interpretation.ai_explanation.prompts %}
+            <form method="post"
+                  action="{% url 'budget_explanation' %}"
+                  data-ai-explanation-trigger
+                  data-ai-explanation-label="{{ prompt.label }}"
+                  data-ai-explanation-region="budget-explanation-region"
+                  data-ai-client-status="budget-explanation-client-status"
+                  data-ai-announcer="budget-explanation-announcer"
+                  hx-post="{% url 'budget_explanation' %}"
+                  hx-target="#budget-explanation-region"
+                  hx-swap="innerHTML"
+                  hx-sync="#budget-explanation-region:replace"
+                  hx-disabled-elt="button"
+                  hx-indicator="#budget-explanation-loading">
+              {% csrf_token %}
+              <input type="hidden"
+                     name="grounded_explanation_token"
+                     value="{{ prompt.token }}">
+              <button class="qa-secondary-button"
+                      type="submit"
+                      aria-controls="budget-explanation-region">{{ prompt.label }}</button>
+            </form>
+          {% endfor %}
+        </div>
+        <div class="qa-ai-explanation-status">
+          <span id="budget-explanation-loading"
+                class="qa-loading-indicator htmx-indicator"
+                aria-hidden="true">Explaining signed budget facts…</span>
+          <p id="budget-explanation-client-status"
+             class="qa-field__message"
+             tabindex="-1"></p>
+          <span id="budget-explanation-announcer"
+                class="qa-visually-hidden"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"></span>
+        </div>
+        <div id="budget-explanation-region"
+             class="qa-ai-explanation-region"
+             data-ai-pending-requests="0"
+             data-ai-client-status="budget-explanation-client-status"
+             data-ai-announcer="budget-explanation-announcer"
+             aria-busy="false"
+             aria-live="polite"></div>
+      </section>
+    {% endif %}
     <form class="qa-budget-interpretation__form"
           method="post"
           action="{% url 'budget_interpretation' %}"
