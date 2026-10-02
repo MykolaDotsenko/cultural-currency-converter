@@ -106,9 +106,7 @@ def explore(request: HttpRequest) -> HttpResponse:
         destination_cards = build_explore_destination_cards(destinations)
 
         try:
-            region_components = build_explore_region_components(
-                build_explore_regions(destinations)
-            )
+            region_components = build_explore_region_components(build_explore_regions(destinations))
         except DatabaseError as exc:
             logger.warning(
                 "Explore regional navigation composition failed",
