@@ -13,8 +13,7 @@ export const PERFORMANCE_BUDGETS = Object.freeze({
   rateChartGzipBytes: 64 * 1024,
   rateChartLoaderGzipBytes: 1 * 1024,
   converterEnhancementsGzipBytes: 6 * 1024,
-  localSavedStateGzipBytes: 6 * 1024,
-  savedStateGzipBytes: 8 * 1024,
+  localSavedStateGzipBytes: 8 * 1024,
   initialRequestCount: 5,
   initialLayoutShift: 0.1,
 });
@@ -101,14 +100,7 @@ export async function measureBuildAssets() {
         "converter-enhancements-",
         "converter-enhancements",
       ),
-      localSavedState: uniqueMatchingAsset(
-        dynamicFiles,
-        (file) =>
-          file.name.startsWith("local-saved-state-") &&
-          !file.name.startsWith("local-saved-state-page-"),
-        "local-saved-state",
-      ),
-      savedState: uniquePrefixedAsset(dynamicFiles, "local-saved-state-page-", "saved-state"),
+      localSavedState: uniquePrefixedAsset(dynamicFiles, "local-saved-state-", "local-saved-state"),
       rateChartLoader: uniquePrefixedAsset(dynamicFiles, "rate-chart-loader-", "rate-chart-loader"),
       rateChart: uniqueMatchingAsset(
         dynamicFiles,
@@ -154,11 +146,6 @@ export function assertBuildPerformanceBudgets(evidence, budgets = PERFORMANCE_BU
       "local saved-state chunk gzip",
       evidence.namedDynamicFiles.localSavedState.gzipBytes,
       budgets.localSavedStateGzipBytes,
-    ],
-    [
-      "saved-state page chunk gzip",
-      evidence.namedDynamicFiles.savedState.gzipBytes,
-      budgets.savedStateGzipBytes,
     ],
   ];
 
