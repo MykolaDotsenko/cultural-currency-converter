@@ -1943,10 +1943,7 @@ async function assertCityProfileQuality(page) {
   await page.getByRole("heading", { level: 1 }).waitFor();
 
   const priceCards = page.locator(".qa-city-profile__price-card");
-  assert(
-    (await priceCards.count()) > 0,
-    "city-profile: expected at least one reviewed price card",
-  );
+  assert((await priceCards.count()) > 0, "city-profile: expected at least one reviewed price card");
   assert(
     (await page.locator(".qa-city-profile__hero-actions .qa-primary-button").count()) === 1,
     "city-profile: hero must expose exactly one primary action",
@@ -1986,7 +1983,8 @@ async function assertExploreFlow(page) {
   const jumpNav = page.locator(".qa-explore-jump-nav");
   assert(
     (await jumpNav.getByRole("link", { name: "Same amount", exact: true }).count()) === 1 &&
-      (await jumpNav.getByRole("link", { name: "Curated collections", exact: true }).count()) === 1 &&
+      (await jumpNav.getByRole("link", { name: "Curated collections", exact: true }).count()) ===
+        1 &&
       (await jumpNav.getByRole("link", { name: "Regions & cities", exact: true }).count()) === 1,
     "explore: compact section navigation is incomplete",
   );
@@ -2089,7 +2087,7 @@ async function assertExploreFlow(page) {
       return Boolean(
         collections &&
           ai &&
-          (collections.compareDocumentPosition(ai) & Node.DOCUMENT_POSITION_FOLLOWING),
+          collections.compareDocumentPosition(ai) & Node.DOCUMENT_POSITION_FOLLOWING,
       );
     });
     assert(
