@@ -609,6 +609,13 @@ h3 {
   text-decoration-color: color-mix(in srgb, var(--color-muted) 40%, transparent);
 }
 
+.qa-story-source-list a {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--qa-space-2);
+}
+
 .qa-payment-list {
   border-block: 1px solid var(--qa-hairline);
 }
