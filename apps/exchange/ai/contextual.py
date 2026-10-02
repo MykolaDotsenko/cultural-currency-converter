@@ -501,11 +501,10 @@ def _destination_label(context: MoneyContext) -> str:
 def _budget_coverage_statement(interpretation: BudgetInterpretation) -> str:
     if interpretation.state is BudgetInterpretationState.COMPLETE:
         return "All selected reference categories matched current sourced anchors."
-    missing = ", ".join(category.replace("_", " ") for category in interpretation.missing_categories)
-    return (
-        "The evidence is incomplete for the selected basket. "
-        f"Missing categories are: {missing}."
+    missing = ", ".join(
+        category.replace("_", " ") for category in interpretation.missing_categories
     )
+    return f"The evidence is incomplete for the selected basket. Missing categories are: {missing}."
 
 
 def _budget_band_statement(interpretation: BudgetInterpretation) -> str:
@@ -516,7 +515,9 @@ def _budget_band_statement(interpretation: BudgetInterpretation) -> str:
     }
     label = labels.get(interpretation.band)
     if label is None:
-        return "No deterministic budget band is produced while selected basket evidence is incomplete."
+        return (
+            "No deterministic budget band is produced while selected basket evidence is incomplete."
+        )
     return f"The deterministic available-amount comparison is {label}."
 
 
