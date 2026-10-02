@@ -312,7 +312,7 @@ Create a coherent city money profile using existing canonical context:
 - Compare;
 - Save/My Places handoff.
 
-**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. Reviewed country/city identity can now be saved through browser-local My Places and reopened from Saved & recent; durable account-owned SavedPlace persistence/sync is still future work.
+**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. Reviewed country/city identity can be saved browser-locally when anonymous or as owner-scoped SavedPlace when signed in; account re-entry resolves current primary currency again instead of replaying a stored currency snapshot.
 
 ## PR #193 — City/national fallback trust audit
 
@@ -382,7 +382,7 @@ No comparison business logic belongs in Explore.
 
 Add save-place interaction contract; durable persistence is completed in the personalization phase.
 
-**Current production slice:** shipped as browser-local persistence. Reviewed country/city rows use the versioned local SavedPlace contract with validation, dedupe and bounded retention; no-JS/storage-unavailable states do not render fake controls. Durable account ownership/sync remains future work.
+**Current production slice:** shipped in both browser-local and owner-scoped modes. Anonymous rows use the versioned local My Places contract with validation, dedupe and bounded retention; signed-in Explore saves use the canonical account SavedPlace service with no-JS fallback. Existing browser-local rows are never imported just because sign-in occurred; migration is an explicit idempotent action from Saved & recent, and confirmed local copies are removed only after account commit succeeds.
 
 ## PR #199 — Explore → contextual AI
 
@@ -499,7 +499,7 @@ Constraints:
 - owner duplicates prevented;
 - ownership enforced.
 
-**Current status:** this durable account-owned domain is **not shipped**. What is shipped is a browser-local versioned SavedPlace contract plus Saved & recent continuity. Sign-in does not silently migrate or sync those local places.
+**Current production slice:** shipped. `SavedPlace` is owner-scoped and stores only canonical country plus optional canonical city; current currency is deliberately resolved again at read time. Per-owner country/city duplicates are prevented, supported writes validate city/country identity, and delete/clear/read paths are owner-scoped. Anonymous My Places remains a separate browser-local contract.
 
 ## PR #209 — My Places UX
 
@@ -511,6 +511,8 @@ Provide:
 - Explore;
 - Create trip;
 - Remove.
+
+**Current production slice:** Saved & recent renders account My Places with Convert, Budget, Compare, Explore/City Profile and Remove actions. Explore supports signed-in account saves plus a server-rendered no-JS save fallback. Create-trip remains a separate future action rather than being invented implicitly.
 
 ## PR #210 — Explicit user preferences
 
@@ -526,6 +528,8 @@ Do not silently infer a sensitive travel/financial profile.
 ## PR #211 — Browser-local → account migration
 
 Define explicit, idempotent migration for supported browser-local state.
+
+**Current production slice:** browser-local My Places migration is explicit from Saved & recent. The server validates the complete requested batch before writes and unions canonical identities idempotently under the authenticated owner. Local copies are removed only after a successful account response; a cleanup failure leaves those browser records in place and does not misrepresent the already-committed account import.
 
 Requirements:
 
@@ -924,9 +928,13 @@ Share only explicitly selected, non-sensitive context.
 
 Persist canonical comparison inputs and user intent, not a duplicated calculation engine.
 
+**Current production slice:** shipped as owner-scoped `SavedComparison` + normalized basket rows. Persistence stores source amount/currency, canonical left/right scopes, duration/travelers and explicit reference-basket units only. Signed save tokens are short-lived and contain no FX quote, local-price result, ranking, PPP output or rendered answer. Database constraints bound amount/duration/travelers/category/unit semantics and per-owner fingerprints make retries idempotent.
+
 ## PR #260 — Reopen comparison
 
 Current reference values are recalculated only through explicit user action and the canonical comparison path.
+
+**Current production slice:** shipped. Reopen is a GET that pre-fills the canonical comparison form and makes no provider call. Re-check is a distinct POST of the saved canonical fields back to Destination Comparison, which is the only path allowed to obtain current rates/context.
 
 ---
 

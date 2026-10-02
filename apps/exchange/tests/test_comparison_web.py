@@ -3,13 +3,16 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
+from urllib.parse import parse_qs, quote, urlparse
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import CulturalProfile, TypicalPrice
+from apps.exchange.comparison_snapshot import load_saved_comparison_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
 from apps.exchange.providers.base import FxProviderUnavailable
 
@@ -190,6 +193,98 @@ def test_comparison_get_prefills_one_canonical_destination_without_provider_call
     assert response.context["form"]["left_destination"].value() == "JP:tokyo"
     assert response.context["form"]["right_destination"].value() in (None, "")
     provider_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_comparison_get_reopens_all_saved_inputs_without_provider_call(
+    client,
+    comparison_reference_data,
+):
+    query = _payload(
+        amount="725.50",
+        duration_days="8",
+        travelers="3",
+        units_coffee="1.5",
+        units_casual_meal="1",
+        units_transit="4",
+    )
+
+    with patch("apps.exchange.views.build_latest_quote_gateway") as provider_factory:
+        response = client.get(reverse("destination_comparison"), query)
+
+    assert response.status_code == 200
+    form = response.context["form"]
+    assert form["amount"].value() == "725.50"
+    assert form["source_currency"].value() == "EUR"
+    assert form["left_destination"].value() == "JP:tokyo"
+    assert form["right_destination"].value() == "NO"
+    assert form["duration_days"].value() == "8"
+    assert form["travelers"].value() == "3"
+    assert form["units_coffee"].value() == "1.5"
+    assert form["units_casual_meal"].value() == "1"
+    assert form["units_transit"].value() == "4"
+    assert response.context["comparison"] is None
+    assert response.context["comparison_save_token"] == ""
+    provider_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_successful_signed_in_comparison_exposes_signed_input_only_save_action(
+    client,
+    comparison_reference_data,
+):
+    user = get_user_model().objects.create_user(
+        username="comparison-owner",
+        password="StrongPass-482!",
+    )
+    client.force_login(user)
+    gateway = ComparisonGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    token = response.context["comparison_save_token"]
+    snapshot = load_saved_comparison_token(token)
+    assert snapshot.source_amount == Decimal("500.00")
+    assert snapshot.source_currency_code == "EUR"
+    assert snapshot.left_destination == "JP:tokyo"
+    assert snapshot.right_destination == "NO"
+    assert snapshot.assumptions.duration_days == 3
+    assert snapshot.assumptions.travelers == 1
+    assert b'action="/saved/comparisons/create/"' in response.content
+    assert b'name="comparison_save_token"' in response.content
+    assert b"Save the inputs, not today" in response.content
+
+
+@pytest.mark.django_db
+def test_anonymous_comparison_result_offers_sign_in_without_auto_persistence(
+    client,
+    comparison_reference_data,
+):
+    gateway = ComparisonGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    assert b"Sign in to save comparisons" in response.content
+    assert b'action="/saved/comparisons/create/"' not in response.content
+    body = response.content.decode()
+    reopen_url = response.context["comparison_reopen_url"]
+    parsed_reopen = urlparse(reopen_url)
+    params = parse_qs(parsed_reopen.query)
+    assert parsed_reopen.path == reverse("destination_comparison")
+    assert params["amount"] == ["500"]
+    assert params["source_currency"] == ["EUR"]
+    assert params["left_destination"] == ["JP:tokyo"]
+    assert params["right_destination"] == ["NO"]
+    assert params["duration_days"] == ["3"]
+    assert params["travelers"] == ["1"]
+    assert "rate" not in params
+    assert "result" not in params
+    expected_href = f"{reverse('login')}?next={quote(reopen_url)}"
+    assert f'href="{expected_href}"' in body
 
 
 @pytest.mark.django_db

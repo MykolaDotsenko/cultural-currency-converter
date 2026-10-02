@@ -1,3 +1,4 @@
+import { accountPlaceSyncAvailable, importLocalPlacesToAccount } from "./account-places";
 import {
   type LocalPreferencesV1,
   type PairContext,
@@ -476,6 +477,8 @@ function renderSavedPage(overrideMessage = ""): void {
   const clearFavourites = page.querySelector<HTMLButtonElement>("[data-clear-favourites]");
   const clearPlaces = page.querySelector<HTMLButtonElement>("[data-clear-places]");
   const clearRecents = page.querySelector<HTMLButtonElement>("[data-clear-recents]");
+  const importPlaces = page.querySelector<HTMLButtonElement>("[data-import-local-places]");
+  const importSummary = page.querySelector<HTMLElement>("[data-local-place-migration-summary]");
   const unavailable = read.status === "unavailable";
   if (clearFavourites) {
     const canClearFavourites = !unavailable && read.state.favourites.length > 0;
@@ -486,6 +489,27 @@ function renderSavedPage(overrideMessage = ""): void {
     const canClearPlaces = !unavailable && read.state.places.length > 0;
     clearPlaces.hidden = !canClearPlaces;
     clearPlaces.disabled = !canClearPlaces;
+  }
+  if (importPlaces) {
+    const canImport =
+      page.dataset.accountMode === "true" &&
+      accountPlaceSyncAvailable() &&
+      !unavailable &&
+      read.state.places.length > 0;
+    importPlaces.hidden = !canImport;
+    importPlaces.disabled = !canImport;
+  }
+  if (importSummary && page.dataset.accountMode === "true") {
+    importSummary.removeAttribute("data-local-pending");
+    if (unavailable) {
+      importSummary.textContent =
+        "Browser-only places cannot be read on this device, so nothing can be imported.";
+    } else if (read.state.places.length === 0) {
+      importSummary.textContent =
+        "No browser-only places are waiting to be imported on this device.";
+    } else {
+      importSummary.textContent = `${read.state.places.length} browser-only place${read.state.places.length === 1 ? "" : "s"} remain on this device. Import is always explicit.`;
+    }
   }
   if (clearRecents) {
     const canClearRecents = !unavailable && read.state.recent.length > 0;
@@ -528,6 +552,39 @@ export function wireSavedPage(): void {
           : "Recent history cleared from this browser.";
       persistAndRender({ ...read.state, recent: [] }, message);
     });
+    page
+      .querySelector<HTMLButtonElement>("[data-import-local-places]")
+      ?.addEventListener("click", async (event) => {
+        const button = event.currentTarget as HTMLButtonElement;
+        const status = page.querySelector<HTMLElement>("[data-local-place-migration-status]");
+        button.disabled = true;
+        if (status) {
+          status.textContent = "Importing browser-only places to your account…";
+          status.setAttribute("aria-live", "polite");
+        }
+
+        try {
+          const result = await importLocalPlacesToAccount();
+          if (status) {
+            status.textContent =
+              result.importedCount === 0
+                ? "There were no browser-only places to import."
+                : result.localCleanupSucceeded
+                  ? `Imported ${result.importedCount} browser-only place${result.importedCount === 1 ? "" : "s"} to your account and removed the confirmed local copies.`
+                  : `Imported ${result.importedCount} browser-only place${result.importedCount === 1 ? "" : "s"} to your account. The browser copies could not be cleared, so they remain safely on this device.`;
+          }
+          if (result.importedCount > 0 && result.localCleanupSucceeded) {
+            window.location.reload();
+            return;
+          }
+        } catch {
+          if (status) {
+            status.textContent =
+              "Import failed. Your browser-only places are unchanged and can be retried.";
+          }
+        }
+        renderSavedPage();
+      });
   }
 
   renderSavedPage();

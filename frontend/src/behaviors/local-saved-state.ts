@@ -3,6 +3,11 @@ import {
   saveFavouriteToAccount,
   syncLocalFavouritesToAccount,
 } from "./account-favourites";
+import {
+  accountPlaceSyncAvailable,
+  loadAccountSavedPlaceTokens,
+  savePlaceToAccount,
+} from "./account-places";
 import { wireSavedPage } from "./local-saved-state-page";
 import {
   isFavourite,
@@ -230,20 +235,90 @@ function toggleSavedPlace(surface: HTMLElement): void {
   );
 }
 
+function setAccountPlaceSurfaceState(surface: HTMLElement, saved: boolean): void {
+  const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+  const label = surface.querySelector<HTMLElement>("[data-save-place-label]");
+  const place = placeFromSurface(surface);
+  if (!button || !label || !place) {
+    if (button) button.hidden = true;
+    return;
+  }
+
+  const placeName = place.cityName ? `${place.cityName}, ${place.countryName}` : place.countryName;
+  button.hidden = false;
+  button.disabled = saved;
+  button.removeAttribute("aria-pressed");
+  button.setAttribute(
+    "aria-label",
+    saved ? `Place saved to account: ${placeName}` : `Save place to account: ${placeName}`,
+  );
+  button.dataset.saved = saved ? "true" : "false";
+  label.textContent = saved ? "Saved to account" : "Save to account";
+}
+
+async function saveAccountPlace(surface: HTMLElement): Promise<void> {
+  const place = placeFromSurface(surface);
+  const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+  if (!place || !button) return;
+
+  button.disabled = true;
+  placeStatus(surface, "Saving place to your account…");
+  try {
+    const created = await savePlaceToAccount(place);
+    surface.dataset.accountSaved = "true";
+    setAccountPlaceSurfaceState(surface, true);
+    placeStatus(
+      surface,
+      created ? "Place saved to your account." : "This place is already saved to your account.",
+    );
+    enhanceExploreSavedPlaces();
+  } catch {
+    setAccountPlaceSurfaceState(surface, false);
+    placeStatus(
+      surface,
+      "The place could not be saved to your account. Nothing was removed from this device.",
+    );
+  }
+}
+
 function enhanceExploreSavedPlaces(): void {
   const surfaces = document.querySelectorAll<HTMLElement>("[data-local-saved-place]");
   if (surfaces.length === 0) return;
 
+  const accountMode = accountPlaceSyncAvailable();
   const read = readState();
   for (const surface of surfaces) {
-    setPlaceSurfaceState(surface, read.state, read.status);
+    if (accountMode) {
+      setAccountPlaceSurfaceState(surface, surface.dataset.accountSaved === "true");
+    } else {
+      setPlaceSurfaceState(surface, read.state, read.status);
+    }
     if (surface.dataset.savePlaceWired === "true") continue;
 
     const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
     if (!button) continue;
 
     surface.dataset.savePlaceWired = "true";
-    button.addEventListener("click", () => toggleSavedPlace(surface));
+    button.addEventListener("click", () => {
+      if (accountMode) void saveAccountPlace(surface);
+      else toggleSavedPlace(surface);
+    });
+  }
+
+  if (accountMode) {
+    void loadAccountSavedPlaceTokens()
+      .then((tokens) => {
+        for (const surface of surfaces) {
+          const place = placeFromSurface(surface);
+          if (!place) continue;
+          const saved = tokens.has(place.token) || surface.dataset.accountSaved === "true";
+          surface.dataset.accountSaved = saved ? "true" : "false";
+          setAccountPlaceSurfaceState(surface, saved);
+        }
+      })
+      .catch(() => {
+        // Saving remains available and idempotent even if the read-state probe fails.
+      });
   }
 }
 

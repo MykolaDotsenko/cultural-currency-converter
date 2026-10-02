@@ -106,6 +106,69 @@ class FavouritePair(models.Model):
         return f"{self.user_id}: {self.source_currency.code} → {self.destination_currency.code}"
 
 
+class SavedPlace(models.Model):
+    """Canonical account-owned destination shortcut.
+
+    The current primary currency is intentionally not persisted. Re-entry
+    resolves it from CountryCurrency at read time so a future currency change
+    cannot leave stale financial context attached to the saved identity.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saved_places",
+    )
+    country = models.ForeignKey(
+        Country,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    city = models.ForeignKey(
+        City,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "country"),
+                condition=Q(city__isnull=True),
+                name="unique_saved_place_country",
+            ),
+            models.UniqueConstraint(
+                fields=("user", "city"),
+                condition=Q(city__isnull=False),
+                name="unique_saved_place_city",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("user", "-updated_at"),
+                name="travel_place_user_upd_idx",
+            )
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        if self.city_id and self.city.country_id != self.country_id:
+            raise ValidationError({"city": "Saved city must belong to the saved country."})
+
+    @property
+    def token(self) -> str:
+        return f"{self.country.iso2}:{self.city.slug}" if self.city_id else self.country.iso2
+
+    def __str__(self) -> str:
+        label = f"{self.city.name}, {self.country.name}" if self.city_id else self.country.name
+        return f"{self.user_id}: {label}"
+
+
 class RecentConversion(models.Model):
     class RateMode(models.TextChoices):
         LATEST = "latest", "Latest available"
@@ -176,6 +239,165 @@ class RecentConversion(models.Model):
             f"{self.user_id}: {self.input_amount} {self.source_currency.code}"
             f" → {self.output_amount} {self.destination_currency.code}"
         )
+
+
+class SavedComparison(models.Model):
+    """Owner-scoped canonical inputs for a reusable destination comparison.
+
+    No FX quote, local-price result, ranking or computed comparison output is
+    persisted here. Re-checks always return through the canonical comparison
+    form/application path.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saved_comparisons",
+    )
+    fingerprint = models.CharField(max_length=64)
+    source_currency = models.ForeignKey(
+        Currency,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    source_amount = models.DecimalField(max_digits=40, decimal_places=12)
+    left_country = models.ForeignKey(
+        Country,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    left_city = models.ForeignKey(
+        City,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    right_country = models.ForeignKey(
+        Country,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    right_city = models.ForeignKey(
+        City,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    duration_days = models.PositiveSmallIntegerField()
+    travelers = models.PositiveSmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "fingerprint"),
+                name="unique_saved_comparison",
+            ),
+            models.CheckConstraint(
+                condition=Q(source_amount__gte=0),
+                name="saved_cmp_amount_nonnegative",
+            ),
+            models.CheckConstraint(
+                condition=Q(source_amount__lte=1_000_000_000),
+                name="saved_cmp_amount_max",
+            ),
+            models.CheckConstraint(
+                condition=~(
+                    Q(left_country=models.F("right_country"))
+                    & Q(left_city__isnull=True, right_city__isnull=True)
+                ),
+                name="saved_cmp_country_scopes_differ",
+            ),
+            models.CheckConstraint(
+                condition=~(
+                    Q(left_city=models.F("right_city"))
+                    & Q(left_city__isnull=False, right_city__isnull=False)
+                ),
+                name="saved_cmp_city_scopes_differ",
+            ),
+            models.CheckConstraint(
+                condition=Q(duration_days__gte=1, duration_days__lte=365),
+                name="saved_cmp_duration_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(travelers__gte=1, travelers__lte=20),
+                name="saved_cmp_travelers_range",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("user", "-updated_at"),
+                name="travel_cmp_user_upd_idx",
+            )
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        if self.left_city_id and self.left_city.country_id != self.left_country_id:
+            raise ValidationError({"left_city": "Destination A city must belong to its country."})
+        if self.right_city_id and self.right_city.country_id != self.right_country_id:
+            raise ValidationError({"right_city": "Destination B city must belong to its country."})
+        if (
+            self.left_country_id == self.right_country_id
+            and self.left_city_id == self.right_city_id
+        ):
+            raise ValidationError("Saved comparison destinations must be different scopes.")
+
+    @property
+    def left_token(self) -> str:
+        return (
+            f"{self.left_country.iso2}:{self.left_city.slug}"
+            if self.left_city_id
+            else self.left_country.iso2
+        )
+
+    @property
+    def right_token(self) -> str:
+        return (
+            f"{self.right_country.iso2}:{self.right_city.slug}"
+            if self.right_city_id
+            else self.right_country.iso2
+        )
+
+    def __str__(self) -> str:
+        return (
+            f"{self.user_id}: {self.source_amount} {self.source_currency.code} · "
+            f"{self.left_token} ↔ {self.right_token}"
+        )
+
+
+class SavedComparisonBudgetItem(models.Model):
+    comparison = models.ForeignKey(
+        SavedComparison,
+        on_delete=models.CASCADE,
+        related_name="budget_items",
+    )
+    category = models.CharField(max_length=24)
+    units_per_person_per_day = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta:
+        ordering = ("category", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("comparison", "category"),
+                name="unique_saved_cmp_category",
+            ),
+            models.CheckConstraint(
+                condition=Q(units_per_person_per_day__gt=0) & Q(units_per_person_per_day__lte=100),
+                name="saved_cmp_units_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(category__in=("coffee", "casual_meal", "transit")),
+                name="saved_cmp_category_allowed",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.comparison_id}: {self.category} x {self.units_per_person_per_day}"
 
 
 class SavedScenarioKind(models.TextChoices):

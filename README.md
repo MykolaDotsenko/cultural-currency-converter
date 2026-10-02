@@ -21,7 +21,7 @@ The arithmetic is the easy part. A useful currency product also has to answer:
 - **Which rate was used?** Current and historical conversions keep source and effective-date semantics explicit.
 - **What happens when a provider fails?** Core conversion still works if optional media, enrichment or AI is unavailable.
 - **Where did local context come from?** Destination content and managed media keep provenance instead of presenting generated filler as fact.
-- **Who owns saved data?** Anonymous favourites, recent conversions and My Places stay browser-local; signed-in favourites, saved scenarios and opt-in account history are owner-scoped. Browser-local My Places do not silently become account data.
+- **Who owns saved data?** Anonymous favourites, recent conversions and My Places stay browser-local. Signed-in favourites, saved scenarios, SavedComparison and My Places are owner-scoped; browser-local My Places move to the account only through an explicit import action.
 
 Those boundaries are more important to this project than adding another conversion widget.
 
@@ -43,8 +43,9 @@ Those boundaries are more important to this project than adding another conversi
 - self-contained offline destination-pack export using stored FX/freshness semantics and reviewed destination context;
 - provider-free regional Explore discovery over reviewed country/canonical-city money context, with five provenance-bearing collections, region → country → city navigation and canonical Converter/City Profile handoffs;
 - Same Amount Across Destinations for two to four explicit destinations, preserving independent rate/provider/date/scope/provenance semantics without ranking, PPP or affordability claims;
-- canonical one-sided Compare handoffs from Explore, browser-local My Places, saved scenarios, favourites and recent conversions; Destination B is never inferred;
-- browser-local My Places with reviewed country/city identity, bounded/deduplicated persistence and Saved-page continuity into Convert, Compare and City Profile; account-owned SavedPlace sync remains future work;
+- canonical one-sided Compare handoffs from Explore, My Places, saved scenarios, favourites and recent conversions; Destination B is never inferred;
+- durable My Places with owner-scoped canonical country/city identity, current-currency re-resolution, explicit browser-local → account import and Saved-page continuity into Convert, Budget, Compare and City Profile;
+- owner-scoped SavedComparison persistence that stores only canonical inputs/explicit basket assumptions; Reopen is provider-free and Re-check returns through the canonical comparison POST path;
 - provider-free City Money Profile pages with direct-city evidence requirements, explicit city/national scope, reviewed price/payment context and provenance;
 - read-only `report_city_coverage` maintenance diagnostics for reviewed city-price freshness, national fallback and provenance gaps; its score is operational only, never a cost-of-living ranking;
 - Historical Series chronology with factual range landmarks and Then & Now, plus Money & culture currency-era / reviewed-story exploration that keeps historical FX separate from historical purchasing power;

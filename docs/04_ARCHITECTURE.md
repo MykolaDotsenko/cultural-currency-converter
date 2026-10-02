@@ -101,7 +101,7 @@ The Money Context Engine is not a second datastore, rate provider or calculation
 
 Destination mode is deliberately an entry adapter, not a second conversion engine. It resolves an explicit current country/city selection to the current primary destination currency, then redirects to the canonical converter with normalized destination scope. It performs no FX-provider call itself; conversion truth, source/effective-date semantics and context composition remain centralized.
 
-`apps/culture/explore.py` is a provider-free discovery query over that same reviewed context layer. It first identifies published/fresh candidate country and canonical-city scopes, then reuses `build_destination_context()` as the final provenance/freshness gate. A city is publishable in Explore only when explicit canonical city price evidence survives that gate; national fallback cannot create a city card by itself. The GET query exposes no live rate, affordability score or ranking. Its presentation layer composes five provenance-bearing collections plus canonical region → country → city navigation, and hands exact scope into Converter, City Money Profile, one-sided Destination Comparison and browser-local My Places without creating a second geography or price model.
+`apps/culture/explore.py` is a provider-free discovery query over that same reviewed context layer. It first identifies published/fresh candidate country and canonical-city scopes, then reuses `build_destination_context()` as the final provenance/freshness gate. A city is publishable in Explore only when explicit canonical city price evidence survives that gate; national fallback cannot create a city card by itself. The GET query exposes no live rate, affordability score or ranking. Its presentation layer composes five provenance-bearing collections plus canonical region → country → city navigation, and hands exact scope into Converter, City Money Profile, one-sided Destination Comparison and My Places without creating a second geography or price model. Signed-in My Places writes through the owner-scoped travel persistence service; anonymous My Places stays browser-local.
 
 Explore contextual AI is a separate explicit POST boundary, not part of the provider-free GET query. The POST accepts only a currently reviewed canonical destination plus a server-approved intent, rebuilds trusted DestinationContext server-side and forwards a bounded structured fact packet through the existing validated AI explanation stack. Raw prompts and arbitrary destination facts do not become application truth.
 
@@ -255,3 +255,10 @@ Before adding infrastructure or abstraction, ask:
 - What is the failure/operational cost?
 
 Architecture may evolve. Update this document and the ADR log when a change creates a new durable project-wide convention.
+
+
+## Durable personalization boundary
+
+`apps/travel/personalization.py` owns durable My Places and SavedComparison persistence. The browser never sends a trusted currency/rate/result for My Places: it sends only canonical country/city identity, and account re-entry resolves current currency from `CountryCurrency`. Browser-local place migration is explicit; sign-in alone does not invoke it.
+
+Destination Comparison remains the only comparison calculation path. A successful comparison may issue a short-lived signed canonical-input token. `SavedComparison` stores those inputs and normalized basket assumptions only. GET reopen is provider-free; explicit Re-check posts the saved fields back to the canonical comparison endpoint, preserving route isolation and preventing a second comparison engine.

@@ -1388,6 +1388,18 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   const localOnlyRecent = {
     version: 1,
     favourites: [],
+    places: [
+      {
+        id: "JP:tokyo",
+        token: "JP:tokyo",
+        countryCode: "JP",
+        countryName: "Japan",
+        citySlug: "tokyo",
+        cityName: "Tokyo",
+        currencyCode: "JPY",
+        savedAt: "2026-09-21T12:00:00.000Z",
+      },
+    ],
     recent: [
       {
         id: "FI:EUR:>:JP:JPY|latest|latest|100",
@@ -1431,6 +1443,34 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   assert(
     (await page.locator("[data-account-recent-id]").count()) === 0,
     "account-history: sign-up silently imported browser-local recent history",
+  );
+  assert(
+    (await page.locator("[data-account-place-id]").count()) === 0,
+    "account-places: sign-up silently imported browser-local My Places",
+  );
+  await page.getByRole("heading", { name: "Tokyo, Japan" }).waitFor();
+  const importPlaces = page.getByRole("button", {
+    name: "Import browser places to account",
+    exact: true,
+  });
+  await importPlaces.waitFor();
+  await importPlaces.click();
+  await page.waitForLoadState("networkidle");
+  assert(
+    (await page.locator("[data-account-place-id]").count()) === 1,
+    "account-places: explicit import did not create exactly one owner-scoped place",
+  );
+  const importedLocalPlaceCount = await page.evaluate((key) => {
+    const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+    return Array.isArray(state.places) ? state.places.length : -1;
+  }, LOCAL_STATE_KEY);
+  assert(
+    importedLocalPlaceCount === 0,
+    `account-places: confirmed local copies were not removed after import; count=${importedLocalPlaceCount}`,
+  );
+  assert(
+    (await page.locator('[data-saved-place-id="JP:tokyo"]').count()) === 0,
+    "account-places: browser-local row remained after successful explicit import",
   );
   await assertAxe(page, "account-history/post-signup");
 

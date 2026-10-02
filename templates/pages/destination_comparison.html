@@ -209,6 +209,29 @@
           This is not a universal cost-of-living index, purchasing-power-parity measure or financial advice.
         </span>
       </div>
+      <div class="qa-continuity-note" aria-label="Saved comparison continuity">
+        <div>
+          <strong>Save the inputs, not today’s answer.</strong>
+          <span>
+            Reopening restores the same amount, destinations, duration, travelers and basket.
+            It does not reuse rates, local prices or a previous result.
+          </span>
+        </div>
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'save_comparison' %}">
+            {% csrf_token %}
+            <input type="hidden"
+                   name="comparison_save_token"
+                   value="{{ comparison_save_token }}">
+            <button class="qa-secondary-button" type="submit">Save comparison inputs</button>
+          </form>
+        {% else %}
+          <a class="qa-secondary-button"
+             href="{% url 'login' %}?next={{ comparison_reopen_url|urlencode }}">
+            Sign in to save comparisons
+          </a>
+        {% endif %}
+      </div>
     </section>
   {% endif %}
 {% endblock %}

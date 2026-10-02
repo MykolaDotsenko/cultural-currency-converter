@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Never
+from urllib.parse import urlencode
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -15,6 +17,7 @@ from apps.exchange.comparison import (
     compare_destinations,
 )
 from apps.exchange.comparison_presentation import build_destination_comparison_component
+from apps.exchange.comparison_snapshot import build_saved_comparison_token
 from apps.exchange.forms import DestinationComparisonForm
 
 LatestGatewayFactory = Callable[[], LatestQuoteGateway]
@@ -26,6 +29,48 @@ def _comparison_category_fields(form: DestinationComparisonForm):
         for category in form.comparison_categories
         if form.units_field_name(category) in form.fields
     )
+
+
+_COMPARISON_REOPEN_FIELDS = (
+    "amount",
+    "source_currency",
+    "left_destination",
+    "right_destination",
+    "duration_days",
+    "travelers",
+    "units_coffee",
+    "units_casual_meal",
+    "units_transit",
+)
+
+
+def _comparison_initial_from_query(request: HttpRequest) -> dict[str, str] | None:
+    initial = {
+        field_name: str(request.GET.get(field_name) or "").strip()
+        for field_name in _COMPARISON_REOPEN_FIELDS
+        if str(request.GET.get(field_name) or "").strip()
+    }
+    return initial or None
+
+
+def _comparison_reopen_url(
+    form: DestinationComparisonForm,
+    cleaned: dict[str, object],
+) -> str:
+    params = {
+        "amount": str(cleaned["amount"]).strip(),
+        "source_currency": str(cleaned["source_currency"]),
+        "left_destination": str(cleaned["left_destination"]),
+        "right_destination": str(cleaned["right_destination"]),
+        "duration_days": str(cleaned["duration_days"]),
+        "travelers": str(cleaned["travelers"]),
+    }
+    for category in form.comparison_categories:
+        field_name = form.units_field_name(category)
+        value = cleaned.get(field_name)
+        if value is not None:
+            params[field_name] = format(value, "f")
+    return f"{reverse('destination_comparison')}?{urlencode(params)}"
 
 
 def _historical_gateway_not_allowed() -> Never:
@@ -50,25 +95,15 @@ def destination_comparison_view(
 ) -> HttpResponse:
     """Compare one source budget across two explicit current destination scopes."""
 
-    initial = None
-    if request.method == "GET":
-        left_destination = str(request.GET.get("left_destination") or "").strip()
-        right_destination = str(request.GET.get("right_destination") or "").strip()
-        initial_values = {
-            key: value
-            for key, value in (
-                ("left_destination", left_destination),
-                ("right_destination", right_destination),
-            )
-            if value
-        }
-        initial = initial_values or None
+    initial = _comparison_initial_from_query(request) if request.method == "GET" else None
     form = DestinationComparisonForm(
         request.POST if request.method == "POST" else None,
         initial=initial,
     )
     comparison_component = None
     comparison_error = None
+    comparison_save_token = ""
+    comparison_reopen_url = ""
     status = 200
 
     if request.method == "POST":
@@ -140,6 +175,14 @@ def destination_comparison_view(
                             left_minor_units=cleaned["left_destination_minor_units"],
                             right_minor_units=cleaned["right_destination_minor_units"],
                         )
+                        comparison_save_token = build_saved_comparison_token(
+                            source_amount=cleaned["amount_decimal"],
+                            source_currency_code=cleaned["source_currency"],
+                            left_destination=cleaned["left_destination"],
+                            right_destination=cleaned["right_destination"],
+                            assumptions=cleaned["budget_assumptions"],
+                        )
+                        comparison_reopen_url = _comparison_reopen_url(form, cleaned)
 
     return render(
         request,
@@ -149,6 +192,8 @@ def destination_comparison_view(
             "comparison_category_fields": _comparison_category_fields(form),
             "comparison": comparison_component,
             "comparison_error": comparison_error,
+            "comparison_save_token": comparison_save_token,
+            "comparison_reopen_url": comparison_reopen_url,
             "reference_data_ready": form.reference_data_ready,
         },
         status=status,

@@ -39,10 +39,17 @@ from apps.travel.scenario_web import (
 from apps.travel.views import (
     clear_favourites,
     clear_recent_conversions,
+    clear_saved_places,
     delete_favourite,
     delete_recent_conversion,
+    delete_saved_comparison,
+    delete_saved_place,
+    save_comparison,
+    save_place,
+    saved_places_status,
     saved_state,
     sync_favourites,
+    sync_saved_places,
 )
 
 urlpatterns = [
@@ -119,6 +126,21 @@ urlpatterns = [
         name="delete_saved_scenario",
     ),
     path("saved/favourites/sync/", sync_favourites, name="sync_favourites"),
+    path("saved/places/sync/", sync_saved_places, name="sync_saved_places"),
+    path("saved/places/create/", save_place, name="save_place"),
+    path("saved/places/state/", saved_places_status, name="saved_places_status"),
+    path(
+        "saved/places/<int:place_id>/delete/",
+        delete_saved_place,
+        name="delete_saved_place",
+    ),
+    path("saved/places/clear/", clear_saved_places, name="clear_saved_places"),
+    path("saved/comparisons/create/", save_comparison, name="save_comparison"),
+    path(
+        "saved/comparisons/<int:comparison_id>/delete/",
+        delete_saved_comparison,
+        name="delete_saved_comparison",
+    ),
     path(
         "saved/favourites/<int:favourite_id>/delete/",
         delete_favourite,

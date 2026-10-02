@@ -14,7 +14,7 @@ Typical identity fields include ISO codes and display name.
 
 A canonical city identity scoped to one country.
 
-The city slug is the stable product identifier used by current city-level Money Context, Budget, Destination Comparison, Explore/City Money Profile and saved-trip/browser-local My Places flows. Display names may evolve without changing saved references. A city slug is unique only within its country.
+The city slug is the stable product identifier used by current city-level Money Context, Budget, Destination Comparison, Explore/City Money Profile and both browser-local and account-owned My Places flows. Display names may evolve without changing saved references. A city slug is unique only within its country.
 
 ## Currency
 
@@ -202,19 +202,38 @@ Browser-local recents and account recents are intentionally distinct privacy sur
 
 Account recent history is only recorded after explicit opt-in and does not silently import existing local browser history.
 
-## Browser-local SavedPlace
+## SavedPlace / browser-local My Places
 
-The shipped My Places contract is browser-local convenience state, not an account-owned Django model.
+My Places has two intentionally separate persistence modes.
 
-A local saved place carries reviewed canonical destination identity:
+**Browser-local My Places** stores validated, versioned and retention-bounded convenience records containing country/city labels, canonical country/city identity, current currency shortcut metadata and save time. This state remains device-local and is never uploaded merely because the user signs in.
 
-- country code/name;
-- optional canonical city slug/name;
-- current primary currency needed for canonical re-entry.
+**Account-owned SavedPlace** stores only:
 
-The local contract is versioned, validated, deduplicated and retention-bounded. It can reopen Converter/City Profile flows and seed exactly one Destination Comparison side while preserving city scope. Sign-in does not silently upload or convert this local state into account-owned persistence.
+- authenticated owner;
+- canonical country;
+- optional canonical city;
+- created/updated timestamps.
 
-A future durable account-owned SavedPlace model, migration/sync policy and conflict semantics remain separate product/domain work.
+The account model intentionally does **not** persist a current currency snapshot. Canonical re-entry resolves the country's current primary currency again at read time, so a later currency transition cannot turn an old shortcut into stale financial truth. Country-level and city-level duplicates are prevented per owner. City/country coherence is validated before supported writes.
+
+Local→account migration is explicit and idempotent. The browser posts only canonical country/city identities; the server validates all requested scopes before any write, unions them with existing owner records, and the browser removes confirmed local copies only after account commit succeeds. If local cleanup fails after the server commit, the account records remain valid and the browser copies are retained for safe manual cleanup.
+
+## SavedComparison
+
+A SavedComparison is an owner-scoped reusable **input contract**, not a persisted comparison result.
+
+It stores:
+
+- source amount and source currency;
+- canonical left/right country scopes plus optional cities;
+- trip duration and traveler count;
+- normalized reference-basket category assumptions;
+- a deterministic per-owner fingerprint for idempotency.
+
+It does **not** store an FX quote, local-price result, ranking, PPP output or rendered comparison answer. A short-lived signed token is produced only after a successful canonical comparison and carries those same canonical inputs. Saving verifies the token and current canonical identities before persistence.
+
+**Reopen** serializes the saved inputs back into the GET form and performs no provider call. **Re-check** is a separate explicit POST through the canonical Destination Comparison path, so current FX/context truth is recalculated only when the user asks.
 
 ## SavedScenario
 

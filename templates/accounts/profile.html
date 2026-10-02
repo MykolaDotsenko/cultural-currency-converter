@@ -5,8 +5,9 @@
     <p class="qa-foundation-kicker">Account</p>
     <h1 id="account-profile-title">{{ user.get_username }}</h1>
     <p class="qa-account-panel__lede">
-      Signed-in favourites are account-owned and available across devices. Recent conversion
-      history is browser-only unless you explicitly enable cross-device history below.
+      Signed-in saved pairs, places, comparisons and scenarios are account-owned and available
+      across devices. Browser-only places move to the account only when you explicitly import them.
+      Recent conversion history is browser-only unless you enable cross-device history below.
     </p>
     <div class="qa-account-actions">
       <a class="qa-primary-button" href="{% url 'saved_state' %}">Saved &amp; recent</a>
@@ -45,8 +46,9 @@
     <section class="qa-account-danger" aria-labelledby="account-privacy-title">
       <h2 id="account-privacy-title">Delete account</h2>
       <p>
-        You can remove saved pairs and recent account history individually on the Saved page, clear
-        them there, or permanently delete this account and all account-owned data.
+        Saved pairs, places, comparisons, scenarios and opted-in recent history are account-owned.
+        You can remove supported items from Saved &amp; recent, or permanently delete this account
+        and all account-owned data.
       </p>
       <a class="qa-secondary-button" href="{% url 'delete_account' %}">Delete account</a>
     </section>
