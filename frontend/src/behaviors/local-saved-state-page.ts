@@ -117,6 +117,7 @@ function renderFavourites(
   if (!list || !empty) return;
 
   list.replaceChildren();
+  empty.textContent = "No saved pairs yet. Save a pair after a conversion for quicker access.";
   empty.hidden = state.favourites.length > 0;
 
   for (const favourite of state.favourites) {
@@ -182,6 +183,7 @@ function renderPlaces(page: HTMLElement, state: LocalPreferencesV1, converterUrl
   if (!list || !empty) return;
 
   list.replaceChildren();
+  empty.textContent = "No saved places yet. Save a reviewed country or city from Explore.";
   empty.hidden = state.places.length > 0;
 
   for (const place of state.places) {
@@ -255,6 +257,10 @@ function renderRecents(page: HTMLElement, state: LocalPreferencesV1, converterUr
   if (!list || !empty) return;
 
   list.replaceChildren();
+  empty.textContent =
+    page.dataset.accountMode === "true"
+      ? "No browser-only recent conversions here."
+      : "No recent conversions in this browser yet.";
   empty.hidden = state.recent.length > 0;
   let activeDay = "";
 
