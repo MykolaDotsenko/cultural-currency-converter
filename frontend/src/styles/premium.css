@@ -312,7 +312,7 @@ h3 {
 }
 
 .qa-primary-button {
-  min-height: 3.25rem;
+  min-height: max(3.25rem, 44px);
   min-width: min(10rem, 100%);
   max-width: 100%;
   padding-inline: 1.75rem;
