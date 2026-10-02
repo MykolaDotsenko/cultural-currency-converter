@@ -2039,6 +2039,78 @@ async function assertPremiumResponsiveTargets(page, label, selector) {
   }
 }
 
+async function assertHistoricalSeriesQuality(page) {
+  await page.getByRole("heading", { name: "Historical trend surface", exact: true }).waitFor();
+
+  const timeline = page.locator(".qa-rate-timeline");
+  await timeline.getByRole("heading", { name: "Range anchors", exact: true }).waitFor();
+  const landmarks = timeline.locator(".qa-rate-timeline__item");
+  assert(
+    (await landmarks.count()) >= 2,
+    "rate-series: expected at least range-start and range-end timeline landmarks",
+  );
+
+  const dates = await timeline.locator("time").evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("datetime") ?? ""),
+  );
+  assert(
+    dates.every((value, index) => index === 0 || value >= dates[index - 1]),
+    `rate-series: timeline landmarks are not chronological: ${JSON.stringify(dates)}`,
+  );
+  assert(
+    new Set(dates).size === dates.length,
+    `rate-series: timeline duplicated an observation date: ${JSON.stringify(dates)}`,
+  );
+  assert(
+    (await timeline.locator(".qa-rate-timeline__item.is-selected").count()) === 1,
+    "rate-series: selected historical observation is not uniquely marked",
+  );
+  assert(
+    (await timeline.getByText(/no historical purchasing-power inference/i).count()) === 1,
+    "rate-series: historical FX boundary is missing from the timeline",
+  );
+
+  const periods = page.locator(".qa-chart-period-control");
+  assert(
+    (await periods.getByRole("link", { name: "1Y", exact: true }).count()) === 1 &&
+      (await periods.getByRole("link", { name: "5Y", exact: true }).count()) === 1 &&
+      (await periods.getByRole("link", { name: "10Y", exact: true }).count()) === 1,
+    "rate-series: bounded period controls are incomplete",
+  );
+  assert(
+    (await periods.getByRole("link", { name: "1Y", exact: true }).getAttribute("aria-current")) ===
+      "page",
+    "rate-series: active period is not exposed semantically",
+  );
+
+  const chart = page.locator("[data-rate-chart]");
+  await chart.waitFor();
+  await page.waitForFunction(() =>
+    document.querySelector("[data-rate-chart]")?.getAttribute("data-rate-chart-enhanced") === "true",
+  );
+
+  const table = page.locator(".qa-rate-series__table");
+  assert(
+    !(await table.evaluate((element) => element.hasAttribute("open"))),
+    "rate-series: raw data table should be collapsed by default",
+  );
+  await table.locator("summary").click();
+  assert(
+    await table.evaluate((element) => element.hasAttribute("open")),
+    "rate-series: raw data table did not open",
+  );
+  assert(
+    (await table.locator("tbody tr").count()) > 0,
+    "rate-series: opened raw data table has no published observations",
+  );
+
+  await assertPremiumResponsiveTargets(
+    page,
+    "rate-series/responsive",
+    ".qa-chart-period-control__item, .qa-rate-series__custom > summary, .qa-rate-series__table > summary",
+  );
+  await assertAxe(page, "rate-series/interactive");
+}
 async function assertSameAmountQuality(page) {
   await page
     .getByRole("heading", { name: "One amount. Several places. No artificial winner." })
@@ -2533,6 +2605,10 @@ try {
 
       if (surface.name === "city-money-profile" && viewport.name === "wide-1440") {
         await assertCityProfileQuality(page);
+      }
+
+      if (surface.name === "rate-series" && viewport.name === "wide-1440") {
+        await assertHistoricalSeriesQuality(page);
       }
 
       if (viewport.name === "mobile-390") {
