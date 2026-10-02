@@ -8,12 +8,20 @@ from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
+from apps.culture.explore_collections import build_explore_collections
+from apps.culture.explore_navigation import build_explore_regions
+from apps.culture.explore_presentation import (
+    build_explore_collection_components,
+    build_explore_destination_cards,
+    build_explore_region_components,
+)
 from apps.culture.forms import CurrentDestinationContextForm, StoryRequestForm
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
@@ -74,10 +82,17 @@ def city_money_profile(
 def explore(request: HttpRequest) -> HttpResponse:
     """Discover reviewed current money context without requesting FX or AI."""
 
+    selected_date = timezone.localdate()
     explore_error = None
+    collection_error = None
+    navigation_error = None
     destinations = ()
+    destination_cards = ()
+    region_components = ()
+    collection_components = ()
+
     try:
-        destinations = build_explore_destinations()
+        destinations = build_explore_destinations(as_of=selected_date, limit=24)
     except DatabaseError as exc:
         logger.warning(
             "Explore destination composition failed",
@@ -87,45 +102,66 @@ def explore(request: HttpRequest) -> HttpResponse:
             "title": "Explore is temporarily unavailable.",
             "detail": "The converter and saved travel-money tools remain available.",
         }
+    else:
+        destination_cards = build_explore_destination_cards(destinations)
 
-    destination_cards = []
-    for destination in destinations:
-        params = {
-            "load": "1",
-            "destination_country": destination.country_code,
-            "destination_currency": destination.currency_code,
-        }
-        if destination.city_slug:
-            params["destination_city_slug"] = destination.city_slug
-        converter_url = f"{reverse('converter')}?{urlencode(params)}"
-        profile_url = (
-            reverse(
-                "city_money_profile",
-                kwargs={
-                    "country_code": destination.country_code,
-                    "city_slug": destination.city_slug,
-                },
+        try:
+            region_components = build_explore_region_components(
+                build_explore_regions(destinations)
             )
-            if destination.city_slug
-            else ""
-        )
-        destination_cards.append(
-            {
-                "destination": destination,
-                "converter_url": converter_url,
-                "profile_url": profile_url,
+        except DatabaseError as exc:
+            logger.warning(
+                "Explore regional navigation composition failed",
+                extra={"error_code": exc.__class__.__name__},
+            )
+            navigation_error = {
+                "title": "Regional navigation is temporarily unavailable.",
+                "detail": "The reviewed destination list below is still available.",
             }
-        )
+
+        try:
+            collections = build_explore_collections(
+                as_of=selected_date,
+                item_limit=6,
+                destinations=destinations,
+            )
+            collection_components = build_explore_collection_components(
+                collections,
+                selected_date=selected_date,
+            )
+        except DatabaseError as exc:
+            logger.warning(
+                "Explore collection composition failed",
+                extra={"error_code": exc.__class__.__name__},
+            )
+            collection_error = {
+                "title": "Curated collections are temporarily unavailable.",
+                "detail": "Regional and destination discovery still use reviewed context.",
+            }
+
+    country_codes = {destination.country_code for destination in destinations}
+    city_count = sum(destination.is_city_scope for destination in destinations)
+    explore_stats = {
+        "country_count": len(country_codes),
+        "city_count": city_count,
+        "region_count": len(region_components),
+        "collection_count": len(collection_components),
+    }
 
     return render(
         request,
         "pages/explore.html",
         {
-            "explore_destinations": tuple(destination_cards),
+            "explore_destinations": destination_cards,
+            "explore_regions": region_components,
+            "explore_collections": collection_components,
+            "explore_stats": explore_stats,
             "explore_error": explore_error,
+            "explore_collection_error": collection_error,
+            "explore_navigation_error": navigation_error,
+            "explore_as_of": selected_date,
         },
     )
-
 
 @require_GET
 def money_culture_story(request: HttpRequest) -> HttpResponse:
