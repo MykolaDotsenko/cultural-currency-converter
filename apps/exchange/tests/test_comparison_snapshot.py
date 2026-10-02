@@ -4,7 +4,12 @@ from decimal import Decimal
 
 import pytest
 
-from apps.exchange.budget import BudgetAssumptions, BudgetBasis, BudgetCategoryAssumption
+from apps.exchange.budget import (
+    BudgetAssumptions,
+    BudgetBasis,
+    BudgetCategoryAssumption,
+    BudgetInterpretationError,
+)
 from apps.exchange.comparison_snapshot import (
     SavedComparisonTokenError,
     build_saved_comparison_token,
@@ -93,7 +98,7 @@ def test_saved_comparison_token_rejects_non_reference_budget_basis():
         basis=BudgetBasis.PAYMENT_ESTIMATE,
     )
 
-    with pytest.raises(Exception, match="reference-conversion"):
+    with pytest.raises(BudgetInterpretationError, match="reference-conversion"):
         build_saved_comparison_token(
             source_amount=Decimal("500"),
             source_currency_code="EUR",
