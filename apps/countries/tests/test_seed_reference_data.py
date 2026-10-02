@@ -66,3 +66,24 @@ def test_reference_seed_exposes_wave_two_current_primary_currencies():
         "NZ": "NZD",
     }
     assert all(link.source.startswith("https://") for link in links)
+
+
+@pytest.mark.django_db
+def test_reference_seed_populates_canonical_region_metadata():
+    call_command("seed_reference_data")
+
+    expected = {
+        "FI": ("Europe", "Northern Europe"),
+        "JP": ("Asia", "Eastern Asia"),
+        "US": ("Americas", "Northern America"),
+        "DE": ("Europe", "Western Europe"),
+        "SG": ("Asia", "South-Eastern Asia"),
+        "CA": ("Americas", "Northern America"),
+        "NZ": ("Oceania", "Australia and New Zealand"),
+    }
+
+    actual = {
+        country.iso2: (country.region, country.subregion)
+        for country in Country.objects.filter(iso2__in=expected)
+    }
+    assert actual == expected
