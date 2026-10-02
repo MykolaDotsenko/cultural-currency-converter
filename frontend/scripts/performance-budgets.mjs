@@ -18,6 +18,7 @@ export const PERFORMANCE_BUDGETS = Object.freeze({
   localSavedStateGzipBytes: 6 * 1024,
   savedStateGzipBytes: 8 * 1024,
   initialRequestCount: 5,
+  initialLayoutShift: 0.1,
 });
 
 export const PERFORMANCE_BUDGET_SOURCE = "docs/07_QUALITY_SECURITY_ACCESSIBILITY.md";
