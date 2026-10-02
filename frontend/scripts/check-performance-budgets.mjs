@@ -16,7 +16,7 @@ console.log(
         totalJavaScriptGzipBytes: evidence.totalJavaScriptGzipBytes,
         stylesheetGzipBytes: evidence.stylesheetGzipBytes,
         rateChartGzipBytes: evidence.namedDynamicFiles.rateChart.gzipBytes,
-        savedStateGzipBytes: evidence.namedDynamicFiles.savedState.gzipBytes,
+        localSavedStateGzipBytes: evidence.namedDynamicFiles.localSavedState.gzipBytes,
       },
     },
     null,
