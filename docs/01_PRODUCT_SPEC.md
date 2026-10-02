@@ -269,25 +269,29 @@ The product is mainly for:
 
 The web product currently supports:
 
-- current FX conversion;
-- historical FX conversion;
-- explicit requested/effective observation dates;
-- bilateral country/currency selection;
+- current and historical FX conversion with explicit requested/effective dates and provider semantics;
+- bilateral country/currency selection with smart current, shared and historical relationship filtering;
 - historical trend views with 1Y / 5Y / 10Y / custom ranges, selected/minimum/maximum/last observations and Then & Now;
-- smart country/currency filtering that respects shared, archived and date-scoped historical relationships while preserving currency-only choices;
 - explicit-assumption Real Payment Estimate for current non-identity conversions, using signed trusted conversion snapshots plus user-entered FX markup and source/destination fixed fees;
-- sourced current destination context;
-- everyday-value examples;
-- cash/card/ATM/tipping guidance;
-- deterministic money/culture storytelling;
-- optional AI explanation;
-- anonymous local favourites/recent conversions;
-- account-owned favourites;
-- separately opt-in account recent history;
-- account-owned saved budget scenarios with explicit Trip Budget Remaining and Camera-confirmed spend;
-- self-contained offline destination-pack export with stored-FX freshness and sourced destination context.
+- canonical Money Context composition with sourced everyday-value examples and reviewed cash/card/ATM/tipping guidance;
+- Destination Mode for reviewed country/canonical-city scopes, preserving city identity into the canonical converter;
+- deterministic Budget Interpretation and side-by-side Destination Comparison with explicit shared assumptions, per-side FX/context provenance and no ranking or PPP claims;
+- Same Amount Across Destinations for two to four explicit destinations with independent rate/provider/date/scope/provenance semantics;
+- provider-free regional Explore discovery with five provenance-bearing collections, canonical region → country → city navigation and direct Converter/City Profile handoffs;
+- provider-free City Money Profile pages with direct-city evidence requirements and explicit city/national fallback;
+- canonical one-sided Destination Comparison handoffs from Explore, browser-local My Places, saved scenarios, favourites and recent conversions, without inferring Destination B;
+- browser-local My Places with versioned, validated, deduplicated and retention-bounded storage plus exact city-scope continuity where available;
+- deterministic money/culture storytelling, Historical Series chronology and reviewed currency-era / previous-currency exploration while keeping historical FX separate from historical purchasing power;
+- restrained source → destination presentation with provenance-aware managed destination media and graceful no-media rendering;
+- optional structured AI explanation with deterministic fallback and server-approved grounded quick prompts; Explore AI uses a separate explicit POST over one reviewed destination and intent while Explore GET remains provider-free;
+- anonymous browser-local favourites and recent conversions, account-owned favourites and separately opt-in account recent history;
+- account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, Trip Budget Remaining and confirmed-spend tracking;
+- returning-user Trip Home continuity based on stored scenario state without silent live-rate refresh;
+- optional Camera amount extraction with ephemeral metadata-stripped processing, mandatory confirmation and a separate idempotent Add-to-trip-budget handoff;
+- self-contained Offline Destination Pack export with stored-FX freshness semantics and reviewed destination context;
+- demand-loaded converter/picker, consolidated Saved-state and rate-chart enhancements with HTMX re-discovery and browser route-isolation quality checks.
 
-Current Real Payment Estimate does not persist a reusable fee profile and does not estimate historical card/ATM/merchant costs. Those remain future work.
+Current Real Payment Estimate does not persist a reusable fee profile and does not estimate historical card/ATM/merchant costs. Durable account-owned SavedPlace sync, a SavedComparison datastore, and Budget/Comparison-specific AI remain future work until their ownership/trust contracts are implemented.
 
 Current code and tests are the authoritative detail for these capabilities.
 
