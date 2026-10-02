@@ -12,6 +12,7 @@ from apps.culture.explore_collections import (
     ExploreCollectionKind,
 )
 from apps.culture.explore_navigation import ExploreRegionNode
+from apps.exchange.ai.explore import available_explore_explanation_intents
 
 
 def _destination_token(*, country_code: str, city_slug: str = "") -> str:
@@ -70,6 +71,31 @@ def build_explore_destination_cards(
             }
         )
     return tuple(cards)
+
+
+def build_explore_ai_component(
+    destinations: tuple[ExploreDestination, ...],
+) -> dict[str, object] | None:
+    if not destinations:
+        return None
+    return {
+        "destinations": tuple(
+            {
+                "token": destination.token,
+                "label": destination.scope_label,
+                "currency_code": destination.currency_code,
+            }
+            for destination in destinations
+        ),
+        "prompts": tuple(
+            {
+                "id": spec.intent.value,
+                "label": spec.label,
+                "question": spec.question,
+            }
+            for spec in available_explore_explanation_intents()
+        ),
+    }
 
 
 def build_explore_region_components(
