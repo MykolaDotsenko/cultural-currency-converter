@@ -312,7 +312,7 @@ Create a coherent city money profile using existing canonical context:
 - Compare;
 - Save/My Places handoff.
 
-**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. Reviewed country/city identity can now be saved through browser-local My Places and reopened from Saved & recent; durable account-owned SavedPlace persistence/sync is still future work.
+**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. Reviewed country/city identity can be saved browser-locally when anonymous or as owner-scoped SavedPlace when signed in; account re-entry resolves current primary currency again instead of replaying a stored currency snapshot.
 
 ## PR #193 — City/national fallback trust audit
 
@@ -382,7 +382,7 @@ No comparison business logic belongs in Explore.
 
 Add save-place interaction contract; durable persistence is completed in the personalization phase.
 
-**Current production slice:** shipped as browser-local persistence. Reviewed country/city rows use the versioned local SavedPlace contract with validation, dedupe and bounded retention; no-JS/storage-unavailable states do not render fake controls. Durable account ownership/sync remains future work.
+**Current production slice:** shipped in both browser-local and owner-scoped modes. Anonymous rows use the versioned local My Places contract with validation, dedupe and bounded retention; signed-in Explore saves use the canonical account SavedPlace service with no-JS fallback. Existing browser-local rows are never imported just because sign-in occurred; migration is an explicit idempotent action from Saved & recent, and confirmed local copies are removed only after account commit succeeds.
 
 ## PR #199 — Explore → contextual AI
 
