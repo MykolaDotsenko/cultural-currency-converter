@@ -257,23 +257,22 @@ Performance work is evidence-driven. Deterministic growth budgets are merge gate
 
 The 2026-10-02 production build after demand-loaded enhancement routing measured:
 
-- core application JavaScript: about 19.10 kB gzip, down from 25.69 kB immediately before this pass;
-- AI explanation enhancement: about 0.75 kB gzip;
-- current-converter enhancement: about 1.15 kB gzip;
-- picker enhancement: about 2.27 kB gzip;
+- core application JavaScript: about 19.48 kB gzip, down from 25.69 kB immediately before this pass;
+- combined converter + picker enhancement: about 3.10 kB gzip;
 - local saved-state enhancement: about 3.79 kB gzip;
 - saved-state page renderer: about 2.55 kB gzip;
 - rate-chart loader: about 0.32 kB gzip;
 - historical chart chunk: about 54.70 kB gzip;
-- all JavaScript across core and lazy chunks: about 84.63 kB gzip;
+- all JavaScript across core and lazy chunks: about 83.94 kB gzip;
 - application stylesheet: about 19.51 kB gzip.
 
-Shared HTMX, typography and CSS stay in the core entry. Converter/picker, AI explanation,
-local saved-state and chart behaviour are demand-loaded from DOM contracts and rediscovered after
-HTMX swaps. Browser QA requires low-interaction shell, Same Amount and City Money Profile surfaces
-to avoid route-only dynamic JavaScript, while Current Converter, Explore, Saved and Rate Series must
-load their required enhancement chunks. Current Converter must additionally prove that result-only
-chunks arrive after interaction rather than in its initial payload.
+Shared HTMX, typography, CSS and the small race-sensitive AI interaction controller stay in the
+core entry. Converter/picker, local saved-state and chart behaviour are demand-loaded from DOM
+contracts and rediscovered after HTMX swaps. Browser QA requires low-interaction shell, Same Amount
+and City Money Profile surfaces to avoid route-only dynamic JavaScript, while Current Converter,
+Explore, Saved and Rate Series must load their required enhancement chunks. Current Converter must
+additionally prove that result-only chunks arrive after interaction rather than in its initial
+payload.
 
 Current hard budgets intentionally leave measured headroom while preserving that architecture:
 
@@ -282,9 +281,7 @@ Current hard budgets intentionally leave measured headroom while preserving that
 - CSS: <= 20 KiB gzip;
 - chart chunk: <= 64 KiB gzip;
 - chart-loader chunk: <= 1 KiB gzip;
-- AI explanation chunk: <= 2 KiB gzip;
-- current-converter chunk: <= 3 KiB gzip;
-- picker chunk: <= 4 KiB gzip;
+- combined converter enhancement chunk: <= 6 KiB gzip;
 - local saved-state chunk: <= 6 KiB gzip;
 - saved-state page chunk: <= 8 KiB gzip;
 - initial browser surface: <= 5 requests;
