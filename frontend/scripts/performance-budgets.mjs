@@ -13,8 +13,7 @@ export const PERFORMANCE_BUDGETS = Object.freeze({
   rateChartGzipBytes: 64 * 1024,
   rateChartLoaderGzipBytes: 1 * 1024,
   aiExplanationGzipBytes: 2 * 1024,
-  currentConverterGzipBytes: 3 * 1024,
-  pickerGzipBytes: 4 * 1024,
+  converterEnhancementsGzipBytes: 6 * 1024,
   localSavedStateGzipBytes: 6 * 1024,
   savedStateGzipBytes: 8 * 1024,
   initialRequestCount: 5,
@@ -99,12 +98,11 @@ export async function measureBuildAssets() {
     dynamicFiles,
     namedDynamicFiles: {
       aiExplanation: uniquePrefixedAsset(dynamicFiles, "ai-explanation-", "AI explanation"),
-      currentConverter: uniquePrefixedAsset(
+      converterEnhancements: uniquePrefixedAsset(
         dynamicFiles,
-        "current-converter-",
-        "current-converter",
+        "converter-enhancements-",
+        "converter-enhancements",
       ),
-      picker: uniquePrefixedAsset(dynamicFiles, "picker-", "picker"),
       localSavedState: uniqueMatchingAsset(
         dynamicFiles,
         (file) =>
@@ -155,11 +153,10 @@ export function assertBuildPerformanceBudgets(evidence, budgets = PERFORMANCE_BU
       budgets.aiExplanationGzipBytes,
     ],
     [
-      "current-converter chunk gzip",
-      evidence.namedDynamicFiles.currentConverter.gzipBytes,
-      budgets.currentConverterGzipBytes,
+      "converter enhancement chunk gzip",
+      evidence.namedDynamicFiles.converterEnhancements.gzipBytes,
+      budgets.converterEnhancementsGzipBytes,
     ],
-    ["picker chunk gzip", evidence.namedDynamicFiles.picker.gzipBytes, budgets.pickerGzipBytes],
     [
       "local saved-state chunk gzip",
       evidence.namedDynamicFiles.localSavedState.gzipBytes,
