@@ -269,6 +269,11 @@ def test_anonymous_comparison_result_offers_sign_in_without_auto_persistence(
     assert response.status_code == 200
     assert b"Sign in to save comparisons" in response.content
     assert b'action="/saved/comparisons/create/"' not in response.content
+    body = response.content.decode()
+    assert "next=%2Fcompare%2F%3F" in body
+    assert "left_destination%3DJP%253Atokyo" in body
+    assert "right_destination%3DNO" in body
+    assert "amount%3D500.00" in body
 
 
 @pytest.mark.django_db
