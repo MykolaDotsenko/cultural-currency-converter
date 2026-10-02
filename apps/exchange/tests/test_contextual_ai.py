@@ -384,6 +384,7 @@ def test_comparison_packet_names_partial_coverage_and_absent_payment():
     assert "Coverage is partial" in facts["comparison_coverage"]
 
 
+@pytest.mark.django_db
 def test_contextual_service_disabled_returns_grounded_fallback():
     packet = ExplanationPacket(
         packet_version=BUDGET_PACKET_VERSION,
