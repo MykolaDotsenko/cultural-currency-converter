@@ -1712,8 +1712,9 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     .getByRole("heading", { name: "Ready for an explicit spend handoff", level: 2 })
     .waitFor();
   assert(
-    (await page.getByText("The uploaded image itself was not persisted.", { exact: false }).count()) >=
-      1,
+    (await page
+      .getByText("The uploaded image itself was not persisted.", { exact: false })
+      .count()) >= 1,
     "camera/e2e: confirmation page lost the no-raw-media persistence boundary",
   );
   await assertAxe(page, "camera/e2e/confirmed");
