@@ -16,6 +16,7 @@ from apps.culture.models import (
     TypicalPriceSourceClass,
 )
 from apps.culture.services import DestinationContext
+from apps.exchange.ai.packet_tokens import GroundedPacketTokenError
 from apps.exchange.ai.service import RuntimeExplanationService
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
@@ -461,3 +462,32 @@ def test_budget_ai_has_no_javascript_full_page_fallback(
     assert b"<html" in response.content
     assert b"Trusted facts first. Explanation second." in response.content
     assert b"Built-in explanation" in response.content
+
+
+@pytest.mark.django_db
+def test_budget_result_survives_optional_ai_packet_contract_failure(
+    client,
+    reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+
+    with patch(
+        "apps.exchange.budget_presentation.build_grounded_packet_token",
+        side_effect=GroundedPacketTokenError("bounded packet unavailable"),
+    ):
+        response = client.post(
+            reverse("budget_interpretation"),
+            {
+                "budget_context_token": _signed_budget_context(),
+                "duration_days": "4",
+                "travelers": "1",
+                "units_coffee": "1",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"Reference-basket comparison" in response.content
+    assert response.context["budget_interpretation"]["ai_explanation"] is None
+    assert b"signed budget facts only" not in response.content
