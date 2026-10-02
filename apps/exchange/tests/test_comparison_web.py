@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlparse
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -272,10 +272,17 @@ def test_anonymous_comparison_result_offers_sign_in_without_auto_persistence(
     assert b'action="/saved/comparisons/create/"' not in response.content
     body = response.content.decode()
     reopen_url = response.context["comparison_reopen_url"]
-    assert reopen_url.startswith(f"{reverse('destination_comparison')}?")
-    assert "amount=500" in reopen_url
-    assert "left_destination=JP%3Atokyo" in reopen_url
-    assert "right_destination=NO" in reopen_url
+    parsed_reopen = urlparse(reopen_url)
+    params = parse_qs(parsed_reopen.query)
+    assert parsed_reopen.path == reverse("destination_comparison")
+    assert params["amount"] == ["500"]
+    assert params["source_currency"] == ["EUR"]
+    assert params["left_destination"] == ["JP:tokyo"]
+    assert params["right_destination"] == ["NO"]
+    assert params["duration_days"] == ["3"]
+    assert params["travelers"] == ["1"]
+    assert "rate" not in params
+    assert "result" not in params
     expected_href = f"{reverse('login')}?next={quote(reopen_url)}"
     assert f'href="{expected_href}"' in body
 
