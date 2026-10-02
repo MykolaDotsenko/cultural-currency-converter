@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
-from threading import Barrier
 from decimal import Decimal
+from threading import Barrier
 from urllib.parse import parse_qs, urlparse
 
 import pytest
