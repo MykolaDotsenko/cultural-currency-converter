@@ -181,10 +181,7 @@ def test_shared_currency_collection_fails_closed_when_one_relationship_loses_pro
     germany_euro = CountryCurrency.objects.get(country__iso2="DE", currency__code="EUR")
     CountryCurrency.objects.filter(pk=germany_euro.pk).update(source="not-a-url")
 
-    kinds = {
-        collection.kind
-        for collection in build_explore_collections(as_of=AS_OF)
-    }
+    kinds = {collection.kind for collection in build_explore_collections(as_of=AS_OF)}
 
     assert ExploreCollectionKind.SHARED_CURRENCY_COUNTRIES not in kinds
 
