@@ -124,9 +124,7 @@ def _resolve_place_specs(raw_items: Any) -> list[SavedPlaceSpec]:
     missing_cities = sorted(city_pairs - set(cities))
     if missing_cities:
         country_code, city_slug = missing_cities[0]
-        raise SavedPlaceSyncError(
-            f"Unknown or inactive city scope: {country_code}:{city_slug}."
-        )
+        raise SavedPlaceSyncError(f"Unknown or inactive city scope: {country_code}:{city_slug}.")
 
     return [
         SavedPlaceSpec(
@@ -177,11 +175,7 @@ def _destination_parts(token: str) -> tuple[str, str]:
     country_code, separator, city_slug = token.partition(":")
     if not _COUNTRY_RE.fullmatch(country_code):
         raise SavedComparisonPersistenceError("Saved comparison country identity is invalid.")
-    if separator and (
-        not city_slug
-        or len(city_slug) > 120
-        or not _CITY_SLUG_RE.fullmatch(city_slug)
-    ):
+    if separator and (not city_slug or len(city_slug) > 120 or not _CITY_SLUG_RE.fullmatch(city_slug)):
         raise SavedComparisonPersistenceError("Saved comparison city identity is invalid.")
     return country_code, city_slug
 
