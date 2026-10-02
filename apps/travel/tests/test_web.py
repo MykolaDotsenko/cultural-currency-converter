@@ -16,4 +16,7 @@ def test_saved_state_page_is_anonymous_browser_local_shell(client):
     assert "hidden>No saved pairs yet." in content
     assert "hidden>No recent conversions in this browser yet." in content
     assert "<noscript>" in content
-    assert "JavaScript is required to read browser-local saved pairs and recent history." in content
+    assert (
+        "JavaScript is required to read browser-local saved places, saved pairs and recent history."
+        in content
+    )
