@@ -100,8 +100,7 @@
       {% endwith %}
     {% endif %}
     {% if budget_interpretation.result and budget_interpretation.ai_explanation %}
-      <section class="qa-ai-explanation-entry"
-               aria-labelledby="budget-ai-title">
+      <section class="qa-ai-explanation-entry" aria-labelledby="budget-ai-title">
         <div>
           <p class="qa-foundation-kicker">Optional AI · signed budget facts only</p>
           <h4 id="budget-ai-title">Ask about this exact interpretation</h4>
@@ -110,7 +109,8 @@
             conversion, basket totals, evidence coverage or destination scope.
           </p>
         </div>
-        <div class="qa-result-actions" aria-label="Suggested budget explanation questions">
+        <div class="qa-result-actions"
+             aria-label="Suggested budget explanation questions">
           {% for prompt in budget_interpretation.ai_explanation.prompts %}
             <form method="post"
                   action="{% url 'budget_explanation' %}"
