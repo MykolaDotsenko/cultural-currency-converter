@@ -2050,9 +2050,9 @@ async function assertHistoricalSeriesQuality(page) {
     "rate-series: expected at least range-start and range-end timeline landmarks",
   );
 
-  const dates = await timeline.locator("time").evaluateAll((elements) =>
-    elements.map((element) => element.getAttribute("datetime") ?? ""),
-  );
+  const dates = await timeline
+    .locator("time")
+    .evaluateAll((elements) => elements.map((element) => element.getAttribute("datetime") ?? ""));
   assert(
     dates.every((value, index) => index === 0 || value >= dates[index - 1]),
     `rate-series: timeline landmarks are not chronological: ${JSON.stringify(dates)}`,
@@ -2085,8 +2085,10 @@ async function assertHistoricalSeriesQuality(page) {
 
   const chart = page.locator("[data-rate-chart]");
   await chart.waitFor();
-  await page.waitForFunction(() =>
-    document.querySelector("[data-rate-chart]")?.getAttribute("data-rate-chart-enhanced") === "true",
+  await page.waitForFunction(
+    () =>
+      document.querySelector("[data-rate-chart]")?.getAttribute("data-rate-chart-enhanced") ===
+      "true",
   );
 
   const table = page.locator(".qa-rate-series__table");
