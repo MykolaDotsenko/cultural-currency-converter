@@ -24,25 +24,34 @@
     <dl class="qa-explore-proof" aria-label="Explore coverage">
       <div>
         <dt>Countries</dt>
-        <dd>{{ explore_stats.country_count }}</dd>
+        <dd>
+          {{ explore_stats.country_count }}
+        </dd>
       </div>
       <div>
         <dt>Cities</dt>
-        <dd>{{ explore_stats.city_count }}</dd>
+        <dd>
+          {{ explore_stats.city_count }}
+        </dd>
       </div>
       <div>
         <dt>Regions</dt>
-        <dd>{{ explore_stats.region_count }}</dd>
+        <dd>
+          {{ explore_stats.region_count }}
+        </dd>
       </div>
       <div>
         <dt>Collections</dt>
-        <dd>{{ explore_stats.collection_count }}</dd>
+        <dd>
+          {{ explore_stats.collection_count }}
+        </dd>
       </div>
     </dl>
   </section>
 
   {% if explore_error %}
-    <section class="qa-explore-section" aria-labelledby="explore-unavailable-title">
+    <section class="qa-explore-section"
+             aria-labelledby="explore-unavailable-title">
       <div class="qa-inline-alert" role="status">
         <h2 id="explore-unavailable-title">{{ explore_error.title }}</h2>
         <p>{{ explore_error.detail }}</p>
@@ -50,7 +59,8 @@
       </div>
     </section>
   {% else %}
-    <section class="qa-explore-section" aria-labelledby="explore-collections-title">
+    <section class="qa-explore-section"
+             aria-labelledby="explore-collections-title">
       <div class="qa-explore-section__heading">
         <div>
           <p class="qa-foundation-kicker">Curated ways in</p>
@@ -61,7 +71,6 @@
           the product. It never changes the underlying financial truth.
         </p>
       </div>
-
       {% if explore_collection_error %}
         <div class="qa-inline-alert" role="status">
           <h3>{{ explore_collection_error.title }}</h3>
@@ -92,7 +101,8 @@
                     </div>
                     <div class="qa-explore-discovery-card__footer">
                       {% if item.action_url %}
-                        <a class="qa-explore-text-link" href="{{ item.action_url }}">{{ item.action_label }}</a>
+                        <a class="qa-explore-text-link"
+                           href="{{ item.action_url }}">{{ item.action_label }}</a>
                       {% endif %}
                       <details class="qa-explore-evidence">
                         <summary>Evidence · {{ item.evidence|length }} source{{ item.evidence|length|pluralize }}</summary>
@@ -119,7 +129,6 @@
         </div>
       {% endif %}
     </section>
-
     <section class="qa-explore-section qa-explore-section--directory"
              id="regional-directory"
              aria-labelledby="explore-regions-title">
@@ -133,24 +142,23 @@
           direct reviewed city evidence survives the same freshness and provenance rules as the converter.
         </p>
       </div>
-
       {% if explore_navigation_error %}
         <div class="qa-inline-alert" role="status">
           <h3>{{ explore_navigation_error.title }}</h3>
           <p>{{ explore_navigation_error.detail }}</p>
         </div>
       {% endif %}
-
       {% if explore_regions %}
         <nav class="qa-explore-region-nav" aria-label="Explore regions">
           {% for region in explore_regions %}
             <a href="#region-{{ region.slug }}">{{ region.name }}</a>
           {% endfor %}
         </nav>
-
         <div class="qa-explore-region-stack">
           {% for region in explore_regions %}
-            <section class="qa-explore-region" id="region-{{ region.slug }}" aria-labelledby="region-{{ region.slug }}-title">
+            <section class="qa-explore-region"
+                     id="region-{{ region.slug }}"
+                     aria-labelledby="region-{{ region.slug }}-title">
               <header class="qa-explore-region__header">
                 <p class="qa-foundation-kicker">Region {{ forloop.counter|stringformat:"02d" }}</p>
                 <h3 id="region-{{ region.slug }}-title">{{ region.name }}</h3>
@@ -167,11 +175,13 @@
                     </header>
                     <div class="qa-explore-country__actions">
                       {% if country.converter_url %}
-                        <a class="qa-explore-text-link" href="{{ country.converter_url }}">Open country context</a>
+                        <a class="qa-explore-text-link"
+                           href="{{ country.converter_url }}">Open country context</a>
                       {% endif %}
                     </div>
                     {% if country.cities %}
-                      <div class="qa-explore-city-list" aria-label="Reviewed cities in {{ country.country_name }}">
+                      <div class="qa-explore-city-list"
+                           aria-label="Reviewed cities in {{ country.country_name }}">
                         {% for city in country.cities %}
                           <div class="qa-explore-city-row">
                             <a class="qa-explore-city-link" href="{{ city.profile_url }}">
@@ -181,7 +191,8 @@
                               </span>
                               <span aria-hidden="true">↗</span>
                             </a>
-                            <a class="qa-explore-city-convert" href="{{ city.converter_url }}">Convert</a>
+                            <a class="qa-explore-city-convert"
+                               href="{{ city.converter_url }}">Convert</a>
                           </div>
                         {% endfor %}
                       </div>
@@ -210,9 +221,11 @@
                   {% endif %}
                 </p>
                 {% if card.profile_url %}
-                  <a class="qa-explore-text-link" href="{{ card.profile_url }}">View city money profile</a>
+                  <a class="qa-explore-text-link"
+                     href="{{ card.profile_url }}">View city money profile</a>
                 {% else %}
-                  <a class="qa-explore-text-link" href="{{ card.converter_url }}">Open destination</a>
+                  <a class="qa-explore-text-link"
+                     href="{{ card.converter_url }}">Open destination</a>
                 {% endif %}
               </article>
             {% endwith %}
@@ -221,13 +234,10 @@
       {% else %}
         <div class="qa-saved-empty" role="status">
           <h3>No reviewed destination context is published yet.</h3>
-          <p>
-            Explore stays empty rather than inventing destination prices, payment behaviour or rankings.
-          </p>
+          <p>Explore stays empty rather than inventing destination prices, payment behaviour or rankings.</p>
           <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
         </div>
       {% endif %}
-
       <footer class="qa-explore-integrity">
         <p>
           Reviewed as of {{ explore_as_of|date:"j M Y" }}. Explore is descriptive, not a purchasing-power
