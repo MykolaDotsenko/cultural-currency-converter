@@ -1039,14 +1039,8 @@
 
 @media (max-width: 44rem) {
   .qa-explore-jump-nav {
-    flex-wrap: nowrap;
-    gap: var(--qa-space-5);
-    overflow-x: auto;
-    scrollbar-width: thin;
-  }
-
-  .qa-explore-jump-link {
-    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 0 var(--qa-space-4);
   }
 
   .qa-explore-country > .qa-saved-row__actions,
