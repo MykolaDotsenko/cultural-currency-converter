@@ -1899,10 +1899,97 @@ async function assertServerRenderedExploreAccessibility(browser) {
   }
 }
 
+async function assertPremiumResponsiveTargets(page, label, selector) {
+  const originalViewport = page.viewportSize();
+  for (const width of [430, 390, 360, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await waitForStableLayout(page);
+    await assertNoHorizontalOverflow(page, `${label}/${width}`);
+
+    const undersized = await page.locator(selector).evaluateAll((elements) =>
+      elements
+        .filter((element) => {
+          const style = window.getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          return (
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            rect.width > 0 &&
+            rect.height > 0 &&
+            rect.height < 44
+          );
+        })
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            text: element.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "",
+            height: Math.round(rect.height * 10) / 10,
+          };
+        }),
+    );
+    assert(
+      undersized.length === 0,
+      `${label}/${width}: interactive targets below 44px: ${JSON.stringify(undersized)}`,
+    );
+  }
+
+  if (originalViewport) {
+    await page.setViewportSize(originalViewport);
+    await waitForStableLayout(page);
+  }
+}
+
+async function assertCityProfileQuality(page) {
+  await page.getByRole("heading", { level: 1 }).waitFor();
+
+  const priceCards = page.locator(".qa-city-profile__price-card");
+  assert(
+    (await priceCards.count()) > 0,
+    "city-profile: expected at least one reviewed price card",
+  );
+  assert(
+    (await page.locator(".qa-city-profile__hero-actions .qa-primary-button").count()) === 1,
+    "city-profile: hero must expose exactly one primary action",
+  );
+  assert(
+    (await page.locator(".qa-city-profile__hero-actions .qa-secondary-button").count()) <= 1,
+    "city-profile: hero action hierarchy regressed into button soup",
+  );
+
+  const evidence = priceCards.first().locator(".qa-city-profile__evidence");
+  assert(
+    !(await evidence.evaluate((element) => element.hasAttribute("open"))),
+    "city-profile: provenance disclosure should be collapsed by default",
+  );
+  await evidence.locator("summary").click();
+  assert(
+    await evidence.evaluate((element) => element.hasAttribute("open")),
+    "city-profile: provenance disclosure did not open",
+  );
+  assert(
+    (await evidence.locator("a[href^='https://']").count()) === 1,
+    "city-profile: provenance disclosure lost its canonical source link",
+  );
+
+  await assertPremiumResponsiveTargets(
+    page,
+    "city-profile/responsive",
+    ".qa-city-profile__hero-actions a, .qa-city-profile__next-actions a, .qa-city-profile__evidence summary",
+  );
+  await assertAxe(page, "city-profile/interactive");
+}
 async function assertExploreFlow(page) {
   await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
   await page.getByRole("heading", { name: "Start with what matters to you." }).waitFor();
   await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
+
+  const jumpNav = page.locator(".qa-explore-jump-nav");
+  assert(
+    (await jumpNav.getByRole("link", { name: "Same amount", exact: true }).count()) === 1 &&
+      (await jumpNav.getByRole("link", { name: "Curated collections", exact: true }).count()) === 1 &&
+      (await jumpNav.getByRole("link", { name: "Regions & cities", exact: true }).count()) === 1,
+    "explore: compact section navigation is incomplete",
+  );
 
   const collectionCount = await page.locator(".qa-explore-collection").count();
   assert(
@@ -1912,6 +1999,10 @@ async function assertExploreFlow(page) {
 
   const evidence = page.locator(".qa-explore-evidence").first();
   const evidenceSummary = evidence.locator("summary");
+  assert(
+    !(await evidence.evaluate((element) => element.hasAttribute("open"))),
+    "explore: provenance disclosure should be collapsed by default",
+  );
   await evidenceSummary.click();
   assert(
     await evidence.evaluate((element) => element.hasAttribute("open")),
@@ -1989,6 +2080,28 @@ async function assertExploreFlow(page) {
   );
   await tokyoRow.getByText("Place saved in this browser.", { exact: true }).waitFor();
 
+  const aiSection = page.locator("#explore-ai");
+  const collectionsSection = page.locator("#explore-collections");
+  if ((await aiSection.count()) === 1) {
+    const aiFollowsDeterministicContent = await page.evaluate(() => {
+      const collections = document.getElementById("explore-collections");
+      const ai = document.getElementById("explore-ai");
+      return Boolean(
+        collections &&
+          ai &&
+          (collections.compareDocumentPosition(ai) & Node.DOCUMENT_POSITION_FOLLOWING),
+      );
+    });
+    assert(
+      aiFollowsDeterministicContent,
+      "explore: optional AI became more prominent than deterministic discovery",
+    );
+    assert(
+      (await collectionsSection.count()) === 1,
+      "explore: curated collections section is missing",
+    );
+  }
+
   const aiDestination = page.getByLabel("Reviewed destination", { exact: true });
   if ((await aiDestination.count()) === 1) {
     await aiDestination.selectOption("JP:tokyo");
@@ -2033,6 +2146,11 @@ async function assertExploreFlow(page) {
     );
   }
 
+  await assertPremiumResponsiveTargets(
+    page,
+    "explore/responsive",
+    ".qa-explore-jump-link, .qa-explore-region-nav a, .qa-explore-city-row a, .qa-explore-city-row button, .qa-explore-country > .qa-saved-row__actions a, .qa-explore-country > .qa-saved-row__actions button, .qa-explore-prompt",
+  );
   await assertAxe(page, "explore/interactive");
 }
 
@@ -2129,6 +2247,10 @@ try {
 
       if (surface.name === "explore" && viewport.name === "wide-1440") {
         await assertExploreFlow(page);
+      }
+
+      if (surface.name === "city-money-profile" && viewport.name === "wide-1440") {
+        await assertCityProfileQuality(page);
       }
 
       if (viewport.name === "mobile-390") {
