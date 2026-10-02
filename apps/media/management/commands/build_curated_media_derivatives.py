@@ -60,6 +60,61 @@ def _source_scope_error(source: MediaAsset, spec: CuratedMediaSpec) -> str:
     return ""
 
 
+def _derivative_contract_error(
+    derivative: MediaAsset,
+    *,
+    source: MediaAsset,
+    spec: CuratedMediaSpec,
+) -> str:
+    country_code = derivative.country.iso2 if derivative.country_id else ""
+    currency_code = derivative.currency.code if derivative.currency_id else ""
+    expected = (
+        source.pk,
+        spec.role,
+        spec.kind,
+        spec.country_code,
+        spec.currency_code,
+        spec.city,
+        spec.focal_x,
+        spec.focal_y,
+        source.source_name,
+        source.source_url,
+        source.source_media_url,
+        source.licence_id,
+        source.licence_url,
+        source.rights_statement,
+        source.attribution_text,
+    )
+    actual = (
+        derivative.derivative_of_id,
+        derivative.role,
+        derivative.kind,
+        country_code,
+        currency_code,
+        derivative.city,
+        derivative.focal_x,
+        derivative.focal_y,
+        derivative.source_name,
+        derivative.source_url,
+        derivative.source_media_url,
+        derivative.licence_id,
+        derivative.licence_url,
+        derivative.rights_statement,
+        derivative.attribution_text,
+    )
+    if actual != expected:
+        return (
+            f"Curated derivative metadata drift for {spec.slug} at "
+            f"{derivative.variant_width}px."
+        )
+    if derivative.status in {MediaStatus.REJECTED, MediaStatus.RETIRED}:
+        return (
+            f"Curated derivative {spec.slug} at {derivative.variant_width}px is "
+            f"{derivative.status}; resolve the reviewed record explicitly."
+        )
+    return ""
+
+
 def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
     if not spec.responsive_widths:
         raise CommandError(f"Curated media {spec.slug} has no responsive-width plan.")
@@ -96,13 +151,19 @@ def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
             f"its responsive plan {spec.responsive_widths!r}."
         )
 
-    raw_existing = tuple(
-        MediaAsset.objects.filter(
+    existing_derivatives = tuple(
+        MediaAsset.objects.select_related("country", "currency")
+        .filter(
             derivative_of=source,
             variant_width__in=spec.responsive_widths,
         )
         .exclude(variant_width__isnull=True)
-        .values_list("variant_width", flat=True)
+        .order_by("variant_width", "pk")
+    )
+    raw_existing = tuple(
+        derivative.variant_width
+        for derivative in existing_derivatives
+        if derivative.variant_width is not None
     )
     existing_widths = tuple(sorted(set(raw_existing)))
     if len(existing_widths) != len(raw_existing):
@@ -110,6 +171,14 @@ def _build_plan(spec: CuratedMediaSpec) -> _DerivativePlan:
             f"Curated source {spec.slug} has duplicate derivative widths; "
             "resolve the media records before continuing."
         )
+    for derivative in existing_derivatives:
+        derivative_error = _derivative_contract_error(
+            derivative,
+            source=source,
+            spec=spec,
+        )
+        if derivative_error:
+            raise CommandError(derivative_error)
 
     missing_widths = tuple(
         width for width in spec.responsive_widths if width not in existing_widths
