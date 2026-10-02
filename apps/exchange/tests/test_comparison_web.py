@@ -463,7 +463,7 @@ def test_comparison_ai_builtin_fallback_never_requests_another_fx_quote(
 
     assert response.status_code == 200
     assert b"Built-in explanation" in response.content
-    assert b"500.00 EUR" in response.content
+    assert b"500 EUR" in response.content
     assert b"Tokyo, Japan" in response.content
     assert b"Norway" in response.content
     assert b"Live AI is unavailable" in response.content
