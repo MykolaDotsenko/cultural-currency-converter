@@ -1757,7 +1757,7 @@ h3 {
   .qa-destination-mode__money,
   .qa-destination-comparison__money,
   .qa-destination-comparison__trip {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .qa-destination-mode__action,
@@ -1782,13 +1782,26 @@ h3 {
 
 /* Destination comparison: same source budget, two independently trusted contexts. */
 .qa-destination-comparison,
+.qa-destination-comparison__instrument,
 .qa-destination-comparison__results {
+  min-inline-size: 0;
   max-width: 78rem;
 }
 
+.qa-destination-comparison__instrument {
+  max-inline-size: 100%;
+}
+
 .qa-destination-comparison__heading {
+  min-inline-size: 0;
   max-width: 48rem;
   margin-block-end: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.qa-destination-comparison__heading > *,
+.qa-destination-comparison__results-heading > * {
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .qa-destination-comparison__heading h2,
@@ -1801,13 +1814,16 @@ h3 {
 }
 
 .qa-destination-comparison__form {
-  min-width: 0;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(1.4rem, 3vw, 2.1rem);
 }
 
 .qa-destination-comparison__money {
-  min-width: 0;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
   gap: clamp(1rem, 3vw, 2rem);
