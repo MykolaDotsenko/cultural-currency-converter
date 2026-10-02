@@ -17,8 +17,7 @@ class ExploreExplanationForm(forms.Form):
     destination_token = forms.ChoiceField(label="Reviewed destination")
     prompt_id = forms.ChoiceField(
         choices=tuple(
-            (spec.intent.value, spec.label)
-            for spec in available_explore_explanation_intents()
+            (spec.intent.value, spec.label) for spec in available_explore_explanation_intents()
         )
     )
 
