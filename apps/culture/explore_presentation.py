@@ -48,10 +48,7 @@ def build_explore_destination_cards(
 ) -> tuple[dict[str, object], ...]:
     cards: list[dict[str, object]] = []
     for destination in destinations:
-        token = _destination_token(
-            country_code=destination.country_code,
-            city_slug=destination.city_slug,
-        )
+        token = destination.token
         cards.append(
             {
                 "destination": destination,
