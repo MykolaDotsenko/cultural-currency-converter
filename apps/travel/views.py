@@ -9,15 +9,30 @@ from django.db.models import OuterRef, Subquery
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
+from apps.countries.models import CountryCurrency
+from apps.exchange.comparison_snapshot import (
+    SavedComparisonTokenError,
+    load_saved_comparison_token,
+)
 from apps.travel.models import (
     FavouritePair,
     RecentConversion,
+    SavedComparison,
+    SavedPlace,
     SavedScenario,
     SavedScenarioObservation,
+)
+from apps.travel.personalization import (
+    SavedComparisonPersistenceError,
+    SavedPlaceSyncError,
+    comparison_reopen_params,
+    persist_saved_comparison,
+    sync_user_saved_places,
 )
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
 
@@ -150,6 +165,143 @@ def _scenario_rows(user) -> list[dict[str, object]]:
     ]
 
 
+def _saved_place_rows(user) -> list[dict[str, object]]:
+    places = tuple(
+        SavedPlace.objects.filter(user=user)
+        .select_related("country", "city")
+        .order_by("-updated_at", "-id")
+    )
+    current_links = {
+        link.country_id: link
+        for link in CountryCurrency.objects.current(timezone.localdate())
+        .primary()
+        .filter(country_id__in={place.country_id for place in places})
+        .select_related("currency")
+    }
+
+    rows: list[dict[str, object]] = []
+    for place in places:
+        link = current_links.get(place.country_id)
+        available = (
+            place.country.is_active
+            and (place.city is None or place.city.is_active)
+            and link is not None
+            and link.currency.is_active
+        )
+        token = place.token
+        converter_url = ""
+        if available and link is not None:
+            params = {
+                "load": "1",
+                "destination_country": place.country.iso2,
+                "destination_currency": link.currency.code,
+            }
+            if place.city is not None:
+                params["destination_city_slug"] = place.city.slug
+            converter_url = f"{reverse('converter')}?{urlencode(params)}"
+
+        rows.append(
+            {
+                "place": place,
+                "token": token,
+                "available": available,
+                "currency_code": link.currency.code if link is not None else "",
+                "converter_url": converter_url,
+                "budget_url": (
+                    f"{reverse('destination_mode')}?{urlencode({'destination': token})}"
+                    if available
+                    else ""
+                ),
+                "compare_url": (
+                    f"{reverse('destination_comparison')}?"
+                    f"{urlencode({'left_destination': token})}"
+                    if available
+                    else ""
+                ),
+                "profile_url": (
+                    reverse(
+                        "city_money_profile",
+                        kwargs={
+                            "country_code": place.country.iso2,
+                            "city_slug": place.city.slug,
+                        },
+                    )
+                    if available and place.city is not None
+                    else ""
+                ),
+            }
+        )
+    return rows
+
+
+def _saved_comparison_rows(user) -> list[dict[str, object]]:
+    comparisons = tuple(
+        SavedComparison.objects.filter(user=user)
+        .select_related(
+            "source_currency",
+            "left_country",
+            "left_city",
+            "right_country",
+            "right_city",
+        )
+        .prefetch_related("budget_items")
+        .order_by("-updated_at", "-id")
+    )
+    current_country_ids = {
+        comparison.left_country_id
+        for comparison in comparisons
+    } | {
+        comparison.right_country_id
+        for comparison in comparisons
+    }
+    current_country_ids.discard(None)
+    current_country_ids = set(current_country_ids)
+    current_links = {
+        country_id
+        for country_id in CountryCurrency.objects.current(timezone.localdate())
+        .primary()
+        .filter(country_id__in=current_country_ids)
+        .values_list("country_id", flat=True)
+    }
+
+    rows: list[dict[str, object]] = []
+    for comparison in comparisons:
+        available = (
+            comparison.source_currency.is_active
+            and comparison.left_country.is_active
+            and comparison.right_country.is_active
+            and comparison.left_country_id in current_links
+            and comparison.right_country_id in current_links
+            and (comparison.left_city is None or comparison.left_city.is_active)
+            and (comparison.right_city is None or comparison.right_city.is_active)
+        )
+        params = comparison_reopen_params(comparison)
+        rows.append(
+            {
+                "comparison": comparison,
+                "available": available,
+                "reopen_url": (
+                    f"{reverse('destination_comparison')}?{urlencode(params)}"
+                    if available
+                    else ""
+                ),
+                "recheck_fields": params if available else {},
+                "left_label": (
+                    f"{comparison.left_city.name}, {comparison.left_country.name}"
+                    if comparison.left_city is not None
+                    else comparison.left_country.name
+                ),
+                "right_label": (
+                    f"{comparison.right_city.name}, {comparison.right_country.name}"
+                    if comparison.right_city is not None
+                    else comparison.right_country.name
+                ),
+                "budget_items": tuple(comparison.budget_items.all()),
+            }
+        )
+    return rows
+
+
 @never_cache
 @require_GET
 def saved_state(request: HttpRequest) -> HttpResponse:
@@ -159,6 +311,12 @@ def saved_state(request: HttpRequest) -> HttpResponse:
         {
             "account_scenario_rows": (
                 _scenario_rows(request.user) if request.user.is_authenticated else []
+            ),
+            "account_saved_place_rows": (
+                _saved_place_rows(request.user) if request.user.is_authenticated else []
+            ),
+            "account_saved_comparison_rows": (
+                _saved_comparison_rows(request.user) if request.user.is_authenticated else []
             ),
             "account_favourite_rows": (
                 _favourite_rows(request.user) if request.user.is_authenticated else []
@@ -226,6 +384,115 @@ def sync_favourites(request: HttpRequest) -> JsonResponse:
             "createdCount": result.created_count,
         }
     )
+
+
+def _place_json_error(message: str, *, status: int) -> JsonResponse:
+    return JsonResponse(
+        {"error": {"code": "invalid_places", "message": message}},
+        status=status,
+    )
+
+
+@require_POST
+def sync_saved_places(request: HttpRequest) -> JsonResponse:
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {
+                "error": {
+                    "code": "authentication_required",
+                    "message": "Sign in to save places to your account.",
+                }
+            },
+            status=401,
+        )
+    if request.content_type != "application/json":
+        return _place_json_error("Content-Type must be application/json.", status=415)
+
+    content_length = request.META.get("CONTENT_LENGTH")
+    if content_length:
+        try:
+            if int(content_length) > MAX_SYNC_BODY_BYTES:
+                return _place_json_error("Saved-place payload is too large.", status=413)
+        except ValueError:
+            return _place_json_error("Invalid Content-Length.", status=400)
+
+    body = request.body
+    if len(body) > MAX_SYNC_BODY_BYTES:
+        return _place_json_error("Saved-place payload is too large.", status=413)
+
+    try:
+        payload = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return _place_json_error("Request body must contain valid JSON.", status=400)
+
+    if not isinstance(payload, dict) or set(payload) != {"places"}:
+        return _place_json_error("Request must contain only a places list.", status=400)
+
+    try:
+        result = sync_user_saved_places(request.user, payload["places"])
+    except SavedPlaceSyncError as exc:
+        return _place_json_error(str(exc), status=400)
+
+    return JsonResponse(
+        {
+            "createdCount": result.created_count,
+            "savedCount": len(result.places),
+        }
+    )
+
+
+@login_required
+@require_POST
+def delete_saved_place(request: HttpRequest, place_id: int) -> HttpResponse:
+    place = get_object_or_404(SavedPlace, pk=place_id, user=request.user)
+    place.delete()
+    messages.success(request, "Saved place removed from your account.")
+    return redirect("saved_state")
+
+
+@login_required
+@require_POST
+def clear_saved_places(request: HttpRequest) -> HttpResponse:
+    deleted, _ = SavedPlace.objects.filter(user=request.user).delete()
+    if deleted:
+        messages.success(request, "All account-saved places were removed.")
+    else:
+        messages.info(request, "There were no account-saved places to remove.")
+    return redirect("saved_state")
+
+
+@login_required
+@require_POST
+def save_comparison(request: HttpRequest) -> HttpResponse:
+    token = str(request.POST.get("comparison_save_token") or "")
+    try:
+        value = load_saved_comparison_token(token)
+        result = persist_saved_comparison(request.user, value)
+    except (SavedComparisonTokenError, SavedComparisonPersistenceError) as exc:
+        messages.error(
+            request,
+            "This comparison could not be saved safely. Re-run it before saving.",
+        )
+        return redirect("destination_comparison")
+
+    if result.created:
+        messages.success(request, "Comparison saved to your account.")
+    else:
+        messages.info(request, "This comparison is already saved to your account.")
+    return redirect("saved_state")
+
+
+@login_required
+@require_POST
+def delete_saved_comparison(request: HttpRequest, comparison_id: int) -> HttpResponse:
+    comparison = get_object_or_404(
+        SavedComparison,
+        pk=comparison_id,
+        user=request.user,
+    )
+    comparison.delete()
+    messages.success(request, "Saved comparison removed from your account.")
+    return redirect("saved_state")
 
 
 @login_required
