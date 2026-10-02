@@ -1786,8 +1786,27 @@ h3 {
 }
 
 .qa-destination-comparison__form {
+  min-width: 0;
   display: grid;
   gap: clamp(1.4rem, 3vw, 2.1rem);
+}
+
+.qa-destination-comparison__money {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.qa-destination-comparison__money > .qa-field {
+  min-width: 0;
+}
+
+.qa-destination-comparison__money input,
+.qa-destination-comparison__money select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .qa-destination-comparison__destinations {
