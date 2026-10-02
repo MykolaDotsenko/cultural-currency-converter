@@ -19,9 +19,11 @@ For most non-trivial work, use this order:
    - [Country media production system](media/00_COUNTRY_MEDIA_SYSTEM.md)
    - [Quality, security and accessibility](07_QUALITY_SECURITY_ACCESSIBILITY.md)
 4. [Roadmap](08_IMPLEMENTATION_ROADMAP.md) when planning what to do next
-5. [Production 100/100 execution plan](PRODUCTION_100_EXECUTION_PLAN.md) when executing the production-readiness PR sequence or release certification
-6. [Decision log](09_ADR_LOG.md) when changing a durable architectural choice
-7. [References](10_REFERENCES.md) when external evidence is needed
+5. [Production 100/100 execution plan](PRODUCTION_100_EXECUTION_PLAN.md) when executing the production-readiness PR sequence
+6. [Release runbook](RELEASE_RUNBOOK.md) when cutting, deploying, recovering or responding to an incident
+7. [Release certification scorecard](RELEASE_CERTIFICATION.md) when recording final repository/deployment evidence
+8. [Decision log](09_ADR_LOG.md) when changing a durable architectural choice
+9. [References](10_REFERENCES.md) when external evidence is needed
 
 ## Source-of-truth hierarchy
 
