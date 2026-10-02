@@ -26,9 +26,7 @@ def _historical_gateway_not_allowed() -> Never:
 
 def _get_initial(request: HttpRequest) -> dict[str, object] | None:
     destinations = tuple(
-        value.strip()
-        for value in request.GET.getlist("destination")
-        if value.strip()
+        value.strip() for value in request.GET.getlist("destination") if value.strip()
     )
     initial: dict[str, object] = {}
     amount = str(request.GET.get("amount") or "").strip()
