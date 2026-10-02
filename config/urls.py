@@ -16,7 +16,9 @@ from apps.culture.views import (
     money_culture_story,
 )
 from apps.exchange.views import (
+    budget_explanation,
     budget_interpretation,
+    comparison_explanation,
     conversion_explanation,
     converter,
     destination_comparison,
@@ -56,6 +58,7 @@ urlpatterns = [
     path("", converter, name="converter"),
     path("destination/", destination_mode, name="destination_mode"),
     path("compare/", destination_comparison, name="destination_comparison"),
+    path("compare/explain/", comparison_explanation, name="comparison_explanation"),
     path(
         "explore/same-amount/",
         same_amount_destinations,
@@ -72,6 +75,7 @@ urlpatterns = [
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
     path("payment/estimate/", payment_estimate, name="payment_estimate"),
     path("budget/interpret/", budget_interpretation, name="budget_interpretation"),
+    path("budget/explain/", budget_explanation, name="budget_explanation"),
     path("story/", money_culture_story, name="money_culture_story"),
     path(
         "destination/current-context/",
