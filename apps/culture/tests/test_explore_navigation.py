@@ -4,10 +4,9 @@ from datetime import date
 from io import StringIO
 from urllib.parse import parse_qs, urlparse
 
+import pytest
 from django.core.management import call_command
 from django.urls import reverse
-
-import pytest
 
 from apps.countries.models import Country
 from apps.culture.explore import build_explore_destinations
@@ -17,7 +16,6 @@ from apps.culture.explore_presentation import (
     build_explore_collection_components,
     build_explore_region_components,
 )
-
 
 AS_OF = date(2026, 10, 1)
 
