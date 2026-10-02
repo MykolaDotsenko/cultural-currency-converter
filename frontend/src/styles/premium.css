@@ -693,7 +693,7 @@ h3 {
 }
 
 .qa-secondary-button {
-  min-height: 2.65rem;
+  min-height: 2.75rem;
   padding: 0.55rem 0.95rem;
   border-color: var(--qa-hairline);
   border-radius: var(--radius-sm);
