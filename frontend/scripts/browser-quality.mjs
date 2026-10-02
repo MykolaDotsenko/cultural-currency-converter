@@ -1839,10 +1839,22 @@ async function assertNoJavaScriptExplore(browser) {
       "explore/no-js: browser-only save controls became visible without JavaScript",
     );
     await assertNoHorizontalOverflow(page, "explore/no-js");
+
+    const aiDestination = page.getByLabel("Reviewed destination");
+    await aiDestination.selectOption("JP:tokyo");
+    await page
+      .getByRole("button", { name: "How should I read this evidence?", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Reviewed destination context, explained." })
+      .waitFor();
+    await page.getByRole("link", { name: "Back to Explore", exact: true }).waitFor();
+
     return {
       collectionsVisible: true,
       regionalNavigationVisible: true,
       canonicalCityHandoffVisible: true,
+      contextualAiNoJavaScriptPost: true,
     };
   } finally {
     await context.close();
@@ -1977,6 +1989,21 @@ async function assertExploreFlow(page) {
     "explore: saved Tokyo did not expose a pressed saved state",
   );
   await tokyoRow.getByText("Place saved in this browser.", { exact: true }).waitFor();
+
+  const aiDestination = page.getByLabel("Reviewed destination");
+  await aiDestination.selectOption("JP:tokyo");
+  const aiPrompt = page.getByRole("button", { name: "What matters here?", exact: true });
+  await aiPrompt.click();
+  const aiRegion = page.locator("#conversion-explanation-region");
+  await aiRegion.locator('[data-ai-generated="true"]').waitFor();
+  await aiRegion
+    .getByText("What matters most in this reviewed destination money context?", { exact: true })
+    .waitFor();
+  assert(
+    (await aiRegion.getByText("Reviewed destination scope: Tokyo, Japan.", { exact: true }).count()) >
+      0,
+    "explore: contextual AI answer was not grounded in the selected reviewed destination",
+  );
 
   await assertAxe(page, "explore/interactive");
 }
