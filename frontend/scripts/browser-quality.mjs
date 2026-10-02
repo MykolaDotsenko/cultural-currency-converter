@@ -1653,6 +1653,7 @@ async function assertConverterTransitionLayout(page) {
 async function installLayoutShiftObserver(page) {
   await page.addInitScript(() => {
     window.__qaLayoutShiftScore = null;
+    window.__qaLayoutShiftEntries = [];
     if (
       typeof PerformanceObserver === "undefined" ||
       !PerformanceObserver.supportedEntryTypes?.includes("layout-shift")
@@ -1660,11 +1661,26 @@ async function installLayoutShiftObserver(page) {
       return;
     }
 
+    const describeNode = (node) => {
+      if (!(node instanceof Element)) return "unknown";
+      if (node.id) return `#${node.id}`;
+      const classes = [...node.classList].slice(0, 3);
+      return `${node.tagName.toLowerCase()}${classes.map((name) => `.${name}`).join("")}`;
+    };
+
     window.__qaLayoutShiftScore = 0;
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (entry.hadRecentInput) continue;
         window.__qaLayoutShiftScore += entry.value;
+        window.__qaLayoutShiftEntries.push({
+          value: Math.round(entry.value * 10000) / 10000,
+          sources: (entry.sources ?? []).map((source) => ({
+            node: describeNode(source.node),
+            previousRect: source.previousRect,
+            currentRect: source.currentRect,
+          })),
+        });
       }
     });
     observer.observe({ type: "layout-shift", buffered: true });
@@ -1698,6 +1714,9 @@ async function collectPerformance(page) {
         typeof window.__qaLayoutShiftScore === "number"
           ? Math.round(window.__qaLayoutShiftScore * 10000) / 10000
           : null,
+      layoutShiftEntries: Array.isArray(window.__qaLayoutShiftEntries)
+        ? window.__qaLayoutShiftEntries
+        : [],
       domContentLoadedMs: navigation
         ? Math.round(navigation.domContentLoadedEventEnd - navigation.startTime)
         : null,
@@ -2370,7 +2389,7 @@ try {
       if (BROWSER_ENGINE === "chromium" && initialPerformanceEvidence.layoutShiftScore !== null) {
         assert(
           initialPerformanceEvidence.layoutShiftScore <= PERFORMANCE_BUDGETS.initialLayoutShift,
-          `${surface.name}/${viewport.name}: initial layout shift ${initialPerformanceEvidence.layoutShiftScore} exceeds ${PERFORMANCE_BUDGETS.initialLayoutShift} budget`,
+          `${surface.name}/${viewport.name}: initial layout shift ${initialPerformanceEvidence.layoutShiftScore} exceeds ${PERFORMANCE_BUDGETS.initialLayoutShift} budget: ${JSON.stringify(initialPerformanceEvidence.layoutShiftEntries)}`,
         );
       }
       await assertNoHorizontalOverflow(page, `${surface.name}/${viewport.name}`);
