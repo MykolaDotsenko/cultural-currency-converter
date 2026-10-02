@@ -83,9 +83,21 @@ function linkForPair(
   return `${url.pathname}${url.search}`;
 }
 
-function actionLink(text: string, href: string, accessibleName = text): HTMLAnchorElement {
+type SavedActionTone = "primary" | "secondary" | "tertiary";
+
+function actionLink(
+  text: string,
+  href: string,
+  accessibleName = text,
+  tone: SavedActionTone = "secondary",
+): HTMLAnchorElement {
   const element = document.createElement("a");
-  element.className = "qa-secondary-button";
+  element.className =
+    tone === "primary"
+      ? "qa-primary-button"
+      : tone === "tertiary"
+        ? "qa-saved-row__text-action"
+        : "qa-secondary-button";
   element.textContent = text;
   element.href = href;
   if (accessibleName !== text) element.setAttribute("aria-label", accessibleName);
@@ -141,11 +153,32 @@ function renderFavourites(
     actions.className = "qa-saved-row__actions";
     const pairActionName = `${favourite.sourceCurrency} to ${favourite.destinationCurrency}`;
     actions.append(
-      actionLink("Use pair", linkForPair(converterUrl, favourite), `Use pair: ${pairActionName}`),
+      actionLink(
+        "Use pair",
+        linkForPair(converterUrl, favourite),
+        `Use pair: ${pairActionName}`,
+        "primary",
+      ),
+      ...(favourite.destinationCountry
+        ? [
+            actionLink(
+              "Compare",
+              destinationComparisonUrl(
+                page.dataset.comparisonUrl ?? "/compare/",
+                favourite.destinationCountry,
+              ),
+              `Compare destination: ${countryLabel(
+                favourite.destinationCountry,
+                favourite.destinationCountryName,
+              )}`,
+            ),
+          ]
+        : []),
       actionLink(
         "Reverse pair",
         linkForPair(converterUrl, favourite, { swap: true }),
         `Reverse pair: ${pairActionName}`,
+        "tertiary",
       ),
       actionButton(
         "Remove",
@@ -178,7 +211,18 @@ function placeConverterUrl(converterUrl: string, place: SavedPlace): string {
   return `${url.pathname}${url.search}`;
 }
 
-function renderPlaces(page: HTMLElement, state: LocalPreferencesV1, converterUrl: string): void {
+function destinationComparisonUrl(baseUrl: string, token: string): string {
+  const url = new URL(baseUrl, window.location.origin);
+  url.searchParams.set("left_destination", token);
+  return `${url.pathname}${url.search}`;
+}
+
+function renderPlaces(
+  page: HTMLElement,
+  state: LocalPreferencesV1,
+  converterUrl: string,
+  comparisonUrl: string,
+): void {
   const list = page.querySelector<HTMLElement>("[data-places-list]");
   const empty = page.querySelector<HTMLElement>("[data-places-empty]");
   if (!list || !empty) return;
@@ -214,6 +258,12 @@ function renderPlaces(page: HTMLElement, state: LocalPreferencesV1, converterUrl
         "Convert",
         placeConverterUrl(converterUrl, place),
         `Convert for ${placeLabel(place)}`,
+        "primary",
+      ),
+      actionLink(
+        "Compare",
+        destinationComparisonUrl(comparisonUrl, place.token),
+        `Compare destination: ${placeLabel(place)}`,
       ),
     );
     if (place.citySlug) {
@@ -222,6 +272,7 @@ function renderPlaces(page: HTMLElement, state: LocalPreferencesV1, converterUrl
           "City profile",
           `/city/${encodeURIComponent(place.countryCode)}/${encodeURIComponent(place.citySlug)}/`,
           `Open city profile: ${placeLabel(place)}`,
+          "tertiary",
         ),
       );
     }
@@ -304,7 +355,23 @@ function renderRecents(page: HTMLElement, state: LocalPreferencesV1, converterUr
           requestedDate: recent.requestedDate,
         }),
         `Repeat conversion: ${conversionActionName}`,
+        "primary",
       ),
+      ...(recent.destinationCountry
+        ? [
+            actionLink(
+              "Compare",
+              destinationComparisonUrl(
+                page.dataset.comparisonUrl ?? "/compare/",
+                recent.destinationCountry,
+              ),
+              `Compare destination: ${countryLabel(
+                recent.destinationCountry,
+                recent.destinationCountryName,
+              )}`,
+            ),
+          ]
+        : []),
       actionLink(
         "Swap",
         linkForPair(converterUrl, recent, {
@@ -314,6 +381,7 @@ function renderRecents(page: HTMLElement, state: LocalPreferencesV1, converterUr
           swap: true,
         }),
         `Swap conversion: ${conversionActionName}`,
+        "tertiary",
       ),
       actionButton(
         "Remove",
@@ -373,6 +441,7 @@ function renderSavedPage(overrideMessage = ""): void {
 
   const read = readState();
   const converterUrl = page.dataset.converterUrl ?? "/";
+  const comparisonUrl = page.dataset.comparisonUrl ?? "/compare/";
   setStorageStatus(page, read, overrideMessage);
 
   const clearFavourites = page.querySelector<HTMLButtonElement>("[data-clear-favourites]");
@@ -395,7 +464,7 @@ function renderSavedPage(overrideMessage = ""): void {
     clearRecents.disabled = !canClearRecents;
   }
 
-  renderPlaces(page, read.state, converterUrl);
+  renderPlaces(page, read.state, converterUrl, comparisonUrl);
   renderFavourites(page, read.state, converterUrl);
   renderRecents(page, read.state, converterUrl);
 }
