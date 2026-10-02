@@ -5,32 +5,28 @@ from dataclasses import dataclass
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.media.curated import CURATED_MEDIA, CuratedMediaSpec, get_curated_media_spec
+from apps.media.curated_runtime import (
+    REVIEWED_SOURCE_STATUSES,
+    curated_derivative_contract_error,
+    curated_source_contract_error,
+)
 from apps.media.models import MediaAsset, MediaStatus
-
-_REVIEWED_SOURCE_STATUSES = {
-    MediaStatus.APPROVED,
-    MediaStatus.PUBLISHED,
-}
 
 
 @dataclass(frozen=True, slots=True)
 class _Coverage:
     spec: CuratedMediaSpec
     source: MediaAsset | None
-    focal_matches: bool
+    source_contract_matches: bool
     existing_widths: tuple[int, ...]
     published_widths: tuple[int, ...]
     derivative_contract_matches: bool
 
     @property
     def ready(self) -> bool:
-        if self.source is None or self.source.status not in _REVIEWED_SOURCE_STATUSES:
+        if self.source is None or self.source.status not in REVIEWED_SOURCE_STATUSES:
             return False
-        if (
-            not self.source.storage_file
-            or not self.focal_matches
-            or not self.derivative_contract_matches
-        ):
+        if not self.source_contract_matches or not self.derivative_contract_matches:
             return False
         return set(self.spec.responsive_widths).issubset(self.published_widths)
 
@@ -49,7 +45,7 @@ def _coverage(spec: CuratedMediaSpec) -> _Coverage:
         return _Coverage(
             spec=spec,
             source=None,
-            focal_matches=False,
+            source_contract_matches=False,
             existing_widths=(),
             published_widths=(),
             derivative_contract_matches=False,
@@ -81,32 +77,21 @@ def _coverage(spec: CuratedMediaSpec) -> _Coverage:
         )
     )
 
+    source_contract_matches = not curated_source_contract_error(source, spec)
     derivative_contract_matches = len(raw_widths) == len(existing_widths)
     for derivative in derivatives:
-        country_code = derivative.country.iso2 if derivative.country_id else ""
-        currency_code = derivative.currency.code if derivative.currency_id else ""
-        derivative_contract_matches = derivative_contract_matches and (
-            derivative.role == spec.role
-            and derivative.kind == spec.kind
-            and country_code == spec.country_code
-            and currency_code == spec.currency_code
-            and derivative.city == spec.city
-            and derivative.focal_x == spec.focal_x
-            and derivative.focal_y == spec.focal_y
-            and derivative.source_name == source.source_name
-            and derivative.source_url == source.source_url
-            and derivative.source_media_url == source.source_media_url
-            and derivative.licence_id == source.licence_id
-            and derivative.licence_url == source.licence_url
-            and derivative.rights_statement == source.rights_statement
-            and derivative.attribution_text == source.attribution_text
-            and derivative.status not in {MediaStatus.REJECTED, MediaStatus.RETIRED}
+        derivative_contract_matches = derivative_contract_matches and not bool(
+            curated_derivative_contract_error(
+                derivative,
+                source=source,
+                spec=spec,
+            )
         )
 
     return _Coverage(
         spec=spec,
         source=source,
-        focal_matches=source.focal_x == spec.focal_x and source.focal_y == spec.focal_y,
+        source_contract_matches=source_contract_matches,
         existing_widths=existing_widths,
         published_widths=published_widths,
         derivative_contract_matches=derivative_contract_matches,
@@ -158,7 +143,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"{state}: slug={row.spec.slug} source={source_id} "
                 f"source_status={source_status} bytes={str(has_bytes).lower()} "
-                f"focal_match={str(row.focal_matches).lower()} "
+                f"source_contract={str(row.source_contract_matches).lower()} "
                 f"derivative_contract={str(row.derivative_contract_matches).lower()} "
                 f"planned={row.spec.responsive_widths!r} "
                 f"existing={row.existing_widths!r} published={row.published_widths!r}"
