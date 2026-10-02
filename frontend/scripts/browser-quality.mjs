@@ -1650,6 +1650,28 @@ async function assertConverterTransitionLayout(page) {
   });
 }
 
+async function installLayoutShiftObserver(page) {
+  await page.addInitScript(() => {
+    window.__qaLayoutShiftScore = null;
+    if (
+      typeof PerformanceObserver === "undefined" ||
+      !PerformanceObserver.supportedEntryTypes?.includes("layout-shift")
+    ) {
+      return;
+    }
+
+    window.__qaLayoutShiftScore = 0;
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.hadRecentInput) continue;
+        window.__qaLayoutShiftScore += entry.value;
+      }
+    });
+    observer.observe({ type: "layout-shift", buffered: true });
+    window.__qaLayoutShiftObserver = observer;
+  });
+}
+
 async function collectPerformance(page) {
   return page.evaluate(() => {
     const resources = performance.getEntriesByType("resource");
@@ -1672,6 +1694,10 @@ async function collectPerformance(page) {
       imageEncodedBodyBytes: applicationResources
         .filter((entry) => ["img", "image"].includes(entry.initiatorType))
         .reduce((total, entry) => total + (entry.encodedBodySize || 0), 0),
+      layoutShiftScore:
+        typeof window.__qaLayoutShiftScore === "number"
+          ? Math.round(window.__qaLayoutShiftScore * 10000) / 10000
+          : null,
       domContentLoadedMs: navigation
         ? Math.round(navigation.domContentLoadedEventEnd - navigation.startTime)
         : null,
@@ -2329,6 +2355,7 @@ try {
         deviceScaleFactor: 1,
       });
       const page = await context.newPage();
+      await installLayoutShiftObserver(page);
       const consoleErrors = [];
       page.on("console", (message) => {
         if (message.type() === "error") consoleErrors.push(message.text());
@@ -2340,6 +2367,15 @@ try {
         initialPerformanceEvidence.requestCount <= PERFORMANCE_BUDGETS.initialRequestCount,
         `${surface.name}/${viewport.name}: initial request count ${initialPerformanceEvidence.requestCount} exceeds ${PERFORMANCE_BUDGETS.initialRequestCount} request budget`,
       );
+      if (
+        BROWSER_ENGINE === "chromium" &&
+        initialPerformanceEvidence.layoutShiftScore !== null
+      ) {
+        assert(
+          initialPerformanceEvidence.layoutShiftScore <= PERFORMANCE_BUDGETS.initialLayoutShift,
+          `${surface.name}/${viewport.name}: initial layout shift ${initialPerformanceEvidence.layoutShiftScore} exceeds ${PERFORMANCE_BUDGETS.initialLayoutShift} budget`,
+        );
+      }
       await assertNoHorizontalOverflow(page, `${surface.name}/${viewport.name}`);
       await assertKeyboardFocus(page, surface.name);
 
