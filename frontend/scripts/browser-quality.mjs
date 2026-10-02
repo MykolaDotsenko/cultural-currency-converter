@@ -1043,6 +1043,18 @@ async function assertSavedStateFlow(page) {
 
   const sampleState = {
     version: 1,
+    places: [
+      {
+        id: "JP:tokyo",
+        token: "JP:tokyo",
+        countryCode: "JP",
+        countryName: "Japan",
+        citySlug: "tokyo",
+        cityName: "Tokyo",
+        currencyCode: "JPY",
+        savedAt: "2026-09-21T12:00:00.000Z",
+      },
+    ],
     favourites: [
       {
         id: "FI:EUR:>:JP:JPY",
@@ -1095,9 +1107,29 @@ async function assertSavedStateFlow(page) {
   });
   await page.reload({ waitUntil: "networkidle" });
 
+  await page.getByRole("heading", { name: "Tokyo, Japan" }).waitFor();
   await page.getByRole("heading", { name: "EUR → JPY" }).waitFor();
   await page.getByText("100 EUR → 17450 JPY", { exact: true }).waitFor();
   await page.getByText("100 FIM → 21.35 USD", { exact: true }).waitFor();
+
+  const savedPlaceRow = page.locator('[data-saved-place-id="JP:tokyo"]');
+  const placeConvertHref = await savedPlaceRow
+    .getByRole("link", { name: "Convert for Tokyo, Japan", exact: true })
+    .getAttribute("href");
+  assert(placeConvertHref, "saved-state: saved Tokyo is missing its converter handoff");
+  const placeConvert = new URL(placeConvertHref, BASE_URL);
+  assert(
+    placeConvert.searchParams.get("destination_country") === "JP" &&
+      placeConvert.searchParams.get("destination_currency") === "JPY" &&
+      placeConvert.searchParams.get("destination_city_slug") === "tokyo",
+    `saved-state: saved Tokyo lost canonical destination scope: ${placeConvertHref}`,
+  );
+  assert(
+    (await savedPlaceRow
+      .getByRole("link", { name: "Open city profile: Tokyo, Japan", exact: true })
+      .getAttribute("href")) === "/city/JP/tokyo/",
+    "saved-state: saved Tokyo city-profile handoff drifted",
+  );
 
   const savedRow = page.locator("[data-saved-pair-id]").first();
   const usePairHref = await savedRow
@@ -1154,6 +1186,26 @@ async function assertSavedStateFlow(page) {
     (key) => JSON.parse(localStorage.getItem(key) ?? "{}").recent?.length === 1,
     LOCAL_STATE_KEY,
   );
+  assert(
+    await page
+      .getByRole("button", { name: "Clear saved places" })
+      .evaluate((element) => element.classList.contains("qa-destructive-button")),
+    "saved-state: Clear saved places is missing destructive-action styling",
+  );
+  await savedPlaceRow
+    .getByRole("button", { name: "Remove saved place: Tokyo, Japan", exact: true })
+    .click();
+  await page.getByText("Place removed from this browser.", { exact: true }).waitFor();
+  await page
+    .getByText("No saved places yet. Save a reviewed country or city from Explore.", {
+      exact: true,
+    })
+    .waitFor();
+  assert(
+    await page.getByRole("button", { name: "Clear saved places" }).isHidden(),
+    "saved-state: clear-places action remained visible after the list became empty",
+  );
+
   for (const label of ["Clear saved pairs", "Clear recent history"]) {
     assert(
       await page
@@ -1782,6 +1834,10 @@ async function assertNoJavaScriptExplore(browser) {
       (await page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).count()) === 1,
       "explore/no-js: reviewed Tokyo city row disappeared without JavaScript",
     );
+    assert(
+      (await page.locator("[data-save-place]:visible").count()) === 0,
+      "explore/no-js: browser-only save controls became visible without JavaScript",
+    );
     await assertNoHorizontalOverflow(page, "explore/no-js");
     return {
       collectionsVisible: true,
@@ -1895,6 +1951,32 @@ async function assertExploreFlow(page) {
       !compareUrl.searchParams.has("right_destination"),
     `explore: Tokyo Compare handoff lost canonical scope or over-selected a peer: ${compareHref}`,
   );
+
+  const savePlace = tokyoRow.getByRole("button", {
+    name: "Save place: Tokyo, Japan",
+    exact: true,
+  });
+  await savePlace.waitFor();
+  assert(
+    (await savePlace.getAttribute("aria-pressed")) === "false",
+    "explore: unsaved Tokyo did not expose an unpressed save toggle",
+  );
+  await savePlace.click();
+  await page.waitForFunction((key) => {
+    const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+    return state.places?.some((place) => place.token === "JP:tokyo") === true;
+  }, LOCAL_STATE_KEY);
+  const savedPlace = tokyoRow.getByRole("button", {
+    name: "Remove saved place: Tokyo, Japan",
+    exact: true,
+  });
+  await savedPlace.waitFor();
+  assert(
+    (await savedPlace.getAttribute("aria-pressed")) === "true" &&
+      (await savedPlace.getAttribute("data-saved")) === "true",
+    "explore: saved Tokyo did not expose a pressed saved state",
+  );
+  await tokyoRow.getByText("Place saved in this browser.", { exact: true }).waitFor();
 
   await assertAxe(page, "explore/interactive");
 }
