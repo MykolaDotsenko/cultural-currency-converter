@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from threading import Barrier
 from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, close_old_connections, transaction
+from django.test import TransactionTestCase, skipUnlessDBFeature
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetAssumptions, BudgetBasis, BudgetCategoryAssumption
-from apps.exchange.comparison_snapshot import build_saved_comparison_token
+from apps.exchange.comparison_snapshot import (
+    build_saved_comparison_token,
+    load_saved_comparison_token,
+)
 from apps.travel.models import SavedComparison, SavedComparisonBudgetItem, SavedPlace
-from apps.travel.personalization import sync_user_saved_places
+from apps.travel.personalization import persist_saved_comparison, sync_user_saved_places
 
 User = get_user_model()
 
@@ -426,3 +432,84 @@ def test_signed_in_saved_page_exposes_explicit_local_place_import_not_auto_migra
     assert b"Sign-in never uploads these automatically." in response.content
     assert b"Import is an explicit, idempotent action" in response.content
     assert not SavedPlace.objects.filter(user=user).exists()
+
+
+class DurablePersonalizationConcurrencyTests(TransactionTestCase):
+    reset_sequences = True
+
+    def setUp(self):
+        self.eur = Currency.objects.create(code="EUR", name="Euro", minor_units=2)
+        self.jpy = Currency.objects.create(
+            code="JPY",
+            name="Japanese yen",
+            minor_units=0,
+        )
+        self.nok = Currency.objects.create(
+            code="NOK",
+            name="Norwegian krone",
+            minor_units=2,
+        )
+        self.fi = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+        self.jp = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+        self.no = Country.objects.create(iso2="NO", iso3="NOR", name="Norway")
+        for country, currency in (
+            (self.fi, self.eur),
+            (self.jp, self.jpy),
+            (self.no, self.nok),
+        ):
+            CountryCurrency.objects.create(
+                country=country,
+                currency=currency,
+                is_primary=True,
+                source="https://example.test/currency",
+            )
+        City.objects.create(country=self.jp, slug="tokyo", name="Tokyo")
+        self.user = User.objects.create_user(
+            username="parallel-owner",
+            password="StrongPass-482!",
+        )
+
+    @skipUnlessDBFeature("has_select_for_update")
+    def test_concurrent_duplicate_place_sync_creates_one_owner_row(self):
+        barrier = Barrier(2)
+        payload = [{"countryCode": "JP", "citySlug": "tokyo"}]
+
+        def worker():
+            close_old_connections()
+            try:
+                user = User.objects.get(pk=self.user.pk)
+                barrier.wait()
+                sync_user_saved_places(user, payload)
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(worker) for _ in range(2)]
+            for future in futures:
+                future.result(timeout=10)
+
+        self.assertEqual(SavedPlace.objects.filter(user=self.user).count(), 1)
+
+    @skipUnlessDBFeature("has_select_for_update")
+    def test_concurrent_duplicate_comparison_save_creates_one_owner_graph(self):
+        barrier = Barrier(2)
+        value = load_saved_comparison_token(_comparison_token())
+
+        def worker():
+            close_old_connections()
+            try:
+                user = User.objects.get(pk=self.user.pk)
+                barrier.wait()
+                persist_saved_comparison(user, value)
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(worker) for _ in range(2)]
+            for future in futures:
+                future.result(timeout=10)
+
+        comparison = SavedComparison.objects.get(user=self.user)
+        self.assertEqual(SavedComparison.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(comparison.budget_items.count(), 3)
+
