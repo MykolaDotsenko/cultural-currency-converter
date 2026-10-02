@@ -26,3 +26,5 @@ document.body.addEventListener("htmx:beforeCleanupElement", (event) => {
     module.destroyRateCharts(target);
   });
 });
+
+export {};
