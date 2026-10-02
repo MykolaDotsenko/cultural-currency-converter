@@ -261,14 +261,14 @@ The 2026-09-25 Chromium/production-build baseline measured:
 - saved-state lazy chunk: 2,144 B gzip;
 - historical chart lazy chunk: 54,084 B gzip;
 - all JavaScript: 80,290 B gzip;
-- application stylesheet: about 13.05 KiB gzip;
+- application stylesheet: about 16.85 KiB gzip with the premium Explore atlas layer;
 - normal initial pages: 4 requests; lazy-chunk pages: 5 requests.
 
 Current hard budgets intentionally leave measured headroom rather than preserving accidental size:
 
 - core JavaScript: <= 32 KiB gzip;
 - all JavaScript: <= 96 KiB gzip;
-- CSS: <= 16 KiB gzip;
+- CSS: <= 20 KiB gzip;
 - chart chunk: <= 64 KiB gzip;
 - saved-state chunk: <= 8 KiB gzip;
 - initial browser surface: <= 5 requests;
@@ -290,7 +290,7 @@ Watch:
 - large images;
 - slow request-path enrichment.
 
-Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold.
+Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold. The October 2026 Explore 2.0 editorial atlas raised measured CSS from the prior ~13 KiB baseline to ~16.85 KiB gzip; the CSS cap was therefore moved to 20 KiB while JS, request and query budgets remained unchanged.
 
 ## Documentation quality
 
