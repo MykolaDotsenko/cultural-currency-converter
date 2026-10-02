@@ -1,8 +1,4 @@
-import {
-  readState,
-  type SavedPlace,
-  writeState,
-} from "./local-saved-state-store";
+import { readState, type SavedPlace, writeState } from "./local-saved-state-store";
 
 interface AccountPlaceSyncConfig {
   url: string;
