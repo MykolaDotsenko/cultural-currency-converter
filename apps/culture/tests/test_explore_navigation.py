@@ -4,9 +4,10 @@ from datetime import date
 from io import StringIO
 from urllib.parse import parse_qs, urlparse
 
-import pytest
 from django.core.management import call_command
 from django.urls import reverse
+
+import pytest
 
 from apps.countries.models import Country
 from apps.culture.explore import build_explore_destinations
