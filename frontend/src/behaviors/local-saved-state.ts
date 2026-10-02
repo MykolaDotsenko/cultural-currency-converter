@@ -250,9 +250,7 @@ function setAccountPlaceSurfaceState(surface: HTMLElement, saved: boolean): void
   button.removeAttribute("aria-pressed");
   button.setAttribute(
     "aria-label",
-    saved
-      ? `Place saved to account: ${placeName}`
-      : `Save place to account: ${placeName}`,
+    saved ? `Place saved to account: ${placeName}` : `Save place to account: ${placeName}`,
   );
   button.dataset.saved = saved ? "true" : "false";
   label.textContent = saved ? "Saved to account" : "Save to account";
@@ -271,9 +269,7 @@ async function saveAccountPlace(surface: HTMLElement): Promise<void> {
     setAccountPlaceSurfaceState(surface, true);
     placeStatus(
       surface,
-      created
-        ? "Place saved to your account."
-        : "This place is already saved to your account.",
+      created ? "Place saved to your account." : "This place is already saved to your account.",
     );
     enhanceExploreSavedPlaces();
   } catch {
