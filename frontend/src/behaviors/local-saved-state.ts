@@ -22,7 +22,6 @@ import {
   writeState,
 } from "./local-saved-state-store";
 
-
 function pairFromSnapshot(element: HTMLElement): PairContext | null {
   return normalizePair({
     sourceCurrency: element.dataset.sourceCurrency ?? "",
