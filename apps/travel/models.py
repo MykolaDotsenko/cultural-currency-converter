@@ -387,8 +387,7 @@ class SavedComparisonBudgetItem(models.Model):
                 name="unique_saved_cmp_category",
             ),
             models.CheckConstraint(
-                condition=Q(units_per_person_per_day__gt=0)
-                & Q(units_per_person_per_day__lte=100),
+                condition=Q(units_per_person_per_day__gt=0) & Q(units_per_person_per_day__lte=100),
                 name="saved_cmp_units_range",
             ),
             models.CheckConstraint(
@@ -398,10 +397,7 @@ class SavedComparisonBudgetItem(models.Model):
         ]
 
     def __str__(self) -> str:
-        return (
-            f"{self.comparison_id}: {self.category} x "
-            f"{self.units_per_person_per_day}"
-        )
+        return f"{self.comparison_id}: {self.category} x {self.units_per_person_per_day}"
 
 
 class SavedScenarioKind(models.TextChoices):
