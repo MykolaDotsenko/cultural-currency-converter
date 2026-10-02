@@ -32,16 +32,16 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         countries = {
-            "FI": ("FIN", "Finland"),
-            "JP": ("JPN", "Japan"),
-            "US": ("USA", "United States"),
-            "SE": ("SWE", "Sweden"),
-            "DK": ("DNK", "Denmark"),
-            "NO": ("NOR", "Norway"),
-            "DE": ("DEU", "Germany"),
-            "SG": ("SGP", "Singapore"),
-            "CA": ("CAN", "Canada"),
-            "NZ": ("NZL", "New Zealand"),
+            "FI": ("FIN", "Finland", "Europe", "Northern Europe"),
+            "JP": ("JPN", "Japan", "Asia", "Eastern Asia"),
+            "US": ("USA", "United States", "Americas", "Northern America"),
+            "SE": ("SWE", "Sweden", "Europe", "Northern Europe"),
+            "DK": ("DNK", "Denmark", "Europe", "Northern Europe"),
+            "NO": ("NOR", "Norway", "Europe", "Northern Europe"),
+            "DE": ("DEU", "Germany", "Europe", "Western Europe"),
+            "SG": ("SGP", "Singapore", "Asia", "South-Eastern Asia"),
+            "CA": ("CAN", "Canada", "Americas", "Northern America"),
+            "NZ": ("NZL", "New Zealand", "Oceania", "Australia and New Zealand"),
         }
         currencies = {
             "EUR": ("Euro", "€", 2, True, None, None),
@@ -57,10 +57,17 @@ class Command(BaseCommand):
         }
 
         country_rows = {}
-        for iso2, (iso3, name) in countries.items():
+        for iso2, (iso3, name, region, subregion) in countries.items():
             country_rows[iso2], _ = Country.objects.update_or_create(
                 iso2=iso2,
-                defaults={"iso3": iso3, "name": name, "official_name": name, "is_active": True},
+                defaults={
+                    "iso3": iso3,
+                    "name": name,
+                    "official_name": name,
+                    "region": region,
+                    "subregion": subregion,
+                    "is_active": True,
+                },
             )
 
         currency_rows = {}
