@@ -18,6 +18,8 @@ on:
       - ".nvmrc"
       - ".github/workflows/frontend-quality.yml"
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 
