@@ -731,8 +731,7 @@ class SameAmountDestinationsForm(forms.Form):
     @property
     def reference_data_ready(self) -> bool:
         return bool(
-            self._currency_by_code
-            and len(self._destination_by_token) >= self.MIN_DESTINATIONS
+            self._currency_by_code and len(self._destination_by_token) >= self.MIN_DESTINATIONS
         )
 
     def add_error(self, field, error):
@@ -779,7 +778,9 @@ class SameAmountDestinationsForm(forms.Form):
             for token in unique_tokens:
                 destination = self._destination_by_token.get(token)
                 if destination is None:
-                    self.add_error("destinations", "One selected destination is no longer available.")
+                    self.add_error(
+                        "destinations", "One selected destination is no longer available."
+                    )
                     continue
                 country, city, currency = destination
                 resolved.append(
