@@ -111,7 +111,16 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for country in region.countries %}
-                    <article class="qa-saved-row qa-explore-country">
+                    <article class="qa-saved-row qa-explore-country"
+                             {% if country.converter_url %}
+                               data-local-saved-place
+                               data-place-token="{{ country.token }}"
+                               data-place-country-code="{{ country.country_code }}"
+                               data-place-country-name="{{ country.country_name }}"
+                               data-place-city-slug=""
+                               data-place-city-name=""
+                               data-place-currency-code="{{ country.currency_code }}"
+                             {% endif %}>
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {{ country.currency_code }}
@@ -122,7 +131,14 @@
                           <div class="qa-saved-list qa-explore-city-list"
                                aria-label="Reviewed cities in {{ country.country_name }}">
                             {% for city in country.cities %}
-                              <div class="qa-saved-row qa-explore-city-row">
+                              <div class="qa-saved-row qa-explore-city-row"
+                                   data-local-saved-place
+                                   data-place-token="{{ city.token }}"
+                                   data-place-country-code="{{ city.country_code }}"
+                                   data-place-country-name="{{ city.country_name }}"
+                                   data-place-city-slug="{{ city.slug }}"
+                                   data-place-city-name="{{ city.name }}"
+                                   data-place-currency-code="{{ city.currency_code }}">
                                 <div class="qa-saved-row__copy">
                                   <h5>
                                     <a class="qa-explore-city-link"
@@ -135,6 +151,16 @@
                                      href="{{ city.converter_url }}">Convert</a>
                                   <a class="qa-secondary-button"
                                      href="{{ city.comparison_url }}">Compare</a>
+                                  <button class="qa-secondary-button"
+                                          type="button"
+                                          data-save-place
+                                          hidden>
+                                    <span data-save-place-label>Save</span>
+                                  </button>
+                                  <span class="qa-visually-hidden"
+                                        role="status"
+                                        aria-live="polite"
+                                        data-save-place-status></span>
                                 </div>
                               </div>
                             {% endfor %}
@@ -149,6 +175,16 @@
                              href="{{ country.converter_url }}">Open country context</a>
                           <a class="qa-secondary-button"
                              href="{{ country.comparison_url }}">Compare</a>
+                          <button class="qa-secondary-button"
+                                  type="button"
+                                  data-save-place
+                                  hidden>
+                            <span data-save-place-label>Save</span>
+                          </button>
+                          <span class="qa-visually-hidden"
+                                role="status"
+                                aria-live="polite"
+                                data-save-place-status></span>
                         </div>
                       {% endif %}
                     </article>
@@ -161,7 +197,14 @@
           <div class="qa-saved-list">
             {% for card in explore_destinations %}
               {% with destination=card.destination %}
-                <article class="qa-saved-row">
+                <article class="qa-saved-row"
+                         data-local-saved-place
+                         data-place-token="{{ card.token }}"
+                         data-place-country-code="{{ destination.country_code }}"
+                         data-place-country-name="{{ destination.country_name }}"
+                         data-place-city-slug="{{ destination.city_slug }}"
+                         data-place-city-name="{{ destination.city_name }}"
+                         data-place-currency-code="{{ destination.currency_code }}">
                   <div class="qa-saved-row__copy">
                     <p class="qa-foundation-kicker">
                       {% if destination.is_city_scope %}City{% else %}Country{% endif %}
@@ -184,6 +227,16 @@
                          href="{{ card.converter_url }}">Open destination</a>
                     {% endif %}
                     <a class="qa-secondary-button" href="{{ card.comparison_url }}">Compare</a>
+                    <button class="qa-secondary-button"
+                            type="button"
+                            data-save-place
+                            hidden>
+                      <span data-save-place-label>Save</span>
+                    </button>
+                    <span class="qa-visually-hidden"
+                          role="status"
+                          aria-live="polite"
+                          data-save-place-status></span>
                   </div>
                 </article>
               {% endwith %}
