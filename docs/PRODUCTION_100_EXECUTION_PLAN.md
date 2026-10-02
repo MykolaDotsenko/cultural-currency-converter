@@ -346,6 +346,8 @@ Add deterministic, provenance-aware collection composition for categories such a
 
 Do not invent “popular” collections without real evidence.
 
+**Current production slice:** a provider-free collection composition layer now derives five neutral collection kinds entirely from existing reviewed domain state. City-profile items require direct city evidence; currency-story items require published reviewed stories and valid provenance; cash/card items require reviewed current-country payment guidance; shared-currency items require at least two current-primary country relationships with valid source URLs; recently reviewed destinations are ordered by evidence date rather than popularity or value. Every collection item carries explicit provenance evidence, bounded deterministic ordering and stable scope identity, and empty/invalid collections fail closed. No collection performs an FX/AI request, adds a geography model or creates a ranking/affordability score. Rendering these collections in richer regional Explore UX remains the next phase.
+
 ## PR #195 — Regional Explore UX
 
 Add region → country → city discovery using canonical geographic/domain identities.
