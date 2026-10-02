@@ -6,7 +6,9 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.core.management import call_command
+from django.urls import reverse
 
+from apps.countries.models import Country
 from apps.culture.explore import build_explore_destinations
 from apps.culture.explore_collections import build_explore_collections
 from apps.culture.explore_navigation import build_explore_regions
@@ -73,8 +75,6 @@ def test_regional_explore_groups_only_reviewed_destination_scopes(seeded_explore
 
 @pytest.mark.django_db
 def test_regional_explore_keeps_unknown_geography_visible_but_last(seeded_explore_ux):
-    from apps.countries.models import Country
-
     Country.objects.filter(iso2="JP").update(region="", subregion="")
     destinations = build_explore_destinations(as_of=AS_OF, limit=24)
     regions = build_explore_regions(destinations)
@@ -141,7 +141,11 @@ def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_expl
         component for component in components if component["kind"] == "currency_stories"
     )
     assert stories["items"][0]["action_label"] == "Read money story"
-    assert str(stories["items"][0]["action_url"]).startswith("/culture/story?")
+    story_url = urlparse(str(stories["items"][0]["action_url"]))
+    assert story_url.path == reverse("money_culture_story")
+    story_query = parse_qs(story_url.query)
+    assert story_query["historical"] == ["0"]
+    assert story_query["selected_date"] == [AS_OF.isoformat()]
 
     shared = next(
         component
