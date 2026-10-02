@@ -29,8 +29,8 @@
           <h2 id="same-amount-form-title">Choose two to four destinations.</h2>
         </div>
         <p>
-          Your selection order is preserved. Results are never re-sorted by converted amount,
-          local prices or any inferred notion of value.
+          Your selected destinations stay in a stable submitted order. Results are never re-sorted
+          by converted amount, local prices or any inferred notion of value.
         </p>
       </div>
       {% if form.errors %}
@@ -129,7 +129,8 @@
       {% endif %}
       <div class="qa-same-amount__grid">
         {% for item in same_amount.destinations %}
-          <article class="qa-same-amount-card">
+          <article class="qa-same-amount-card"
+                   data-destination-token="{{ item.token }}">
             <header class="qa-same-amount-card__header">
               <div>
                 <p class="qa-foundation-kicker">{{ item.currency_code }} · current reference</p>
