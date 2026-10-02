@@ -354,6 +354,8 @@ Add region → country → city discovery using canonical geographic/domain iden
 
 Do not build a second geography model.
 
+**Current production slice:** Explore now renders the #194 collection domain and canonical geography as one server-rendered premium discovery surface. Region → country → city navigation is derived from existing `Country.region` / `Country.subregion` / canonical `City.country` relationships, with deterministic reference-seed metadata for the reviewed destination set and a neutral “Other reviewed places” fallback when geography metadata is genuinely absent. Region/country filters are deep-linkable query state and never alter financial truth. The five evidence-backed collection kinds are rendered with progressive source disclosure; global Explore keeps all valid collections discoverable, while an explicit geography selection narrows collection items to the selected scope. Destination and collection actions hand off only to canonical City Money Profile or Converter flows, no live FX/AI request occurs during discovery, and no popularity/value/affordability ranking is introduced. The frontend reuses one reviewed destination snapshot for collection composition to avoid duplicate domain work and is covered by the existing Chromium/Firefox/WebKit Explore surface.
+
 ## PR #196 — Same amount across destinations
 
 Allow one source amount to be viewed across several explicit destinations.
