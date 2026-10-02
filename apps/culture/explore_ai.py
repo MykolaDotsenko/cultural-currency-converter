@@ -203,19 +203,24 @@ def build_explore_explanation_packet(
             )
         )
     else:
+        payment_facts = (
+            ("payment_summary", context.payment.summary),
+            ("payment_customs", context.payment.payment_customs),
+            ("cash_usage", context.payment.cash_usage),
+            ("atm_notes", context.payment.atm_notes),
+            ("dcc_warning", context.payment.dcc_warning),
+        )
         facts.extend(
-            (
-                GroundedFact(id="payment_summary", statement=context.payment.summary),
-                GroundedFact(id="payment_customs", statement=context.payment.payment_customs),
-                GroundedFact(id="cash_usage", statement=context.payment.cash_usage),
-                GroundedFact(id="atm_notes", statement=context.payment.atm_notes),
-                GroundedFact(id="dcc_warning", statement=context.payment.dcc_warning),
-                GroundedFact(
-                    id="payment_verified",
-                    statement=(
-                        "The reviewed payment context was verified on "
-                        f"{context.payment.verified_at.date().isoformat()}."
-                    ),
+            GroundedFact(id=fact_id, statement=statement.strip())
+            for fact_id, statement in payment_facts
+            if statement.strip()
+        )
+        facts.append(
+            GroundedFact(
+                id="payment_verified",
+                statement=(
+                    "The reviewed payment context was verified on "
+                    f"{context.payment.verified_at.date().isoformat()}."
                 ),
             )
         )
@@ -260,7 +265,9 @@ def build_explore_explanation_packet(
 
     if intent is ExploreExplanationIntent.CASH_CARD:
         required_fact_ids = (
-            ("payment_summary",) if context.payment is not None else ("payment_absence",)
+            ("payment_summary",)
+            if "payment_summary" in {fact.id for fact in facts}
+            else ("payment_absence",)
         )
     elif intent is ExploreExplanationIntent.PRICE_EVIDENCE:
         required_fact_ids = ("price_1",) if context.prices else ("price_absence",)
