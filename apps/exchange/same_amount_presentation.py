@@ -148,7 +148,9 @@ def build_same_amount_component(
     item_by_token = {**success_by_token, **failure_by_token}
 
     if destination_order:
-        items = tuple(item_by_token[token] for token in destination_order if token in item_by_token)
+        if set(destination_order) != set(item_by_token) or len(destination_order) != len(item_by_token):
+            raise ValueError("Same-amount presentation order must match every rendered destination.")
+        items = tuple(item_by_token[token] for token in destination_order)
     else:
         items = tuple(success_by_token.values()) + tuple(failure_by_token.values())
 
