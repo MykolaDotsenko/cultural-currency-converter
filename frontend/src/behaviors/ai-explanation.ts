@@ -1,27 +1,40 @@
-const REGION_ID = "conversion-explanation-region";
-const CLIENT_STATUS_ID = "explanation-client-status";
-const ANNOUNCER_ID = "explanation-announcer";
+const DEFAULT_REGION_ID = "conversion-explanation-region";
+const DEFAULT_CLIENT_STATUS_ID = "explanation-client-status";
+const DEFAULT_ANNOUNCER_ID = "explanation-announcer";
 const TRIGGER_SELECTOR = "[data-ai-explanation-trigger]";
 const FOCUS_SELECTOR = "[data-ai-explanation-focus]";
 
-function explanationRegion(): HTMLElement | null {
-  return document.getElementById(REGION_ID);
-}
-
-function clientStatus(): HTMLElement | null {
-  return document.getElementById(CLIENT_STATUS_ID);
-}
-
-function announcer(): HTMLElement | null {
-  return document.getElementById(ANNOUNCER_ID);
+interface ExplanationTargets {
+  region: HTMLElement | null;
+  clientStatus: HTMLElement | null;
+  announcer: HTMLElement | null;
 }
 
 function explanationTrigger(target: EventTarget | null): HTMLElement | null {
   return target instanceof Element ? target.closest<HTMLElement>(TRIGGER_SELECTOR) : null;
 }
 
-function setPending(delta: number): void {
-  const region = explanationRegion();
+function elementById(id: string | undefined, fallback: string): HTMLElement | null {
+  return document.getElementById(id?.trim() || fallback);
+}
+
+function targetsForTrigger(trigger: HTMLElement): ExplanationTargets {
+  return {
+    region: elementById(trigger.dataset.aiExplanationRegion, DEFAULT_REGION_ID),
+    clientStatus: elementById(trigger.dataset.aiClientStatus, DEFAULT_CLIENT_STATUS_ID),
+    announcer: elementById(trigger.dataset.aiAnnouncer, DEFAULT_ANNOUNCER_ID),
+  };
+}
+
+function targetsForRegion(region: HTMLElement): ExplanationTargets {
+  return {
+    region,
+    clientStatus: elementById(region.dataset.aiClientStatus, DEFAULT_CLIENT_STATUS_ID),
+    announcer: elementById(region.dataset.aiAnnouncer, DEFAULT_ANNOUNCER_ID),
+  };
+}
+
+function setPending(region: HTMLElement | null, delta: number): void {
   if (!region) return;
 
   const current = Number.parseInt(region.dataset.aiPendingRequests ?? "0", 10);
@@ -30,86 +43,95 @@ function setPending(delta: number): void {
   region.setAttribute("aria-busy", next > 0 ? "true" : "false");
 }
 
-function resetPending(): void {
-  const region = explanationRegion();
+function resetPending(region: HTMLElement | null): void {
   if (!region) return;
   region.dataset.aiPendingRequests = "0";
   region.setAttribute("aria-busy", "false");
 }
 
-function announce(message: string): void {
-  const status = announcer();
-  if (!status) return;
+function announce(announcer: HTMLElement | null, message: string): void {
+  if (!announcer) return;
 
-  status.textContent = "";
+  announcer.textContent = "";
   window.setTimeout(() => {
-    status.textContent = message;
+    announcer.textContent = message;
   }, 0);
 }
 
-function clearClientStatus(): void {
-  const status = clientStatus();
+function clearClientStatus(status: HTMLElement | null): void {
   if (status) status.textContent = "";
 }
 
-function showClientFailure(): void {
-  resetPending();
-  const status = clientStatus();
+function showClientFailure(trigger: HTMLElement): void {
+  const targets = targetsForTrigger(trigger);
+  resetPending(targets.region);
+  const status = targets.clientStatus;
   if (!status) return;
 
   status.textContent =
     "The explanation request could not be completed. Choose the question again to retry.";
-  announce("Explanation request failed. Choose the question again to retry.");
+  announce(targets.announcer, "Explanation request failed. Choose the question again to retry.");
   status.focus();
 }
 
 document.addEventListener("htmx:beforeRequest", (event) => {
-  if (!explanationTrigger(event.target)) return;
-  clearClientStatus();
-  setPending(1);
   const trigger = explanationTrigger(event.target);
-  const label = trigger?.dataset.aiExplanationLabel ?? trigger?.textContent?.trim();
-  announce(label ? `Generating explanation: ${label}` : "Generating explanation.");
+  if (!trigger) return;
+
+  const targets = targetsForTrigger(trigger);
+  clearClientStatus(targets.clientStatus);
+  setPending(targets.region, 1);
+  const label = trigger.dataset.aiExplanationLabel ?? trigger.textContent?.trim();
+  announce(
+    targets.announcer,
+    label ? `Generating explanation: ${label}` : "Generating explanation.",
+  );
 });
 
 document.addEventListener("htmx:afterRequest", (event) => {
-  if (!explanationTrigger(event.target)) return;
-  setPending(-1);
+  const trigger = explanationTrigger(event.target);
+  if (!trigger) return;
+  setPending(targetsForTrigger(trigger).region, -1);
 });
 
 document.addEventListener("htmx:afterSwap", (event) => {
   const target = event.target;
-  if (!(target instanceof HTMLElement) || target.id !== REGION_ID) return;
+  if (!(target instanceof HTMLElement)) return;
 
-  resetPending();
-  clearClientStatus();
+  const isExplanationRegion =
+    target.id === DEFAULT_REGION_ID || target.hasAttribute("data-ai-pending-requests");
+  if (!isExplanationRegion) return;
+
+  const targets = targetsForRegion(target);
+  resetPending(targets.region);
+  clearClientStatus(targets.clientStatus);
 
   const focusTarget = target.querySelector<HTMLElement>(FOCUS_SELECTOR);
   const generated = target.querySelector<HTMLElement>("[data-ai-generated]")?.dataset.aiGenerated;
   if (generated === "true") {
-    announce("AI explanation ready.");
+    announce(targets.announcer, "AI explanation ready.");
   } else if (generated === "false") {
-    announce("Built-in explanation ready. Live AI is unavailable.");
+    announce(targets.announcer, "Built-in explanation ready. Live AI is unavailable.");
   } else if (target.querySelector('[role="alert"]')) {
-    announce("Explanation unavailable. Choose the question again to retry.");
+    announce(targets.announcer, "Explanation unavailable. Choose the question again to retry.");
   }
 
   focusTarget?.focus();
 });
 
 document.addEventListener("htmx:responseError", (event) => {
-  if (!explanationTrigger(event.target)) return;
-  showClientFailure();
+  const trigger = explanationTrigger(event.target);
+  if (trigger) showClientFailure(trigger);
 });
 
 document.addEventListener("htmx:sendError", (event) => {
-  if (!explanationTrigger(event.target)) return;
-  showClientFailure();
+  const trigger = explanationTrigger(event.target);
+  if (trigger) showClientFailure(trigger);
 });
 
 document.addEventListener("htmx:timeout", (event) => {
-  if (!explanationTrigger(event.target)) return;
-  showClientFailure();
+  const trigger = explanationTrigger(event.target);
+  if (trigger) showClientFailure(trigger);
 });
 
 export {};
