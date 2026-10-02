@@ -2065,3 +2065,149 @@ h3 {
     border-color: CanvasText;
   }
 }
+
+/* Frontend continuity and degraded-state pass. */
+.qa-continuity-note {
+  max-width: 72rem;
+  display: flex;
+  align-items: baseline;
+  gap: var(--qa-space-3) var(--qa-space-5);
+  margin-block: calc(var(--qa-space-8) * -0.5) var(--qa-space-8);
+  padding-block: var(--qa-space-4);
+  border-block: 1px solid var(--qa-hairline);
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+}
+
+.qa-continuity-note strong {
+  flex: 0 0 auto;
+  color: var(--color-ink);
+  font-size: var(--text-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.qa-context-empty,
+.qa-saved-empty {
+  min-block-size: 5.5rem;
+  display: grid;
+  align-content: center;
+  max-width: 48rem;
+  margin: 0;
+  padding: var(--qa-space-5);
+  border: 1px dashed var(--color-border-control);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-soft) 66%, transparent);
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.qa-media__caption {
+  min-width: 0;
+  align-items: baseline;
+}
+
+.qa-media__caption > *,
+.qa-media__caption a {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.qa-media__authenticity,
+.qa-media__change-note {
+  color: var(--color-tertiary);
+}
+
+.qa-media__caption a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 40rem) {
+  .qa-continuity-note {
+    display: grid;
+    gap: var(--qa-space-2);
+    margin-block-start: calc(var(--qa-space-4) * -1);
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-continuity-note,
+  .qa-context-empty,
+  .qa-saved-empty {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .qa-media__caption a {
+    color: LinkText;
+  }
+}
+
+/* Frontend system quality batch. */
+.qa-product-intro h1,
+.qa-foundation-intro h1 {
+  max-width: 19ch;
+}
+
+.qa-product-intro .qa-foundation-lede,
+.qa-foundation-intro .qa-foundation-lede {
+  max-width: 64ch;
+}
+
+.qa-degraded-panel {
+  min-width: 0;
+  display: grid;
+  gap: var(--qa-space-3);
+  max-width: 48rem;
+  padding: var(--qa-space-5);
+  border: 1px dashed var(--color-border-control);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-soft) 68%, transparent);
+  color: var(--color-muted);
+}
+
+.qa-degraded-panel h3,
+.qa-degraded-panel p {
+  margin: 0;
+}
+
+.qa-degraded-panel h3 {
+  color: var(--color-ink);
+  font-size: var(--text-heading-3);
+}
+
+.qa-degraded-panel p {
+  max-width: 60ch;
+  line-height: 1.65;
+}
+
+.qa-degraded-panel .qa-secondary-button {
+  width: fit-content;
+}
+
+@media (hover: hover) {
+  .qa-media__caption a:hover {
+    color: var(--color-brand-hover);
+    text-decoration-thickness: 0.12em;
+  }
+}
+
+@media (max-width: 30rem) {
+  .qa-degraded-panel .qa-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-degraded-panel {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}

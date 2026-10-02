@@ -69,6 +69,7 @@ const VIEWPORTS = [
   { name: "transition-1023", width: 1023, height: 900 },
   { name: "transition-1025", width: 1025, height: 900 },
   { name: "mobile-390", width: 390, height: 844 },
+  { name: "reflow-640", width: 640, height: 900 },
   { name: "reflow-320", width: 320, height: 700 },
 ];
 
@@ -2122,6 +2123,30 @@ async function assertCityProfileQuality(page) {
     "city-profile: hero action hierarchy regressed into button soup",
   );
 
+  const converterHref = await page
+    .locator(".qa-city-profile__hero-actions .qa-primary-button")
+    .getAttribute("href");
+  assert(converterHref, "city-profile: canonical converter handoff is missing");
+  const converterUrl = new URL(converterHref, BASE_URL);
+  assert(
+    converterUrl.searchParams.get("destination_country") === "JP" &&
+      converterUrl.searchParams.get("destination_currency") === "JPY" &&
+      converterUrl.searchParams.get("destination_city_slug") === "tokyo",
+    `city-profile: converter handoff lost Tokyo scope: ${converterHref}`,
+  );
+
+  const compareHref = await page
+    .locator(".qa-city-profile__hero-actions .qa-city-profile__text-action")
+    .getAttribute("href");
+  assert(compareHref, "city-profile: contextual Compare handoff is missing");
+  const compareUrl = new URL(compareHref, BASE_URL);
+  assert(
+    compareUrl.pathname === "/compare/" &&
+      compareUrl.searchParams.get("left_destination") === "JP:tokyo" &&
+      !compareUrl.searchParams.has("right_destination"),
+    `city-profile: Compare handoff lost canonical Tokyo scope: ${compareHref}`,
+  );
+
   const evidence = priceCards.first().locator(".qa-city-profile__evidence");
   assert(
     !(await evidence.evaluate((element) => element.hasAttribute("open"))),
@@ -2220,6 +2245,32 @@ async function assertExploreFlow(page) {
       !compareUrl.searchParams.has("right_destination"),
     `explore: Tokyo Compare handoff lost canonical scope or over-selected a peer: ${compareHref}`,
   );
+
+  const comparisonPage = await page.context().newPage();
+  try {
+    const comparisonResponse = await comparisonPage.goto(compareUrl.toString(), {
+      waitUntil: "networkidle",
+    });
+    assert(
+      comparisonResponse?.ok(),
+      `explore/compare: seeded comparison returned ${comparisonResponse?.status() ?? "no response"}`,
+    );
+    await comparisonPage
+      .getByText("Destination A is already selected.", { exact: false })
+      .waitFor();
+    assert(
+      (await comparisonPage.locator('select[name="left_destination"]').inputValue()) === "JP:tokyo",
+      "explore/compare: seeded Destination A was not preserved in the comparison form",
+    );
+    assert(
+      (await comparisonPage.locator('select[name="right_destination"]').inputValue()) === "",
+      "explore/compare: comparison handoff silently selected Destination B",
+    );
+    await assertNoHorizontalOverflow(comparisonPage, "explore/compare-handoff");
+    await assertAxe(comparisonPage, "explore/compare-handoff");
+  } finally {
+    await comparisonPage.close();
+  }
 
   const savePlace = tokyoRow.getByRole("button", {
     name: "Save place: Tokyo, Japan",
@@ -2438,8 +2489,8 @@ try {
         }
       }
 
-      if (BROWSER_SCOPE === "full" && viewport.name === "reflow-320") {
-        await assertTextExpansion(page, surface.name);
+      if (BROWSER_SCOPE === "full" && ["reflow-640", "reflow-320"].includes(viewport.name)) {
+        await assertTextExpansion(page, `${surface.name}/${viewport.name}`);
       }
 
       assert(
