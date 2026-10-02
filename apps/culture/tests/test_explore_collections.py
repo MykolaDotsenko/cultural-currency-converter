@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
@@ -199,3 +200,21 @@ def test_cash_card_collection_fails_closed_on_invalid_profile_provenance(seeded_
 def test_explore_collection_item_limit_is_bounded():
     with pytest.raises(ValueError, match="between 1 and 12"):
         build_explore_collections(item_limit=13)
+
+
+@pytest.mark.django_db
+def test_explore_collections_can_reuse_precomputed_destinations(seeded_collections):
+    from apps.culture.explore import build_explore_destinations
+
+    destinations = build_explore_destinations(as_of=AS_OF, limit=24)
+    with patch(
+        "apps.culture.explore_collections.build_explore_destinations",
+        side_effect=AssertionError("destinations should be reused"),
+    ):
+        collections = build_explore_collections(
+            as_of=AS_OF,
+            destinations=destinations,
+        )
+
+    assert collections
+    assert collections[0].kind == ExploreCollectionKind.CITY_MONEY_PROFILES
