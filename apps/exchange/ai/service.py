@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -12,6 +13,7 @@ from django.db import DatabaseError, transaction
 from apps.exchange.ai.contracts import (
     ExplanationDrafter,
     ExplanationInsight,
+    ExplanationPacket,
     ExplanationResult,
 )
 from apps.exchange.ai.intents import ExplanationIntent, explanation_intent_spec
@@ -65,10 +67,29 @@ class RuntimeExplanationService:
         locale: str = "en",
     ) -> ExplanationDelivery:
         packet = build_explanation_packet(snapshot, intent=intent, locale=locale)
+        return self.explain_packet(
+            packet,
+            fallback_delivery_factory=lambda reason: _fallback_delivery(
+                snapshot,
+                intent=intent,
+                packet_hash=packet.packet_hash,
+                reason=reason,
+            ),
+        )
+
+    def explain_packet(
+        self,
+        packet: ExplanationPacket,
+        *,
+        fallback_delivery_factory: Callable[[str], ExplanationDelivery],
+        capability: str = "runtime_explanation",
+    ) -> ExplanationDelivery:
+        """Execute any server-built grounded packet through the shared AI trust boundary."""
+
         cache_key = _persistent_cache_key(
             packet_hash=packet.packet_hash,
             model=self.model,
-            locale=locale,
+            locale=packet.locale,
         )
 
         cached = _safe_persistent_cache_get(cache_key)
@@ -79,7 +100,7 @@ class RuntimeExplanationService:
                 logger.warning(
                     "Discarding invalid persisted AI explanation",
                     extra={
-                        "capability": "runtime_explanation",
+                        "capability": capability,
                         "provider": cached.provider,
                         "model": cached.model,
                         "operation": "persistent_cache_read",
@@ -92,7 +113,7 @@ class RuntimeExplanationService:
                 logger.info(
                     "AI runtime explanation cache hit",
                     extra={
-                        "capability": "runtime_explanation",
+                        "capability": capability,
                         "provider": cached.provider,
                         "model": cached.model,
                         "operation": "persistent_cache_read",
@@ -107,30 +128,17 @@ class RuntimeExplanationService:
                 )
 
         if not self.enabled or self._drafter is None:
-            return _fallback_delivery(
-                snapshot,
-                intent=intent,
-                packet_hash=packet.packet_hash,
-                reason="AI explanation is disabled.",
-            )
+            return fallback_delivery_factory("AI explanation is disabled.")
 
-        cooldown_key = f"ai:runtime-explanation:cooldown:{packet.packet_hash}"
+        cooldown_key = f"ai:{capability}:cooldown:{packet.packet_hash}"
         if _safe_cache_get(cooldown_key):
-            return _fallback_delivery(
-                snapshot,
-                intent=intent,
-                packet_hash=packet.packet_hash,
-                reason="Live AI is temporarily cooling down.",
-            )
+            return fallback_delivery_factory("Live AI is temporarily cooling down.")
 
-        lock_key = f"ai:runtime-explanation:lock:{cache_key}"
+        lock_key = f"ai:{capability}:lock:{cache_key}"
         lock_acquired = _safe_cache_add(lock_key, "1", timeout=_LOCK_SECONDS)
         if lock_acquired is False:
-            return _fallback_delivery(
-                snapshot,
-                intent=intent,
-                packet_hash=packet.packet_hash,
-                reason="An identical explanation is already being generated.",
+            return fallback_delivery_factory(
+                "An identical explanation is already being generated."
             )
 
         try:
@@ -154,7 +162,7 @@ class RuntimeExplanationService:
                 logger.warning(
                     "AI runtime explanation fallback",
                     extra={
-                        "capability": "runtime_explanation",
+                        "capability": capability,
                         "provider": "google",
                         "model": self.model,
                         "operation": "generate",
@@ -162,11 +170,8 @@ class RuntimeExplanationService:
                         "latency_ms": latency_ms,
                     },
                 )
-                return _fallback_delivery(
-                    snapshot,
-                    intent=intent,
-                    packet_hash=packet.packet_hash,
-                    reason="Live AI explanation is temporarily unavailable.",
+                return fallback_delivery_factory(
+                    "Live AI explanation is temporarily unavailable."
                 )
 
             latency_ms = round((time.perf_counter() - started) * 1000)
@@ -181,7 +186,7 @@ class RuntimeExplanationService:
                         "provider": "google",
                         "model": self.model,
                         "provider_model_version": provider_result.provider_model,
-                        "locale": locale,
+                        "locale": packet.locale,
                         "result": provider_result.payload,
                         "input_tokens": provider_result.usage.input_tokens,
                         "output_tokens": provider_result.usage.output_tokens,
@@ -194,7 +199,7 @@ class RuntimeExplanationService:
                 logger.warning(
                     "AI persistent explanation cache write failed open",
                     extra={
-                        "capability": "runtime_explanation",
+                        "capability": capability,
                         "dependency": "database",
                         "operation": "persistent_cache_write",
                         "outcome": "failure",
@@ -205,7 +210,7 @@ class RuntimeExplanationService:
             logger.info(
                 "AI runtime explanation success",
                 extra={
-                    "capability": "runtime_explanation",
+                    "capability": capability,
                     "provider": "google",
                     "model": self.model,
                     "operation": "generate",
