@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Ask about reviewed destination context · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Ask bounded questions about reviewed destination money context. AI can explain supplied facts but cannot create destination truth.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  {% if explore_ai %}
+    <section class="qa-product-intro" aria-labelledby="explore-ai-title">
+      <p class="qa-foundation-kicker">Explore · grounded explanation</p>
+      <h1 id="explore-ai-title">{{ explore_ai.snapshot.scope_label }}</h1>
+      <p class="qa-foundation-lede">
+        Ask only questions that the reviewed destination context can support. AI may explain these
+        facts, but it cannot create prices, payment behaviour, rankings or missing destination data.
+      </p>
+    </section>
+
+    <div class="qa-saved-state qa-explore-ai-page">
+      <section class="qa-saved-section" aria-labelledby="explore-ai-prompts-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">{{ explore_ai.snapshot.currency_code }} · reviewed context</p>
+            <h2 id="explore-ai-prompts-title">Choose a grounded question.</h2>
+            <p>There is intentionally no open-ended chatbot on this surface.</p>
+          </div>
+        </div>
+        <div class="qa-saved-row__actions">
+          {% for spec in explore_ai.intents %}
+            <form method="post"
+                  action="{% url 'explore_context_ai' %}"
+                  hx-post="{% url 'explore_context_ai' %}"
+                  hx-target="#explore-explanation-region"
+                  hx-swap="innerHTML">
+              {% csrf_token %}
+              <input type="hidden" name="explore_context_token" value="{{ explore_ai.signed_token }}">
+              <input type="hidden" name="prompt_id" value="{{ spec.intent.value }}">
+              <button class="qa-secondary-button" type="submit">{{ spec.label }}</button>
+            </form>
+          {% endfor %}
+        </div>
+        <div id="explore-explanation-region" aria-live="polite">
+          {% include "components/culture/explore_explanation.html" %}
+        </div>
+      </section>
+
+      <section class="qa-saved-section" aria-labelledby="explore-ai-evidence-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">What the assistant is allowed to know</p>
+            <h2 id="explore-ai-evidence-title">Reviewed facts only.</h2>
+          </div>
+        </div>
+        <dl class="qa-context-facts">
+          <div><dt>Scope</dt><dd>{{ explore_ai.snapshot.scope_label }}</dd></div>
+          <div><dt>Currency</dt><dd>{{ explore_ai.snapshot.currency_code }}</dd></div>
+          <div><dt>Context date</dt><dd>{{ explore_ai.snapshot.as_of|date:"j M Y" }}</dd></div>
+          <div><dt>Price anchors</dt><dd>{{ explore_ai.snapshot.prices|length }}</dd></div>
+        </dl>
+        <div class="qa-saved-row__actions">
+          <a class="qa-primary-button" href="{{ explore_ai.converter_url }}">Open converter</a>
+          <a class="qa-secondary-button" href="{{ explore_ai.budget_url }}">Build a budget</a>
+          <a class="qa-secondary-button" href="{{ explore_ai.explore_url }}">Back to Explore</a>
+        </div>
+      </section>
+    </div>
+  {% else %}
+    {% include "components/culture/explore_explanation.html" %}
+  {% endif %}
+{% endblock %}
