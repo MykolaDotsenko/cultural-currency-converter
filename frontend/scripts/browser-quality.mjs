@@ -1848,7 +1848,114 @@ async function assertExploreFlow(page) {
     `explore: Tokyo converter handoff lost canonical scope: ${convertHref}`,
   );
 
+  const compareHref = await tokyoRow
+    .getByRole("link", { name: "Compare", exact: true })
+    .getAttribute("href");
+  const compareUrl = new URL(compareHref, BASE_URL);
+  assert(
+    compareUrl.pathname === "/compare/" &&
+      compareUrl.searchParams.get("left_destination") === "JP:tokyo",
+    `explore: Tokyo Compare handoff lost canonical scope: ${compareHref}`,
+  );
+
+  const askHref = await tokyoRow
+    .getByRole("link", { name: "Ask", exact: true })
+    .getAttribute("href");
+  const askUrl = new URL(askHref, BASE_URL);
+  assert(
+    askUrl.pathname === "/explore/explain/" &&
+      askUrl.searchParams.get("destination") === "JP:tokyo",
+    `explore: Tokyo grounded-AI handoff lost canonical scope: ${askHref}`,
+  );
+
+  const saveHref = await tokyoRow
+    .getByRole("link", { name: "Save", exact: true })
+    .getAttribute("href");
+  const saveUrl = new URL(saveHref, BASE_URL);
+  assert(
+    saveUrl.pathname === "/saved/" && saveUrl.searchParams.get("place") === "JP:tokyo",
+    `explore: Tokyo My Places handoff lost canonical scope: ${saveHref}`,
+  );
+
   await assertAxe(page, "explore/interactive");
+}
+
+async function assertExploreSameAmountFlow(page) {
+  await page
+    .getByRole("heading", { name: "See the same amount in local money contexts." })
+    .waitFor();
+
+  const tokyo = page.getByLabel("Tokyo, Japan · JPY", { exact: true });
+  const norway = page.getByLabel("Norway · NOK", { exact: true });
+  await tokyo.check();
+  await norway.check();
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/explore/same-amount/",
+  );
+  await page.getByRole("button", { name: "View across destinations" }).click();
+  const response = await responsePromise;
+  assert(
+    response.status() === 200,
+    `explore/same-amount: submit returned ${response.status()}`,
+  );
+
+  await page.getByText("Tokyo, Japan", { exact: true }).last().waitFor();
+  await page.getByText("Norway", { exact: true }).last().waitFor();
+  assert(
+    (await page.locator(".qa-explore-amount-card").count()) === 2,
+    "explore/same-amount: expected exactly two submitted destination cards",
+  );
+  assert(
+    (await page.getByText("Reference unavailable", { exact: true }).count()) === 0,
+    "explore/same-amount: deterministic browser fixture unexpectedly failed",
+  );
+
+  const detailedCompare = await page
+    .getByRole("link", { name: "Compare the first two in detail", exact: true })
+    .getAttribute("href");
+  const compareUrl = new URL(detailedCompare, BASE_URL);
+  assert(
+    compareUrl.pathname === "/compare/" &&
+      compareUrl.searchParams.get("amount") === "100" &&
+      compareUrl.searchParams.get("source_currency") === "EUR" &&
+      compareUrl.searchParams.get("left_destination") === "JP:tokyo" &&
+      compareUrl.searchParams.get("right_destination") === "NO",
+    `explore/same-amount: comparison continuation lost form state: ${detailedCompare}`,
+  );
+
+  await assertAxe(page, "explore/same-amount/interactive");
+}
+
+async function assertExploreAiFlow(page) {
+  await page.getByRole("heading", { name: "Tokyo, Japan", exact: true }).waitFor();
+  await page.getByText("There is intentionally no open-ended chatbot on this surface.").waitFor();
+
+  for (const prompt of ["Everyday money", "Paying here", "Sources & freshness"]) {
+    assert(
+      (await page.getByRole("button", { name: prompt, exact: true }).count()) === 1,
+      `explore/ai: missing grounded prompt ${prompt}`,
+    );
+  }
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/explore/explain/",
+  );
+  await page.getByRole("button", { name: "Everyday money", exact: true }).click();
+  const response = await responsePromise;
+  assert(response.status() === 200, `explore/ai: prompt returned ${response.status()}`);
+
+  const result = page.locator("#explore-explanation-region");
+  await result.getByText("AI-assisted explanation", { exact: true }).waitFor();
+  assert(
+    (await result.textContent())?.includes("Tokyo"),
+    "explore/ai: generated answer lost reviewed destination scope",
+  );
+  await assertAxe(page, "explore/ai/interactive");
 }
 
 async function openSurface(page, surface) {
@@ -1946,6 +2053,14 @@ try {
 
       if (surface.name === "explore" && viewport.name === "wide-1440") {
         await assertExploreFlow(page);
+      }
+
+      if (surface.name === "explore-same-amount" && viewport.name === "wide-1440") {
+        await assertExploreSameAmountFlow(page);
+      }
+
+      if (surface.name === "explore-ai" && viewport.name === "wide-1440") {
+        await assertExploreAiFlow(page);
       }
 
       if (viewport.name === "mobile-390") {
