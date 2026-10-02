@@ -573,9 +573,11 @@ export function wireSavedPage(): void {
             status.textContent =
               result.importedCount === 0
                 ? "There were no browser-only places to import."
-                : `Imported ${result.importedCount} browser-only place${result.importedCount === 1 ? "" : "s"} to your account.`;
+                : result.localCleanupSucceeded
+                  ? `Imported ${result.importedCount} browser-only place${result.importedCount === 1 ? "" : "s"} to your account and removed the confirmed local copies.`
+                  : `Imported ${result.importedCount} browser-only place${result.importedCount === 1 ? "" : "s"} to your account. The browser copies could not be cleared, so they remain safely on this device.`;
           }
-          if (result.importedCount > 0) {
+          if (result.importedCount > 0 && result.localCleanupSucceeded) {
             window.location.reload();
             return;
           }
