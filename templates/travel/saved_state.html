@@ -15,9 +15,9 @@
     <h1 id="saved-page-title">Saved &amp; recent</h1>
     {% if user.is_authenticated %}
       <p class="qa-foundation-lede">
-        Saved scenarios and pairs belong to your account. Cross-device recent history is separate
-        and stays off until you explicitly enable it; browser-only history is never uploaded
-        automatically.
+        Saved scenarios, comparisons, places and pairs belong to your account. Browser-only places
+        move to the account only when you explicitly import them. Cross-device recent history is
+        separate and stays off until you enable it.
       </p>
     {% else %}
       <p class="qa-foundation-lede">
@@ -132,22 +132,207 @@
         {% endif %}
       </section>
     {% endif %}
+    {% if user.is_authenticated %}
+      <section class="qa-saved-section" aria-labelledby="saved-comparisons-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Comparisons</p>
+            <h2 id="saved-comparisons-title">Saved comparisons</h2>
+            <p>
+              Saved comparisons keep canonical inputs and your explicit daily basket only. Rates,
+              prices, rankings and rendered results are never persisted as reusable truth.
+            </p>
+          </div>
+        </div>
+        {% if account_saved_comparison_rows %}
+          <div class="qa-saved-list">
+            {% for row in account_saved_comparison_rows %}
+              {% with saved=row.comparison %}
+                <article class="qa-saved-row" data-saved-comparison-id="{{ saved.pk }}">
+                  <div class="qa-saved-row__copy">
+                    <p class="qa-foundation-kicker">Canonical inputs · account-owned</p>
+                    <h3>{{ row.left_label }} ↔ {{ row.right_label }}</h3>
+                    <p>
+                      {{ saved.source_amount|floatformat:"-12" }} {{ saved.source_currency.code }}
+                      · {{ saved.duration_days }} day{{ saved.duration_days|pluralize }}
+                      · {{ saved.travelers }} traveler{{ saved.travelers|pluralize }}
+                    </p>
+                    <p class="qa-saved-row__meta">
+                      Basket:
+                      {% for item in row.budget_items %}
+                        {{ item.category|cut:"_" }} {{ item.units_per_person_per_day|floatformat:"-2" }}/day{% if not forloop.last %} · {% endif %}
+                      {% endfor %}
+                    </p>
+                    {% if not row.available %}
+                      <p class="qa-saved-row__meta">
+                        One canonical destination or currency is no longer current. Inputs remain
+                        saved, but reopen/re-check is disabled until that identity is supported again.
+                      </p>
+                    {% endif %}
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    {% if row.available %}
+                      <a class="qa-primary-button"
+                         href="{{ row.reopen_url }}"
+                         aria-label="Reopen saved comparison: {{ row.left_label }} and {{ row.right_label }}">
+                        Reopen inputs
+                      </a>
+                      <form method="post" action="{% url 'destination_comparison' %}">
+                        {% csrf_token %}
+                        {% for name, value in row.recheck_fields.items %}
+                          <input type="hidden" name="{{ name }}" value="{{ value }}">
+                        {% endfor %}
+                        <button class="qa-secondary-button"
+                                type="submit"
+                                aria-label="Re-check saved comparison now: {{ row.left_label }} and {{ row.right_label }}">
+                          Re-check now
+                        </button>
+                      </form>
+                    {% endif %}
+                    <form method="post"
+                          action="{% url 'delete_saved_comparison' saved.pk %}">
+                      {% csrf_token %}
+                      <button class="qa-secondary-button qa-destructive-button"
+                              type="submit"
+                              aria-label="Remove saved comparison: {{ row.left_label }} and {{ row.right_label }}">
+                        Remove
+                      </button>
+                    </form>
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">
+            <span>No saved comparisons yet. Run a destination comparison, then save its inputs.</span>
+            <a class="qa-saved-row__text-action"
+               href="{% url 'destination_comparison' %}">Compare destinations</a>
+          </p>
+        {% endif %}
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="saved-places-title">
       <div class="qa-saved-section__heading">
         <div>
           <p class="qa-foundation-kicker">Places</p>
           <h2 id="saved-places-title">My places</h2>
-          <p>
-            Saved destinations stay only in this browser for now. Country/city scope and current
-            primary currency are retained so you can convert, compare or reopen a city profile
-            without reconstructing the destination. Account sync waits for durable SavedPlace ownership.
-          </p>
+          {% if user.is_authenticated %}
+            <p>
+              Account places store canonical country and optional city identity only. Current
+              currency is resolved again when you return, so a saved shortcut never freezes old
+              monetary context.
+            </p>
+          {% else %}
+            <p>
+              These destinations stay in this browser. Country/city identity and the current
+              currency shortcut let you return to canonical product flows without rebuilding scope.
+            </p>
+          {% endif %}
         </div>
-        <button class="qa-secondary-button qa-destructive-button"
-                type="button"
-                data-clear-places
-                hidden>Clear saved places</button>
+        {% if user.is_authenticated %}
+          {% if account_saved_place_rows %}
+            <form method="post" action="{% url 'clear_saved_places' %}">
+              {% csrf_token %}
+              <button class="qa-secondary-button qa-destructive-button"
+                      type="submit">Clear account places</button>
+            </form>
+          {% endif %}
+        {% else %}
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="button"
+                  data-clear-places
+                  hidden>Clear saved places</button>
+        {% endif %}
       </div>
+      {% if user.is_authenticated %}
+        {% if account_saved_place_rows %}
+          <div class="qa-saved-list" data-account-places-list>
+            {% for row in account_saved_place_rows %}
+              {% with place=row.place %}
+                <article class="qa-saved-row" data-account-place-id="{{ place.pk }}">
+                  <div class="qa-saved-row__copy">
+                    <p class="qa-foundation-kicker">
+                      {% if place.city %}City{% else %}Country{% endif %}
+                      · account-owned
+                    </p>
+                    <h3>
+                      {% if place.city %}
+                        {{ place.city.name }}, {{ place.country.name }}
+                      {% else %}
+                        {{ place.country.name }}
+                      {% endif %}
+                    </h3>
+                    <p class="qa-saved-row__meta">
+                      {% if row.available %}
+                        Current primary currency {{ row.currency_code }}
+                      {% else %}
+                        Canonical re-entry is currently unavailable; the saved identity is retained.
+                      {% endif %}
+                    </p>
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    {% if row.available %}
+                      <a class="qa-primary-button" href="{{ row.converter_url }}">Convert</a>
+                      <a class="qa-secondary-button" href="{{ row.budget_url }}">Budget</a>
+                      <a class="qa-secondary-button" href="{{ row.compare_url }}">Compare</a>
+                      {% if row.profile_url %}
+                        <a class="qa-saved-row__text-action" href="{{ row.profile_url }}">City profile</a>
+                      {% else %}
+                        <a class="qa-saved-row__text-action"
+                           href="{% url 'explore' %}#regional-directory">Explore</a>
+                      {% endif %}
+                    {% endif %}
+                    <form method="post" action="{% url 'delete_saved_place' place.pk %}">
+                      {% csrf_token %}
+                      <button class="qa-secondary-button qa-destructive-button"
+                              type="submit"
+                              aria-label="Remove saved place: {% if place.city %}{{ place.city.name }}, {% endif %}{{ place.country.name }}">
+                        Remove
+                      </button>
+                    </form>
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">
+            <span>No account-saved places yet. Save a reviewed destination from Explore.</span>
+            <a class="qa-saved-row__text-action" href="{% url 'explore' %}">Explore destinations</a>
+          </p>
+        {% endif %}
+        <div class="qa-continuity-note" data-local-place-migration>
+          <div>
+            <strong>This device</strong>
+            <span data-local-place-migration-summary data-local-pending>
+              Checking browser-only places…
+            </span>
+          </div>
+          <button class="qa-secondary-button"
+                  type="button"
+                  data-import-local-places
+                  hidden>Import browser places to account</button>
+          <span class="qa-visually-hidden"
+                role="status"
+                aria-live="polite"
+                data-local-place-migration-status></span>
+        </div>
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Browser-only</p>
+            <h3>Places still on this device</h3>
+            <p>
+              Sign-in never uploads these automatically. Import is an explicit, idempotent action;
+              successful imports remove only the confirmed local copies.
+            </p>
+          </div>
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="button"
+                  data-clear-places
+                  hidden>Clear browser places</button>
+        </div>
+      {% endif %}
       <p class="qa-saved-empty"
          data-places-empty
          data-local-pending>Checking saved places in this browser…</p>
@@ -394,14 +579,13 @@
     {% endif %}
     <p class="qa-saved-state__privacy">
       {% if user.is_authenticated %}
-        Browser-only places and history are never uploaded automatically. Saved scenarios are created only by
-        an explicit account action. Turning account history off stops future recent-history
-        recording but keeps existing rows until you remove or clear them. Deleting your account
-        removes account-owned scenarios, favourites and recent history.
+        Browser-only places and history are never uploaded automatically. Place migration, scenario
+        creation and comparison saving are explicit account actions. Reopening a saved comparison
+        does not request a rate; “Re-check now” does. Deleting your account removes account-owned
+        scenarios, comparisons, places, favourites and recent history.
       {% else %}
-        Clearing browser site data also removes these items. Saved places remain browser-local even
-        after sign-in until durable My Places sync is introduced. Sign in only if you want saved pairs
-        to sync across devices.
+        Clearing browser site data also removes these items. Signing in does not silently upload
+        browser-only places; you can explicitly import them from Saved & recent after sign-in.
       {% endif %}
     </p>
   </div>
