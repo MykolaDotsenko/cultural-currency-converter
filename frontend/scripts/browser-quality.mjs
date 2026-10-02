@@ -2367,10 +2367,7 @@ try {
         initialPerformanceEvidence.requestCount <= PERFORMANCE_BUDGETS.initialRequestCount,
         `${surface.name}/${viewport.name}: initial request count ${initialPerformanceEvidence.requestCount} exceeds ${PERFORMANCE_BUDGETS.initialRequestCount} request budget`,
       );
-      if (
-        BROWSER_ENGINE === "chromium" &&
-        initialPerformanceEvidence.layoutShiftScore !== null
-      ) {
+      if (BROWSER_ENGINE === "chromium" && initialPerformanceEvidence.layoutShiftScore !== null) {
         assert(
           initialPerformanceEvidence.layoutShiftScore <= PERFORMANCE_BUDGETS.initialLayoutShift,
           `${surface.name}/${viewport.name}: initial layout shift ${initialPerformanceEvidence.layoutShiftScore} exceeds ${PERFORMANCE_BUDGETS.initialLayoutShift} budget`,
