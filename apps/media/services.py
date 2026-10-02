@@ -567,7 +567,7 @@ def _media_score(
     currency: Currency | None,
     target_date: date | None,
     aspect_ratio: str | None,
-) -> tuple[int, int, int, int, datetime, int]:
+) -> tuple[int, int, int, int, int, datetime, int]:
     semantic_specificity = 0
     if country is not None and asset.country_id == country.id:
         semantic_specificity += 2
@@ -587,11 +587,13 @@ def _media_score(
         authenticity_rank = 1
 
     aspect_match = int(_aspect_ratio_matches(asset.aspect_ratio, aspect_ratio))
+    delivery_rank = int(asset.derivative_of_id is not None)
     return (
         semantic_specificity,
         authenticity_rank,
         temporal_score,
         aspect_match,
+        delivery_rank,
         asset.published_at or asset.updated_at,
         asset.pk,
     )
