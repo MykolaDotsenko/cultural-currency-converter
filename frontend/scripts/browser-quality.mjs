@@ -1650,6 +1650,44 @@ async function assertConverterTransitionLayout(page) {
   });
 }
 
+async function installLayoutShiftObserver(page) {
+  await page.addInitScript(() => {
+    window.__qaLayoutShiftScore = null;
+    window.__qaLayoutShiftEntries = [];
+    if (
+      typeof PerformanceObserver === "undefined" ||
+      !PerformanceObserver.supportedEntryTypes?.includes("layout-shift")
+    ) {
+      return;
+    }
+
+    const describeNode = (node) => {
+      if (!(node instanceof Element)) return "unknown";
+      if (node.id) return `#${node.id}`;
+      const classes = [...node.classList].slice(0, 3);
+      return `${node.tagName.toLowerCase()}${classes.map((name) => `.${name}`).join("")}`;
+    };
+
+    window.__qaLayoutShiftScore = 0;
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.hadRecentInput) continue;
+        window.__qaLayoutShiftScore += entry.value;
+        window.__qaLayoutShiftEntries.push({
+          value: Math.round(entry.value * 10000) / 10000,
+          sources: (entry.sources ?? []).map((source) => ({
+            node: describeNode(source.node),
+            previousRect: source.previousRect,
+            currentRect: source.currentRect,
+          })),
+        });
+      }
+    });
+    observer.observe({ type: "layout-shift", buffered: true });
+    window.__qaLayoutShiftObserver = observer;
+  });
+}
+
 async function collectPerformance(page) {
   return page.evaluate(() => {
     const resources = performance.getEntriesByType("resource");
@@ -1672,6 +1710,13 @@ async function collectPerformance(page) {
       imageEncodedBodyBytes: applicationResources
         .filter((entry) => ["img", "image"].includes(entry.initiatorType))
         .reduce((total, entry) => total + (entry.encodedBodySize || 0), 0),
+      layoutShiftScore:
+        typeof window.__qaLayoutShiftScore === "number"
+          ? Math.round(window.__qaLayoutShiftScore * 10000) / 10000
+          : null,
+      layoutShiftEntries: Array.isArray(window.__qaLayoutShiftEntries)
+        ? window.__qaLayoutShiftEntries
+        : [],
       domContentLoadedMs: navigation
         ? Math.round(navigation.domContentLoadedEventEnd - navigation.startTime)
         : null,
@@ -2329,6 +2374,7 @@ try {
         deviceScaleFactor: 1,
       });
       const page = await context.newPage();
+      await installLayoutShiftObserver(page);
       const consoleErrors = [];
       page.on("console", (message) => {
         if (message.type() === "error") consoleErrors.push(message.text());
@@ -2340,6 +2386,12 @@ try {
         initialPerformanceEvidence.requestCount <= PERFORMANCE_BUDGETS.initialRequestCount,
         `${surface.name}/${viewport.name}: initial request count ${initialPerformanceEvidence.requestCount} exceeds ${PERFORMANCE_BUDGETS.initialRequestCount} request budget`,
       );
+      if (BROWSER_ENGINE === "chromium" && initialPerformanceEvidence.layoutShiftScore !== null) {
+        assert(
+          initialPerformanceEvidence.layoutShiftScore <= PERFORMANCE_BUDGETS.initialLayoutShift,
+          `${surface.name}/${viewport.name}: initial layout shift ${initialPerformanceEvidence.layoutShiftScore} exceeds ${PERFORMANCE_BUDGETS.initialLayoutShift} budget: ${JSON.stringify(initialPerformanceEvidence.layoutShiftEntries)}`,
+        );
+      }
       await assertNoHorizontalOverflow(page, `${surface.name}/${viewport.name}`);
       await assertKeyboardFocus(page, surface.name);
 
@@ -2435,25 +2487,45 @@ try {
     const dynamicAssetNames = new Set(
       evidence.compressedAssets.dynamicFiles.map((file) => file.name),
     );
-    const requestedDynamicAssets = (surfaceName) =>
+    const dynamicAssetsFromPaths = (paths) =>
       new Set(
-        Object.values(evidence.surfaces[surfaceName] ?? {})
-          .flatMap((measurement) => measurement.jsPaths ?? [])
+        (paths ?? [])
           .map((path) => path.split("/").at(-1))
           .filter((name) => dynamicAssetNames.has(name)),
       );
+    const requestedDynamicAssets = (surfaceName) =>
+      new Set(
+        Object.values(evidence.surfaces[surfaceName] ?? {}).flatMap((measurement) => [
+          ...dynamicAssetsFromPaths(measurement.jsPaths ?? []),
+        ]),
+      );
+    const initiallyRequestedDynamicAssets = (surfaceName) =>
+      new Set(
+        Object.values(evidence.surfaces[surfaceName] ?? {}).flatMap((measurement) => [
+          ...dynamicAssetsFromPaths(measurement.initial?.jsPaths ?? []),
+        ]),
+      );
+
+    for (const surfaceName of ["shell", "same-amount", "city-money-profile"]) {
+      assert(
+        requestedDynamicAssets(surfaceName).size === 0,
+        `${surfaceName} unexpectedly loaded route-only dynamic JavaScript: ${JSON.stringify([
+          ...requestedDynamicAssets(surfaceName),
+        ])}`,
+      );
+    }
+
+    for (const surfaceName of ["current-converter", "explore", "saved-state", "rate-series"]) {
+      assert(
+        requestedDynamicAssets(surfaceName).size > 0,
+        `${surfaceName} did not load its demand-driven enhancement JavaScript`,
+      );
+    }
 
     assert(
-      requestedDynamicAssets("current-converter").size === 0,
-      "current converter unexpectedly loaded route-only dynamic JavaScript",
-    );
-    assert(
-      requestedDynamicAssets("saved-state").size > 0,
-      "saved-state surface did not load its route-specific renderer chunk",
-    );
-    assert(
-      requestedDynamicAssets("rate-series").size > 0,
-      "historical rate-series surface did not load its dynamic chart JavaScript chunk",
+      requestedDynamicAssets("current-converter").size >
+        initiallyRequestedDynamicAssets("current-converter").size,
+      "current converter did not defer result-only enhancements until after HTMX interaction",
     );
   }
 

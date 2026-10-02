@@ -33,9 +33,9 @@
        data-converter-url="{% url 'converter' %}">
     <p class="qa-saved-state__storage-note"
        data-local-storage-status
+       data-local-pending
        data-storage-tone="neutral"
-       aria-live="off"
-       hidden>Checking browser storage…</p>
+       aria-live="off">Checking browser storage…</p>
     <noscript>
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
@@ -133,7 +133,7 @@
       </div>
       <p class="qa-saved-empty"
          data-places-empty
-         hidden>No saved places yet. Save a reviewed country or city from Explore.</p>
+         data-local-pending>Checking saved places in this browser…</p>
       <div class="qa-saved-list" data-places-list></div>
     </section>
     <section class="qa-saved-section" aria-labelledby="saved-pairs-title">
@@ -216,7 +216,7 @@
       {% else %}
         <p class="qa-saved-empty"
            data-favourites-empty
-           hidden>No saved pairs yet. Save a pair after a conversion for quicker access.</p>
+           data-local-pending>Checking saved pairs in this browser…</p>
         <div class="qa-saved-list" data-favourites-list></div>
       {% endif %}
     </section>
@@ -322,7 +322,7 @@
         </div>
         <p class="qa-saved-empty"
            data-recents-empty
-           hidden>No browser-only recent conversions here.</p>
+           data-local-pending>Checking browser-only recent conversions…</p>
         <div class="qa-saved-list" data-recents-list></div>
       </section>
     {% else %}
@@ -340,7 +340,7 @@
         </div>
         <p class="qa-saved-empty"
            data-recents-empty
-           hidden>No recent conversions in this browser yet.</p>
+           data-local-pending>Checking recent conversions in this browser…</p>
         <div class="qa-saved-list" data-recents-list></div>
       </section>
     {% endif %}

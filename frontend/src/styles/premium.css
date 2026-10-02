@@ -312,7 +312,7 @@ h3 {
 }
 
 .qa-primary-button {
-  min-height: 3.25rem;
+  min-height: max(3.25rem, 44px);
   min-width: min(10rem, 100%);
   max-width: 100%;
   padding-inline: 1.75rem;
@@ -693,7 +693,7 @@ h3 {
 }
 
 .qa-secondary-button {
-  min-height: 2.65rem;
+  min-height: 2.75rem;
   padding: 0.55rem 0.95rem;
   border-color: var(--qa-hairline);
   border-radius: var(--radius-sm);
@@ -1227,30 +1227,6 @@ h3 {
 }
 
 @media (max-width: 30rem) {
-  .qa-shell__header-inner {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    padding-block: var(--qa-space-4);
-  }
-
-  .qa-header-actions {
-    width: auto;
-    flex: 1 1 auto;
-    flex-direction: row;
-    justify-content: flex-end;
-  }
-
-  .qa-header-actions form {
-    width: auto;
-  }
-
-  .qa-header-link {
-    width: auto;
-    justify-content: flex-start;
-    text-align: start;
-  }
-
   .qa-shell__main {
     padding-block-start: 2.25rem;
   }
@@ -1810,8 +1786,27 @@ h3 {
 }
 
 .qa-destination-comparison__form {
+  min-width: 0;
   display: grid;
   gap: clamp(1.4rem, 3vw, 2.1rem);
+}
+
+.qa-destination-comparison__money {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.qa-destination-comparison__money > .qa-field {
+  min-width: 0;
+}
+
+.qa-destination-comparison__money input,
+.qa-destination-comparison__money select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .qa-destination-comparison__destinations {

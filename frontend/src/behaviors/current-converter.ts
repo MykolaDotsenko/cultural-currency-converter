@@ -104,7 +104,7 @@ function announceConversionResult(target: EventTarget | null, status: number | u
   }, 0);
 }
 
-function enhanceCurrentConverterBehavior(): void {
+export function enhanceCurrentConverterBehavior(): void {
   const form = document.querySelector<HTMLFormElement>("[data-current-conversion-form]");
   if (form) enhanceAutoRefresh(form);
 }

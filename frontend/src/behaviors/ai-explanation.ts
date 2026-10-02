@@ -111,3 +111,5 @@ document.addEventListener("htmx:timeout", (event) => {
   if (!explanationTrigger(event.target)) return;
   showClientFailure();
 });
+
+export {};

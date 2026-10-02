@@ -472,3 +472,30 @@
     border-color: CanvasText;
   }
 }
+
+@media (max-width: 30rem) {
+  .qa-header-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--qa-space-2);
+  }
+
+  .qa-header-actions > *,
+  .qa-header-actions form {
+    min-width: 0;
+  }
+
+  .qa-header-actions form {
+    width: 100%;
+  }
+
+  .qa-header-link {
+    min-width: 0;
+    width: 100%;
+    padding-inline: var(--qa-space-2);
+    justify-content: center;
+    overflow-wrap: anywhere;
+    text-align: center;
+    white-space: normal;
+  }
+}

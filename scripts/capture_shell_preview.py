@@ -37,35 +37,24 @@ def _assert_shell_integrity(page: Page) -> None:
         raise RuntimeError("Destination Japan atmosphere scope is missing")
 
     font_state = page.evaluate(
-        """async () => {
-            await document.fonts.ready;
-            const matches = await document.fonts.load(
-                "400 16px 'Inter Variable'",
-                "Quiet Atlas",
-            );
+        """() => {
             const family = getComputedStyle(document.body).fontFamily;
-            const resources = performance
+            const font_resources = performance
                 .getEntriesByType("resource")
                 .map((entry) => entry.name)
-                .filter(
-                    (name) =>
-                        name.includes("/static/build/assets/inter-") &&
-                        name.endsWith(".woff2"),
-                );
+                .filter((name) => /\.(woff2?|ttf|otf)(\?|$)/i.test(name));
 
             return {
-                matchCount: matches.length,
                 family,
-                resources,
+                font_resources,
             };
         }"""
     )
-    if (
-        font_state["matchCount"] < 1
-        or "Inter Variable" not in font_state["family"]
-        or not font_state["resources"]
-    ):
-        raise RuntimeError(f"Self-hosted Inter Variable did not load: {font_state!r}")
+    if "system-ui" not in font_state["family"] or font_state["font_resources"]:
+        raise RuntimeError(
+            "Quiet Atlas typography must use the stable system stack without "
+            f"runtime webfont requests: {font_state!r}"
+        )
 
     overflow = page.evaluate(
         """() => ({
