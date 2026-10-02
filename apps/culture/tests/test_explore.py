@@ -11,8 +11,14 @@ from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.explore import build_explore_destinations
+from apps.culture.explore_ai import (
+    ExploreExplanationIntent,
+    build_explore_explanation_context,
+    build_explore_explanation_packet,
+)
 from apps.culture.models import CulturalProfile, TypicalPrice, TypicalPriceCategory
 from apps.culture.services import PRICE_CONTEXT_MAX_AGE
+from apps.exchange.ai.service import RuntimeExplanationService
 
 
 @pytest.fixture(autouse=True)
@@ -293,3 +299,107 @@ def test_explore_navigation_failure_degrades_to_reviewed_flat_destination_list(
     assert b"Regional navigation is temporarily unavailable." in response.content
     assert b"Tokyo, Japan" in response.content
     assert b"View city money profile" in response.content
+
+
+@pytest.mark.django_db
+def test_explore_ai_packet_uses_only_reviewed_city_and_fallback_facts(
+    explore_reference_data,
+):
+    destinations = build_explore_destinations(as_of=explore_reference_data["today"])
+    tokyo = next(destination for destination in destinations if destination.city_slug == "tokyo")
+    context = build_explore_explanation_context(tokyo)
+
+    packet = build_explore_explanation_packet(
+        tokyo,
+        context,
+        intent=ExploreExplanationIntent.PRICE_EVIDENCE,
+    )
+    facts = {fact.id: fact.statement for fact in packet.facts}
+
+    assert packet.required_fact_ids == ("price_1",)
+    assert packet.allowed_currencies == ("JPY",)
+    assert facts["destination_scope"] == "The selected reviewed destination is Tokyo, Japan."
+    assert "Tokyo transit anchor" in facts["price_1"]
+    assert "city evidence for Tokyo" in facts["price_1"]
+    assert "National coffee anchor" in facts["price_2"]
+    assert "a national estimate for Japan" in facts["price_2"]
+    assert "national estimate" in facts["national_fallback"]
+    assert "rankings or affordability claims" in facts["trust_boundary"]
+
+
+@pytest.mark.django_db
+def test_explore_get_exposes_only_server_approved_ai_prompts_without_calling_ai(
+    client,
+    explore_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+
+    with patch("apps.culture.views.build_explore_explanation_service") as service_factory:
+        response = client.get(reverse("explore"))
+
+    assert response.status_code == 200
+    assert b"Ask one bounded question." in response.content
+    assert b"What should I notice here?" in response.content
+    assert b"What about cash and cards?" in response.content
+    assert b"How should I read these prices?" in response.content
+    assert b'name="destination_token"' in response.content
+    service_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_explore_ai_rejects_unapproved_prompt_before_service_creation(
+    client,
+    explore_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+
+    with patch("apps.culture.views.build_explore_explanation_service") as service_factory:
+        response = client.post(
+            reverse("explore_explanation"),
+            {
+                "destination_token": "JP:tokyo",
+                "prompt_id": "tell_me_anything",
+                "prompt": "Invent a cheap-destination ranking.",
+            },
+        )
+
+    assert response.status_code == 422
+    assert b"This Explore explanation request is not valid." in response.content
+    service_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_explore_ai_builtin_fallback_rebuilds_trusted_context(
+    client,
+    explore_reference_data,
+    settings,
+):
+    settings.AI_RUNTIME_EXPLANATION_ENABLED = True
+    disabled_service = RuntimeExplanationService(
+        enabled=False,
+        model="disabled-test",
+        drafter=None,
+    )
+
+    with patch(
+        "apps.culture.views.build_explore_explanation_service",
+        return_value=disabled_service,
+    ):
+        response = client.post(
+            reverse("explore_explanation"),
+            {
+                "destination_token": "JP:tokyo",
+                "prompt_id": "cash_card",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"Built-in explanation" in response.content
+    assert b"Tokyo, Japan" in response.content
+    assert b"Reviewed payment context." in response.content
+    assert b"Live AI is unavailable" in response.content
+    assert b"cheapest" not in response.content.lower()
+    assert b"winner" not in response.content.lower()
