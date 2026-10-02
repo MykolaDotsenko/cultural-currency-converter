@@ -204,6 +204,25 @@ def test_curated_media_coverage_strict_fails_before_derivatives_are_published(
 
 
 @pytest.mark.django_db
+def test_curated_derivative_build_rejects_source_provenance_or_dimension_drift(
+    reviewed_source,
+    curated_destination,
+) -> None:
+    reviewed_source.licence_id = "CC0 1.0"
+    reviewed_source.width = 63
+    reviewed_source.save(update_fields=("licence_id", "width", "updated_at"))
+
+    with pytest.raises(CommandError, match="metadata/provenance drift"):
+        call_command(
+            "build_curated_media_derivatives",
+            "--slug",
+            curated_destination.slug,
+        )
+
+    assert not MediaAsset.objects.filter(derivative_of=reviewed_source).exists()
+
+
+@pytest.mark.django_db
 def test_curated_derivative_build_rejects_drifted_existing_width(
     reviewed_source,
     curated_destination,
@@ -221,6 +240,31 @@ def test_curated_derivative_build_rejects_drifted_existing_width(
     derivative.save(update_fields=("focal_x", "updated_at"))
 
     with pytest.raises(CommandError, match="derivative metadata drift"):
+        call_command(
+            "build_curated_media_derivatives",
+            "--slug",
+            curated_destination.slug,
+        )
+
+
+@pytest.mark.django_db
+def test_curated_derivative_build_rejects_pixel_dimension_drift(
+    reviewed_source,
+    curated_destination,
+) -> None:
+    call_command(
+        "build_curated_media_derivatives",
+        "--slug",
+        curated_destination.slug,
+    )
+    derivative = MediaAsset.objects.get(
+        derivative_of=reviewed_source,
+        variant_width=16,
+    )
+    derivative.width = 15
+    derivative.save(update_fields=("width", "updated_at"))
+
+    with pytest.raises(CommandError, match="pixel width drift"):
         call_command(
             "build_curated_media_derivatives",
             "--slug",
