@@ -2435,25 +2435,45 @@ try {
     const dynamicAssetNames = new Set(
       evidence.compressedAssets.dynamicFiles.map((file) => file.name),
     );
-    const requestedDynamicAssets = (surfaceName) =>
+    const dynamicAssetsFromPaths = (paths) =>
       new Set(
-        Object.values(evidence.surfaces[surfaceName] ?? {})
-          .flatMap((measurement) => measurement.jsPaths ?? [])
+        (paths ?? [])
           .map((path) => path.split("/").at(-1))
           .filter((name) => dynamicAssetNames.has(name)),
       );
+    const requestedDynamicAssets = (surfaceName) =>
+      new Set(
+        Object.values(evidence.surfaces[surfaceName] ?? {}).flatMap((measurement) => [
+          ...dynamicAssetsFromPaths(measurement.jsPaths ?? []),
+        ]),
+      );
+    const initiallyRequestedDynamicAssets = (surfaceName) =>
+      new Set(
+        Object.values(evidence.surfaces[surfaceName] ?? {}).flatMap((measurement) => [
+          ...dynamicAssetsFromPaths(measurement.initial?.jsPaths ?? []),
+        ]),
+      );
+
+    for (const surfaceName of ["shell", "same-amount", "city-money-profile"]) {
+      assert(
+        requestedDynamicAssets(surfaceName).size === 0,
+        `${surfaceName} unexpectedly loaded route-only dynamic JavaScript: ${JSON.stringify([
+          ...requestedDynamicAssets(surfaceName),
+        ])}`,
+      );
+    }
+
+    for (const surfaceName of ["current-converter", "explore", "saved-state", "rate-series"]) {
+      assert(
+        requestedDynamicAssets(surfaceName).size > 0,
+        `${surfaceName} did not load its demand-driven enhancement JavaScript`,
+      );
+    }
 
     assert(
-      requestedDynamicAssets("current-converter").size === 0,
-      "current converter unexpectedly loaded route-only dynamic JavaScript",
-    );
-    assert(
-      requestedDynamicAssets("saved-state").size > 0,
-      "saved-state surface did not load its route-specific renderer chunk",
-    );
-    assert(
-      requestedDynamicAssets("rate-series").size > 0,
-      "historical rate-series surface did not load its dynamic chart JavaScript chunk",
+      requestedDynamicAssets("current-converter").size >
+        initiallyRequestedDynamicAssets("current-converter").size,
+      "current converter did not defer result-only enhancements until after HTMX interaction",
     );
   }
 
