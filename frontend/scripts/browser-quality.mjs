@@ -1998,7 +1998,16 @@ async function assertSameAmountQuality(page) {
     "same-amount: neutral no-ranking boundary disappeared",
   );
 
-  for (const card of await cards.all()) {
+  const availableCards = page.locator(
+    ".qa-same-amount-card:not(.qa-same-amount-card--unavailable)",
+  );
+  const unavailableCards = page.locator(".qa-same-amount-card--unavailable");
+  assert(
+    (await availableCards.count()) > 0,
+    "same-amount: expected at least one successful destination observation",
+  );
+
+  for (const card of await availableCards.all()) {
     assert(
       (await card.getByRole("link", { name: "Open conversion", exact: true }).count()) === 1,
       "same-amount: canonical conversion action is missing",
@@ -2013,7 +2022,24 @@ async function assertSameAmountQuality(page) {
     );
   }
 
-  const context = cards.first().locator(".qa-same-amount-card__context");
+  if ((await unavailableCards.count()) > 0) {
+    assert(
+      (await page.getByText("Part of the view is unavailable.", { exact: true }).count()) === 1,
+      "same-amount: partial-result status disappeared",
+    );
+    for (const card of await unavailableCards.all()) {
+      assert(
+        (await card.locator(".qa-same-amount-card__amount").count()) === 0,
+        "same-amount: unavailable destination must not display an inferred amount",
+      );
+      assert(
+        (await card.getByText("Reference rate unavailable", { exact: true }).count()) === 1,
+        "same-amount: unavailable destination lost its fail-closed explanation",
+      );
+    }
+  }
+
+  const context = availableCards.first().locator(".qa-same-amount-card__context");
   if ((await context.count()) === 1) {
     assert(
       !(await context.evaluate((element) => element.hasAttribute("open"))),
