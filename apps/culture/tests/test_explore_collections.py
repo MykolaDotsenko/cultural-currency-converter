@@ -192,10 +192,7 @@ def test_cash_card_collection_fails_closed_on_invalid_profile_provenance(seeded_
         source_url="https://user:secret@example.org/payment"
     )
 
-    kinds = {
-        collection.kind
-        for collection in build_explore_collections(as_of=AS_OF)
-    }
+    kinds = {collection.kind for collection in build_explore_collections(as_of=AS_OF)}
 
     assert ExploreCollectionKind.CASH_CARD_BEHAVIOUR not in kinds
 
