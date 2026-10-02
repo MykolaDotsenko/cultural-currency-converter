@@ -5,7 +5,11 @@ from decimal import Decimal
 
 import pytest
 
-from apps.culture.services import DestinationContext, TypicalPriceContext, calculate_purchase_equivalent
+from apps.culture.services import (
+    DestinationContext,
+    TypicalPriceContext,
+    calculate_purchase_equivalent,
+)
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
 from apps.exchange.same_amount import (
