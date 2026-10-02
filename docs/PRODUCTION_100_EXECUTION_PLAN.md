@@ -12,7 +12,7 @@ It is an execution and release-readiness plan, not a replacement for the product
 
 The plan was originally created from an earlier repository baseline. It is now synchronized through `master`:
 
-`26594476429fe146dd2bfeda36b7feec7a36f247`
+`75cf9a7e337f1de15a4e80549cdee9b5621effc7`
 
 The current product already includes:
 
@@ -343,7 +343,7 @@ Add deterministic, provenance-aware collection composition for categories such a
 
 Do not invent “popular” collections without real evidence.
 
-**Current production slice:** a provider-free collection composition layer now derives five neutral collection kinds entirely from existing reviewed domain state. City-profile items require direct city evidence; currency-story items require published reviewed stories and valid provenance; cash/card items require reviewed current-country payment guidance; shared-currency items require at least two current-primary country relationships with valid source URLs; recently reviewed destinations are ordered by evidence date rather than popularity or value. Every collection item carries explicit provenance evidence, bounded deterministic ordering and stable scope identity, and empty/invalid collections fail closed. No collection performs an FX/AI request, adds a geography model or creates a ranking/affordability score. Rendering these collections in richer regional Explore UX remains the next phase.
+**Current production slice:** a provider-free collection composition layer now derives five neutral collection kinds entirely from existing reviewed domain state. City-profile items require direct city evidence; currency-story items require published reviewed stories and valid provenance; cash/card items require reviewed current-country payment guidance; shared-currency items require at least two current-primary country relationships with valid source URLs; recently reviewed destinations are ordered by evidence date rather than popularity or value. Every collection item carries explicit provenance evidence, bounded deterministic ordering and stable scope identity, and empty/invalid collections fail closed. No collection performs an FX/AI request, adds a geography model or creates a ranking/affordability score. These collections are now rendered through the shipped regional Explore UX described below, with canonical region → country → city navigation and preserved provenance.
 
 ## PR #195 — Regional Explore UX
 
