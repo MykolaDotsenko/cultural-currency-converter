@@ -129,6 +129,8 @@ class Command(BaseCommand):
         asset.valid_from = spec.valid_from
         asset.valid_to = spec.valid_to
         asset.date_precision = spec.date_precision
+        asset.focal_x = spec.focal_x
+        asset.focal_y = spec.focal_y
         asset.save(
             update_fields=(
                 "city",
@@ -137,6 +139,8 @@ class Command(BaseCommand):
                 "valid_from",
                 "valid_to",
                 "date_precision",
+                "focal_x",
+                "focal_y",
                 "updated_at",
             )
         )
@@ -145,6 +149,8 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(
                     f"METADATA: slug={spec.slug} asset={asset.pk}; status={asset.status}; "
+                    f"focal={spec.focal_x},{spec.focal_y}; "
+                    f"responsive_widths={','.join(str(width) for width in spec.responsive_widths) or 'none'}; "
                     "source bytes were not downloaded."
                 )
             )
@@ -192,7 +198,8 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 f"INGESTED: slug={spec.slug} asset={asset.pk} "
                 f"sha256={asset.content_hash} size={asset.width}x{asset.height}; "
-                f"status={asset.status}. Review before approval; do not publish the full-size "
-                "source directly when a responsive derivative is appropriate."
+                f"status={asset.status}. Review before approval; planned responsive widths="
+                f"{','.join(str(width) for width in spec.responsive_widths) or 'none'}. "
+                "Do not publish the full-size source directly when a responsive derivative is appropriate."
             )
         )
