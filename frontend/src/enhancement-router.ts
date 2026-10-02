@@ -63,7 +63,6 @@ document.addEventListener("htmx:afterSwap", () => {
   loadEnhancements(document);
 });
 
-
 document.addEventListener("htmx:beforeCleanupElement", (event) => {
   if (!rateChartModule) return;
 
