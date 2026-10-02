@@ -267,9 +267,7 @@ def test_saved_comparison_save_is_explicit_idempotent_and_input_only(
     assert saved.right_token == "NO"
     assert saved.duration_days == 5
     assert saved.travelers == 2
-    assert list(
-        saved.budget_items.values_list("category", "units_per_person_per_day")
-    ) == [
+    assert list(saved.budget_items.values_list("category", "units_per_person_per_day")) == [
         ("casual_meal", Decimal("2.00")),
         ("coffee", Decimal("1.00")),
         ("transit", Decimal("2.50")),
