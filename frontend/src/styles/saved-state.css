@@ -13,7 +13,6 @@
 
 .qa-saved-state__storage-note {
   min-block-size: 2.75rem;
-  width: fit-content;
   max-width: 100%;
   margin: 0;
   padding: var(--qa-space-2) 0;
@@ -130,11 +129,9 @@
   font-size: var(--text-body-sm);
   font-weight: 650;
   text-decoration: none;
-  text-underline-offset: 0.2em;
 }
 
 .qa-saved-row__text-action:focus-visible {
-  border-radius: var(--radius-sm);
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
@@ -208,7 +205,4 @@
     border-color: CanvasText;
   }
 
-  .qa-saved-row__text-action {
-    color: LinkText;
-  }
 }
