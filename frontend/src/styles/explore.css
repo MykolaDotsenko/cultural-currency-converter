@@ -343,11 +343,14 @@
 }
 
 .qa-same-amount {
+  min-inline-size: 0;
   max-width: 72rem;
 }
 
 .qa-same-amount__instrument {
+  min-inline-size: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(2rem, 5vw, 3.75rem);
   padding-block: clamp(2rem, 5vw, 3.5rem);
   border-block: 1px solid var(--qa-hairline);
@@ -360,6 +363,12 @@
   grid-template-columns: minmax(0, 1.15fr) minmax(17rem, 0.85fr);
   align-items: end;
   gap: clamp(1.5rem, 5vw, 4.5rem);
+}
+
+.qa-same-amount__heading > *,
+.qa-same-amount__results-heading > * {
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .qa-same-amount__heading h2,
@@ -381,7 +390,9 @@
 }
 
 .qa-same-amount__form {
+  min-inline-size: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(1.75rem, 4vw, 3rem);
 }
 
@@ -1103,6 +1114,17 @@
 }
 
 @media (max-width: 30rem) {
+  .qa-explore-region-nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .qa-explore-region-nav .qa-secondary-button {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+
   .qa-explore-city-row .qa-saved-row__actions > *,
   .qa-explore-country > .qa-saved-row__actions > *,
   .qa-explore-collection-item .qa-saved-row__actions > * {

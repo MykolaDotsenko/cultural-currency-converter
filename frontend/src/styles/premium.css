@@ -1236,6 +1236,12 @@ h3 {
 }
 
 @media (max-width: 30rem) {
+  .qa-brand__wordmark {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
   .qa-shell__main {
     padding-block-start: 2.25rem;
   }
