@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from django.db import DatabaseError
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -13,6 +14,8 @@ from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.explore import build_explore_destinations
 from apps.culture.models import CulturalProfile, TypicalPrice, TypicalPriceCategory
 from apps.culture.services import PRICE_CONTEXT_MAX_AGE
+from apps.exchange.ai.contracts import ExplanationInsight, ExplanationResult
+from apps.exchange.ai.service import ExplanationDelivery
 
 
 @pytest.fixture(autouse=True)
