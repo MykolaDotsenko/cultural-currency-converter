@@ -199,7 +199,7 @@ Current UX rules:
 - changing the destination country or swapping sides clears stale city scope rather than applying a city to the wrong country;
 - users can still change currency manually once they reach the converter.
 
-Browser-local My Places is now shipped for reviewed Explore country/city scopes and reopens canonical destination flows without account sync. Optional coarse location assistance remains future work. Returning-user continuity is already available on the clean converter home for relevant saved trips. Any location assistance must remain opt-in and must never silently persist travel history.
+My Places now supports both browser-local and owner-scoped account persistence for reviewed Explore country/city scopes. Anonymous saves remain device-local. Signed-in saves go directly to the account, while older browser-local places move only through an explicit import control on Saved & recent; sign-in alone never migrates them. Account re-entry resolves current currency from canonical country/currency relationships rather than replaying a stored currency snapshot. Optional coarse location assistance remains future work and must stay opt-in.
 
 ## Destination comparison flow
 
@@ -247,7 +247,7 @@ Repeated saved/recent row actions should keep concise visible verbs while exposi
 
 Signed-in data should respect ownership. Cross-device recent history is separately opt-in; signing in should not silently upload existing local recent activity.
 
-**Current continuity slice:** Saved & recent now gives account-owned scenarios/favourites/recent history and browser-local My Places/favourites/recent conversions a restrained re-entry hierarchy. Primary actions reopen the canonical flow, secondary Compare actions seed only a known destination, tertiary Reverse/Swap/City Profile actions stay visually subordinate, and destructive actions remain explicit. Browser-local My Places preserve reviewed city scope when available. Account-owned SavedPlace sync and a durable SavedComparison model are still future work.
+**Current continuity slice:** Saved & recent now gives account-owned scenarios, SavedComparison, My Places, favourites and opt-in recent history a restrained hierarchy beside remaining browser-local places/favourites/recent conversions. Primary actions reopen canonical flows, destructive actions remain explicit, and browser-local place migration is opt-in. SavedComparison makes the trust distinction visible: **Reopen inputs** is provider-free and restores the form only; **Re-check now** explicitly submits the saved inputs through canonical Compare and requests current reference values.
 
 ### Actionable history
 
