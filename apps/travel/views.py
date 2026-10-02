@@ -213,8 +213,7 @@ def _saved_place_rows(user) -> list[dict[str, object]]:
                     else ""
                 ),
                 "compare_url": (
-                    f"{reverse('destination_comparison')}?"
-                    f"{urlencode({'left_destination': token})}"
+                    f"{reverse('destination_comparison')}?{urlencode({'left_destination': token})}"
                     if available
                     else ""
                 ),
@@ -247,12 +246,8 @@ def _saved_comparison_rows(user) -> list[dict[str, object]]:
         .prefetch_related("budget_items")
         .order_by("-updated_at", "-id")
     )
-    current_country_ids = {
-        comparison.left_country_id
-        for comparison in comparisons
-    } | {
-        comparison.right_country_id
-        for comparison in comparisons
+    current_country_ids = {comparison.left_country_id for comparison in comparisons} | {
+        comparison.right_country_id for comparison in comparisons
     }
     current_country_ids.discard(None)
     current_country_ids = set(current_country_ids)
@@ -281,9 +276,7 @@ def _saved_comparison_rows(user) -> list[dict[str, object]]:
                 "comparison": comparison,
                 "available": available,
                 "reopen_url": (
-                    f"{reverse('destination_comparison')}?{urlencode(params)}"
-                    if available
-                    else ""
+                    f"{reverse('destination_comparison')}?{urlencode(params)}" if available else ""
                 ),
                 "recheck_fields": params if available else {},
                 "left_label": (
