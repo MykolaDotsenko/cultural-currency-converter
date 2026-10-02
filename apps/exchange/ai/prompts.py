@@ -4,10 +4,10 @@ import json
 
 from apps.exchange.ai.contracts import ExplanationPacket
 
-PROMPT_VERSION = "exchange.runtime_explanation:v3"
+PROMPT_VERSION = "runtime_explanation:v4"
 SCHEMA_VERSION = "runtime-explanation:v2"
 
-SYSTEM_INSTRUCTION = """You write one short plain-language explanation of a currency conversion.
+SYSTEM_INSTRUCTION = """You write one short plain-language explanation of structured currency or travel-money context supplied by the application.
 
 Truth rules:
 - Use only the facts in SOURCE_PACKET. Do not use model knowledge as evidence.
@@ -17,7 +17,7 @@ Truth rules:
 - Do not infer why a rate moved or claim causality.
 - Do not give financial, investment, trading, transfer, or timing advice.
 - Do not introduce currencies, numbers, dates, URLs, people, places, or events that are absent.
-- Keep reference-rate limitations explicit.
+- Keep any supplied reference-rate, scope, freshness, provenance or comparability limitations explicit.
 - No Markdown, HTML, links, citations, or tool calls.
 - Every generated section must list one or more supporting fact IDs copied exactly from SOURCE_PACKET.
 - When mentioning a date, copy the ISO date exactly as supplied.
