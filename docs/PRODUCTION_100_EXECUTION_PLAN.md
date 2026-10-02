@@ -354,6 +354,8 @@ Add region → country → city discovery using canonical geographic/domain iden
 
 Do not build a second geography model.
 
+**Current production slice:** Explore now renders the #194 evidence-backed collections and a premium regional directory on one provider-free surface. Regional grouping reuses canonical `Country.region` / `Country.subregion` plus canonical `City.country` relationships; the deterministic reference seed supplies those fields for the reviewed production destinations and unknown geography degrades into an explicit final “Other reviewed destinations” group instead of disappearing. The view composes destination scopes once and reuses that tuple for regional navigation and collections, avoiding duplicate discovery/provider work. Collection provenance is progressively disclosed, region navigation works without JavaScript, and country/city actions preserve canonical converter/profile scope. Optional collection or regional composition failures degrade locally while the reviewed destination fallback remains usable. The surface has dedicated cross-browser interaction, axe, reflow, reduced-motion and forced-colours evidence.
+
 ## PR #196 — Same amount across destinations
 
 Allow one source amount to be viewed across several explicit destinations.

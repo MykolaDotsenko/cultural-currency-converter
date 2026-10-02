@@ -90,7 +90,7 @@ A dimension omitted from a row is not silently waived. It is either not meaningf
 | Current converter | H E I S F O K X R N C FF W PG | `apps/exchange/tests/test_web.py`, `test_forms.py`, `test_application.py`, `test_frankfurter.py`, `test_cache.py` | `current-converter` is full Chromium + Firefox/WebKit smoke; full flow is exercised on the wide surface | Strong baseline. Final certification still re-runs provider-failure and constrained-network evidence. |
 | Historical conversion + rate series | H E I S F K X R C FF W PG | `apps/exchange/tests/test_domain.py`, `test_series.py`, `test_series_presentation.py`, `test_web.py` | `rate-series` is full Chromium + Firefox/WebKit smoke | Strong baseline; historical FX/purchasing-power wording remains a permanent semantic audit item. |
 | Real Payment Estimate | H I O K X R N C PG | `apps/exchange/tests/test_payment_estimate.py`, `test_payment_estimate_web.py` | exercised inside the full `current-converter` browser flow | Cross-engine surface smoke exists through current converter, but the estimate interaction itself is primarily Chromium + server-test evidence. |
-| Destination context / local value / culture | H E P S O K X R C FF W PG | `apps/culture/tests/test_destination_context.py`, `test_city_fallback_trust.py`, `test_city_profile.py`, `test_explore_collections.py`, `test_price_quality.py`, `test_city_health.py`, `test_migrations.py`, `test_destination_empty_state.py`, `test_destination_media.py`, `test_story.py`, `test_web.py`, `test_provenance.py` | rendered through current converter; Explore, provenance-aware Explore collections and City Money Profile carry context evidence; `report_city_coverage` provides read-only ops evidence | City-price quality has stable issue codes, normalized category/unit semantics, canonical-city/current-currency/freshness/provenance validation and DB identity constraints. The fallback trust suite proves that national-only evidence cannot manufacture a city claim, fallback remains labelled, wrong-currency/stale rows fail closed and cross-country city references are rejected/filtered defensively. City health reports fresh/stale/fallback/provenance coverage through the same policy; its score is maintenance-only and never user-facing. |
+| Destination context / local value / culture | H E P S O K X R C FF W PG | `apps/culture/tests/test_destination_context.py`, `test_city_fallback_trust.py`, `test_city_profile.py`, `test_explore_collections.py`, `test_explore_navigation.py`, `test_price_quality.py`, `test_city_health.py`, `test_migrations.py`, `test_destination_empty_state.py`, `test_destination_media.py`, `test_story.py`, `test_web.py`, `test_provenance.py` | rendered through current converter; Explore, provenance-aware Explore collections, canonical regional navigation and City Money Profile carry context evidence; `report_city_coverage` provides read-only ops evidence | City-price quality has stable issue codes, normalized category/unit semantics, canonical-city/current-currency/freshness/provenance validation and DB identity constraints. The fallback trust suite proves that national-only evidence cannot manufacture a city claim, fallback remains labelled, wrong-currency/stale rows fail closed and cross-country city references are rejected/filtered defensively. City health reports fresh/stale/fallback/provenance coverage through the same policy; its score is maintenance-only and never user-facing. |
 | Budget Interpretation | H E I P S O K X R N C PG | `apps/exchange/tests/test_budget.py`, `test_budget_snapshot.py`, `test_budget_web.py` | explicit budget flow inside full `current-converter` QA | Deterministic calculation and insufficient-data semantics are covered; richer presets/payment handoff remain future product work. |
 | Destination Mode | H E I P K X R N C PG | `apps/exchange/tests/test_destination_mode.py` | dedicated `destination-mode` surface in full Chromium | Firefox/WebKit dedicated smoke is not currently present; close if cross-engine evidence becomes required for final certification. |
 | Destination Comparison | H E I P S F O K X R N C FF W PG | `apps/exchange/tests/test_comparison.py`, `test_comparison_web.py` | dedicated full Chromium + Firefox/WebKit smoke surface | Strong baseline; saved-comparison continuity is future scope. |
@@ -261,14 +261,14 @@ The 2026-09-25 Chromium/production-build baseline measured:
 - saved-state lazy chunk: 2,144 B gzip;
 - historical chart lazy chunk: 54,084 B gzip;
 - all JavaScript: 80,290 B gzip;
-- application stylesheet: about 13.05 KiB gzip;
+- application stylesheet: about 16.85 KiB gzip with the premium Explore atlas layer;
 - normal initial pages: 4 requests; lazy-chunk pages: 5 requests.
 
 Current hard budgets intentionally leave measured headroom rather than preserving accidental size:
 
 - core JavaScript: <= 32 KiB gzip;
 - all JavaScript: <= 96 KiB gzip;
-- CSS: <= 16 KiB gzip;
+- CSS: <= 20 KiB gzip;
 - chart chunk: <= 64 KiB gzip;
 - saved-state chunk: <= 8 KiB gzip;
 - initial browser surface: <= 5 requests;
@@ -290,7 +290,7 @@ Watch:
 - large images;
 - slow request-path enrichment.
 
-Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold.
+Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold. The October 2026 Explore 2.0 editorial atlas raised measured CSS from the prior ~13 KiB baseline to ~16.85 KiB gzip; the CSS cap was therefore moved to 20 KiB while JS, request and query budgets remained unchanged.
 
 ## Documentation quality
 

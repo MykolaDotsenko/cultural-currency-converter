@@ -369,6 +369,7 @@ def build_explore_collections(
     *,
     as_of: date | None = None,
     item_limit: int = 6,
+    destinations: tuple[ExploreDestination, ...] | None = None,
 ) -> tuple[ExploreCollection, ...]:
     """Compose neutral Explore collections only from reviewed canonical evidence."""
 
@@ -376,11 +377,15 @@ def build_explore_collections(
         raise ValueError("Explore collection item limit must be between 1 and 12.")
 
     selected_date = as_of or timezone.localdate()
-    destinations = build_explore_destinations(as_of=selected_date, limit=24)
+    destination_rows = (
+        destinations
+        if destinations is not None
+        else build_explore_destinations(as_of=selected_date, limit=24)
+    )
 
     items_by_kind: dict[ExploreCollectionKind, tuple[ExploreCollectionItem, ...]] = {
         ExploreCollectionKind.CITY_MONEY_PROFILES: _city_profile_items(
-            destinations=destinations,
+            destinations=destination_rows,
             as_of=selected_date,
             limit=item_limit,
         ),
@@ -394,7 +399,7 @@ def build_explore_collections(
             limit=item_limit,
         ),
         ExploreCollectionKind.RECENTLY_REVIEWED_DESTINATIONS: _recent_destination_items(
-            destinations=destinations,
+            destinations=destination_rows,
             as_of=selected_date,
             limit=item_limit,
         ),

@@ -1753,6 +1753,102 @@ async function assertNoJavaScriptSavedStateFallback(browser) {
   }
 }
 
+async function assertNoJavaScriptExplore(browser) {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  try {
+    const page = await context.newPage();
+    const response = await page.goto(`${BASE_URL}/explore/`, { waitUntil: "load" });
+    assert(
+      response?.ok(),
+      `explore/no-js: request failed with ${response?.status() ?? "no response"}`,
+    );
+
+    await page
+      .getByRole("heading", { name: "Know the money before you know the place." })
+      .waitFor();
+    await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
+    assert(
+      (await page.locator(".qa-explore-collection").count()) >= 4,
+      "explore/no-js: curated collections disappeared without JavaScript",
+    );
+    assert(
+      (await page.locator(".qa-explore-region-nav a").count()) >= 4,
+      "explore/no-js: regional navigation disappeared without JavaScript",
+    );
+    assert(
+      (await page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).count()) === 1,
+      "explore/no-js: reviewed Tokyo city row disappeared without JavaScript",
+    );
+    await assertNoHorizontalOverflow(page, "explore/no-js");
+    await assertAxe(page, "explore/no-js");
+    return {
+      collectionsVisible: true,
+      regionalNavigationVisible: true,
+      canonicalCityHandoffVisible: true,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function assertExploreFlow(page) {
+  await page.getByRole("heading", { name: "Know the money before you know the place." }).waitFor();
+  await page.getByRole("heading", { name: "Start with what matters to you." }).waitFor();
+  await page.getByRole("heading", { name: "Region → country → city." }).waitFor();
+
+  const collectionCount = await page.locator(".qa-explore-collection").count();
+  assert(
+    collectionCount >= 4,
+    `explore: expected at least four curated collections, found ${collectionCount}`,
+  );
+
+  const evidence = page.locator(".qa-explore-evidence").first();
+  const evidenceSummary = evidence.locator("summary");
+  await evidenceSummary.click();
+  assert(
+    await evidence.evaluate((element) => element.hasAttribute("open")),
+    "explore: provenance disclosure did not open",
+  );
+  assert(
+    (await evidence.locator("a[href^='https://']").count()) > 0,
+    "explore: opened provenance disclosure has no HTTPS source",
+  );
+
+  const regionNav = page.locator(".qa-explore-region-nav");
+  for (const region of ["Americas", "Asia", "Europe", "Oceania"]) {
+    assert(
+      (await regionNav.getByRole("link", { name: region, exact: true }).count()) === 1,
+      `explore: missing regional navigation link for ${region}`,
+    );
+  }
+  await regionNav.getByRole("link", { name: "Asia", exact: true }).click();
+  assert(
+    new URL(page.url()).hash === "#region-asia",
+    "explore: region anchor did not update location",
+  );
+
+  const tokyoRow = page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).first();
+  const profileHref = await tokyoRow.getByRole("link", { name: /Tokyo/ }).getAttribute("href");
+  assert(profileHref === "/city/JP/tokyo/", `explore: Tokyo profile URL drifted: ${profileHref}`);
+
+  const convertHref = await tokyoRow
+    .getByRole("link", { name: "Convert", exact: true })
+    .getAttribute("href");
+  assert(convertHref, "explore: Tokyo direct Convert handoff is missing");
+  const convertUrl = new URL(convertHref, BASE_URL);
+  assert(
+    convertUrl.searchParams.get("destination_country") === "JP" &&
+      convertUrl.searchParams.get("destination_currency") === "JPY" &&
+      convertUrl.searchParams.get("destination_city_slug") === "tokyo",
+    `explore: Tokyo converter handoff lost canonical scope: ${convertHref}`,
+  );
+
+  await assertAxe(page, "explore/interactive");
+}
+
 async function openSurface(page, surface) {
   const response = await page.goto(`${BASE_URL}${surface.path}`, { waitUntil: "networkidle" });
   await waitForStableLayout(page);
@@ -1844,6 +1940,10 @@ try {
         await assertSavedStateFlow(page);
       }
 
+      if (surface.name === "explore" && viewport.name === "wide-1440") {
+        await assertExploreFlow(page);
+      }
+
       if (viewport.name === "mobile-390") {
         await assertReducedMotion(page, surface.name);
         if (BROWSER_SCOPE === "full") {
@@ -1891,6 +1991,7 @@ try {
   if (BROWSER_SCOPE === "full") {
     evidence.csp = await assertCspEnforcement(browser);
     evidence.noJavaScript = await assertNoJavaScriptSavedStateFallback(browser);
+    evidence.noJavaScriptExplore = await assertNoJavaScriptExplore(browser);
     evidence.compressedAssets = await measureBuildAssets();
     assertBuildPerformanceBudgets(evidence.compressedAssets);
 

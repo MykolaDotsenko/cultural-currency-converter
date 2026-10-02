@@ -2,108 +2,259 @@
 {% block title %}Explore travel money · Cultural Currency Converter{% endblock %}
 {% block head_meta %}
   <meta name="description"
-        content="Explore reviewed city and country money context without rankings, hidden FX assumptions or generated price claims.">
+        content="Explore reviewed city and country money context by region, story, payment behaviour and current currency evidence.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
-  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan by destination</a>
-  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare destinations</a>
-  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
+  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan</a>
+  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
 {% endblock %}
 {% block content %}
-  <section class="qa-foundation-intro" aria-labelledby="explore-title">
+  <section class="qa-product-intro" aria-labelledby="explore-title">
     <p class="qa-foundation-kicker">Explore · reviewed money context</p>
-    <h1 id="explore-title">Discover the money side of a place.</h1>
+    <h1 id="explore-title">Know the money before you know the place.</h1>
     <p class="qa-foundation-lede">
-      Browse destinations only when reviewed current money context exists. Explore does not rank
-      places, request a live exchange rate or use AI to fill missing prices.
+      A curated view of local currency, everyday price anchors, payment behaviour and sourced
+      money stories. No popularity list, no “cheapest” ranking and no AI-generated facts.
     </p>
   </section>
-  <section class="qa-saved-state" aria-labelledby="explore-destinations-title">
-    <div class="qa-saved-section">
-      <div class="qa-saved-section__heading">
-        <div>
-          <p class="qa-foundation-kicker">Current coverage</p>
-          <h2 id="explore-destinations-title">Destinations with evidence you can inspect</h2>
-        </div>
+  {% if explore_error %}
+    <section class="qa-saved-section" aria-labelledby="explore-unavailable-title">
+      <div class="qa-inline-alert" role="status">
+        <h2 id="explore-unavailable-title">{{ explore_error.title }}</h2>
+        <p>{{ explore_error.detail }}</p>
+        <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
       </div>
-      {% if explore_error %}
-        <div class="qa-inline-alert" role="status">
-          <h3>{{ explore_error.title }}</h3>
-          <p>{{ explore_error.detail }}</p>
+    </section>
+  {% else %}
+    <div class="qa-saved-state qa-explore-page">
+      <section class="qa-saved-section qa-explore-overview"
+               aria-labelledby="explore-coverage-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Coverage you can inspect</p>
+            <h2 id="explore-coverage-title">Reviewed, scoped, current.</h2>
+            <p>Only destinations and collections that survive the same evidence rules as the converter appear here.</p>
+          </div>
         </div>
-      {% elif explore_destinations %}
-        <div class="qa-saved-list">
-          {% for card in explore_destinations %}
-            {% with destination=card.destination %}
-              <article class="qa-saved-row">
-                <div class="qa-saved-row__copy">
-                  <p class="qa-foundation-kicker">
-                    {% if destination.is_city_scope %}City scope{% else %}Country scope{% endif %}
-                    · {{ destination.currency_code }}
-                  </p>
-                  <h3>{{ destination.scope_label }}</h3>
-                  <p>
-                    {% if destination.city_price_anchor_count %}
-                      {{ destination.city_price_anchor_count }} city price anchor{{ destination.city_price_anchor_count|pluralize }} shown
-                    {% endif %}
-                    {% if destination.city_price_anchor_count and destination.national_price_anchor_count %}·{% endif %}
-                    {% if destination.national_price_anchor_count %}
-                      {{ destination.national_price_anchor_count }} national price anchor{{ destination.national_price_anchor_count|pluralize }} shown
-                    {% endif %}
-                    {% if destination.payment_available %}
-                      {% if destination.city_price_anchor_count or destination.national_price_anchor_count %}·{% endif %}
-                      {% if destination.is_city_scope %}
-                        reviewed country payment guidance
-                      {% else %}
-                        reviewed payment guidance
+        <div class="qa-price-grid" aria-label="Explore coverage">
+          <article class="qa-price-card">
+            <p class="qa-price-card__label">Countries</p>
+            <p class="qa-price-card__price">{{ explore_stats.country_count }}</p>
+          </article>
+          <article class="qa-price-card">
+            <p class="qa-price-card__label">Cities</p>
+            <p class="qa-price-card__price">{{ explore_stats.city_count }}</p>
+          </article>
+          <article class="qa-price-card">
+            <p class="qa-price-card__label">Regions</p>
+            <p class="qa-price-card__price">{{ explore_stats.region_count }}</p>
+          </article>
+          <article class="qa-price-card">
+            <p class="qa-price-card__label">Collections</p>
+            <p class="qa-price-card__price">{{ explore_stats.collection_count }}</p>
+          </article>
+        </div>
+      </section>
+      <section class="qa-saved-section qa-explore-directory"
+               id="regional-directory"
+               aria-labelledby="explore-regions-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Browse geographically</p>
+            <h2 id="explore-regions-title">Region → country → city.</h2>
+            <p>
+              Geography comes from canonical country and city records. A city appears only when
+              direct reviewed city evidence survives freshness and provenance rules.
+            </p>
+          </div>
+        </div>
+        {% if explore_navigation_error %}
+          <div class="qa-inline-alert" role="status">
+            <h3>{{ explore_navigation_error.title }}</h3>
+            <p>{{ explore_navigation_error.detail }}</p>
+          </div>
+        {% endif %}
+        {% if explore_regions %}
+          <nav class="qa-saved-row__actions qa-explore-region-nav"
+               aria-label="Explore regions">
+            {% for region in explore_regions %}
+              <a class="qa-secondary-button" href="#region-{{ region.slug }}">{{ region.name }}</a>
+            {% endfor %}
+          </nav>
+          <div class="qa-saved-state">
+            {% for region in explore_regions %}
+              <section class="qa-saved-section qa-explore-region"
+                       id="region-{{ region.slug }}"
+                       aria-labelledby="region-{{ region.slug }}-title">
+                <div class="qa-saved-section__heading">
+                  <div>
+                    <p class="qa-foundation-kicker">Region {{ forloop.counter|stringformat:"02d" }}</p>
+                    <h3 id="region-{{ region.slug }}-title">{{ region.name }}</h3>
+                  </div>
+                </div>
+                <div class="qa-saved-list">
+                  {% for country in region.countries %}
+                    <article class="qa-saved-row qa-explore-country">
+                      <div class="qa-saved-row__copy">
+                        <p class="qa-foundation-kicker">
+                          {{ country.currency_code }}
+                          {% if country.subregion %}· {{ country.subregion }}{% endif %}
+                        </p>
+                        <h4>{{ country.country_name }}</h4>
+                        {% if country.cities %}
+                          <div class="qa-saved-list qa-explore-city-list"
+                               aria-label="Reviewed cities in {{ country.country_name }}">
+                            {% for city in country.cities %}
+                              <div class="qa-saved-row qa-explore-city-row">
+                                <div class="qa-saved-row__copy">
+                                  <h5>
+                                    <a class="qa-explore-city-link"
+                                       href="{{ city.profile_url }}">{{ city.name }}</a>
+                                  </h5>
+                                  <p class="qa-saved-row__meta">{{ city.currency_code }} · city money profile</p>
+                                </div>
+                                <div class="qa-saved-row__actions">
+                                  <a class="qa-secondary-button"
+                                     href="{{ city.converter_url }}">Convert</a>
+                                </div>
+                              </div>
+                            {% endfor %}
+                          </div>
+                        {% else %}
+                          <p class="qa-saved-row__meta">No city-level profile is published yet.</p>
+                        {% endif %}
+                      </div>
+                      {% if country.converter_url %}
+                        <div class="qa-saved-row__actions">
+                          <a class="qa-secondary-button"
+                             href="{{ country.converter_url }}">Open country context</a>
+                        </div>
                       {% endif %}
-                    {% endif %}
-                  </p>
-                  <p class="qa-saved-row__meta">
-                    {% if destination.latest_price_observed_at %}
-                      Shown price evidence observed through {{ destination.latest_price_observed_at|date:"j M Y" }}
-                    {% endif %}
-                    {% if destination.latest_price_observed_at and destination.payment_verified_at %}·{% endif %}
-                    {% if destination.payment_verified_at %}
-                      payment guidance reviewed {{ destination.payment_verified_at|date:"j M Y" }}
-                    {% endif %}
-                  </p>
-                  {% if destination.is_city_scope and destination.national_price_anchor_count %}
-                    <p class="qa-saved-row__meta">
-                      Missing city categories may use clearly labelled national fallback already
-                      accepted by the Money Context Engine.
+                    </article>
+                  {% endfor %}
+                </div>
+              </section>
+            {% endfor %}
+          </div>
+        {% elif explore_destinations %}
+          <div class="qa-saved-list">
+            {% for card in explore_destinations %}
+              {% with destination=card.destination %}
+                <article class="qa-saved-row">
+                  <div class="qa-saved-row__copy">
+                    <p class="qa-foundation-kicker">
+                      {% if destination.is_city_scope %}City{% else %}Country{% endif %}
+                      · {{ destination.currency_code }}
                     </p>
-                  {% endif %}
-                </div>
-                <div class="qa-saved-row__actions">
-                  {% if card.profile_url %}
-                    <a class="qa-primary-button"
-                       href="{{ card.profile_url }}">View {{ destination.city_name }} money profile</a>
-                    <a class="qa-secondary-button" href="{{ card.converter_url }}">Convert</a>
-                  {% else %}
-                    <a class="qa-primary-button"
-                       href="{{ card.converter_url }}">Open {{ destination.scope_label }}</a>
-                  {% endif %}
-                </div>
-              </article>
-            {% endwith %}
-          {% endfor %}
+                    <h3>{{ destination.scope_label }}</h3>
+                    <p class="qa-saved-row__meta">
+                      Reviewed context available
+                      {% if destination.latest_price_observed_at %}
+                        · evidence through {{ destination.latest_price_observed_at|date:"j M Y" }}
+                      {% endif %}
+                    </p>
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    {% if card.profile_url %}
+                      <a class="qa-secondary-button"
+                         href="{{ card.profile_url }}">View city money profile</a>
+                    {% else %}
+                      <a class="qa-secondary-button"
+                         href="{{ card.converter_url }}">Open destination</a>
+                    {% endif %}
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="qa-saved-empty" role="status">
+            <h3>No reviewed destination context is published yet.</h3>
+            <p>Explore stays empty rather than inventing destination prices, payment behaviour or rankings.</p>
+            <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+          </div>
+        {% endif %}
+        <p class="qa-saved-state__privacy">
+          Reviewed as of {{ explore_as_of|date:"j M Y" }}. Explore is descriptive, not a
+          purchasing-power index: city and country evidence keep their original scope, freshness and provenance.
+        </p>
+      </section>
+      <section class="qa-saved-section qa-explore-collections"
+               aria-labelledby="explore-collections-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Curated ways in</p>
+            <h2 id="explore-collections-title">Start with what matters to you.</h2>
+            <p>
+              Concise previews reuse reviewed evidence already used elsewhere in the product. Open
+              provenance only when you want the detail; the underlying financial truth never changes.
+            </p>
+          </div>
         </div>
-      {% else %}
-        <div class="qa-saved-empty" role="status">
-          <h3>No reviewed destination context is published yet.</h3>
-          <p>
-            The converter remains available. Explore stays empty instead of inventing destination
-            prices or payment claims.
-          </p>
-          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
-        </div>
-      {% endif %}
-      <p class="qa-saved-state__privacy">
-        Alphabetical discovery only. No “cheapest”, “best value” or purchasing-power ranking is
-        calculated from mixed city and country data.
-      </p>
+        {% if explore_collection_error %}
+          <div class="qa-inline-alert" role="status">
+            <h3>{{ explore_collection_error.title }}</h3>
+            <p>{{ explore_collection_error.detail }}</p>
+          </div>
+        {% elif explore_collections %}
+          <div class="qa-saved-state">
+            {% for collection in explore_collections %}
+              <section class="qa-saved-section qa-explore-collection"
+                       id="collection-{{ collection.slug }}"
+                       aria-labelledby="collection-{{ collection.slug }}-title">
+                <div class="qa-saved-section__heading">
+                  <div>
+                    <p class="qa-foundation-kicker">{{ forloop.counter|stringformat:"02d" }}</p>
+                    <h3 id="collection-{{ collection.slug }}-title">{{ collection.title }}</h3>
+                    <p>{{ collection.description }}</p>
+                  </div>
+                </div>
+                <div class="qa-saved-list">
+                  {% for item in collection.items %}
+                    <article class="qa-saved-row qa-explore-collection-item">
+                      <div class="qa-saved-row__copy">
+                        <p class="qa-foundation-kicker">
+                          {% if item.currency_codes %}{{ item.currency_codes|join:" · " }}{% endif %}
+                          {% if item.reviewed_on %}
+                            {% if item.currency_codes %}·{% endif %}
+                            reviewed {{ item.reviewed_on|date:"j M Y" }}
+                          {% endif %}
+                        </p>
+                        <h4>{{ item.title }}</h4>
+                        <p>{{ item.summary }}</p>
+                        <details class="qa-saved-state__privacy qa-explore-evidence">
+                          <summary>Evidence · {{ item.evidence|length }} source{{ item.evidence|length|pluralize }}</summary>
+                          <ul>
+                            {% for source in item.evidence %}
+                              <li>
+                                <a href="{{ source.source_url }}">{{ source.source_name }}</a>
+                                {% if source.evidence_date %}<span>{{ source.evidence_date|date:"j M Y" }}</span>{% endif %}
+                              </li>
+                            {% endfor %}
+                          </ul>
+                        </details>
+                      </div>
+                      {% if item.action_url %}
+                        <div class="qa-saved-row__actions">
+                          <a class="qa-secondary-button"
+                             href="{{ item.action_url }}">{{ item.action_label }}</a>
+                        </div>
+                      {% endif %}
+                    </article>
+                  {% endfor %}
+                </div>
+              </section>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="qa-saved-empty" role="status">
+            <h3>No curated collections are available yet.</h3>
+            <p>Regional discovery remains available wherever reviewed evidence exists.</p>
+          </div>
+        {% endif %}
+      </section>
     </div>
-  </section>
+  {% endif %}
 {% endblock %}

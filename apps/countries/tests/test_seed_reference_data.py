@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from django.core.management import call_command
 
-from apps.countries.models import CountryCurrency, Currency
+from apps.countries.models import Country, CountryCurrency, Currency
 
 
 @pytest.mark.django_db
@@ -66,3 +66,18 @@ def test_reference_seed_exposes_wave_two_current_primary_currencies():
         "NZ": "NZD",
     }
     assert all(link.source.startswith("https://") for link in links)
+
+
+@pytest.mark.django_db
+def test_reference_seed_exposes_canonical_region_and_subregion_metadata():
+    call_command("seed_reference_data")
+
+    assert {
+        country.iso2: (country.region, country.subregion)
+        for country in Country.objects.filter(iso2__in={"FI", "JP", "CA", "NZ"}).order_by("iso2")
+    } == {
+        "CA": ("Americas", "North America"),
+        "FI": ("Europe", "Northern Europe"),
+        "JP": ("Asia", "Eastern Asia"),
+        "NZ": ("Oceania", "Australia and New Zealand"),
+    }
