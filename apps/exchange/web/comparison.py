@@ -53,7 +53,16 @@ def destination_comparison_view(
     initial = None
     if request.method == "GET":
         left_destination = str(request.GET.get("left_destination") or "").strip()
-        initial = {"left_destination": left_destination} if left_destination else None
+        right_destination = str(request.GET.get("right_destination") or "").strip()
+        initial_values = {
+            key: value
+            for key, value in (
+                ("left_destination", left_destination),
+                ("right_destination", right_destination),
+            )
+            if value
+        }
+        initial = initial_values or None
     form = DestinationComparisonForm(
         request.POST if request.method == "POST" else None,
         initial=initial,
