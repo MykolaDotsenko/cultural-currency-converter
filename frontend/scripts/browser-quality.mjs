@@ -1953,7 +1953,7 @@ async function assertSameAmountQuality(page) {
       await destination.uncheck();
     }
   }
-  await form.locator('input[name="destinations"][value="CA:toronto"]').check();
+  await form.locator('input[name="destinations"][value="FI:helsinki"]').check();
   await form.locator('input[name="destinations"][value="JP:tokyo"]').check();
   const selectedOrder = await form
     .locator('input[name="destinations"]:checked')
@@ -1983,7 +1983,7 @@ async function assertSameAmountQuality(page) {
   );
 
   assert(
-    JSON.stringify(selectedOrder) === JSON.stringify(["CA:toronto", "JP:tokyo"]),
+    JSON.stringify(selectedOrder) === JSON.stringify(["FI:helsinki", "JP:tokyo"]),
     `same-amount: deterministic checkbox selection drifted: ${JSON.stringify(selectedOrder)}`,
   );
   const renderedOrder = await cards.evaluateAll((elements) =>
