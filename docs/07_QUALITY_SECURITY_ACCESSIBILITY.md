@@ -255,23 +255,40 @@ Structured operational events should expose only bounded fields needed for diagn
 
 Performance work is evidence-driven. Deterministic growth budgets are merge gates; noisy lab timings remain recorded evidence until the CI environment can support a stable threshold.
 
-The 2026-09-25 Chromium/production-build baseline measured:
+The 2026-10-02 production build after demand-loaded enhancement routing measured:
 
-- core application JavaScript: 24,062 B gzip;
-- saved-state lazy chunk: 2,144 B gzip;
-- historical chart lazy chunk: 54,084 B gzip;
-- all JavaScript: 80,290 B gzip;
-- application stylesheet: about 16.85 KiB gzip with the premium Explore atlas layer;
-- normal initial pages: 4 requests; lazy-chunk pages: 5 requests.
+- core application JavaScript: about 19.10 kB gzip, down from 25.69 kB immediately before this pass;
+- AI explanation enhancement: about 0.75 kB gzip;
+- current-converter enhancement: about 1.15 kB gzip;
+- picker enhancement: about 2.27 kB gzip;
+- local saved-state enhancement: about 3.79 kB gzip;
+- saved-state page renderer: about 2.55 kB gzip;
+- rate-chart loader: about 0.32 kB gzip;
+- historical chart chunk: about 54.70 kB gzip;
+- all JavaScript across core and lazy chunks: about 84.63 kB gzip;
+- application stylesheet: about 19.51 kB gzip.
 
-Current hard budgets intentionally leave measured headroom rather than preserving accidental size:
+Shared HTMX, typography and CSS stay in the core entry. Converter/picker, AI explanation,
+local saved-state and chart behaviour are demand-loaded from DOM contracts and rediscovered after
+HTMX swaps. Browser QA requires low-interaction shell, Same Amount and City Money Profile surfaces
+to avoid route-only dynamic JavaScript, while Current Converter, Explore, Saved and Rate Series must
+load their required enhancement chunks. Current Converter must additionally prove that result-only
+chunks arrive after interaction rather than in its initial payload.
 
-- core JavaScript: <= 32 KiB gzip;
-- all JavaScript: <= 96 KiB gzip;
+Current hard budgets intentionally leave measured headroom while preserving that architecture:
+
+- core JavaScript: <= 22 KiB gzip;
+- all JavaScript: <= 92 KiB gzip;
 - CSS: <= 20 KiB gzip;
 - chart chunk: <= 64 KiB gzip;
-- saved-state chunk: <= 8 KiB gzip;
+- chart-loader chunk: <= 1 KiB gzip;
+- AI explanation chunk: <= 2 KiB gzip;
+- current-converter chunk: <= 3 KiB gzip;
+- picker chunk: <= 4 KiB gzip;
+- local saved-state chunk: <= 6 KiB gzip;
+- saved-state page chunk: <= 8 KiB gzip;
 - initial browser surface: <= 5 requests;
+- initial Chromium layout shift: <= 0.1;
 - initial converter render: <= 6 SQL queries;
 - story composition with a reviewed fact remains <= 4 SQL queries.
 
