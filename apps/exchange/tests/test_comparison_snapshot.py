@@ -57,8 +57,7 @@ def test_saved_comparison_token_round_trips_only_canonical_inputs():
     assert snapshot.assumptions.duration_days == 5
     assert snapshot.assumptions.travelers == 2
     assert [
-        (item.category, item.units_per_person_per_day)
-        for item in snapshot.assumptions.categories
+        (item.category, item.units_per_person_per_day) for item in snapshot.assumptions.categories
     ] == [
         ("coffee", Decimal("1")),
         ("casual_meal", Decimal("2")),
