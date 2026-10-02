@@ -149,6 +149,17 @@ def test_rate_series_component_exposes_chart_state_and_optional_query_context():
     )
 
     assert component["point_count"] == 3
+    assert [item["label"] for item in component["timeline_landmarks"]] == [
+        "Range start",
+        "Selected observation",
+        "Range end",
+    ]
+    assert [item["rate"] for item in component["timeline_landmarks"]] == [
+        "150",
+        "170.5",
+        "160",
+    ]
+    assert component["timeline_landmarks"][1]["selected"] is True
     assert component["chart_payload"]["selectedIndex"] == 1
     assert component["selected_point"]["rate"] == "170.5"
     assert component["minimum"]["rate"] == "150"
@@ -183,6 +194,7 @@ def test_rate_series_component_handles_empty_series_without_inventing_values():
     )
 
     assert component["point_count"] == 0
+    assert component["timeline_landmarks"] == []
     assert component["selected_point"] is None
     assert component["last_point"] is None
     assert component["minimum"] is None
