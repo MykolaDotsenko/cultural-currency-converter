@@ -21,7 +21,6 @@
       cost-of-living or purchasing-power score.
     </p>
   </section>
-
   <section class="qa-same-amount" aria-labelledby="same-amount-form-title">
     <div class="qa-same-amount__instrument">
       <div class="qa-same-amount__heading">
@@ -34,7 +33,6 @@
           local prices or any inferred notion of value.
         </p>
       </div>
-
       {% if form.errors %}
         <div class="qa-inline-alert qa-inline-alert--error"
              id="same-amount-errors"
@@ -53,7 +51,6 @@
           </ul>
         </div>
       {% endif %}
-
       {% if reference_data_ready %}
         <form method="post"
               action="{% url 'same_amount_destinations' %}"
@@ -79,22 +76,18 @@
               {% endif %}
             </label>
           </div>
-
           <fieldset class="qa-same-amount__destination-fieldset{% if form.destinations.errors %} qa-field--error{% endif %}">
             <legend class="qa-field__label">{{ form.destinations.label }}</legend>
             <p class="qa-field__message">
               Choose explicit city scope when reviewed city evidence exists; country and city
               evidence remain separate throughout the result.
             </p>
-            <div class="qa-same-amount__choice-panel">
-              {{ form.destinations }}
-            </div>
+            <div class="qa-same-amount__choice-panel">{{ form.destinations }}</div>
             {% if form.destinations.errors %}
               <p class="qa-field__message qa-field__message--error"
                  id="destinations-error">{{ form.destinations.errors.0 }}</p>
             {% endif %}
           </fieldset>
-
           <div class="qa-same-amount__action">
             <button class="qa-primary-button" type="submit">View across destinations</button>
             <p>
@@ -112,7 +105,6 @@
       {% endif %}
     </div>
   </section>
-
   {% if same_amount %}
     <section class="qa-same-amount__results"
              aria-labelledby="same-amount-results-title">
@@ -129,14 +121,12 @@
           successful observations on the others.
         </p>
       </div>
-
       {% if same_amount.partial %}
         <div class="qa-inline-alert" role="status">
           <h3>Part of the view is unavailable.</h3>
           <p>Successful destination observations remain valid and are shown below.</p>
         </div>
       {% endif %}
-
       <div class="qa-same-amount__grid">
         {% for item in same_amount.destinations %}
           <article class="qa-same-amount-card">
@@ -151,7 +141,6 @@
                 <span class="qa-status-badge qa-status-badge--reference">Reference rate</span>
               {% endif %}
             </header>
-
             <div class="qa-same-amount-card__amount">
               <p>{{ item.output_amount }} <span>{{ item.currency_code }}</span></p>
               <p>
@@ -159,22 +148,26 @@
                 · 1 {{ same_amount.source_currency_code }} = {{ item.rate }} {{ item.currency_code }}
               </p>
             </div>
-
             <dl class="qa-same-amount-card__trust">
               <div>
                 <dt>Effective</dt>
-                <dd>{{ item.effective_date }}</dd>
+                <dd>
+                  {{ item.effective_date }}
+                </dd>
               </div>
               <div>
                 <dt>Source</dt>
-                <dd>{{ item.provider }}</dd>
+                <dd>
+                  {{ item.provider }}
+                </dd>
               </div>
               <div>
                 <dt>Fetched</dt>
-                <dd>{{ item.fetched_at }}</dd>
+                <dd>
+                  {{ item.fetched_at }}
+                </dd>
               </div>
             </dl>
-
             {% if item.prices or item.payment_summary %}
               <details class="qa-same-amount-card__context">
                 <summary>
@@ -208,7 +201,6 @@
                 </div>
               </details>
             {% endif %}
-
             <div class="qa-same-amount-card__actions">
               <a class="qa-primary-button" href="{{ item.converter_url }}">Open conversion</a>
               <a class="qa-secondary-button" href="{{ item.budget_url }}">Build budget</a>
@@ -218,7 +210,6 @@
             </div>
           </article>
         {% endfor %}
-
         {% for item in same_amount.failed_destinations %}
           <article class="qa-same-amount-card qa-same-amount-card--unavailable">
             <header class="qa-same-amount-card__header">
@@ -234,7 +225,6 @@
           </article>
         {% endfor %}
       </div>
-
       <div class="qa-same-amount__caveat">
         <strong>No winner is calculated.</strong>
         <span>
