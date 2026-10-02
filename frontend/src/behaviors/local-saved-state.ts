@@ -235,6 +235,56 @@ function toggleSavedPlace(surface: HTMLElement): void {
   );
 }
 
+function setAccountPlaceSurfaceState(surface: HTMLElement, saved: boolean): void {
+  const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+  const label = surface.querySelector<HTMLElement>("[data-save-place-label]");
+  const place = placeFromSurface(surface);
+  if (!button || !label || !place) {
+    if (button) button.hidden = true;
+    return;
+  }
+
+  const placeName = place.cityName ? `${place.cityName}, ${place.countryName}` : place.countryName;
+  button.hidden = false;
+  button.disabled = saved;
+  button.removeAttribute("aria-pressed");
+  button.setAttribute(
+    "aria-label",
+    saved
+      ? `Place saved to account: ${placeName}`
+      : `Save place to account: ${placeName}`,
+  );
+  button.dataset.saved = saved ? "true" : "false";
+  label.textContent = saved ? "Saved to account" : "Save to account";
+}
+
+async function saveAccountPlace(surface: HTMLElement): Promise<void> {
+  const place = placeFromSurface(surface);
+  const button = surface.querySelector<HTMLButtonElement>("[data-save-place]");
+  if (!place || !button) return;
+
+  button.disabled = true;
+  placeStatus(surface, "Saving place to your account…");
+  try {
+    const created = await savePlaceToAccount(place);
+    surface.dataset.accountSaved = "true";
+    setAccountPlaceSurfaceState(surface, true);
+    placeStatus(
+      surface,
+      created
+        ? "Place saved to your account."
+        : "This place is already saved to your account.",
+    );
+    enhanceExploreSavedPlaces();
+  } catch {
+    setAccountPlaceSurfaceState(surface, false);
+    placeStatus(
+      surface,
+      "The place could not be saved to your account. Nothing was removed from this device.",
+    );
+  }
+}
+
 function enhanceExploreSavedPlaces(): void {
   const surfaces = document.querySelectorAll<HTMLElement>("[data-local-saved-place]");
   if (surfaces.length === 0) return;
