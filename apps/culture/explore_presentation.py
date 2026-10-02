@@ -191,7 +191,9 @@ def build_explore_navigation(
             if country_card is not None
             else city_cards[0].destination.currency_code
         )
-        filter_url = f"{reverse('explore')}?{urlencode({'region': region_slug, 'country': country_code})}"
+        filter_url = (
+            f"{reverse('explore')}?{urlencode({'region': region_slug, 'country': country_code})}"
+        )
         country_nodes.append(
             ExploreCountryNode(
                 country_code=country_code,
@@ -315,10 +317,15 @@ def build_explore_collection_sections(
                         "city_slug": item.city_slug,
                     },
                 )
-            elif collection.kind in {
-                ExploreCollectionKind.CASH_CARD_BEHAVIOUR,
-                ExploreCollectionKind.RECENTLY_REVIEWED_DESTINATIONS,
-            } and item.country_codes and item.currency_codes:
+            elif (
+                collection.kind
+                in {
+                    ExploreCollectionKind.CASH_CARD_BEHAVIOUR,
+                    ExploreCollectionKind.RECENTLY_REVIEWED_DESTINATIONS,
+                }
+                and item.country_codes
+                and item.currency_codes
+            ):
                 params = {
                     "load": "1",
                     "destination_country": item.country_codes[0],
