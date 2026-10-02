@@ -30,7 +30,9 @@
        data-local-saved-state-page
        data-account-mode="{% if user.is_authenticated %}true{% else %}false{% endif %}"
        data-account-history-enabled="{% if account_recent_history_enabled %}true{% else %}false{% endif %}"
-       data-converter-url="{% url 'converter' %}">
+       data-converter-url="{% url 'converter' %}"
+       data-comparison-url="{% url 'destination_comparison' %}"
+       data-explore-url="{% url 'explore' %}">
     <p class="qa-saved-state__storage-note"
        data-local-storage-status
        data-local-pending
@@ -93,14 +95,25 @@
                     </p>
                   </div>
                   <div class="qa-saved-row__actions">
-                    <a class="qa-secondary-button"
+                    <a class="qa-primary-button"
                        href="{{ row.detail_url }}"
-                       aria-label="Open saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">Open</a>
+                       aria-label="Open saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">
+                      Open
+                    </a>
+                    {% if row.compare_url %}
+                      <a class="qa-secondary-button"
+                         href="{{ row.compare_url }}"
+                         aria-label="Compare destination from saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">
+                        Compare
+                      </a>
+                    {% endif %}
                     <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
                       {% csrf_token %}
                       <button class="qa-secondary-button qa-destructive-button"
                               type="submit"
-                              aria-label="Remove saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">Remove</button>
+                              aria-label="Remove saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">
+                        Remove
+                      </button>
                     </form>
                   </div>
                 </article>
@@ -109,8 +122,12 @@
           </div>
         {% else %}
           <p class="qa-saved-empty">
-            No account-saved scenarios yet. Interpret a destination budget, then save the result
-            when you want to reopen the same assumptions later.
+            <span>
+              No account-saved scenarios yet. Interpret a destination budget, then save the result
+              when you want to reopen the same assumptions later.
+            </span>
+            <a class="qa-saved-row__text-action"
+               href="{% url 'destination_mode' %}">Plan a destination</a>
           </p>
         {% endif %}
       </section>
@@ -122,8 +139,8 @@
           <h2 id="saved-places-title">My places</h2>
           <p>
             Saved destinations stay only in this browser for now. Country/city scope and current
-            primary currency are retained so you can reopen the canonical converter or city profile.
-            Account sync is introduced only when durable SavedPlace ownership ships.
+            primary currency are retained so you can convert, compare or reopen a city profile
+            without reconstructing the destination. Account sync waits for durable SavedPlace ownership.
           </p>
         </div>
         <button class="qa-secondary-button qa-destructive-button"
@@ -191,17 +208,30 @@
                     </p>
                   </div>
                   <div class="qa-saved-row__actions">
-                    <a class="qa-secondary-button"
+                    <a class="qa-primary-button"
                        href="{{ row.use_url }}"
-                       aria-label="Use pair: {{ favourite.source_currency.code }} to {{ favourite.destination_currency.code }}">Use pair</a>
-                    <a class="qa-secondary-button"
+                       aria-label="Use pair: {{ favourite.source_currency.code }} to {{ favourite.destination_currency.code }}">
+                      Use pair
+                    </a>
+                    {% if row.compare_url %}
+                      <a class="qa-secondary-button"
+                         href="{{ row.compare_url }}"
+                         aria-label="Compare destination: {{ favourite.destination_country.name }}">
+                        Compare
+                      </a>
+                    {% endif %}
+                    <a class="qa-saved-row__text-action"
                        href="{{ row.reverse_url }}"
-                       aria-label="Reverse pair: {{ favourite.source_currency.code }} to {{ favourite.destination_currency.code }}">Reverse pair</a>
+                       aria-label="Reverse pair: {{ favourite.source_currency.code }} to {{ favourite.destination_currency.code }}">
+                      Reverse pair
+                    </a>
                     <form method="post" action="{% url 'delete_favourite' favourite.pk %}">
                       {% csrf_token %}
                       <button class="qa-secondary-button"
                               type="submit"
-                              aria-label="Remove saved pair: {{ favourite.source_currency.code }} to {{ favourite.destination_currency.code }}">Remove</button>
+                              aria-label="Remove saved pair: {{ favourite.source_currency.code }} to {{ favourite.destination_currency.code }}">
+                        Remove
+                      </button>
                     </form>
                   </div>
                 </article>
@@ -210,7 +240,8 @@
           </div>
         {% else %}
           <p class="qa-saved-empty" data-account-favourites-empty>
-            No account-saved pairs yet. Save a pair after a conversion for quicker access.
+            <span>No account-saved pairs yet. Save a pair after a conversion for quicker access.</span>
+            <a class="qa-saved-row__text-action" href="{% url 'converter' %}">Convert a pair</a>
           </p>
         {% endif %}
       {% else %}
@@ -282,17 +313,30 @@
                     </p>
                   </div>
                   <div class="qa-saved-row__actions">
-                    <a class="qa-secondary-button"
+                    <a class="qa-primary-button"
                        href="{{ row.repeat_url }}"
-                       aria-label="Repeat conversion: {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_currency.code }}">Repeat</a>
-                    <a class="qa-secondary-button"
+                       aria-label="Repeat conversion: {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_currency.code }}">
+                      Repeat
+                    </a>
+                    {% if row.compare_url %}
+                      <a class="qa-secondary-button"
+                         href="{{ row.compare_url }}"
+                         aria-label="Compare destination: {{ recent.destination_country.name }}">
+                        Compare
+                      </a>
+                    {% endif %}
+                    <a class="qa-saved-row__text-action"
                        href="{{ row.swap_url }}"
-                       aria-label="Swap conversion: {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_currency.code }}">Swap</a>
+                       aria-label="Swap conversion: {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_currency.code }}">
+                      Swap
+                    </a>
                     <form method="post" action="{% url 'delete_recent_conversion' recent.pk %}">
                       {% csrf_token %}
                       <button class="qa-secondary-button"
                               type="submit"
-                              aria-label="Remove recent conversion: {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_currency.code }}">Remove</button>
+                              aria-label="Remove recent conversion: {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_currency.code }}">
+                        Remove
+                      </button>
                     </form>
                   </div>
                 </article>
@@ -301,7 +345,8 @@
           </div>
         {% else %}
           <p class="qa-saved-empty">
-            No account recent history. Browser-only history below stays on this device.
+            <span>No account recent history. Browser-only history below stays on this device.</span>
+            <a class="qa-saved-row__text-action" href="{% url 'converter' %}">Start a conversion</a>
           </p>
         {% endif %}
       </section>
@@ -331,7 +376,10 @@
           <div>
             <p class="qa-foundation-kicker">Recent</p>
             <h2 id="recent-conversions-title">Recent conversions</h2>
-            <p>Up to 10 recent conversions stay on this device so you can repeat or reverse them.</p>
+            <p>
+              Up to 10 recent conversions stay on this device so you can repeat, compare the
+              destination or reverse the pair without rebuilding the context.
+            </p>
           </div>
           <button class="qa-secondary-button qa-destructive-button"
                   type="button"

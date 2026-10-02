@@ -389,6 +389,11 @@ def test_saved_state_lists_only_current_users_scenarios(client, scenario_referen
     assert b'<meta name="robots" content="noindex">' in response.content
     assert b"Owner Tokyo plan" in response.content
     assert b"Other private plan" not in response.content
+    assert (
+        b'aria-label="Compare destination from saved scenario: Owner Tokyo plan"'
+        in response.content
+    )
+    assert b'href="/compare/?left_destination=JP%3Atokyo"' in response.content
 
 
 @pytest.mark.django_db

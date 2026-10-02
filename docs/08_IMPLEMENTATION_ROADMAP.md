@@ -259,6 +259,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Let a past conversion reopen into useful follow-up actions such as repeat, compare, save as scenario/trip or open relevant context.
    - Preserve original requested/effective dates and provider semantics when historical records are reused.
    - Avoid turning history into a noisy action dashboard.
+   - **Current production slice:** Saved & recent now acts as a restrained continuity hub across account-owned and browser-local state. Saved scenarios reopen through their canonical detail flow and may seed exactly one canonical Destination Comparison side from their stored country/city scope. Account/browser favourites restore their pair without storing an amount, may seed the stored destination country into Compare, and keep Reverse pair as a tertiary action. Account/browser recent conversions preserve amount plus historical requested/effective-date semantics for Repeat, may seed only the recorded destination country into Compare, and keep Swap separate. Browser-local My Places preserve reviewed country/city identity so Convert and Compare retain exact city scope when available. Comparison shortcuts never infer the second destination and introduce no saved-comparison datastore. Empty Saved states provide one bounded next action back into canonical Explore, Convert or Destination Mode flows.
 
 33. **Voice interaction — 68/100**
    - Allow an explicit voice query for travel-money questions when hands-free interaction materially helps, especially on mobile during travel.

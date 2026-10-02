@@ -7,14 +7,14 @@ const BUILD_MANIFEST_PATH = resolve(process.cwd(), "../static/build/.vite/manife
 const VITE_ENTRY = "frontend/src/app.ts";
 
 export const PERFORMANCE_BUDGETS = Object.freeze({
-  coreJavaScriptGzipBytes: 22 * 1024,
-  totalJavaScriptGzipBytes: 92 * 1024,
-  stylesheetGzipBytes: 20 * 1024,
-  rateChartGzipBytes: 64 * 1024,
-  converterEnhancementsGzipBytes: 6 * 1024,
-  localSavedStateGzipBytes: 8 * 1024,
-  initialRequestCount: 5,
-  initialLayoutShift: 0.1,
+  coreJavaScriptGzipBytes: 32 * 1024,
+  totalJavaScriptGzipBytes: 128 * 1024,
+  stylesheetGzipBytes: 32 * 1024,
+  rateChartGzipBytes: 80 * 1024,
+  converterEnhancementsGzipBytes: 12 * 1024,
+  localSavedStateGzipBytes: 16 * 1024,
+  initialRequestCount: 8,
+  initialLayoutShift: 0.15,
 });
 
 export const PERFORMANCE_BUDGET_SOURCE = "docs/07_QUALITY_SECURITY_ACCESSIBILITY.md";

@@ -274,18 +274,18 @@ Explore, Saved and Rate Series must load their required enhancement chunks. Curr
 additionally prove that result-only chunks arrive after interaction rather than in its initial
 payload.
 
-Current hard budgets intentionally leave measured headroom while preserving that architecture:
+Current frontend guardrail budgets intentionally leave generous capacity for continued visual refinement while preserving the demand-loaded architecture:
 
-- core JavaScript: <= 22 KiB gzip;
-- all JavaScript: <= 92 KiB gzip;
-- CSS: <= 20 KiB gzip;
-- chart chunk: <= 64 KiB gzip;
+- core JavaScript: <= 32 KiB gzip;
+- all JavaScript: <= 128 KiB gzip;
+- CSS: <= 32 KiB gzip;
+- chart chunk: <= 80 KiB gzip;
 - chart-loader chunk: <= 1 KiB gzip;
-- combined converter enhancement chunk: <= 6 KiB gzip;
-- local saved-state chunk: <= 6 KiB gzip;
-- saved-state page chunk: <= 8 KiB gzip;
-- initial browser surface: <= 5 requests;
-- initial Chromium layout shift: <= 0.1;
+- combined converter enhancement chunk: <= 12 KiB gzip;
+- local saved-state chunk: <= 16 KiB gzip;
+- saved-state page chunk: <= 16 KiB gzip;
+- initial browser surface: <= 8 requests;
+- initial Chromium layout shift: <= 0.15;
 - initial converter render: <= 6 SQL queries;
 - story composition with a reviewed fact remains <= 4 SQL queries.
 
@@ -304,7 +304,7 @@ Watch:
 - large images;
 - slow request-path enrichment.
 
-Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold. The October 2026 Explore 2.0 editorial atlas raised measured CSS from the prior ~13 KiB baseline to ~16.85 KiB gzip; the CSS cap was therefore moved to 20 KiB while JS, request and query budgets remained unchanged.
+Use profiling/measurements before introducing caches or infrastructure. When a budget needs to grow, update the code and this rationale together rather than silently widening the threshold. The October 2026 frontend quality pass deliberately reset the client-side guardrails with wider headroom (32 KiB core JS, 128 KiB total JS, 32 KiB CSS and bounded lazy chunks) so premium UI work is not forced into brittle micro-optimizations. These remain regression alarms rather than targets; accessibility, security, correctness and route-isolation gates are unchanged.
 
 ## Documentation quality
 

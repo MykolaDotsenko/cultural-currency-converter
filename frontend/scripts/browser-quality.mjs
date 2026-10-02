@@ -1099,6 +1099,12 @@ async function assertSavedStateFlow(page) {
     (await neutralStatus.getAttribute("data-storage-tone")) === "neutral",
     "saved-state/empty: ordinary local-storage metadata should remain visually neutral",
   );
+  for (const label of ["Explore destinations", "Convert a pair", "Start a conversion"]) {
+    assert(
+      (await page.getByRole("link", { name: label, exact: true }).count()) === 1,
+      `saved-state/empty: missing bounded next action ${label}`,
+    );
+  }
 
   const sampleState = {
     version: 1,
@@ -1189,6 +1195,23 @@ async function assertSavedStateFlow(page) {
       .getAttribute("href")) === "/city/JP/tokyo/",
     "saved-state: saved Tokyo city-profile handoff drifted",
   );
+  const placeCompareHref = await savedPlaceRow
+    .getByRole("link", { name: "Compare destination: Tokyo, Japan", exact: true })
+    .getAttribute("href");
+  assert(placeCompareHref, "saved-state: saved Tokyo is missing Compare");
+  const placeCompare = new URL(placeCompareHref, BASE_URL);
+  assert(
+    placeCompare.pathname === "/compare/" &&
+      placeCompare.searchParams.get("left_destination") === "JP:tokyo" &&
+      !placeCompare.searchParams.has("right_destination"),
+    `saved-state: saved Tokyo Compare handoff drifted: ${placeCompareHref}`,
+  );
+  assert(
+    await savedPlaceRow
+      .getByRole("link", { name: "Convert for Tokyo, Japan", exact: true })
+      .evaluate((element) => element.classList.contains("qa-primary-button")),
+    "saved-state: saved place primary action hierarchy regressed",
+  );
 
   const savedRow = page.locator("[data-saved-pair-id]").first();
   const usePairHref = await savedRow
@@ -1208,6 +1231,29 @@ async function assertSavedStateFlow(page) {
     usePair.searchParams.get("source_country") === "FI",
     "saved-state: favourite source country missing",
   );
+  const pairCompareHref = await savedRow
+    .getByRole("link", { name: "Compare destination: Japan", exact: true })
+    .getAttribute("href");
+  assert(pairCompareHref, "saved-state: favourite is missing Compare");
+  const pairCompare = new URL(pairCompareHref, BASE_URL);
+  assert(
+    pairCompare.pathname === "/compare/" &&
+      pairCompare.searchParams.get("left_destination") === "JP" &&
+      !pairCompare.searchParams.has("right_destination"),
+    `saved-state: favourite Compare handoff drifted: ${pairCompareHref}`,
+  );
+  assert(
+    await savedRow
+      .getByRole("link", { name: "Use pair: EUR to JPY", exact: true })
+      .evaluate((element) => element.classList.contains("qa-primary-button")),
+    "saved-state: favourite primary action hierarchy regressed",
+  );
+  assert(
+    await savedRow
+      .getByRole("link", { name: "Reverse pair: EUR to JPY", exact: true })
+      .evaluate((element) => element.classList.contains("qa-saved-row__text-action")),
+    "saved-state: favourite tertiary action hierarchy regressed",
+  );
 
   const latestRecent = page.locator("[data-recent-conversion-id]").first();
   const repeatHref = await latestRecent
@@ -1221,6 +1267,24 @@ async function assertSavedStateFlow(page) {
   );
   assert(repeat.searchParams.get("amount") === "100", "saved-state: repeat amount missing");
 
+  const recentCompareHref = await latestRecent
+    .getByRole("link", { name: "Compare destination: Japan", exact: true })
+    .getAttribute("href");
+  assert(recentCompareHref, "saved-state: recent conversion is missing Compare");
+  const recentCompare = new URL(recentCompareHref, BASE_URL);
+  assert(
+    recentCompare.pathname === "/compare/" &&
+      recentCompare.searchParams.get("left_destination") === "JP" &&
+      !recentCompare.searchParams.has("right_destination"),
+    `saved-state: recent Compare handoff drifted: ${recentCompareHref}`,
+  );
+  assert(
+    await latestRecent
+      .getByRole("link", { name: "Repeat conversion: 100 EUR to JPY", exact: true })
+      .evaluate((element) => element.classList.contains("qa-primary-button")),
+    "saved-state: recent primary action hierarchy regressed",
+  );
+
   const swapHref = await latestRecent
     .getByRole("link", { name: "Swap conversion: 100 EUR to JPY", exact: true })
     .getAttribute("href");
@@ -1230,6 +1294,12 @@ async function assertSavedStateFlow(page) {
     swap.searchParams.get("source_currency") === "JPY" &&
       swap.searchParams.get("destination_currency") === "EUR",
     "saved-state: swap URL did not reverse the pair",
+  );
+  assert(
+    await latestRecent
+      .getByRole("link", { name: "Swap conversion: 100 EUR to JPY", exact: true })
+      .evaluate((element) => element.classList.contains("qa-saved-row__text-action")),
+    "saved-state: recent tertiary action hierarchy regressed",
   );
 
   assert(
@@ -1403,6 +1473,17 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   assert(
     (await accountRecentRow.getByRole("link", { name: /^Repeat conversion:/ }).count()) === 1,
     "account-history: repeat action is missing row-specific accessible context",
+  );
+  const accountCompareHref = await accountRecentRow
+    .getByRole("link", { name: /^Compare destination:/ })
+    .getAttribute("href");
+  assert(accountCompareHref, "account-history: compare action is missing");
+  const accountCompare = new URL(accountCompareHref, BASE_URL);
+  assert(
+    accountCompare.pathname === "/compare/" &&
+      accountCompare.searchParams.get("left_destination") === "FI" &&
+      !accountCompare.searchParams.has("right_destination"),
+    `account-history: compare handoff drifted: ${accountCompareHref}`,
   );
   assert(
     (await accountRecentRow.getByRole("button", { name: /^Remove recent conversion:/ }).count()) ===

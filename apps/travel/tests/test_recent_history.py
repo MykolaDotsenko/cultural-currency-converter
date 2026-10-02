@@ -172,6 +172,8 @@ class RecentHistoryWebTests(TestCase):
         self.assertContains(response, "Browser-only history")
         self.assertContains(response, f'data-account-recent-id="{recent.pk}"')
         self.assertContains(response, 'aria-label="Repeat conversion: 10 EUR to JPY"')
+        self.assertContains(response, 'aria-label="Compare destination: Japan"')
+        self.assertContains(response, 'href="/compare/?left_destination=JP"')
         self.assertContains(response, 'aria-label="Swap conversion: 10 EUR to JPY"')
         self.assertContains(response, 'aria-label="Remove recent conversion: 10 EUR to JPY"')
         self.assertContains(response, "qa-destructive-button")
