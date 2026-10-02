@@ -102,6 +102,14 @@ def test_regional_presentation_preserves_canonical_converter_and_profile_handoff
     assert city_query["destination_city_slug"] == ["tokyo"]
     assert str(tokyo["profile_url"]) == "/city/JP/tokyo/"
 
+    country_compare_url = urlparse(str(japan["comparison_url"]))
+    assert country_compare_url.path == reverse("destination_comparison")
+    assert parse_qs(country_compare_url.query)["left_destination"] == ["JP"]
+
+    city_compare_url = urlparse(str(tokyo["comparison_url"]))
+    assert city_compare_url.path == reverse("destination_comparison")
+    assert parse_qs(city_compare_url.query)["left_destination"] == ["JP:tokyo"]
+
 
 @pytest.mark.django_db
 def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_explore_ux):
@@ -125,6 +133,9 @@ def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_expl
     )
     assert city_profiles["items"][0]["action_label"] == "View city profile"
     assert str(city_profiles["items"][0]["action_url"]).startswith("/city/")
+    city_compare_url = urlparse(str(city_profiles["items"][0]["comparison_url"]))
+    assert city_compare_url.path == reverse("destination_comparison")
+    assert parse_qs(city_compare_url.query)["left_destination"][0].count(":") == 1
 
     stories = next(component for component in components if component["kind"] == "currency_stories")
     assert stories["items"][0]["action_label"] == "Read money story"
@@ -133,6 +144,7 @@ def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_expl
     story_query = parse_qs(story_url.query)
     assert story_query["historical"] == ["0"]
     assert story_query["selected_date"] == [AS_OF.isoformat()]
+    assert stories["items"][0]["comparison_url"] == ""
 
     shared = next(
         component for component in components if component["kind"] == "shared_currency_countries"

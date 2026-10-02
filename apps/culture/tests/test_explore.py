@@ -228,6 +228,8 @@ def test_explore_page_is_provider_free_and_links_back_to_canonical_converter(
     assert b"No popularity list" in response.content
     assert b"destination_city_slug=tokyo" in response.content
     assert b"load=1" in response.content
+    assert b"left_destination=JP%3Atokyo" in response.content
+    assert b"left_destination=JP" in response.content
     latest_gateway_factory.assert_not_called()
 
 

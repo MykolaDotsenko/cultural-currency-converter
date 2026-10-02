@@ -1783,11 +1783,49 @@ async function assertNoJavaScriptExplore(browser) {
       "explore/no-js: reviewed Tokyo city row disappeared without JavaScript",
     );
     await assertNoHorizontalOverflow(page, "explore/no-js");
-    await assertAxe(page, "explore/no-js");
     return {
       collectionsVisible: true,
       regionalNavigationVisible: true,
       canonicalCityHandoffVisible: true,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
+async function assertServerRenderedExploreAccessibility(browser) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  const baseOrigin = new URL(BASE_URL).origin;
+  await context.route("**/*", async (route) => {
+    const request = route.request();
+    const requestUrl = new URL(request.url());
+    if (request.resourceType() === "script" && requestUrl.origin === baseOrigin) {
+      await route.abort();
+      return;
+    }
+    await route.continue();
+  });
+
+  try {
+    const page = await context.newPage();
+    const response = await page.goto(`${BASE_URL}/explore/`, { waitUntil: "load" });
+    assert(
+      response?.ok(),
+      `explore/server-rendered-a11y: request failed with ${response?.status() ?? "no response"}`,
+    );
+    await page
+      .getByRole("heading", { name: "Know the money before you know the place." })
+      .waitFor();
+    assert(
+      (await page.locator(".qa-explore-collection").count()) >= 4,
+      "explore/server-rendered-a11y: curated collections require application JavaScript",
+    );
+    await assertAxe(page, "explore/server-rendered-a11y");
+    return {
+      applicationScriptsBlocked: true,
+      axePassed: true,
     };
   } finally {
     await context.close();
@@ -1844,6 +1882,18 @@ async function assertExploreFlow(page) {
       convertUrl.searchParams.get("destination_currency") === "JPY" &&
       convertUrl.searchParams.get("destination_city_slug") === "tokyo",
     `explore: Tokyo converter handoff lost canonical scope: ${convertHref}`,
+  );
+
+  const compareHref = await tokyoRow
+    .getByRole("link", { name: "Compare", exact: true })
+    .getAttribute("href");
+  assert(compareHref, "explore: Tokyo contextual Compare handoff is missing");
+  const compareUrl = new URL(compareHref, BASE_URL);
+  assert(
+    compareUrl.pathname === "/compare/" &&
+      compareUrl.searchParams.get("left_destination") === "JP:tokyo" &&
+      !compareUrl.searchParams.has("right_destination"),
+    `explore: Tokyo Compare handoff lost canonical scope or over-selected a peer: ${compareHref}`,
   );
 
   await assertAxe(page, "explore/interactive");
@@ -1992,6 +2042,8 @@ try {
     evidence.csp = await assertCspEnforcement(browser);
     evidence.noJavaScript = await assertNoJavaScriptSavedStateFallback(browser);
     evidence.noJavaScriptExplore = await assertNoJavaScriptExplore(browser);
+    evidence.serverRenderedExploreAccessibility =
+      await assertServerRenderedExploreAccessibility(browser);
     evidence.compressedAssets = await measureBuildAssets();
     assertBuildPerformanceBudgets(evidence.compressedAssets);
 
