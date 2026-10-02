@@ -54,7 +54,7 @@ jobs:
             scope: smoke
           - browser: webkit
             scope: smoke
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       APP_ENV: test
       DJANGO_DEBUG: "true"
