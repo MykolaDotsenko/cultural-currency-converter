@@ -13,6 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
+from apps.countries.models import City, CountryCurrency
 from apps.travel.models import (
     FavouritePair,
     RecentConversion,
@@ -108,6 +109,60 @@ def _recent_rows(user) -> list[dict[str, object]]:
     ]
 
 
+def _place_intent(token: str) -> dict[str, object] | None:
+    normalized = token.strip()
+    if not normalized:
+        return None
+
+    country_code, separator, city_slug = normalized.partition(":")
+    country_code = country_code.upper().strip()
+    city_slug = city_slug.strip().lower() if separator else ""
+    if len(country_code) != 2 or not country_code.isascii() or not country_code.isalpha():
+        return None
+
+    link = (
+        CountryCurrency.objects.current()
+        .primary()
+        .filter(country__iso2=country_code, country__is_active=True)
+        .select_related("country", "currency")
+        .first()
+    )
+    if link is None:
+        return None
+
+    city = None
+    if city_slug:
+        city = City.objects.filter(
+            country=link.country,
+            slug=city_slug,
+            is_active=True,
+        ).first()
+        if city is None:
+            return None
+
+    canonical_token = f"{country_code}:{city.slug}" if city is not None else country_code
+    scope_label = f"{city.name}, {link.country.name}" if city is not None else link.country.name
+    converter_params = {
+        "load": "1",
+        "destination_country": country_code,
+        "destination_currency": link.currency.code,
+    }
+    if city is not None:
+        converter_params["destination_city_slug"] = city.slug
+
+    return {
+        "token": canonical_token,
+        "scope_label": scope_label,
+        "currency_code": link.currency.code,
+        "converter_url": f"{reverse('converter')}?{urlencode(converter_params)}",
+        "budget_url": f"{reverse('destination_mode')}?{urlencode({'destination': canonical_token})}",
+        "compare_url": (
+            f"{reverse('destination_comparison')}?"
+            f"{urlencode({'left_destination': canonical_token})}"
+        ),
+    }
+
+
 def _scenario_rows(user) -> list[dict[str, object]]:
     latest_observation = (
         SavedScenarioObservation.objects.filter(scenario_id=OuterRef("pk"))
@@ -138,10 +193,12 @@ def _scenario_rows(user) -> list[dict[str, object]]:
 @never_cache
 @require_GET
 def saved_state(request: HttpRequest) -> HttpResponse:
+    selected_place = _place_intent(str(request.GET.get("place") or ""))
     return render(
         request,
         "travel/saved_state.html",
         {
+            "selected_place_intent": selected_place,
             "account_scenario_rows": (
                 _scenario_rows(request.user) if request.user.is_authenticated else []
             ),
