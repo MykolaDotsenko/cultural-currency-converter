@@ -28,8 +28,8 @@
       </div>
     </section>
   {% else %}
-    <div class="qa-saved-state">
-      <section class="qa-saved-section" aria-labelledby="explore-coverage-title">
+    <div class="qa-saved-state qa-explore-page">
+      <section class="qa-saved-section qa-explore-overview" aria-labelledby="explore-coverage-title">
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Coverage you can inspect</p>
@@ -56,7 +56,7 @@
           </article>
         </div>
       </section>
-      <section class="qa-saved-section" aria-labelledby="explore-collections-title">
+      <section class="qa-saved-section qa-explore-collections" aria-labelledby="explore-collections-title">
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Curated ways in</p>
@@ -87,7 +87,7 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for item in collection.items %}
-                    <article class="qa-saved-row">
+                    <article class="qa-saved-row qa-explore-collection-item">
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {% if item.currency_codes %}{{ item.currency_codes|join:" · " }}{% endif %}
@@ -129,7 +129,7 @@
           </div>
         {% endif %}
       </section>
-      <section class="qa-saved-section"
+      <section class="qa-saved-section qa-explore-directory"
                id="regional-directory"
                aria-labelledby="explore-regions-title">
         <div class="qa-saved-section__heading">
@@ -168,7 +168,7 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for country in region.countries %}
-                    <article class="qa-saved-row">
+                    <article class="qa-saved-row qa-explore-country">
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {{ country.currency_code }}
