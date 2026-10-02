@@ -401,7 +401,7 @@
 @media (max-width: 20rem) {
   .qa-shell__frame,
   .qa-shell__main {
-    padding-inline: 16px;
+    padding-inline: var(--qa-space-4);
   }
 
   .qa-shell__header-inner,

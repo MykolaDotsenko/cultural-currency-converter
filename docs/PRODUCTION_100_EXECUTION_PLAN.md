@@ -31,7 +31,8 @@ The current product already includes:
 - optional grounded AI explanation with deterministic fallback, including explicit reviewed-destination Explore intents;
 - managed provenance-aware media, restrained source → destination presentation and historical/currency-era story exploration;
 - demand-loaded frontend enhancement routing with consolidated Saved and rate-chart lazy chunks;
-- Chromium/Firefox/WebKit quality coverage, 640px/320px reflow evidence, forced-colors/reduced-motion checks and Python/PostgreSQL CI.
+- a CSS custom-property integrity gate plus normalized narrow-layout spacing tokens;
+- Chromium page-level 430/390/360/320 mobile coverage, 640px/320px reflow evidence, Firefox/WebKit smoke, forced-colors/reduced-motion checks and Python/PostgreSQL CI.
 
 The original **92/100** figure is a historical planning snapshot, not a current score. Remaining work is concentrated in broader reviewed media coverage, durable account-owned SavedPlace/saved-comparison persistence, richer scenario/personalization flows, PWA/offline lifecycle work and final production evidence.
 

@@ -33,10 +33,10 @@ PostgreSQL also has a dedicated CI job because SQLite alone cannot validate all 
 ```bash
 cd frontend
 npm ci
-npm run typecheck
-npm run check
-npm run build
+npm run quality
 ```
+
+`npm run quality` includes TypeScript checking, Biome, the CSS custom-property integrity contract, the production build and deterministic asset-budget checks.
 
 Browser QA uses Playwright and axe. Chromium carries the broadest gate; Firefox/WebKit provide smoke coverage.
 
@@ -114,8 +114,8 @@ These checks apply across surfaces and should not be copied into every row:
 | Python/Django | `.github/workflows/required-merge-quality.yml`, `.github/workflows/django-tests.yml` | Ruff, mypy on typed boundaries, Django checks, migrations check, pytest/coverage and dependency audit remain green. |
 | PostgreSQL + Redis | required PostgreSQL lane | real PostgreSQL persistence, shared Redis behaviour, readiness semantics, migrations and full pytest suite pass. |
 | Backup/restore | required PostgreSQL lane + `scripts/postgres_backup.sh` / `scripts/postgres_restore.sh` | backup checksum/overwrite guards and clean-database restore are executable; deployment-specific RPO/RTO remains a later production-evidence requirement. |
-| Browser engines | `.github/workflows/browser-quality.yml` | Chromium runs full scope. Firefox/WebKit run smoke on current converter, comparison, Explore, City Money Profile, saved state and rate series at wide/mobile viewports. Browser/release-quality runs enable the test-only deterministic FX provider so engine evidence is not coupled to public-provider network availability; Frankfurter transport/normalization remains covered separately by provider tests. |
-| Accessibility/reflow | `frontend/scripts/browser-quality.mjs` | axe, keyboard focus, overflow, reduced motion and forced colors run according to browser scope. Full Chromium also certifies 640px and 320px reflow surfaces (roughly 200% and 400% zoom equivalents from a 1280px reference viewport) with text expansion and no horizontal page scrolling. |
+| Browser engines | `.github/workflows/browser-quality.yml` | Chromium runs full scope across wide, breakpoint-transition, 430/390/360 mobile and 640/320 reflow viewports. Firefox/WebKit run smoke on current converter, comparison, Explore, City Money Profile, Money & culture, saved state and rate series at wide/390px mobile viewports. Browser/release-quality runs enable the test-only deterministic FX provider so engine evidence is not coupled to public-provider network availability; Frankfurter transport/normalization remains covered separately by provider tests. |
+| Accessibility/reflow | `frontend/scripts/browser-quality.mjs` | axe, keyboard focus, overflow, reduced motion and forced colors run according to browser scope. Full Chromium now includes page-level 430/390/360/320 mobile regression coverage and separately certifies 640px and 320px reflow surfaces (roughly 200% and 400% zoom equivalents from a 1280px reference viewport) with 200% text expansion and no horizontal page scrolling. |
 | No-JavaScript | `frontend/scripts/browser-quality.mjs` + server web tests | workflows that promise a server fallback must not become inert when enhancement is absent. |
 | CSP/deploy security | required PostgreSQL lane + browser CSP enforcement check | production settings, secure cookies/HSTS/proxy assumptions and public CSP remain executable. |
 | Performance | `frontend/scripts/performance-budgets.mjs`, frontend quality, browser quality | JS/CSS/request/query budgets may grow only with measured justification. |

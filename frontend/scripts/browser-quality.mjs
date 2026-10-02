@@ -72,7 +72,9 @@ const VIEWPORTS = [
   { name: "wide-1440", width: 1440, height: 1000 },
   { name: "transition-1023", width: 1023, height: 900 },
   { name: "transition-1025", width: 1025, height: 900 },
+  { name: "mobile-430", width: 430, height: 932 },
   { name: "mobile-390", width: 390, height: 844 },
+  { name: "mobile-360", width: 360, height: 800 },
   { name: "reflow-640", width: 640, height: 900 },
   { name: "reflow-320", width: 320, height: 700 },
 ];
