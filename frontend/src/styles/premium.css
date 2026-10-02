@@ -2211,3 +2211,183 @@ h3 {
     color: CanvasText;
   }
 }
+
+/* Bilateral conversion identity and reviewed-media editorial composition. */
+.qa-bilateral-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(2.5rem, 6rem) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  margin-block: 0 1.75rem;
+  padding-block: 1rem;
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-bilateral-result__side {
+  --qa-route-accent: var(--qa-context-accent, var(--qa-accent-metal));
+
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+  padding-inline-start: 0.7rem;
+  border-inline-start: 0.18rem solid var(--qa-route-accent);
+}
+
+.qa-bilateral-result__side--destination {
+  justify-items: end;
+  padding-inline: 0 0.7rem;
+  border-inline: 0 0.18rem solid var(--qa-route-accent);
+  text-align: end;
+}
+
+.qa-bilateral-result__role {
+  color: var(--color-tertiary);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.qa-bilateral-result__place {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+  font-weight: 560;
+  line-height: 1.15;
+}
+
+.qa-bilateral-result__currency {
+  color: var(--qa-route-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.qa-bilateral-result__connector {
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-media-role-label {
+  margin: 0;
+  color: var(--color-tertiary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.qa-destination-context__hero {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.3fr) minmax(0, 1.7fr);
+  align-items: end;
+  gap: clamp(1rem, 3vw, 2rem);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.qa-destination-context__hero-media,
+.qa-context-section__body {
+  min-width: 0;
+}
+
+.qa-destination-context__hero .qa-media__frame {
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+}
+
+.qa-destination-context__hero .qa-media__caption {
+  padding: 0.65rem 0 0;
+  border-block-start: 0;
+}
+
+.qa-context-section__layout,
+.qa-context-section__body {
+  display: grid;
+  gap: var(--qa-space-4);
+}
+
+.qa-context-section--with-media .qa-context-section__layout {
+  grid-template-columns: minmax(7rem, 0.6fr) minmax(0, 1.4fr);
+  align-items: start;
+}
+
+.qa-context-section--with-media .qa-context-section__media {
+  max-inline-size: none;
+}
+
+.qa-context-section--with-media .qa-price-grid {
+  grid-template-columns: minmax(0, 1fr);
+  border-block: 0;
+}
+
+.qa-context-section--with-media .qa-price-card,
+.qa-context-section--with-media .qa-price-card:first-child,
+.qa-context-section--with-media .qa-price-card:last-child {
+  min-height: 0;
+  padding-inline: 0;
+  border-inline-start: 0;
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+.qa-context-section--with-media .qa-price-card:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.qa-context-detail {
+  display: grid;
+  max-inline-size: 44rem;
+  gap: var(--qa-space-3);
+  margin-inline-start: auto;
+  padding-block-start: var(--qa-space-4);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+@media (max-width: 58rem) {
+  .qa-destination-context__hero,
+  .qa-context-section--with-media .qa-context-section__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qa-context-section--with-media .qa-context-section__media {
+    max-inline-size: min(100%, 22rem);
+  }
+
+  .qa-context-detail {
+    max-inline-size: 100%;
+    margin-inline-start: 0;
+  }
+}
+
+@media (max-width: 30rem) {
+  .qa-bilateral-result {
+    grid-template-columns: minmax(0, 1fr) 1.5rem minmax(0, 1fr);
+    gap: 0.4rem;
+    margin-block-end: 1.35rem;
+    padding-block: 0.8rem;
+  }
+
+  .qa-bilateral-result__side {
+    padding-inline-start: 0.5rem;
+  }
+
+  .qa-bilateral-result__side--destination {
+    padding-inline: 0 0.5rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-bilateral-result,
+  .qa-bilateral-result__side,
+  .qa-bilateral-result__connector,
+  .qa-context-detail {
+    border-color: CanvasText;
+  }
+
+  .qa-bilateral-result__currency,
+  .qa-media-role-label {
+    color: CanvasText;
+  }
+}

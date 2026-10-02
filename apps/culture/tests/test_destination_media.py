@@ -188,6 +188,11 @@ def test_destination_context_template_renders_supporting_media_only_with_context
 
     assert html.count('class="qa-context-section__media"') == 2
     assert 'class="qa-context-detail"' in html
+    assert 'data-media-role="everyday-value"' in html
+    assert 'data-media-role="payment-culture"' in html
+    assert 'data-media-role="local-detail"' in html
+    assert html.count("Reviewed local detail") == 2
+    assert "Reviewed payment detail" in html
     assert 'style="aspect-ratio: 4 / 5"' in html
     assert 'style="aspect-ratio: 3 / 2"' in html
     assert "Everyday supporting image" in html
@@ -227,7 +232,10 @@ def test_destination_context_template_renders_reviewed_hero_with_provenance() ->
         {"component": component},
     )
 
+    assert "qa-destination-context--with-hero" in html
     assert 'class="qa-destination-context__hero"' in html
+    assert 'data-media-role="country-hero"' in html
+    assert "Reviewed destination photography" in html
     assert 'style="aspect-ratio: 16 / 9"' in html
     assert 'loading="lazy"' in html
     assert "A Helsinki tram on Aleksanterinkatu." in html

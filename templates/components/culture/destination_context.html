@@ -1,5 +1,5 @@
 {% with destination_context=component %}
-  <section class="qa-destination-context"
+  <section class="qa-destination-context{% if destination_context.hero_image %} qa-destination-context--with-hero{% endif %}"
            aria-labelledby="destination-context-title">
     <div class="qa-destination-context__heading">
       <div>
@@ -15,8 +15,11 @@
       {% endif %}
     </div>
     {% if destination_context.hero_image %}
-      <div class="qa-destination-context__hero">
-        {% include "components/media/image_frame.html" with image=destination_context.hero_image display_ratio="16 / 9" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
+      <div class="qa-destination-context__hero" data-media-role="country-hero">
+        <p class="qa-media-role-label">Reviewed destination photography</p>
+        <div class="qa-destination-context__hero-media">
+          {% include "components/media/image_frame.html" with image=destination_context.hero_image display_ratio="16 / 9" sizes="(max-width: 58rem) calc(100vw - 2rem), 58rem" %}
+        </div>
       </div>
     {% endif %}
     {% if destination_context.historical_notice %}
@@ -24,38 +27,43 @@
     {% endif %}
     <div class="qa-destination-context__grid">
       <section id="everyday-value"
-               class="qa-context-section"
+               class="qa-context-section{% if destination_context.everyday_value_image %} qa-context-section--with-media{% endif %}"
                aria-labelledby="everyday-value-title">
         <div>
           <p class="qa-foundation-kicker">Everyday value</p>
           <h4 id="everyday-value-title">What this amount roughly buys</h4>
         </div>
         {% if destination_context.prices %}
-          {% if destination_context.everyday_value_image %}
-            <div class="qa-context-section__media">
-              {% include "components/media/image_frame.html" with image=destination_context.everyday_value_image display_ratio="4 / 5" sizes="(max-width: 58rem) calc(100vw - 2rem), 34rem" %}
+          <div class="qa-context-section__layout">
+            {% if destination_context.everyday_value_image %}
+              <div class="qa-context-section__media" data-media-role="everyday-value">
+                <p class="qa-media-role-label">Reviewed local detail</p>
+                {% include "components/media/image_frame.html" with image=destination_context.everyday_value_image display_ratio="4 / 5" sizes="(max-width: 58rem) calc(100vw - 2rem), 16rem" %}
+              </div>
+            {% endif %}
+            <div class="qa-context-section__body">
+              <div class="qa-price-grid">
+                {% for price in destination_context.prices %}
+                  <article class="qa-price-card">
+                    <div>
+                      <p class="qa-price-card__label">{{ price.label }}</p>
+                      <p class="qa-price-card__price">{{ price.price_text }} typical</p>
+                      <p class="qa-price-card__equivalent">{{ price.equivalent_text }}</p>
+                    </div>
+                    <p class="qa-price-card__meta">
+                      {{ price.scope }} · {{ price.observed }} · {{ price.source_class }} ·
+                      {{ price.confidence }} confidence
+                    </p>
+                    <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+                  </article>
+                {% endfor %}
+              </div>
+              <p class="qa-context-disclaimer">
+                Approximate observed prices vary by location and merchant. They are context, not a
+                guaranteed price.
+              </p>
             </div>
-          {% endif %}
-          <div class="qa-price-grid">
-            {% for price in destination_context.prices %}
-              <article class="qa-price-card">
-                <div>
-                  <p class="qa-price-card__label">{{ price.label }}</p>
-                  <p class="qa-price-card__price">{{ price.price_text }} typical</p>
-                  <p class="qa-price-card__equivalent">{{ price.equivalent_text }}</p>
-                </div>
-                <p class="qa-price-card__meta">
-                  {{ price.scope }} · {{ price.observed }} · {{ price.source_class }} ·
-                  {{ price.confidence }} confidence
-                </p>
-                <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
-              </article>
-            {% endfor %}
           </div>
-          <p class="qa-context-disclaimer">
-            Approximate observed prices vary by location and merchant. They are context, not a
-            guaranteed price.
-          </p>
         {% else %}
           <p class="qa-context-empty">
             Recent sourced everyday-price observations are not available for this destination yet.
@@ -63,35 +71,40 @@
         {% endif %}
       </section>
       <section id="payment-context"
-               class="qa-context-section"
+               class="qa-context-section{% if destination_context.payment_culture_image %} qa-context-section--with-media{% endif %}"
                aria-labelledby="payment-context-title">
         <div>
           <p class="qa-foundation-kicker">Payment context</p>
           <h4 id="payment-context-title">Paying in {{ destination_context.country_name }}</h4>
         </div>
         {% if destination_context.payment %}
-          {% if destination_context.payment_culture_image %}
-            <div class="qa-context-section__media">
-              {% include "components/media/image_frame.html" with image=destination_context.payment_culture_image display_ratio="4 / 5" sizes="(max-width: 58rem) calc(100vw - 2rem), 28rem" %}
-            </div>
-          {% endif %}
-          {% if destination_context.payment.summary %}
-            <p>{{ destination_context.payment.summary }}</p>
-          {% endif %}
-          <dl class="qa-payment-list">
-            {% for row in destination_context.payment.rows %}
-              <div>
-                <dt>{{ row.label }}</dt>
-                <dd>
-                  {{ row.text }}
-                </dd>
+          <div class="qa-context-section__layout">
+            {% if destination_context.payment_culture_image %}
+              <div class="qa-context-section__media" data-media-role="payment-culture">
+                <p class="qa-media-role-label">Reviewed payment detail</p>
+                {% include "components/media/image_frame.html" with image=destination_context.payment_culture_image display_ratio="4 / 5" sizes="(max-width: 58rem) calc(100vw - 2rem), 14rem" %}
               </div>
-            {% endfor %}
-          </dl>
-          <p class="qa-context-source">
-            Verified {{ destination_context.payment.verified }} ·
-            <a href="{{ destination_context.payment.source_url }}">{{ destination_context.payment.source_name }}</a>
-          </p>
+            {% endif %}
+            <div class="qa-context-section__body">
+              {% if destination_context.payment.summary %}
+                <p>{{ destination_context.payment.summary }}</p>
+              {% endif %}
+              <dl class="qa-payment-list">
+                {% for row in destination_context.payment.rows %}
+                  <div>
+                    <dt>{{ row.label }}</dt>
+                    <dd>
+                      {{ row.text }}
+                    </dd>
+                  </div>
+                {% endfor %}
+              </dl>
+              <p class="qa-context-source">
+                Verified {{ destination_context.payment.verified }} ·
+                <a href="{{ destination_context.payment.source_url }}">{{ destination_context.payment.source_name }}</a>
+              </p>
+            </div>
+          </div>
         {% else %}
           <p class="qa-context-empty">
             Reviewed payment guidance is not available for this destination yet.
@@ -100,8 +113,9 @@
       </section>
     </div>
     {% if destination_context.local_detail_image %}
-      <div class="qa-context-detail">
-        {% include "components/media/image_frame.html" with image=destination_context.local_detail_image display_ratio="3 / 2" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
+      <div class="qa-context-detail" data-media-role="local-detail">
+        <p class="qa-media-role-label">Reviewed local detail</p>
+        {% include "components/media/image_frame.html" with image=destination_context.local_detail_image display_ratio="3 / 2" sizes="(max-width: 58rem) calc(100vw - 2rem), 44rem" %}
       </div>
     {% endif %}
   </section>

@@ -527,6 +527,34 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await page.locator("#id_amount").fill("100");
   await Promise.all([waitForPost(), page.locator(".qa-primary-button").click()]);
   await page.getByRole("heading", { name: "Estimate what explicit fees may change" }).waitFor();
+
+  const bilateralRoute = page.locator("[data-bilateral-route]");
+  await bilateralRoute.waitFor();
+  assert(
+    (await bilateralRoute.locator(".qa-bilateral-result__side").count()) === 2,
+    "current-converter: bilateral result must expose exactly two contextual sides",
+  );
+  const routeCurrencies = (
+    await bilateralRoute.locator(".qa-bilateral-result__currency").allTextContents()
+  ).map((value) => value.trim());
+  assert(
+    JSON.stringify(routeCurrencies) ===
+      JSON.stringify([
+        await page.locator("#id_source_currency").inputValue(),
+        await page.locator("#id_destination_currency").inputValue(),
+      ]),
+    `current-converter: bilateral route currencies drifted from the canonical controls: ${JSON.stringify(routeCurrencies)}`,
+  );
+  assert(
+    (await bilateralRoute.locator("img").count()) === 0,
+    "current-converter: bilateral identity must not introduce flag or decorative image chrome",
+  );
+  assert(
+    (await bilateralRoute
+      .locator(".qa-bilateral-result__connector[aria-hidden='true']")
+      .count()) === 1,
+    "current-converter: bilateral connector must remain decorative for assistive technology",
+  );
   await assertAiExplanationReliability(page, consoleErrors);
 
   const waitForPaymentEstimate = () =>
@@ -826,6 +854,31 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await page.getByText("Cup of coffee", { exact: true }).waitFor();
   await page.getByText("Tokyo Metro regular ticket", { exact: true }).waitFor();
   await page.getByRole("heading", { name: "Paying in Japan" }).waitFor();
+
+  const destinationMedia = page.locator(".qa-destination-context [data-media-role]");
+  if ((await destinationMedia.count()) > 0) {
+    for (const mediaRole of await destinationMedia.all()) {
+      const image = mediaRole.locator(".qa-media__image");
+      await image.waitFor();
+      assert(
+        Number(await image.getAttribute("width")) > 0 &&
+          Number(await image.getAttribute("height")) > 0,
+        "current-converter/media: managed photography lost intrinsic dimensions",
+      );
+      const frame = mediaRole.locator(".qa-media__frame");
+      assert(
+        (await frame.count()) === 1,
+        "current-converter/media: reviewed photography lost its reserved aspect-ratio frame",
+      );
+      const caption = mediaRole.locator(".qa-media__caption");
+      if ((await caption.count()) === 1) {
+        assert(
+          (await caption.locator("a[href^='https://']").count()) > 0,
+          "current-converter/media: visible media provenance lost its HTTPS source/licence link",
+        );
+      }
+    }
+  }
 
   await page.waitForFunction((key) => {
     const raw = localStorage.getItem(key);
