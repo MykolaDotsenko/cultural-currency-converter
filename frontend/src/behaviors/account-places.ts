@@ -6,6 +6,7 @@ import {
 
 interface AccountPlaceSyncConfig {
   url: string;
+  stateUrl: string;
   csrfToken: string;
 }
 
@@ -18,14 +19,52 @@ function accountPlaceSyncConfig(): AccountPlaceSyncConfig | null {
   const {
     accountAuthenticated,
     accountPlaceSyncUrl: url,
+    accountPlaceStateUrl: stateUrl,
     accountCsrfToken: csrfToken,
   } = document.body.dataset;
-  if (accountAuthenticated !== "true" || !url || !csrfToken) return null;
-  return { url, csrfToken };
+  if (accountAuthenticated !== "true" || !url || !stateUrl || !csrfToken) return null;
+  return { url, stateUrl, csrfToken };
 }
 
 export function accountPlaceSyncAvailable(): boolean {
   return accountPlaceSyncConfig() !== null;
+}
+
+let accountPlaceTokensPromise: Promise<Set<string>> | null = null;
+
+export function loadAccountSavedPlaceTokens(): Promise<Set<string>> {
+  if (accountPlaceTokensPromise) return accountPlaceTokensPromise;
+
+  const config = accountPlaceSyncConfig();
+  if (!config) return Promise.resolve(new Set());
+
+  accountPlaceTokensPromise = fetch(config.stateUrl, {
+    credentials: "same-origin",
+    headers: { Accept: "application/json" },
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`Saved-place state failed with status ${response.status}.`);
+      }
+      const payload = (await response.json()) as { tokens?: unknown };
+      if (
+        !Array.isArray(payload.tokens) ||
+        payload.tokens.some((token) => typeof token !== "string")
+      ) {
+        throw new Error("Saved-place state response is invalid.");
+      }
+      return new Set(payload.tokens);
+    })
+    .catch((error: unknown) => {
+      accountPlaceTokensPromise = null;
+      throw error;
+    });
+
+  return accountPlaceTokensPromise;
+}
+
+function invalidateAccountPlaceTokenCache(): void {
+  accountPlaceTokensPromise = null;
 }
 
 function placePayload(place: Pick<SavedPlace, "countryCode" | "citySlug">) {
@@ -60,6 +99,7 @@ export async function savePlaceToAccount(
   place: Pick<SavedPlace, "countryCode" | "citySlug">,
 ): Promise<boolean> {
   const response = await postPlaces([place]);
+  invalidateAccountPlaceTokenCache();
   return response.createdCount > 0;
 }
 
@@ -74,6 +114,7 @@ export async function importLocalPlacesToAccount(): Promise<{
 
   const snapshot = [...read.state.places];
   const response = await postPlaces(snapshot);
+  invalidateAccountPlaceTokenCache();
 
   // Clear only the exact local records that were confirmed by the server.
   // Concurrent/new browser-only saves remain local and can be imported later.
