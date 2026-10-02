@@ -123,13 +123,25 @@ Prefer a small number of useful, scoped examples over a long list. City/country 
 
 ## Explore layer
 
-The compact first-level exploration is:
+Explore is a calm progressive-disclosure hub rather than a dense destination dashboard.
 
-- **Everyday value** — sourced examples that help interpret an amount;
-- **Payment context** — cash/card/ATM/tipping guidance;
-- **Money & culture** — deterministic factual stories.
+The current navigation hierarchy is:
 
-These paths can evolve. Their purpose is more important than a fixed card layout.
+**Region → Country → City → canonical money context**
+
+Geography comes from canonical country/city metadata already used elsewhere in the product. Region and country selections are deep-linkable and provider-free; they change what is shown, never the underlying financial or provenance semantics.
+
+The current curated collection layer exposes:
+
+- **City money profiles** — reviewed direct city money evidence;
+- **Currency stories** — published sourced money-history facts;
+- **Cash and card behaviour** — reviewed country payment guidance;
+- **Countries sharing a currency** — current-primary currency relationships with provenance;
+- **Recently reviewed destinations** — ordered by evidence date rather than popularity.
+
+Premium presentation should not mean more chrome. The Explore surface uses strong hierarchy, whitespace, quiet hairlines and one dominant action per destination. Provenance stays inspectable through disclosure controls so trust is available without making every card read like an audit report. Explicit national fallback remains visible where it materially affects city scope.
+
+Explore never shows “best”, “cheapest”, “goes further”, purchasing-power or affordability rankings from heterogeneous context data. A live FX request starts only after a user chooses a canonical conversion/planning action.
 
 ### One useful insight at a time
 
