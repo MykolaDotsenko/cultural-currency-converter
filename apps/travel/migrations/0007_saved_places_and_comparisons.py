@@ -243,9 +243,7 @@ class Migration(migrations.Migration):
                         name="saved_cmp_units_range",
                     ),
                     models.CheckConstraint(
-                        condition=models.Q(
-                            ("category__in", ("coffee", "casual_meal", "transit"))
-                        ),
+                        condition=models.Q(("category__in", ("coffee", "casual_meal", "transit"))),
                         name="saved_cmp_category_allowed",
                     ),
                 ],
