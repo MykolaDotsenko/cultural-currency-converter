@@ -172,7 +172,9 @@ def _packet_from_payload(value: Any) -> ExplanationPacket:
             if not parsed.is_finite():
                 raise InvalidOperation
     except (InvalidOperation, ValueError) as exc:
-        raise GroundedPacketTokenError("Grounded explanation number allow-list is invalid.") from exc
+        raise GroundedPacketTokenError(
+            "Grounded explanation number allow-list is invalid."
+        ) from exc
 
     return ExplanationPacket(
         packet_version=packet_version,
