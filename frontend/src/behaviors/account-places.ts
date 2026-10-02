@@ -106,10 +106,11 @@ export async function savePlaceToAccount(
 export async function importLocalPlacesToAccount(): Promise<{
   importedCount: number;
   createdCount: number;
+  localCleanupSucceeded: boolean;
 }> {
   const read = readState();
   if (read.status === "unavailable" || read.state.places.length === 0) {
-    return { importedCount: 0, createdCount: 0 };
+    return { importedCount: 0, createdCount: 0, localCleanupSucceeded: true };
   }
 
   const snapshot = [...read.state.places];
@@ -119,9 +120,10 @@ export async function importLocalPlacesToAccount(): Promise<{
   // Clear only the exact local records that were confirmed by the server.
   // Concurrent/new browser-only saves remain local and can be imported later.
   const latest = readState();
+  let localCleanupSucceeded = false;
   if (latest.status !== "unavailable") {
     const importedTokens = new Set(snapshot.map((item) => item.token));
-    writeState({
+    localCleanupSucceeded = writeState({
       ...latest.state,
       places: latest.state.places.filter((item) => !importedTokens.has(item.token)),
     });
@@ -130,5 +132,6 @@ export async function importLocalPlacesToAccount(): Promise<{
   return {
     importedCount: snapshot.length,
     createdCount: response.createdCount,
+    localCleanupSucceeded,
   };
 }
