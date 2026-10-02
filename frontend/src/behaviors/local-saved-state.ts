@@ -237,6 +237,113 @@ function enhanceExploreSavedPlaces(): void {
   }
 }
 
+function placeFromButton(
+  button: HTMLButtonElement,
+): Omit<SavedPlace, "id" | "savedAt"> | null {
+  const normalized = normalizePlace({
+    countryCode: button.dataset.countryCode ?? "",
+    countryName: button.dataset.countryName ?? "",
+    citySlug: button.dataset.citySlug ?? "",
+    cityName: button.dataset.cityName ?? "",
+    currencyCode: button.dataset.currencyCode ?? "",
+    savedAt: new Date().toISOString(),
+  });
+  if (!normalized || normalized.token !== button.dataset.placeToken) return null;
+
+  return {
+    token: normalized.token,
+    countryCode: normalized.countryCode,
+    countryName: normalized.countryName,
+    citySlug: normalized.citySlug,
+    cityName: normalized.cityName,
+    currencyCode: normalized.currencyCode,
+  };
+}
+
+function placeStatus(message: string): void {
+  const status = document.querySelector<HTMLElement>("[data-save-place-status]");
+  if (status) status.textContent = message;
+}
+
+function setPlaceButtonState(
+  button: HTMLButtonElement,
+  state: LocalPreferencesV1,
+  storageStatus: ReadStatus,
+): void {
+  const label = button.querySelector<HTMLElement>("[data-save-place-label]");
+  const place = placeFromButton(button);
+  if (!label || !place) {
+    button.hidden = true;
+    return;
+  }
+
+  button.hidden = false;
+  const placeName = place.cityName || place.countryName;
+  if (storageStatus === "unavailable") {
+    button.disabled = true;
+    button.removeAttribute("aria-pressed");
+    button.setAttribute(
+      "aria-label",
+      `Saving ${placeName} is unavailable because browser storage is blocked`,
+    );
+    button.dataset.storageUnavailable = "true";
+    label.textContent = "Save unavailable";
+    return;
+  }
+
+  const saved = isPlaceSaved(place.token, state);
+  button.disabled = false;
+  button.setAttribute("aria-pressed", saved ? "true" : "false");
+  button.setAttribute(
+    "aria-label",
+    saved ? `Remove ${placeName} from My places` : `Save ${placeName} to My places`,
+  );
+  button.dataset.saved = saved ? "true" : "false";
+  delete button.dataset.storageUnavailable;
+  label.textContent = saved ? "Saved" : "Save";
+}
+
+function toggleSavedPlace(button: HTMLButtonElement): void {
+  const place = placeFromButton(button);
+  if (!place) return;
+
+  const read = readState();
+  if (read.status === "unavailable") {
+    setPlaceButtonState(button, read.state, read.status);
+    placeStatus("My places is unavailable because browser storage is blocked.");
+    return;
+  }
+
+  const toggled = togglePlaceInState(read.state, place);
+  if (!writeState(toggled.state)) {
+    setPlaceButtonState(button, read.state, "unavailable");
+    placeStatus("This place could not be saved because browser storage is unavailable.");
+    return;
+  }
+
+  enhanceExploreSavedPlaces();
+  const placeName = place.cityName || place.countryName;
+  placeStatus(
+    toggled.saved
+      ? `${placeName} saved to My places on this browser.`
+      : `${placeName} removed from My places.`,
+  );
+}
+
+function enhanceExploreSavedPlaces(): void {
+  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-save-place]");
+  if (buttons.length === 0) return;
+
+  const read = readState();
+  for (const button of buttons) {
+    setPlaceButtonState(button, read.state, read.status);
+    if (button.dataset.savePlaceWired === "true") continue;
+
+    button.dataset.savePlaceWired = "true";
+    button.addEventListener("click", () => toggleSavedPlace(button));
+  }
+}
+
 function enhanceConversionSnapshots(): void {
   const read = readState();
   const accountMode = accountFavouriteSyncAvailable();
