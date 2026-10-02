@@ -278,6 +278,73 @@ def test_comparison_packet_keeps_two_scopes_and_payment_context_without_ranking(
     assert "recommended destination" not in packet.canonical_json().casefold()
 
 
+def test_comparison_packet_bounds_max_length_payment_fields_without_losing_fact_identity():
+    tokyo = _context(
+        country_code="JP",
+        country_name="Japan",
+        currency_code="JPY",
+        output_amount=Decimal("3000"),
+        minor_units=0,
+    )
+    norway = _context(
+        country_code="NO",
+        country_name="Norway",
+        currency_code="NOK",
+        output_amount=Decimal("1200"),
+        minor_units=2,
+    )
+    long_payment = PaymentContext(
+        summary="S" * 1200,
+        payment_customs="C" * 1200,
+        cash_usage="H" * 1200,
+        tipping="T" * 1200,
+        atm_notes="A" * 1200,
+        dcc_warning="D" * 1200,
+        source_name="Official source",
+        source_url="https://example.com/payment",
+        verified_at=datetime(2026, 9, 30, 8, tzinfo=UTC),
+    )
+    assert norway.destination_context is not None
+    norway = MoneyContext(
+        conversion=norway.conversion,
+        destination_country_code=norway.destination_country_code,
+        destination_city_slug=norway.destination_city_slug,
+        as_of=norway.as_of,
+        destination_context=DestinationContext(
+            country_code=norway.destination_context.country_code,
+            country_name=norway.destination_context.country_name,
+            as_of=norway.destination_context.as_of,
+            payment=long_payment,
+            prices=norway.destination_context.prices,
+            city_slug=norway.destination_context.city_slug,
+            city_name=norway.destination_context.city_name,
+        ),
+        destination_state=norway.destination_state,
+    )
+    comparison = compare_destinations(
+        tokyo,
+        norway,
+        assumptions=_assumptions(),
+        left_minor_units=0,
+        right_minor_units=2,
+    )
+
+    packet = build_comparison_explanation_packet(
+        comparison,
+        left_destination_name="Japan",
+        right_destination_name="Norway",
+        intent=ComparisonExplanationIntent.PAYMENT,
+    )
+    facts = {fact.id: fact.statement for fact in packet.facts}
+
+    assert len(facts["right_payment"]) <= 700
+    assert len(facts["right_payment_cash"]) <= 700
+    assert len(facts["right_payment_dcc"]) <= 700
+    assert facts["right_payment"].endswith("…")
+    assert facts["right_payment_cash"].endswith("…")
+    assert facts["right_payment_dcc"].endswith("…")
+
+
 def test_comparison_packet_names_partial_coverage_and_absent_payment():
     tokyo = _context(
         country_code="JP",
