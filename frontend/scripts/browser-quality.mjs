@@ -28,6 +28,7 @@ const SURFACES = [
   { name: "destination-mode", path: "/destination/" },
   { name: "destination-comparison", path: "/compare/" },
   { name: "explore", path: "/explore/" },
+  { name: "same-amount", path: "/explore/same-amount/" },
   { name: "city-money-profile", path: "/city/JP/tokyo/" },
   { name: "saved-state", path: "/saved/" },
   { name: "account-login", path: "/accounts/login/" },
@@ -1939,6 +1940,78 @@ async function assertPremiumResponsiveTargets(page, label, selector) {
   }
 }
 
+async function assertSameAmountQuality(page) {
+  await page
+    .getByRole("heading", { name: "One amount. Several places. No artificial winner." })
+    .waitFor();
+
+  const form = page.locator(".qa-same-amount__form");
+  await form.locator('input[name="amount"]').fill("100");
+  await form.locator('select[name="source_currency"]').selectOption("EUR");
+  await form.locator('input[name="destinations"][value="CA:toronto"]').check();
+  await form.locator('input[name="destinations"][value="JP:tokyo"]').check();
+
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/explore/same-amount/") && response.request().method() === "POST",
+  );
+  await form.getByRole("button", { name: "View across destinations", exact: true }).click();
+  const response = await responsePromise;
+  assert(response.ok(), `same-amount: form submission returned ${response.status()}`);
+
+  await page.getByRole("heading", { name: /across your selected destinations/ }).waitFor();
+  const cards = page.locator(".qa-same-amount-card");
+  assert((await cards.count()) === 2, `same-amount: expected 2 result cards, found ${await cards.count()}`);
+
+  const headings = await cards.locator("h3").allTextContents();
+  assert(
+    headings[0]?.includes("Toronto") && headings[1]?.includes("Tokyo"),
+    `same-amount: explicit destination order drifted: ${JSON.stringify(headings)}`,
+  );
+  assert(
+    (await page.getByText("No winner is calculated.", { exact: true }).count()) === 1,
+    "same-amount: neutral no-ranking boundary disappeared",
+  );
+
+  for (const card of await cards.all()) {
+    assert(
+      (await card.getByRole("link", { name: "Open conversion", exact: true }).count()) === 1,
+      "same-amount: canonical conversion action is missing",
+    );
+    assert(
+      (await card.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
+      "same-amount: canonical budget action is missing",
+    );
+    assert(
+      (await card.getByRole("link", { name: "City money profile", exact: true }).count()) === 1,
+      "same-amount: city profile action is missing or duplicated",
+    );
+  }
+
+  const context = cards.first().locator(".qa-same-amount-card__context");
+  if ((await context.count()) === 1) {
+    assert(
+      !(await context.evaluate((element) => element.hasAttribute("open"))),
+      "same-amount: reviewed local context should be collapsed by default",
+    );
+    await context.locator("summary").click();
+    assert(
+      await context.evaluate((element) => element.hasAttribute("open")),
+      "same-amount: reviewed local context did not open",
+    );
+    assert(
+      (await context.locator("a[href^='https://']").count()) > 0,
+      "same-amount: opened local context lost provenance links",
+    );
+  }
+
+  await assertPremiumResponsiveTargets(
+    page,
+    "same-amount/responsive",
+    ".qa-same-amount-card__actions a, .qa-same-amount-card__context summary",
+  );
+  await assertAxe(page, "same-amount/interactive");
+}
 async function assertCityProfileQuality(page) {
   await page.getByRole("heading", { level: 1 }).waitFor();
 
@@ -2245,6 +2318,10 @@ try {
 
       if (surface.name === "explore" && viewport.name === "wide-1440") {
         await assertExploreFlow(page);
+      }
+
+      if (surface.name === "same-amount" && viewport.name === "wide-1440") {
+        await assertSameAmountQuality(page);
       }
 
       if (surface.name === "city-money-profile" && viewport.name === "wide-1440") {
