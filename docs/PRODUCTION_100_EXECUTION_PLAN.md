@@ -12,7 +12,7 @@ It is an execution and release-readiness plan, not a replacement for the product
 
 The plan was originally created from an earlier repository baseline. It is now synchronized through `master`:
 
-`75cf9a7e337f1de15a4e80549cdee9b5621effc7`
+`495ce394d6fa31148d173039859c699fd2892cae`
 
 The current product already includes:
 
@@ -28,13 +28,13 @@ The current product already includes:
 - one-sided canonical Compare handoffs from Explore and Saved continuity surfaces;
 - browser-local My Places with exact country/city identity preservation;
 - provider-free City Money Profile;
-- optional grounded AI explanation with deterministic fallback, including explicit reviewed-destination Explore intents;
+- optional grounded AI explanation with deterministic fallback across conversion, reviewed Explore destinations, Budget Interpretation and Destination Comparison;
 - managed provenance-aware media, restrained source → destination presentation and historical/currency-era story exploration;
 - demand-loaded frontend enhancement routing with consolidated Saved and rate-chart lazy chunks;
 - a CSS custom-property integrity gate plus normalized narrow-layout spacing tokens;
 - Chromium page-level 430/390/360/320 mobile coverage, 640px/320px reflow evidence, Firefox/WebKit smoke, forced-colors/reduced-motion checks and Python/PostgreSQL CI.
 
-The original **92/100** figure is a historical planning snapshot, not a current score. Remaining work is concentrated in broader reviewed media coverage, durable account-owned SavedPlace/saved-comparison persistence, richer scenario/personalization flows, PWA/offline lifecycle work and final production evidence.
+The original **92/100** figure is a historical planning snapshot, not a current score. The scoped 36-item functional roadmap is complete through trusted Budget/Comparison AI. Remaining work in this plan is release evidence: final regression, zero-P1 verification, operational runbook/restore evidence and deployed RC certification. Broader product ideas remain future scope rather than blockers for this release candidate.
 
 ## 100/100 definition of done
 
@@ -939,6 +939,8 @@ Current reference values are recalculated only through explicit user action and 
 ---
 
 # Phase 16 — Final release certification
+
+**Current certification pass:** active on the release branch after feature-complete master `495ce394d6fa31148d173039859c699fd2892cae`. Repository-side regression is being extended with real Camera confirmation/spend browser evidence, Offline Pack download/open evidence, constrained-network Chromium evidence and Destination Mode Firefox/WebKit smoke. The canonical operational procedure is `docs/RELEASE_RUNBOOK.md`; certification state is recorded in `docs/RELEASE_CERTIFICATION.md`. Deployment-specific RPO/RTO and object-storage restore evidence remain external requirements and must not be inferred from CI.
 
 ## PR #261 — Full production regression
 
