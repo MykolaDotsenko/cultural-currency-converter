@@ -2005,7 +2005,7 @@ async function assertExploreFlow(page) {
     assert(response.ok(), `explore/ai: explanation returned ${response.status()}`);
 
     const aiRegion = page.locator("#conversion-explanation-region");
-    await aiRegion.getByText("AI explanation", { exact: true }).waitFor();
+    await aiRegion.getByText(/AI explanation · Tokyo, Japan/).waitFor();
     assert(
       (await aiRegion.innerText()).includes("Tokyo, Japan"),
       "explore/ai: response lost the selected reviewed destination",
