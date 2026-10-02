@@ -399,7 +399,7 @@ def build_explore_collections(
             limit=item_limit,
         ),
         ExploreCollectionKind.RECENTLY_REVIEWED_DESTINATIONS: _recent_destination_items(
-            destinations=destinations,
+            destinations=destination_rows,
             as_of=selected_date,
             limit=item_limit,
         ),
