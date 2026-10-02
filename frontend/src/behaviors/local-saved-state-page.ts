@@ -4,6 +4,7 @@ import {
   type RateMode,
   type ReadResult,
   type RecentConversion,
+  type SavedPlace,
   readState,
   writeState,
 } from "./local-saved-state-store";
@@ -162,6 +163,85 @@ function renderFavourites(
   }
 }
 
+function placeLabel(place: SavedPlace): string {
+  return place.cityName ? `${place.cityName}, ${place.countryName}` : place.countryName;
+}
+
+function placeConverterUrl(converterUrl: string, place: SavedPlace): string {
+  const url = new URL(converterUrl, window.location.origin);
+  url.searchParams.set("load", "1");
+  url.searchParams.set("destination_country", place.countryCode);
+  url.searchParams.set("destination_currency", place.currencyCode);
+  if (place.citySlug) url.searchParams.set("destination_city_slug", place.citySlug);
+  return `${url.pathname}${url.search}`;
+}
+
+function renderPlaces(
+  page: HTMLElement,
+  state: LocalPreferencesV1,
+  converterUrl: string,
+): void {
+  const list = page.querySelector<HTMLElement>("[data-places-list]");
+  const empty = page.querySelector<HTMLElement>("[data-places-empty]");
+  if (!list || !empty) return;
+
+  list.replaceChildren();
+  empty.hidden = state.places.length > 0;
+
+  for (const place of state.places) {
+    const article = document.createElement("article");
+    article.className = "qa-saved-row";
+    article.dataset.savedPlaceId = place.id;
+
+    const copy = document.createElement("div");
+    copy.className = "qa-saved-row__copy";
+    const kicker = document.createElement("p");
+    kicker.className = "qa-foundation-kicker";
+    kicker.textContent = place.citySlug ? "City · saved in this browser" : "Country · saved in this browser";
+    const title = document.createElement("h3");
+    title.textContent = placeLabel(place);
+    const meta = document.createElement("p");
+    meta.className = "qa-saved-row__meta";
+    meta.textContent = `${place.currencyCode} · Saved ${savedAtLabel(place.savedAt)}`;
+    copy.append(kicker, title, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "qa-saved-row__actions";
+    actions.append(
+      actionLink(
+        "Convert",
+        placeConverterUrl(converterUrl, place),
+        `Convert for ${placeLabel(place)}`,
+      ),
+    );
+    if (place.citySlug) {
+      actions.append(
+        actionLink(
+          "City profile",
+          `/city/${encodeURIComponent(place.countryCode)}/${encodeURIComponent(place.citySlug)}/`,
+          `Open city profile: ${placeLabel(place)}`,
+        ),
+      );
+    }
+    actions.append(
+      actionButton(
+        "Remove",
+        () => {
+          const read = readState();
+          const next = {
+            ...read.state,
+            places: read.state.places.filter((item) => item.token !== place.token),
+          };
+          persistAndRender(next, "Place removed from this browser.");
+        },
+        `Remove saved place: ${placeLabel(place)}`,
+      ),
+    );
+    article.append(copy, actions);
+    list.append(article);
+  }
+}
+
 function recentMeta(recent: RecentConversion): string {
   if (recent.rateMode === "historical") {
     return `Historical · requested ${dateLabel(recent.requestedDate)} · observation ${dateLabel(
@@ -275,7 +355,7 @@ function setStorageStatus(page: HTMLElement, read: ReadResult, overrideMessage =
       ? accountHistoryEnabled
         ? `Account history is on · Browser-only recent entries on this device: ${read.state.recent.length}.`
         : `Account history is off · Browser-only recent entries on this device: ${read.state.recent.length}.`
-      : `Stored locally in this browser · ${read.state.favourites.length} saved · ${read.state.recent.length} recent.`;
+      : `Stored locally in this browser · ${read.state.places.length} places · ${read.state.favourites.length} pairs · ${read.state.recent.length} recent.`;
   }
 }
 
@@ -288,6 +368,7 @@ function renderSavedPage(overrideMessage = ""): void {
   setStorageStatus(page, read, overrideMessage);
 
   const clearFavourites = page.querySelector<HTMLButtonElement>("[data-clear-favourites]");
+  const clearPlaces = page.querySelector<HTMLButtonElement>("[data-clear-places]");
   const clearRecents = page.querySelector<HTMLButtonElement>("[data-clear-recents]");
   const unavailable = read.status === "unavailable";
   if (clearFavourites) {
@@ -295,12 +376,18 @@ function renderSavedPage(overrideMessage = ""): void {
     clearFavourites.hidden = !canClearFavourites;
     clearFavourites.disabled = !canClearFavourites;
   }
+  if (clearPlaces) {
+    const canClearPlaces = !unavailable && read.state.places.length > 0;
+    clearPlaces.hidden = !canClearPlaces;
+    clearPlaces.disabled = !canClearPlaces;
+  }
   if (clearRecents) {
     const canClearRecents = !unavailable && read.state.recent.length > 0;
     clearRecents.hidden = !canClearRecents;
     clearRecents.disabled = !canClearRecents;
   }
 
+  renderPlaces(page, read.state, converterUrl);
   renderFavourites(page, read.state, converterUrl);
   renderRecents(page, read.state, converterUrl);
 }
@@ -321,6 +408,14 @@ export function wireSavedPage(): void {
           "Saved pairs cleared from this browser.",
         );
       });
+    page.querySelector<HTMLButtonElement>("[data-clear-places]")?.addEventListener("click", () => {
+      const read = readState();
+      if (read.status === "unavailable") return renderSavedPage();
+      persistAndRender(
+        { ...read.state, places: [] },
+        "Saved places cleared from this browser.",
+      );
+    });
     page.querySelector<HTMLButtonElement>("[data-clear-recents]")?.addEventListener("click", () => {
       const read = readState();
       if (read.status === "unavailable") return renderSavedPage();
