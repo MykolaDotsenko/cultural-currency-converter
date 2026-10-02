@@ -230,6 +230,9 @@ def test_explore_page_is_provider_free_and_links_back_to_canonical_converter(
     assert b"load=1" in response.content
     assert b"left_destination=JP%3Atokyo" in response.content
     assert b"left_destination=JP" in response.content
+    assert b'data-place-token="JP:tokyo"' in response.content
+    assert b'data-place-token="JP"' in response.content
+    assert b"data-save-place" in response.content
     latest_gateway_factory.assert_not_called()
 
 
