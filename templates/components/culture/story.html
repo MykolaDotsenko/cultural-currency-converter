@@ -5,47 +5,111 @@
   </section>
 {% elif story %}
   <section class="qa-story-surface" aria-labelledby="money-culture-story-title">
-    <div>
-      <p class="qa-foundation-kicker">
-        Money &amp; culture
-        {% if story.historical %}· {{ story.selected_date|date:"j M Y" }}{% endif %}
+    <div class="qa-story-surface__heading">
+      <div>
+        <p class="qa-foundation-kicker">
+          Money &amp; culture
+          {% if story.historical %}· {{ story.selected_date|date:"j M Y" }}{% endif %}
+        </p>
+        <h2 id="money-culture-story-title">The sourced story behind this currency context</h2>
+        {% if story.status == "partial" %}
+          <p>Only the reviewed context currently available is shown. Missing facts are not filled in.</p>
+        {% elif story.status == "unavailable" %}
+          <p>No reviewed story facts are available for this context yet.</p>
+        {% else %}
+          <p>Reviewed currency eras and published money-history facts, assembled without invented filler.</p>
+        {% endif %}
+      </div>
+      <p class="qa-story-surface__scope">
+        {% if story.historical %}
+          Historical reference context · {{ story.selected_date|date:"j M Y" }}
+        {% else %}
+          Current reviewed context
+        {% endif %}
       </p>
-      <h2 id="money-culture-story-title">The sourced story behind this currency context</h2>
-      {% if story.status == "partial" %}
-        <p>Only the sourced context currently available is shown. Missing facts are not filled in.</p>
-      {% elif story.status == "unavailable" %}
-        <p>No reviewed story facts are available for this context yet.</p>
-      {% else %}
-        <p>Deterministic chapters assembled from reviewed currency relationships and story facts.</p>
-      {% endif %}
     </div>
+
     {% if story.status != "unavailable" %}
       {% if story_media %}
         {% include "components/media/image_frame.html" with image=story_media.image loading="lazy" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
       {% endif %}
-      <div class="qa-story-chapters">
-        {% for chapter in story.chapters %}
-          <article class="qa-story-chapter">
-            <div>
-              <p class="qa-foundation-kicker">{{ chapter.label }}</p>
-              <h3>{{ chapter.title }}</h3>
-            </div>
-            <p>{{ chapter.body }}</p>
-            <p class="qa-story-chapter__meta">Temporal scope: {{ chapter.temporal_scope }}</p>
-            {% if chapter.source_refs %}
-              <div class="qa-story-source-list" aria-label="Sources">
-                {% for source in chapter.source_refs %}
-                  <a href="{{ source.url }}">{{ source.label }}</a>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </article>
-        {% endfor %}
-      </div>
+
+      {% if story.currency_era_chapters %}
+        <section class="qa-story-section" aria-labelledby="currency-era-story-title">
+          <div class="qa-story-section__heading">
+            <p class="qa-foundation-kicker">Currency eras</p>
+            <h3 id="currency-era-story-title">Which currency relationship applies here</h3>
+            <p>
+              These records come from the canonical country–currency timeline. They describe currency
+              usage for this context; they do not estimate historical purchasing power.
+            </p>
+          </div>
+          <div class="qa-story-era-grid">
+            {% for chapter in story.currency_era_chapters %}
+              <article class="qa-story-chapter qa-story-era-card">
+                <div>
+                  <p class="qa-foundation-kicker">{{ chapter.label }}</p>
+                  <h4>{{ chapter.title }}</h4>
+                </div>
+                <p>{{ chapter.body }}</p>
+                <p class="qa-story-chapter__meta">Temporal scope: {{ chapter.temporal_scope }}</p>
+                {% if chapter.source_refs %}
+                  <details class="qa-source-details qa-story-source-details">
+                    <summary>Era source &amp; scope</summary>
+                    <div class="qa-story-source-list" aria-label="Currency era sources">
+                      {% for source in chapter.source_refs %}
+                        <a href="{{ source.url }}">{{ source.label }}</a>
+                      {% endfor %}
+                    </div>
+                  </details>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if story.historical_moment_chapters %}
+        <section class="qa-story-section" aria-labelledby="reviewed-money-history-title">
+          <div class="qa-story-section__heading">
+            <p class="qa-foundation-kicker">Reviewed history</p>
+            <h3 id="reviewed-money-history-title">Published money-history moments</h3>
+            <p>
+              Each item is independently reviewed and sourced. Ordering reflects editorial relevance,
+              not a claim that one event caused an exchange-rate movement.
+            </p>
+          </div>
+          <div class="qa-story-chapters">
+            {% for chapter in story.historical_moment_chapters %}
+              <article class="qa-story-chapter">
+                <div>
+                  <p class="qa-foundation-kicker">{{ chapter.label }}</p>
+                  <h4>{{ chapter.title }}</h4>
+                </div>
+                <p>{{ chapter.body }}</p>
+                <p class="qa-story-chapter__meta">Temporal scope: {{ chapter.temporal_scope }}</p>
+                {% if chapter.source_refs %}
+                  <details class="qa-source-details qa-story-source-details">
+                    <summary>Source &amp; scope</summary>
+                    <div class="qa-story-source-list" aria-label="Historical moment sources">
+                      {% for source in chapter.source_refs %}
+                        <a href="{{ source.url }}">{{ source.label }}</a>
+                      {% endfor %}
+                    </div>
+                  </details>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
     {% endif %}
-    <p class="qa-story-chapter__meta">
-      Story chapters are deterministic and sourced. They do not claim that an event caused an
-      exchange-rate movement unless reviewed source material explicitly supports that claim.
-    </p>
+
+    <aside class="qa-story-trust-note">
+      <strong>Interpretation boundary.</strong>
+      Story chapters are deterministic and sourced. Historical FX and currency-era records do not
+      describe historical purchasing power, and no event is treated as causal unless reviewed source
+      material explicitly supports that claim.
+    </aside>
   </section>
 {% endif %}
