@@ -166,8 +166,7 @@ class Command(BaseCommand):
 
         ready_count = sum(row.ready for row in rows)
         self.stdout.write(
-            f"SUMMARY: ready={ready_count} total={len(rows)} "
-            f"not_ready={len(rows) - ready_count}"
+            f"SUMMARY: ready={ready_count} total={len(rows)} not_ready={len(rows) - ready_count}"
         )
         if options["strict"] and ready_count != len(rows):
             raise CommandError(
