@@ -1762,7 +1762,7 @@ async function assertNoJavaScriptExplore(browser) {
   });
   try {
     const page = await context.newPage();
-    const response = await page.goto(`${BASE_URL}/explore/`, { waitUntil: "load" });
+    let response = await page.goto(`${BASE_URL}/explore/`, { waitUntil: "load" });
     assert(
       response?.ok(),
       `explore/no-js: request failed with ${response?.status() ?? "no response"}`,
@@ -1780,16 +1780,65 @@ async function assertNoJavaScriptExplore(browser) {
       (await page.locator(".qa-explore-region-nav a").count()) >= 4,
       "explore/no-js: regional navigation disappeared without JavaScript",
     );
+    const tokyoRow = page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).first();
     assert(
-      (await page.locator(".qa-explore-city-row").filter({ hasText: "Tokyo" }).count()) === 1,
+      (await tokyoRow.count()) === 1,
       "explore/no-js: reviewed Tokyo city row disappeared without JavaScript",
+    );
+    assert(
+      (await tokyoRow.getByRole("link", { name: "Compare", exact: true }).count()) === 1 &&
+        (await tokyoRow.getByRole("link", { name: "Ask", exact: true }).count()) === 1 &&
+        (await tokyoRow.getByRole("link", { name: "Save", exact: true }).count()) === 1,
+      "explore/no-js: progressive destination handoffs disappeared without JavaScript",
     );
     await assertNoHorizontalOverflow(page, "explore/no-js");
     await assertAxe(page, "explore/no-js");
+
+    response = await page.goto(`${BASE_URL}/explore/same-amount/`, { waitUntil: "load" });
+    assert(
+      response?.ok(),
+      `explore/same-amount/no-js: request failed with ${response?.status() ?? "no response"}`,
+    );
+    await page
+      .getByRole("heading", { name: "See the same amount in local money contexts." })
+      .waitFor();
+    await page.getByLabel("Tokyo, Japan · JPY", { exact: true }).check();
+    await page.getByLabel("Norway · NOK", { exact: true }).check();
+    await page.getByRole("button", { name: "View across destinations" }).click();
+    await page.getByText("Tokyo, Japan", { exact: true }).last().waitFor();
+    await page.getByText("Norway", { exact: true }).last().waitFor();
+    assert(
+      (await page.locator(".qa-explore-amount-card").count()) === 2,
+      "explore/same-amount/no-js: server form did not render both destination results",
+    );
+    await assertNoHorizontalOverflow(page, "explore/same-amount/no-js");
+    await assertAxe(page, "explore/same-amount/no-js");
+
+    response = await page.goto(
+      `${BASE_URL}/explore/explain/?destination=JP%3Atokyo`,
+      { waitUntil: "load" },
+    );
+    assert(
+      response?.ok(),
+      `explore/ai/no-js: request failed with ${response?.status() ?? "no response"}`,
+    );
+    await page.getByRole("heading", { name: "Tokyo, Japan", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Everyday money", exact: true }).click();
+    await page.getByText(/explanation/i).first().waitFor();
+    assert(
+      (await page.getByText("There is intentionally no open-ended chatbot on this surface.").count()) ===
+        1,
+      "explore/ai/no-js: full server response lost the bounded-prompt trust copy",
+    );
+    await assertNoHorizontalOverflow(page, "explore/ai/no-js");
+    await assertAxe(page, "explore/ai/no-js");
+
     return {
       collectionsVisible: true,
       regionalNavigationVisible: true,
       canonicalCityHandoffVisible: true,
+      sameAmountServerFallback: true,
+      groundedAiServerFallback: true,
     };
   } finally {
     await context.close();
