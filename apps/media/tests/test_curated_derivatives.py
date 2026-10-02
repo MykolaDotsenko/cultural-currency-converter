@@ -204,6 +204,66 @@ def test_curated_media_coverage_strict_fails_before_derivatives_are_published(
     assert "ready=0 total=1 not_ready=1" in output.getvalue()
 
 
+
+@pytest.mark.django_db
+def test_curated_derivative_build_rejects_drifted_existing_width(
+    reviewed_source,
+    curated_destination,
+) -> None:
+    call_command(
+        "build_curated_media_derivatives",
+        "--slug",
+        curated_destination.slug,
+    )
+    derivative = MediaAsset.objects.get(
+        derivative_of=reviewed_source,
+        variant_width=16,
+    )
+    derivative.focal_x = Decimal("0.500")
+    derivative.save(update_fields=("focal_x", "updated_at"))
+
+    with pytest.raises(CommandError, match="derivative metadata drift"):
+        call_command(
+            "build_curated_media_derivatives",
+            "--slug",
+            curated_destination.slug,
+        )
+
+
+@pytest.mark.django_db
+def test_curated_media_coverage_rejects_drifted_published_family(
+    reviewed_source,
+    curated_destination,
+) -> None:
+    call_command(
+        "build_curated_media_derivatives",
+        "--slug",
+        curated_destination.slug,
+    )
+    derivatives = list(
+        MediaAsset.objects.filter(derivative_of=reviewed_source).order_by("variant_width")
+    )
+    for derivative in derivatives:
+        approve_media_asset(derivative)
+        publish_media_asset(derivative)
+
+    derivatives[0].focal_y = Decimal("0.500")
+    derivatives[0].save(update_fields=("focal_y", "updated_at"))
+
+    output = io.StringIO()
+    with pytest.raises(CommandError, match="not fully runtime-ready"):
+        call_command(
+            "report_curated_media_coverage",
+            "--slug",
+            curated_destination.slug,
+            "--strict",
+            stdout=output,
+        )
+
+    assert "derivative_contract=false" in output.getvalue()
+    assert "NOT_READY:" in output.getvalue()
+
+
 @pytest.mark.django_db
 def test_curated_derivative_build_requires_explicitly_reviewed_source(
     db,
