@@ -1846,6 +1846,18 @@ async function assertExploreFlow(page) {
     `explore: Tokyo converter handoff lost canonical scope: ${convertHref}`,
   );
 
+  const compareHref = await tokyoRow
+    .getByRole("link", { name: "Compare", exact: true })
+    .getAttribute("href");
+  assert(compareHref, "explore: Tokyo contextual Compare handoff is missing");
+  const compareUrl = new URL(compareHref, BASE_URL);
+  assert(
+    compareUrl.pathname === "/compare/" &&
+      compareUrl.searchParams.get("left_destination") === "JP:tokyo" &&
+      !compareUrl.searchParams.has("right_destination"),
+    `explore: Tokyo Compare handoff lost canonical scope or over-selected a peer: ${compareHref}`,
+  );
+
   await assertAxe(page, "explore/interactive");
 }
 
