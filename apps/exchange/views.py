@@ -20,8 +20,8 @@ from apps.exchange.web.gateways import (
 )
 from apps.exchange.web.history import historical_series_view
 from apps.exchange.web.payment_estimate import payment_estimate_view
-from apps.exchange.web.same_amount import same_amount_destinations_view
 from apps.exchange.web.picker import picker_options_view
+from apps.exchange.web.same_amount import same_amount_destinations_view
 from apps.travel.history import record_recent_conversion
 from apps.travel.queries import is_user_favourite
 
