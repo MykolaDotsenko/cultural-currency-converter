@@ -113,11 +113,7 @@ export async function measureBuildAssets() {
         "local-saved-state",
       ),
       savedState: uniquePrefixedAsset(dynamicFiles, "local-saved-state-page-", "saved-state"),
-      rateChartLoader: uniquePrefixedAsset(
-        dynamicFiles,
-        "rate-chart-loader-",
-        "rate-chart-loader",
-      ),
+      rateChartLoader: uniquePrefixedAsset(dynamicFiles, "rate-chart-loader-", "rate-chart-loader"),
       rateChart: uniqueMatchingAsset(
         dynamicFiles,
         (file) =>
@@ -163,11 +159,7 @@ export function assertBuildPerformanceBudgets(evidence, budgets = PERFORMANCE_BU
       evidence.namedDynamicFiles.currentConverter.gzipBytes,
       budgets.currentConverterGzipBytes,
     ],
-    [
-      "picker chunk gzip",
-      evidence.namedDynamicFiles.picker.gzipBytes,
-      budgets.pickerGzipBytes,
-    ],
+    ["picker chunk gzip", evidence.namedDynamicFiles.picker.gzipBytes, budgets.pickerGzipBytes],
     [
       "local saved-state chunk gzip",
       evidence.namedDynamicFiles.localSavedState.gzipBytes,
