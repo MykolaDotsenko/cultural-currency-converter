@@ -740,3 +740,394 @@
     border-color: CanvasText;
   }
 }
+
+
+/* Premium frontend quality pass: one visual hierarchy across Explore, City Profile and Same Amount. */
+.qa-explore-jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--qa-space-5);
+  padding-block: var(--qa-space-3);
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-explore-jump-link,
+.qa-explore-action,
+.qa-city-profile__text-action,
+.qa-same-amount-card__text-action {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+.qa-explore-jump-link::after,
+.qa-explore-action--primary::after,
+.qa-city-profile__text-action::after,
+.qa-same-amount-card__text-action::after {
+  content: "→";
+  margin-inline-start: 0.4rem;
+  color: var(--color-tertiary);
+  transition: transform 140ms ease;
+}
+
+.qa-explore-action--primary {
+  color: var(--color-ink);
+}
+
+.qa-explore-jump-link:focus-visible,
+.qa-explore-action:focus-visible,
+.qa-explore-save-button:focus-visible,
+.qa-explore-prompt:focus-visible,
+.qa-city-profile__text-action:focus-visible,
+.qa-city-profile__evidence summary:focus-visible,
+.qa-same-amount-card__text-action:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.qa-explore-country > .qa-saved-row__actions,
+.qa-explore-city-row .qa-saved-row__actions,
+.qa-explore-collection-item .qa-saved-row__actions {
+  align-items: center;
+  gap: var(--qa-space-4);
+}
+
+.qa-explore-save-button {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.qa-explore-save-button::before {
+  content: "+";
+  inline-size: 1.2rem;
+  display: inline-grid;
+  place-items: center;
+  margin-inline-end: 0.2rem;
+  color: var(--color-tertiary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.qa-explore-directory [data-save-place][data-saved="true"] {
+  border: 0;
+  background: transparent;
+  color: var(--color-brand-hover);
+}
+
+.qa-explore-directory [data-save-place][data-saved="true"]::before {
+  content: "✓";
+  color: currentColor;
+}
+
+.qa-explore-collection-item {
+  border-color: color-mix(in srgb, var(--qa-hairline) 84%, transparent);
+  background: transparent;
+}
+
+.qa-explore-collection-item .qa-saved-row__copy > p:not(.qa-saved-row__meta) {
+  max-width: 52ch;
+  line-height: 1.65;
+}
+
+.qa-explore-ai {
+  max-width: 58rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-soft) 72%, transparent);
+}
+
+.qa-explore-ai .qa-saved-section__heading h2 {
+  max-width: 22ch;
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.qa-explore-ai__form {
+  max-width: 44rem;
+}
+
+.qa-explore-ai__prompts {
+  gap: var(--qa-space-2) var(--qa-space-3);
+}
+
+.qa-explore-prompt {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--qa-space-4);
+  border: 1px solid var(--color-border-control);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.qa-explore-prompt:disabled {
+  cursor: progress;
+  opacity: 0.58;
+}
+
+.qa-explore-ai__result:not(:empty) {
+  padding-block-start: var(--qa-space-5);
+  border-block-start: 1px solid var(--qa-hairline);
+}
+
+/* City Money Profile: facts first, provenance on demand, canonical actions with one primary CTA. */
+.qa-city-profile__hero {
+  max-width: 72rem;
+}
+
+.qa-city-profile__hero .qa-foundation-lede {
+  max-width: 64rem;
+}
+
+.qa-city-profile__hero-actions,
+.qa-city-profile__next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qa-space-3) var(--qa-space-5);
+  margin-block-start: var(--qa-space-6);
+}
+
+.qa-city-profile {
+  max-width: 72rem;
+  gap: clamp(3.5rem, 7vw, 6rem);
+}
+
+.qa-city-profile .qa-saved-section {
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.qa-city-profile .qa-price-grid {
+  gap: var(--qa-space-4);
+}
+
+.qa-city-profile__price-card {
+  align-content: start;
+  gap: var(--qa-space-5);
+}
+
+.qa-city-profile__price-card .qa-price-card__price {
+  max-width: 14ch;
+  line-height: 1;
+}
+
+.qa-city-profile__price-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qa-space-2) var(--qa-space-3);
+  color: var(--color-tertiary);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.qa-city-profile__scope-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding-inline: var(--qa-space-2);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 26%, var(--qa-hairline));
+  border-radius: 999px;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-hover);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.qa-city-profile__scope-badge--fallback {
+  border-color: var(--color-border-subtle);
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+}
+
+.qa-city-profile__evidence {
+  margin-block-start: auto;
+  border: 0;
+  color: var(--color-muted);
+}
+
+.qa-city-profile__evidence summary {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  cursor: pointer;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.qa-city-profile__evidence-body {
+  display: grid;
+  gap: var(--qa-space-2);
+  padding-block-start: var(--qa-space-3);
+  border-block-start: 1px solid var(--qa-hairline);
+  color: var(--color-tertiary);
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.qa-city-profile__evidence-body p {
+  margin: 0;
+}
+
+.qa-city-profile__payment-evidence {
+  max-width: 46rem;
+  margin-block-start: var(--qa-space-4);
+}
+
+.qa-city-profile__next-actions {
+  margin-block-start: 0;
+}
+
+.qa-same-amount-card__text-action {
+  margin-inline-start: auto;
+}
+
+@media (hover: hover) {
+  .qa-explore-jump-link:hover,
+  .qa-explore-action:hover,
+  .qa-city-profile__text-action:hover,
+  .qa-same-amount-card__text-action:hover {
+    color: var(--color-brand-hover);
+    text-decoration: underline;
+  }
+
+  .qa-explore-jump-link:hover::after,
+  .qa-explore-action--primary:hover::after,
+  .qa-city-profile__text-action:hover::after,
+  .qa-same-amount-card__text-action:hover::after {
+    transform: translateX(0.15rem);
+  }
+
+  .qa-explore-save-button:hover {
+    color: var(--color-brand-hover);
+  }
+
+  .qa-explore-prompt:hover {
+    border-color: var(--color-brand);
+    background: var(--color-brand-soft);
+  }
+}
+
+@media (max-width: 44rem) {
+  .qa-explore-jump-nav {
+    flex-wrap: nowrap;
+    gap: var(--qa-space-5);
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .qa-explore-jump-link {
+    flex: 0 0 auto;
+  }
+
+  .qa-explore-country > .qa-saved-row__actions,
+  .qa-explore-city-row .qa-saved-row__actions,
+  .qa-explore-collection-item .qa-saved-row__actions {
+    gap: var(--qa-space-2) var(--qa-space-4);
+  }
+
+  .qa-explore-ai {
+    padding-inline: var(--qa-space-5);
+  }
+
+  .qa-city-profile__hero-actions,
+  .qa-city-profile__next-actions {
+    align-items: stretch;
+  }
+
+  .qa-city-profile__hero-actions .qa-primary-button,
+  .qa-city-profile__next-actions .qa-primary-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .qa-same-amount-card__text-action {
+    margin-inline-start: 0;
+  }
+}
+
+@media (max-width: 30rem) {
+  .qa-explore-city-row .qa-saved-row__actions > *,
+  .qa-explore-country > .qa-saved-row__actions > *,
+  .qa-explore-collection-item .qa-saved-row__actions > * {
+    width: fit-content;
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+
+  .qa-explore-ai__prompts {
+    display: grid;
+  }
+
+  .qa-explore-prompt {
+    width: 100%;
+    border-radius: var(--radius-md);
+    text-align: start;
+  }
+
+  .qa-city-profile__hero-actions .qa-secondary-button {
+    width: fit-content;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-explore-jump-link::after,
+  .qa-explore-action--primary::after,
+  .qa-city-profile__text-action::after,
+  .qa-same-amount-card__text-action::after {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-explore-jump-nav,
+  .qa-explore-ai,
+  .qa-explore-ai__result:not(:empty),
+  .qa-explore-prompt,
+  .qa-city-profile__scope-badge,
+  .qa-city-profile__evidence-body {
+    border-color: CanvasText;
+  }
+
+  .qa-explore-ai,
+  .qa-explore-prompt,
+  .qa-city-profile__scope-badge,
+  .qa-city-profile__scope-badge--fallback {
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .qa-explore-directory [data-save-place][data-saved="true"] {
+    color: LinkText;
+  }
+}
