@@ -466,6 +466,29 @@ def sync_saved_places(request: HttpRequest) -> JsonResponse:
 
 @login_required
 @require_POST
+def save_place(request: HttpRequest) -> HttpResponse:
+    country_code = str(request.POST.get("country_code") or "")
+    city_slug = str(request.POST.get("city_slug") or "")
+    try:
+        result = sync_user_saved_places(
+            request.user,
+            [{"countryCode": country_code, "citySlug": city_slug}],
+        )
+    except SavedPlaceSyncError:
+        messages.error(
+            request,
+            "This place could not be saved safely. Refresh Explore and try again.",
+        )
+    else:
+        if result.created_count:
+            messages.success(request, "Place saved to your account.")
+        else:
+            messages.info(request, "This place is already saved to your account.")
+    return redirect("explore")
+
+
+@login_required
+@require_POST
 def delete_saved_place(request: HttpRequest, place_id: int) -> HttpResponse:
     place = get_object_or_404(SavedPlace, pk=place_id, user=request.user)
     place.delete()
@@ -491,7 +514,7 @@ def save_comparison(request: HttpRequest) -> HttpResponse:
     try:
         value = load_saved_comparison_token(token)
         result = persist_saved_comparison(request.user, value)
-    except (SavedComparisonTokenError, SavedComparisonPersistenceError) as exc:
+    except (SavedComparisonTokenError, SavedComparisonPersistenceError):
         messages.error(
             request,
             "This comparison could not be saved safely. Re-run it before saving.",
