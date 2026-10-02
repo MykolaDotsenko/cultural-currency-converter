@@ -309,4 +309,4 @@ def test_explore_links_to_same_amount_surface(client, same_amount_reference_data
     assert response.status_code == 200
     assert reverse("same_amount_destinations").encode() in response.content
     assert b"One amount" in response.content
-    assert b"View the same amount" in response.content
+    assert b"Compare one amount" in response.content
