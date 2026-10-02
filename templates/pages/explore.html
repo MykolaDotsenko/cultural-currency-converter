@@ -173,13 +173,16 @@
                     {% if country.cities %}
                       <div class="qa-explore-city-list" aria-label="Reviewed cities in {{ country.country_name }}">
                         {% for city in country.cities %}
-                          <a class="qa-explore-city-link" href="{{ city.profile_url }}">
-                            <span>
-                              <strong>{{ city.name }}</strong>
-                              <small>{{ city.currency_code }} · city money profile</small>
-                            </span>
-                            <span aria-hidden="true">↗</span>
-                          </a>
+                          <div class="qa-explore-city-row">
+                            <a class="qa-explore-city-link" href="{{ city.profile_url }}">
+                              <span>
+                                <strong>{{ city.name }}</strong>
+                                <small>{{ city.currency_code }} · city money profile</small>
+                              </span>
+                              <span aria-hidden="true">↗</span>
+                            </a>
+                            <a class="qa-explore-city-convert" href="{{ city.converter_url }}">Convert</a>
+                          </div>
                         {% endfor %}
                       </div>
                     {% else %}
