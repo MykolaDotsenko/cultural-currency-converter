@@ -532,6 +532,46 @@ def test_historical_comparison_selector_is_sourced_currency_and_date_scoped(euro
 
 
 @pytest.mark.django_db
+def test_selector_prefers_published_derivative_over_newer_full_size_source(finland):
+    source = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.LOCAL_DETAIL,
+        country=finland,
+        title="Full-size source",
+        storage_file="sourced/full-size.webp",
+        width=4000,
+        height=3000,
+        aspect_ratio="4000 / 3000",
+        status=MediaStatus.PUBLISHED,
+        published_at=datetime(2026, 10, 2, 12, 0, tzinfo=UTC),
+    )
+    derivative = MediaAsset.objects.create(
+        kind=source.kind,
+        source_kind=source.source_kind,
+        role=source.role,
+        country=source.country,
+        title="Responsive derivative",
+        storage_file="sourced/derivative-1200.webp",
+        width=1200,
+        height=900,
+        aspect_ratio="1200 / 900",
+        derivative_of=source,
+        variant_width=1200,
+        status=MediaStatus.PUBLISHED,
+        published_at=datetime(2026, 10, 1, 12, 0, tzinfo=UTC),
+    )
+
+    selected = select_published_media(
+        role=MediaRole.LOCAL_DETAIL,
+        country=finland,
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == derivative.pk
+
+
+@pytest.mark.django_db
 def test_supporting_role_allows_labelled_generated_media_when_no_sourced_option(finland):
     generated = MediaAsset.objects.create(
         kind=MediaKind.GENERATED_ILLUSTRATION,
