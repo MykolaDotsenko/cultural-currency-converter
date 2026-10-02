@@ -66,6 +66,15 @@ def _recent_url(recent: RecentConversion, *, swap: bool = False) -> str:
     return f"{reverse('converter')}?{urlencode(params)}"
 
 
+def _comparison_url(destination_country, destination_city=None) -> str:
+    if destination_country is None:
+        return ""
+    token = destination_country.iso2
+    if destination_city is not None:
+        token = f"{token}:{destination_city.slug}"
+    return f"{reverse('destination_comparison')}?{urlencode({'left_destination': token})}"
+
+
 def _favourite_rows(user) -> list[dict[str, object]]:
     favourites = (
         FavouritePair.objects.filter(user=user)
@@ -82,6 +91,7 @@ def _favourite_rows(user) -> list[dict[str, object]]:
             "favourite": favourite,
             "use_url": _pair_url(favourite),
             "reverse_url": _pair_url(favourite, swap=True),
+            "compare_url": _comparison_url(favourite.destination_country),
         }
         for favourite in favourites
     ]
@@ -103,6 +113,7 @@ def _recent_rows(user) -> list[dict[str, object]]:
             "recent": recent,
             "repeat_url": _recent_url(recent),
             "swap_url": _recent_url(recent, swap=True),
+            "compare_url": _comparison_url(recent.destination_country),
         }
         for recent in recents
     ]
@@ -130,6 +141,10 @@ def _scenario_rows(user) -> list[dict[str, object]]:
             "scenario": scenario,
             "latest_effective_date": scenario.latest_effective_date,
             "detail_url": reverse("saved_scenario_detail", args=(scenario.pk,)),
+            "compare_url": _comparison_url(
+                scenario.destination_country,
+                scenario.destination_city,
+            ),
         }
         for scenario in scenarios
     ]
