@@ -98,6 +98,36 @@ def build_then_now_component(
     }
 
 
+def _timeline_landmarks(points, selected_date) -> list[dict[str, object]]:
+    if not points:
+        return []
+
+    landmarks = []
+    last_index = len(points) - 1
+    for index, point in enumerate(points):
+        roles = []
+        if index == 0:
+            roles.append("Range start")
+        if point.observation_date == selected_date:
+            roles.append("Selected observation")
+        if index == last_index:
+            roles.append("Range end")
+        if not roles:
+            continue
+        landmarks.append(
+            {
+                "label": " · ".join(roles),
+                "date": point.observation_date,
+                "date_label": date_format(point.observation_date, "j M Y"),
+                "date_iso": point.observation_date.isoformat(),
+                "rate": _rate_text(point.rate),
+                "selected": point.observation_date == selected_date,
+                "provider_keys": ", ".join(key.upper() for key in point.provider_keys),
+            }
+        )
+    return landmarks
+
+
 def build_rate_series_component(
     result: RateSeriesResult,
     *,
@@ -185,6 +215,7 @@ def build_rate_series_component(
         "stale": result.stale,
         "points": points,
         "point_count": len(points),
+        "timeline_landmarks": _timeline_landmarks(series.points, selected_date),
         "chart_payload": {
             "pair": f"{series.base_currency} → {series.quote_currency}",
             "baseCurrency": series.base_currency,
