@@ -5,15 +5,23 @@
   <meta name="description"
         content="Sourced currency-era and money-culture context for a conversion.">
 {% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+{% endblock %}
 {% block content %}
-  <section class="qa-foundation-intro" aria-labelledby="story-page-title">
+  <section class="qa-foundation-intro qa-story-page__intro"
+           aria-labelledby="story-page-title">
     <p class="qa-foundation-kicker">Money &amp; culture</p>
-    <h1 id="story-page-title">The story behind the currency context.</h1>
+    <h1 id="story-page-title">Currency history, without invented meaning.</h1>
     <p class="qa-foundation-lede">
-      Reviewed facts are assembled deterministically. Missing evidence produces a shorter story,
-      not invented filler.
+      Follow reviewed country–currency eras and sourced money-history facts. Missing evidence stays
+      missing, and historical FX is never presented as historical purchasing power.
     </p>
+    <div class="qa-story-page__actions">
+      <a class="qa-primary-button" href="{% url 'converter' %}">Back to converter</a>
+      <a class="qa-story-page__text-action" href="{% url 'explore' %}">Explore destinations</a>
+    </div>
   </section>
   {% include "components/culture/story.html" %}
-  <p><a class="qa-secondary-button" href="{% url 'converter' %}">Back to converter</a></p>
 {% endblock %}
