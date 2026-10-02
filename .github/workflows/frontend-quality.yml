@@ -79,15 +79,13 @@ jobs:
             const cssFiles = readdirSync('static/build/assets').filter((name) => name.endsWith('.css'));
             const fontUrls = cssFiles.flatMap((name) => {
               const css = readFileSync('static/build/assets/' + name, 'utf8');
-              return [...css.matchAll(/url\\(([^)]+\\.woff2)\\)/g)].map((match) =>
+              return [...css.matchAll(/url\\(([^)]+\\.(?:woff2?|ttf|otf))\\)/gi)].map((match) =>
                 match[1].replace(/^['\"']|['\"']$/g, ''),
               );
             });
-            if (fontUrls.length === 0) {
-              throw new Error('Expected at least one built WOFF2 font URL');
-            }
-            const invalid = fontUrls.filter((url) => !url.startsWith('/static/build/assets/'));
-            if (invalid.length > 0) {
-              throw new Error('Built font URLs escaped Django static base: ' + invalid.join(', '));
+            if (fontUrls.length > 0) {
+              throw new Error(
+                'Production CSS must not trigger runtime webfont requests: ' + fontUrls.join(', '),
+              );
             }
           "
