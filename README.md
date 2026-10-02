@@ -48,7 +48,7 @@ Those boundaries are more important to this project than adding another conversi
 - provider-free City Money Profile pages with direct-city evidence requirements, explicit city/national scope, reviewed price/payment context and provenance;
 - read-only `report_city_coverage` maintenance diagnostics for reviewed city-price freshness, national fallback and provenance gaps; its score is operational only, never a cost-of-living ranking;
 - Historical Series chronology with factual range landmarks and Then & Now, plus Money & culture currency-era / reviewed-story exploration that keeps historical FX separate from historical purchasing power;
-- restrained source → destination result identity and provenance-aware managed destination media with graceful no-media rendering;
+- restrained source → destination result identity and provenance-aware managed destination media with graceful no-media rendering, plus sourced Finland/Japan/France P01–P04 showcase manifests with reviewed focal points, responsive-width plans, idempotent derivative generation and strict deployment-readiness reporting;
 - optional Gemini structured insight with deterministic fallback, server-approved contextual quick prompts and per-section grounding against trusted structured packets; Explore AI is an explicit POST over a reviewed destination/intent while Explore GET remains provider-free;
 - demand-loaded converter/picker, saved-state and rate-chart enhancements with HTMX re-discovery and browser route-isolation checks;
 - browser-local anonymous favourites and recent conversions, signed-in favourite ownership and opt-in cross-device history.
