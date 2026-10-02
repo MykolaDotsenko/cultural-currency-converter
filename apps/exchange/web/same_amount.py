@@ -121,6 +121,9 @@ def same_amount_destinations_view(
                     result,
                     source_minor_units=cleaned["source_minor_units"],
                     failed_destinations=tuple(failures),
+                    destination_order=tuple(
+                        destination["token"] for destination in cleaned["resolved_destinations"]
+                    ),
                 )
             else:
                 component = {
@@ -128,6 +131,7 @@ def same_amount_destinations_view(
                     "source_currency_code": cleaned["source_currency"],
                     "destinations": (),
                     "failed_destinations": tuple(failures),
+                    "items": tuple({**item, "available": False} for item in failures),
                     "partial": True,
                 }
                 status = 503
