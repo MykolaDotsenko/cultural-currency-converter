@@ -958,9 +958,23 @@
 }
 
 .qa-city-profile__evidence {
+  min-width: 0;
+  max-width: 100%;
   margin-block-start: auto;
   border: 0;
   color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.qa-city-profile__evidence-body,
+.qa-city-profile__evidence-body > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.qa-city-profile__evidence-body a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .qa-city-profile__evidence summary {
