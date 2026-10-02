@@ -91,6 +91,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Let users save countries/places independently of a specific conversion pair.
    - Use saved places as shortcuts into common source/destination flows and destination money context.
    - Define browser-local versus account-owned persistence and migration/sync behaviour before shipping.
+   - **Current slice:** reviewed Explore country/city rows now save through the existing versioned browser-local `SavedPlace` state with validation, dedupe and bounded retention. Saved & recent reopens the canonical Converter and City Profile from the same country/city/currency identity. Controls are progressive enhancement and stay hidden when JavaScript or browser storage is unavailable. Account-owned SavedPlace sync remains future work and is not implied by sign-in.
 
 7. **Subtle bilateral visual styling — 74/100**
    - Give source and destination distinct but restrained visual identity inside the same Quiet Atlas Premium system.
