@@ -511,21 +511,21 @@
   .qa-result,
   .qa-workspace__stage,
   .qa-workspace__context {
-    padding: 16px;
+    padding: var(--qa-space-4);
   }
 
   .qa-component-section {
-    margin-block-start: 48px;
+    margin-block-start: var(--qa-space-12);
   }
 
   .qa-amount-control {
-    gap: 8px;
-    padding-inline: 12px;
+    gap: var(--qa-space-2);
+    padding-inline: var(--qa-space-3);
   }
 
   .qa-selector-trigger {
-    gap: 8px;
-    padding-inline: 8px;
+    gap: var(--qa-space-2);
+    padding-inline: var(--qa-space-2);
   }
 
   .qa-preview-disclaimer {
@@ -591,7 +591,7 @@
   }
 }
 
-/* PR2E — responsive bilateral converter composition */
+/* Responsive bilateral converter composition. */
 .qa-workspace {
   container-type: inline-size;
 }
