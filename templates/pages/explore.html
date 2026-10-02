@@ -246,6 +246,77 @@
           purchasing-power index: city and country evidence keep their original scope, freshness and provenance.
         </p>
       </section>
+      {% if explore_ai %}
+        <section class="qa-saved-section qa-explore-ai"
+                 aria-labelledby="explore-ai-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">Optional AI · reviewed facts only</p>
+              <h2 id="explore-ai-title">Explain what’s already known.</h2>
+              <p id="explore-ai-boundary">
+                Choose one reviewed destination and a bounded question. Gemini receives only
+                structured context already accepted by Explore; it cannot fetch rates, add prices,
+                rank places or create new source claims.
+              </p>
+            </div>
+          </div>
+          <form class="qa-explore-ai__form" method="post">
+            {% csrf_token %}
+            <label class="qa-field" for="explore-ai-destination">
+              <span class="qa-field__label">Reviewed destination</span>
+              <select class="qa-native-select"
+                      id="explore-ai-destination"
+                      name="destination_token"
+                      aria-describedby="explore-ai-boundary"
+                      required>
+                <option value="">Choose a destination</option>
+                {% for destination in explore_ai.destinations %}
+                  <option value="{{ destination.token }}">
+                    {{ destination.label }} · {{ destination.currency_code }}
+                  </option>
+                {% endfor %}
+              </select>
+            </label>
+            <div class="qa-result-actions"
+                 aria-label="Suggested Explore explanation questions">
+              {% for prompt in explore_ai.prompts %}
+                <button class="qa-secondary-button"
+                        type="submit"
+                        name="prompt_id"
+                        value="{{ prompt.id }}"
+                        data-ai-explanation-trigger
+                        aria-controls="conversion-explanation-region"
+                        formaction="{% url 'explore_explanation' %}"
+                        formmethod="post"
+                        hx-post="{% url 'explore_explanation' %}"
+                        hx-include="closest form"
+                        hx-target="#conversion-explanation-region"
+                        hx-swap="innerHTML"
+                        hx-sync="#conversion-explanation-region:replace"
+                        hx-disabled-elt="this"
+                        hx-indicator="#explanation-loading">{{ prompt.label }}</button>
+              {% endfor %}
+            </div>
+          </form>
+          <div class="qa-ai-explanation-status">
+            <span id="explanation-loading"
+                  class="qa-loading-indicator htmx-indicator"
+                  aria-hidden="true">Generating optional explanation…</span>
+            <p id="explanation-client-status"
+               class="qa-field__message"
+               tabindex="-1"></p>
+            <span id="explanation-announcer"
+                  class="qa-visually-hidden"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"></span>
+          </div>
+          <div id="conversion-explanation-region"
+               class="qa-ai-explanation-region"
+               data-ai-pending-requests="0"
+               aria-busy="false"></div>
+        </section>
+      {% endif %}
       <section class="qa-saved-section qa-explore-collections"
                aria-labelledby="explore-collections-title">
         <div class="qa-saved-section__heading">
