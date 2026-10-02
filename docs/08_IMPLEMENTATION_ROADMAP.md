@@ -20,14 +20,17 @@ The web product already includes:
 - explicit Camera extraction/confirmation with a separate idempotent spend handoff;
 - self-contained Offline Destination Pack export from saved budget scenarios;
 - returning-user trip continuity on the clean converter home;
-- provider-free Explore discovery over reviewed country/canonical-city money context;
-- deterministic culture/story content;
-- managed raster media with provenance/review;
-- optional AI explanation with deterministic fallback;
-- browser-local favourites/recent conversions;
-- account authentication and durable favourites;
-- separately opt-in account recent history;
-- browser accessibility/reflow quality gates.
+- provider-free Explore GET over reviewed country/canonical-city money context, with five provenance-bearing collections and canonical region → country → city navigation;
+- Same Amount Across Destinations over two to four explicit scopes with independent FX/context provenance and no ranking semantics;
+- City Money Profile with direct-city evidence requirements and explicit city/national fallback;
+- canonical one-sided Destination Comparison handoffs from Explore and Saved continuity surfaces;
+- deterministic culture/story content plus currency-era / historical-series timeline exploration;
+- managed raster media with provenance/review and restrained destination-media composition;
+- optional AI explanation with deterministic fallback, including explicit reviewed-destination Explore intents;
+- browser-local favourites/recent conversions/My Places plus account-owned favourites/scenarios and opt-in account recent history;
+- Saved & recent continuity with primary/secondary/tertiary re-entry actions and exact city-scope preservation where available;
+- demand-loaded converter/picker, Saved and rate-chart enhancements with HTMX re-discovery and route-isolation checks;
+- browser accessibility/reflow quality gates including 640px/320px (~200%/~400%) evidence, forced-colors and reduced-motion coverage.
 
 The old release-owned cartoon SVG media pack has been removed.
 
@@ -43,25 +46,30 @@ The following previously planned items are now part of the current product basel
 - **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope travels through the same contract instead of using a parallel path. Budget, destination comparison, saved-trip, Camera, offline-pack, returning-home and Explore slices now consume this shared meaning; native/mobile consumers remain future work.
 - **#34 Destination mode — shipped first production slice.** Manual country/canonical-city selection resolves the current primary local currency, preserves explicit city scope where available and redirects into the canonical converter. The destination entry surface makes no FX-provider call and uses no device location.
 
-## Now: premium visual pass
+## Now: finish premium media breadth and durable personalization
 
-Raise the existing web product to a more expensive, editorial visual standard.
+The large October 2026 frontend quality pass has already shipped:
 
-Priority outcomes:
+- premium hierarchy/CTA cleanup across Explore, City Money Profile, Same Amount and Saved continuity;
+- 320/360/390/430 mobile hardening plus 640px/320px reflow evidence (~200%/~400% equivalents);
+- stable mobile-header geometry, reduced-motion/forced-colors handling and broader browser QA;
+- demand-loaded converter/picker, consolidated Saved-state and rate-chart enhancements with HTMX re-discovery;
+- restrained source → destination result identity inside one Quiet Atlas Premium system;
+- reviewed managed destination-media composition with provenance, focal crops, intrinsic dimensions and graceful no-media rendering;
+- stronger Historical Series chronology/Then & Now and Money & culture currency-era/story exploration;
+- browser-local My Places, one-sided Compare handoffs and a bounded Saved & recent action hierarchy.
 
-- use the Finland curated-photography vertical slice as the reference implementation for source review, managed ingestion, responsive derivatives, attribution and destination-context rendering;
-- curate realistic contemporary country photography for additional destinations;
-- expand reviewed country-media coverage now that hero, everyday-value, payment-culture and local-detail roles are wired into destination context;
-- keep the converter clean when photography is unavailable;
-- validate focal-point crops across responsive ratios and keep tonal treatment consistent across real country photography;
-- expand authentic archival/heritage coverage now that Then & Now supports currency/date-scoped sourced historical media;
-- remove remaining visual patterns that feel demo-like or decorative;
-- simplify UX where controls/content are duplicated;
-- continue auditing empty/degraded states beyond the destination-context fallback already made trust-explicit;
-- profile product performance with real photographic media;
-- improve portfolio/demo clarity.
+The remaining premium/product priorities are narrower:
 
-Do not add images simply to increase visual density.
+- expand reviewed contemporary destination photography beyond the existing curated coverage rather than adding placeholder imagery;
+- continue focal-point/crop review with real media at mobile/tablet/desktop sizes;
+- finish residual CSS/spacing/typography cleanup only where it improves hierarchy or reflow;
+- keep account-owned SavedPlace persistence/sync separate until its ownership/migration contract is deliberately implemented;
+- add durable saved comparisons only if they provide value beyond the current one-sided canonical Compare handoffs;
+- add Budget AI / Comparison AI only after each surface has a trusted bounded server packet equivalent to the current conversion/Explore AI contracts;
+- continue profiling real-media performance within the current frontend guardrails.
+
+Do not add images simply to increase visual density, and do not duplicate backend truth in frontend-only state.
 
 ## Next: high-value product expansion
 
@@ -71,6 +79,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Keep source and destination culturally legible at the same time, not only financially legible.
    - Let both sides contribute useful local context such as place identity, everyday-value cues and destination atmosphere.
    - Preserve one coherent premium interface rather than turning the page into two unrelated themes.
+   - **Current production slice:** successful converter results now render a restrained Source → Destination identity rail from existing country/currency presentation context. Reviewed destination hero/supporting media can sit beside deterministic facts with provenance and graceful no-media fallback. This is presentation-only: no new financial or media truth is created.
 
 2. **Currency story / previous-currency exploration — 88/100**
    - Add a clear progressive-disclosure entry point from a selected country/currency into its currency history.
@@ -93,12 +102,13 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Let users save countries/places independently of a specific conversion pair.
    - Use saved places as shortcuts into common source/destination flows and destination money context.
    - Define browser-local versus account-owned persistence and migration/sync behaviour before shipping.
-   - **Current slice:** reviewed Explore country/city rows now save through the existing versioned browser-local `SavedPlace` state with validation, dedupe and bounded retention. Saved & recent reopens the canonical Converter and City Profile from the same country/city/currency identity. Controls are progressive enhancement and stay hidden when JavaScript or browser storage is unavailable. Account-owned SavedPlace sync remains future work and is not implied by sign-in.
+   - **Current slice:** reviewed Explore country/city rows now save through the existing versioned browser-local `SavedPlace` state with validation, dedupe and bounded retention. Saved & recent reopens canonical Converter/City Profile flows and can seed exactly one Destination Comparison side while preserving city scope. Controls are progressive enhancement and stay hidden when JavaScript or browser storage is unavailable. Account-owned SavedPlace sync remains future work and is not implied by sign-in.
 
 7. **Subtle bilateral visual styling — 74/100**
    - Give source and destination distinct but restrained visual identity inside the same Quiet Atlas Premium system.
    - Prefer typography, tonal atmosphere, reviewed photography and material cues over flags, decorative skins or split-screen theme gimmicks.
    - Ensure the bilateral treatment still works with missing media, narrow screens, large text and reduced motion.
+   - **Current production slice:** the converter result now uses one source/destination identity rail, country-theme tonal accents and managed destination media composition without flags or split-screen skins. Browser QA covers narrow/reflow states, forced colors and reduced motion; broader photography coverage remains the main unfinished visual breadth.
 
 8. **Favourite currencies — 67/100**
    - Allow users to save currencies independently of full source/destination pairs where this improves repeat conversion.
@@ -144,7 +154,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Let a user compare what the same source amount roughly means across two destinations.
    - Compare sourced everyday-value, payment-context and budget assumptions side by side while keeping currency/country identity distinct.
    - Avoid flattening country-wide estimates into false precision; city/scope differences must remain visible.
-   - **Current production slice:** the deterministic comparison domain is exposed through a provider-free entry page and explicit POST orchestration. The user supplies one source amount/currency, two country/canonical-city destinations and one shared duration/traveller/reference-basket assumption set. Each side is quoted through the canonical converter/MoneyContext path and retains effective date/provider/stale semantics, city/national scope, price provenance and payment context. Partial coverage remains visible; no winner/ranking, direct cross-currency price ratio, PPP claim or generic cost-of-living index is produced. Explore can now hand one reviewed canonical destination into the left side of Compare without selecting or inferring the second destination; all comparison assumptions remain owned by the canonical Compare flow. Saved comparisons remain future work.
+   - **Current production slice:** the deterministic comparison domain is exposed through a provider-free entry page and explicit POST orchestration. The user supplies one source amount/currency, two country/canonical-city destinations and one shared duration/traveller/reference-basket assumption set. Each side is quoted through the canonical converter/MoneyContext path and retains effective date/provider/stale semantics, city/national scope, price provenance and payment context. Partial coverage remains visible; no winner/ranking, direct cross-currency price ratio, PPP claim or generic cost-of-living index is produced. Explore and Saved continuity rows can now hand one reviewed canonical destination into the left side of Compare without selecting or inferring the second destination; exact city scope is preserved where stored. All comparison assumptions remain owned by the canonical Compare flow. A durable SavedComparison datastore remains future work.
 
 16. **Product modes: Quick / Travel / Budget / Shopping — 80/100**
    - Use one shared conversion/domain engine and expose progressively richer workflows rather than building four separate products.
