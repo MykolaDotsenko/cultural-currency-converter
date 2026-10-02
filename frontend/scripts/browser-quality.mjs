@@ -30,6 +30,10 @@ const SURFACES = [
   { name: "explore", path: "/explore/" },
   { name: "same-amount", path: "/explore/same-amount/" },
   { name: "city-money-profile", path: "/city/JP/tokyo/" },
+  {
+    name: "money-culture-story",
+    path: "/story/?source_country=FI&source_currency=EUR&destination_country=JP&destination_currency=JPY&selected_date=2026-09-21&historical=0",
+  },
   { name: "saved-state", path: "/saved/" },
   { name: "account-login", path: "/accounts/login/" },
   { name: "account-signup", path: "/accounts/signup/" },
@@ -2039,6 +2043,59 @@ async function assertPremiumResponsiveTargets(page, label, selector) {
   }
 }
 
+async function assertMoneyCultureStoryQuality(page) {
+  await page
+    .getByRole("heading", { name: "Currency history, without invented meaning.", exact: true })
+    .waitFor();
+  const story = page.locator(".qa-story-surface");
+  await story
+    .getByRole("heading", { name: "Which currency relationship applies here", exact: true })
+    .waitFor();
+
+  const eraCards = story.locator(".qa-story-era-card");
+  assert(
+    (await eraCards.count()) === 2,
+    `money-culture-story: expected two canonical currency-era cards, found ${await eraCards.count()}`,
+  );
+  assert(
+    (await story.getByText("Source currency era", { exact: true }).count()) === 1 &&
+      (await story.getByText("Destination currency era", { exact: true }).count()) === 1,
+    "money-culture-story: source/destination era identity is incomplete",
+  );
+  assert(
+    (await story.locator(".qa-story-surface__scope").innerText()).includes("Current reviewed context"),
+    "money-culture-story: current temporal scope is not explicit",
+  );
+  const storyText = await story.innerText();
+  assert(
+    /historical purchasing power/i.test(storyText),
+    "money-culture-story: historical purchasing-power boundary is missing",
+  );
+
+  const sourceDetails = story.locator(".qa-story-source-details");
+  for (const details of await sourceDetails.all()) {
+    assert(
+      !(await details.evaluate((element) => element.hasAttribute("open"))),
+      "money-culture-story: provenance should be collapsed by default",
+    );
+    await details.locator("summary").click();
+    assert(
+      await details.evaluate((element) => element.hasAttribute("open")),
+      "money-culture-story: provenance disclosure did not open",
+    );
+    assert(
+      (await details.locator("a[href^='https://']").count()) > 0,
+      "money-culture-story: provenance disclosure lost its HTTPS source",
+    );
+  }
+
+  await assertPremiumResponsiveTargets(
+    page,
+    "money-culture-story/responsive",
+    ".qa-story-page__actions a, .qa-story-source-details > summary",
+  );
+  await assertAxe(page, "money-culture-story/interactive");
+}
 async function assertHistoricalSeriesQuality(page) {
   await page.getByRole("heading", { name: "Historical trend surface", exact: true }).waitFor();
 
@@ -2523,6 +2580,7 @@ const activeSurfaces =
           "destination-comparison",
           "explore",
           "city-money-profile",
+          "money-culture-story",
           "saved-state",
           "rate-series",
         ].includes(surface.name),
@@ -2607,6 +2665,10 @@ try {
 
       if (surface.name === "city-money-profile" && viewport.name === "wide-1440") {
         await assertCityProfileQuality(page);
+      }
+
+      if (surface.name === "money-culture-story" && viewport.name === "wide-1440") {
+        await assertMoneyCultureStoryQuality(page);
       }
 
       if (surface.name === "rate-series" && viewport.name === "wide-1440") {
