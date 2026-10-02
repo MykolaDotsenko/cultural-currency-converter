@@ -305,6 +305,38 @@
   }
 }
 
+/* Contextual Explore AI: one bounded explanation instrument, not a chatbot. */
+.qa-explore-ai {
+  max-width: 72rem;
+}
+
+.qa-explore-ai__form {
+  display: grid;
+  grid-template-columns: minmax(16rem, 28rem) minmax(0, 1fr);
+  align-items: end;
+  gap: var(--qa-space-4) var(--qa-space-6);
+}
+
+.qa-explore-ai__form .qa-field {
+  margin: 0;
+}
+
+.qa-explore-ai__form .qa-result-actions {
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+}
+
+@media (max-width: 44rem) {
+  .qa-explore-ai__form {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-explore-ai__form .qa-result-actions > * {
+    width: 100%;
+  }
+}
+
 /* Same amount across destinations: premium decision surface, never a ranking. */
 .qa-explore-decision .qa-saved-section__heading {
   align-items: end;
