@@ -76,6 +76,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Add a clear progressive-disclosure entry point from a selected country/currency into its currency history.
    - Reuse the existing temporal country/currency model, archived currencies, historical FX, Then & Now and provenance rules.
    - When a country changed currency, explain the transition and expose relevant historical context without implying historical purchasing power.
+   - **Current slice:** the canonical Money & culture surface now separates country–currency era records from independently published story moments, keeps source/destination era identity explicit, collapses provenance behind inspectable disclosures and states the historical-purchasing-power boundary directly. Historical converter suggestions remain opt-in: the user's explicit currency is never silently replaced, and choosing a suggested historical currency reuses the existing canonical replay action for the selected date.
 
 3. **Travel-money companion layer — 88/100**
    - Expand destination context around practical money use rather than becoming a generic tourism guide.
@@ -86,6 +87,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Build a deeper historical exploration layer from the existing historical FX and Then & Now foundations.
    - Prefer concise timelines, currency-era transitions, sourced archival media and provenance over encyclopedia-style long-form content.
    - Keep historical FX separate from historical purchasing-power claims.
+   - **Current slice:** Historical Series now exposes chronological range anchors and stronger Then & Now semantics over the published reference-rate series, while Money & culture provides the adjacent currency-era/story layer. Both surfaces keep reference FX, temporal currency relationships and sourced editorial history distinct; neither infers historical purchasing power or causality.
 
 6. **Favourite countries / My Places — 76/100**
    - Let users save countries/places independently of a specific conversion pair.
