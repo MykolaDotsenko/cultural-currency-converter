@@ -6,7 +6,31 @@ from django import forms
 from django.utils import timezone
 
 from apps.countries.models import Country, Currency
+from apps.culture.explore_ai import available_explore_explanation_intents
 from apps.culture.story import StoryRequest
+
+
+
+
+
+class ExploreExplanationForm(forms.Form):
+    destination_token = forms.ChoiceField(label="Reviewed destination")
+    prompt_id = forms.ChoiceField(
+        choices=tuple(
+            (spec.intent.value, spec.label)
+            for spec in available_explore_explanation_intents()
+        )
+    )
+
+    def __init__(
+        self,
+        *args,
+        destination_choices: tuple[tuple[str, str], ...],
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.fields["destination_token"].choices = destination_choices
+        self.fields["destination_token"].widget.attrs["class"] = "qa-native-select"
 
 
 class StoryRequestForm(forms.Form):
