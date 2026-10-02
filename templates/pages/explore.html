@@ -99,7 +99,7 @@
                         </p>
                         <h4>{{ item.title }}</h4>
                         <p>{{ item.summary }}</p>
-                        <details class="qa-explore-evidence">
+                        <details class="qa-saved-state__privacy qa-explore-evidence">
                           <summary>Evidence · {{ item.evidence|length }} source{{ item.evidence|length|pluralize }}</summary>
                           <ul>
                             {% for source in item.evidence %}
@@ -151,9 +151,11 @@
           </div>
         {% endif %}
         {% if explore_regions %}
-          <nav class="qa-explore-region-nav" aria-label="Explore regions">
+          <nav class="qa-saved-row__actions qa-explore-region-nav"
+               aria-label="Explore regions">
             {% for region in explore_regions %}
-              <a href="#region-{{ region.slug }}">{{ region.name }}</a>
+              <a class="qa-secondary-button"
+                 href="#region-{{ region.slug }}">{{ region.name }}</a>
             {% endfor %}
           </nav>
           <div class="qa-saved-state">
@@ -177,19 +179,21 @@
                         </p>
                         <h4>{{ country.country_name }}</h4>
                         {% if country.cities %}
-                          <div class="qa-explore-city-list"
+                          <div class="qa-saved-list qa-explore-city-list"
                                aria-label="Reviewed cities in {{ country.country_name }}">
                             {% for city in country.cities %}
-                              <div class="qa-explore-city-row">
-                                <a class="qa-explore-city-link" href="{{ city.profile_url }}">
-                                  <span>
-                                    <strong>{{ city.name }}</strong>
-                                    <small>{{ city.currency_code }} · city money profile</small>
-                                  </span>
-                                  <span aria-hidden="true">↗</span>
-                                </a>
-                                <a class="qa-secondary-button"
-                                   href="{{ city.converter_url }}">Convert</a>
+                              <div class="qa-saved-row qa-explore-city-row">
+                                <div class="qa-saved-row__copy">
+                                  <h5>
+                                    <a class="qa-explore-city-link"
+                                       href="{{ city.profile_url }}">{{ city.name }}</a>
+                                  </h5>
+                                  <p class="qa-saved-row__meta">{{ city.currency_code }} · city money profile</p>
+                                </div>
+                                <div class="qa-saved-row__actions">
+                                  <a class="qa-secondary-button"
+                                     href="{{ city.converter_url }}">Convert</a>
+                                </div>
                               </div>
                             {% endfor %}
                           </div>
