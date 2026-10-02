@@ -141,18 +141,13 @@
 
 .qa-saved-empty {
   min-block-size: 5.5rem;
+  display: grid;
+  gap: var(--qa-space-3);
   margin: 0;
   padding: var(--qa-space-5);
   border: 1px dashed var(--color-border-control);
   border-radius: var(--radius-lg);
   color: var(--color-muted);
-}
-
-.qa-saved-empty__action {
-  margin-block-start: var(--qa-space-3);
-  color: var(--color-ink);
-  font-weight: 700;
-  text-decoration: underline;
 }
 
 .qa-saved-state__privacy {
