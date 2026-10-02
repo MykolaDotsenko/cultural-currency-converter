@@ -159,6 +159,17 @@ def test_curated_derivative_build_is_idempotent_and_preserves_review_contract(
     assert f"{derivatives[1].storage_file.url} 32w" in responsive_image.srcset
     assert responsive_image.focal_position == "25% 62.5%"
 
+    coverage = io.StringIO()
+    call_command(
+        "report_curated_media_coverage",
+        "--slug",
+        curated_destination.slug,
+        "--strict",
+        stdout=coverage,
+    )
+    assert f"READY: slug={curated_destination.slug}" in coverage.getvalue()
+    assert "ready=1 total=1 not_ready=0" in coverage.getvalue()
+
     second = io.StringIO()
     call_command(
         "build_curated_media_derivatives",
@@ -169,6 +180,28 @@ def test_curated_derivative_build_is_idempotent_and_preserves_review_contract(
 
     assert MediaAsset.objects.filter(derivative_of=reviewed_source).count() == 2
     assert "UNCHANGED:" in second.getvalue()
+
+
+
+@pytest.mark.django_db
+def test_curated_media_coverage_strict_fails_before_derivatives_are_published(
+    reviewed_source,
+    curated_destination,
+) -> None:
+    output = io.StringIO()
+
+    with pytest.raises(CommandError, match="not fully runtime-ready"):
+        call_command(
+            "report_curated_media_coverage",
+            "--slug",
+            curated_destination.slug,
+            "--strict",
+            stdout=output,
+        )
+
+    assert f"NOT_READY: slug={curated_destination.slug}" in output.getvalue()
+    assert "published=()" in output.getvalue()
+    assert "ready=0 total=1 not_ready=1" in output.getvalue()
 
 
 @pytest.mark.django_db
