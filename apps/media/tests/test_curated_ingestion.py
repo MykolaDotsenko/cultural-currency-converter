@@ -601,7 +601,6 @@ def test_curated_comparison_metadata_is_countryless_currency_and_time_scoped(
     assert asset.status == MediaStatus.NEEDS_REVIEW
 
 
-
 def test_all_curated_manifest_entries_validate() -> None:
     validated = {slug: validate_curated_media_spec(spec) for slug, spec in CURATED_MEDIA.items()}
 
