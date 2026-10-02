@@ -8,6 +8,7 @@ from django.urls import include, path
 from apps.common.health import health_live, health_ready
 from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
+from apps.culture.explore_ai_web import explore_context_ai_view
 from apps.culture.views import (
     city_money_profile,
     current_destination_context,
@@ -50,6 +51,7 @@ urlpatterns = [
     path("compare/", destination_comparison, name="destination_comparison"),
     path("explore/", explore, name="explore"),
     path("explore/same-amount/", explore_same_amount, name="explore_same_amount"),
+    path("explore/explain/", explore_context_ai_view, name="explore_context_ai"),
     path(
         "city/<str:country_code>/<slug:city_slug>/",
         city_money_profile,
