@@ -135,11 +135,7 @@ def _collection_action(
         }
         return f"{reverse('money_culture_story')}?{urlencode(params)}", "Read money story"
 
-    if (
-        kind is ExploreCollectionKind.CASH_CARD_BEHAVIOUR
-        and country_code
-        and currency_code
-    ):
+    if kind is ExploreCollectionKind.CASH_CARD_BEHAVIOUR and country_code and currency_code:
         return (
             _converter_url(country_code=country_code, currency_code=currency_code),
             "Open payment context",
