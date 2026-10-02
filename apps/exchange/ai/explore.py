@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -261,5 +262,5 @@ def _insight(fact: GroundedFact) -> ExplanationInsight:
     return ExplanationInsight(text=fact.statement, supporting_fact_ids=(fact.id,))
 
 
-def _ordered_unique(values) -> tuple[str, ...]:
+def _ordered_unique(values: Iterable[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(values))
