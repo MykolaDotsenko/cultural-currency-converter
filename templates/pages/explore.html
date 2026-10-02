@@ -56,7 +56,6 @@
           </article>
         </div>
       </section>
-
       <section class="qa-saved-section" aria-labelledby="explore-collections-title">
         <div class="qa-saved-section__heading">
           <div>
@@ -130,7 +129,6 @@
           </div>
         {% endif %}
       </section>
-
       <section class="qa-saved-section"
                id="regional-directory"
                aria-labelledby="explore-regions-title">
@@ -154,8 +152,7 @@
           <nav class="qa-saved-row__actions qa-explore-region-nav"
                aria-label="Explore regions">
             {% for region in explore_regions %}
-              <a class="qa-secondary-button"
-                 href="#region-{{ region.slug }}">{{ region.name }}</a>
+              <a class="qa-secondary-button" href="#region-{{ region.slug }}">{{ region.name }}</a>
             {% endfor %}
           </nav>
           <div class="qa-saved-state">
