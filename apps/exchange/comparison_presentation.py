@@ -11,7 +11,7 @@ from apps.exchange.ai.contextual import (
     available_comparison_explanation_intents,
     build_comparison_explanation_packet,
 )
-from apps.exchange.ai.packet_tokens import build_grounded_packet_token
+from apps.exchange.ai.packet_tokens import GroundedPacketTokenError, build_grounded_packet_token
 from apps.exchange.budget import BudgetBand, BudgetInterpretationState
 from apps.exchange.comparison import DestinationComparison, DestinationComparisonSide
 
@@ -133,26 +133,30 @@ def build_destination_comparison_component(
 
     ai_explanation = None
     if settings.AI_RUNTIME_EXPLANATION_ENABLED:
-        prompts = []
-        for spec in available_comparison_explanation_intents():
-            packet = build_comparison_explanation_packet(
-                comparison,
-                left_destination_name=left_destination_name,
-                right_destination_name=right_destination_name,
-                intent=ComparisonExplanationIntent(spec.intent_id),
-            )
-            prompts.append(
-                {
-                    "id": spec.intent_id,
-                    "label": spec.label,
-                    "question": spec.question,
-                    "token": build_grounded_packet_token(
-                        packet,
-                        capability=COMPARISON_AI_CAPABILITY,
-                    ),
-                }
-            )
-        ai_explanation = {"prompts": tuple(prompts)}
+        try:
+            prompts = []
+            for spec in available_comparison_explanation_intents():
+                packet = build_comparison_explanation_packet(
+                    comparison,
+                    left_destination_name=left_destination_name,
+                    right_destination_name=right_destination_name,
+                    intent=ComparisonExplanationIntent(spec.intent_id),
+                )
+                prompts.append(
+                    {
+                        "id": spec.intent_id,
+                        "label": spec.label,
+                        "question": spec.question,
+                        "token": build_grounded_packet_token(
+                            packet,
+                            capability=COMPARISON_AI_CAPABILITY,
+                        ),
+                    }
+                )
+        except GroundedPacketTokenError:
+            prompts = []
+        if prompts:
+            ai_explanation = {"prompts": tuple(prompts)}
 
     return {
         "source_amount": _money_text(
