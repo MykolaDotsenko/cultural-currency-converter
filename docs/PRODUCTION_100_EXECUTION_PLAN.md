@@ -688,13 +688,19 @@ Expand reviewed contemporary destination photography where it adds useful contex
 
 Do not add imagery for density alone.
 
+**Current production slice:** the showcase wave now has sourced P01–P04 selections for Finland, Japan and France. Finland and France no longer rely on the earlier synthetic P02–P04 trials for production selection; those trial assets remain documented as historical design experiments. Every source stays an untrusted external candidate until managed ingestion and explicit editorial review.
+
 ## PR #231 — Responsive media derivatives
 
 Ensure appropriate image dimensions, responsive sources and loading policy.
 
+**Current production slice:** curated destination specs declare deterministic width families. `build_curated_media_derivatives` preflights reviewed managed sources, creates only missing planned WebP widths, preserves provenance/focal metadata, is safe to rerun and never auto-publishes. Presentation continues to emit `srcset` only from published members of one derivative family.
+
 ## PR #232 — Focal-point and crop audit
 
 Validate mobile/tablet/desktop crops.
+
+**Current production slice:** curated destination specs now require normalized focal coordinates plus at least two safe responsive widths. Ingestion persists that reviewed crop intent on mutable candidates; the derivative builder fails closed on managed-source scope/focal drift. `report_curated_media_coverage --strict` provides read-only deployment evidence and distinguishes selected/ingested/reviewed/published states instead of treating manifest inclusion as runtime readiness.
 
 ## PR #233 — Bilateral visual system
 
