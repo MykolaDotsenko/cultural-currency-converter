@@ -25,7 +25,8 @@
       </div>
     </section>
   {% elif city_profile %}
-    <section class="qa-foundation-intro qa-city-profile__hero" aria-labelledby="city-profile-title">
+    <section class="qa-foundation-intro qa-city-profile__hero"
+             aria-labelledby="city-profile-title">
       <p class="qa-foundation-kicker">City money profile · reviewed current context</p>
       <h1 id="city-profile-title">{{ city_profile.scope_label }}</h1>
       <p class="qa-foundation-lede">
@@ -33,14 +34,17 @@
         This page uses reviewed price and payment context only. It does not request a live FX rate,
         calculate a cost-of-living score or rank this city against another place.
       </p>
-      <div class="qa-city-profile__hero-actions" aria-label="City money profile actions">
+      <div class="qa-city-profile__hero-actions"
+           aria-label="City money profile actions">
         <a class="qa-primary-button"
            href="{{ city_profile.converter_url }}">Convert for {{ city_profile.city_name }}</a>
         <a class="qa-secondary-button" href="{{ city_profile.budget_url }}">Build a budget</a>
-        <a class="qa-city-profile__text-action" href="{{ city_profile.compare_url }}">Compare this city</a>
+        <a class="qa-city-profile__text-action"
+           href="{{ city_profile.compare_url }}">Compare this city</a>
       </div>
     </section>
-    <section class="qa-saved-state qa-city-profile" aria-labelledby="city-profile-evidence-title">
+    <section class="qa-saved-state qa-city-profile"
+             aria-labelledby="city-profile-evidence-title">
       <div class="qa-saved-section">
         <div class="qa-saved-section__heading">
           <div>
@@ -132,8 +136,10 @@
         </div>
         <div class="qa-city-profile__next-actions">
           <a class="qa-primary-button" href="{{ city_profile.budget_url }}">Build a budget</a>
-          <a class="qa-city-profile__text-action" href="{{ city_profile.compare_url }}">Compare this city</a>
-          <a class="qa-city-profile__text-action" href="{{ city_profile.saved_url }}">Saved &amp; recent</a>
+          <a class="qa-city-profile__text-action"
+             href="{{ city_profile.compare_url }}">Compare this city</a>
+          <a class="qa-city-profile__text-action"
+             href="{{ city_profile.saved_url }}">Saved &amp; recent</a>
         </div>
         <p class="qa-saved-state__privacy">
           This profile stays read-only: saving and scenario ownership remain in their canonical
