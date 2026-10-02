@@ -14,7 +14,7 @@ Typical identity fields include ISO codes and display name.
 
 A canonical city identity scoped to one country.
 
-The city slug is the stable product identifier used by future city-level money-context, budget, comparison and saved-trip flows. Display names may evolve without changing saved references. A city slug is unique only within its country.
+The city slug is the stable product identifier used by current city-level Money Context, Budget, Destination Comparison, Explore/City Money Profile and saved-trip/browser-local My Places flows. Display names may evolve without changing saved references. A city slug is unique only within its country.
 
 ## Currency
 
@@ -108,6 +108,20 @@ If one side lacks one or more requested budget categories, the result is partial
 
 The current comparison basis is the reference conversion only. Payment-estimate comparison remains future work until the same explicit fee assumptions can be carried transparently and consistently across both destinations.
 
+## SameAmountDestinationSnapshot
+
+Same Amount Across Destinations is a descriptive multi-destination view over canonical current conversion and MoneyContext outputs, not a new financial model.
+
+For each of two to four explicit destination scopes it preserves:
+
+- the trusted ConversionResult;
+- provider/effective-date/stale semantics;
+- destination currency and canonical country/city identity;
+- MoneyContext availability and city/national scope;
+- provenance-bearing local context.
+
+The aggregate preserves submitted order and may contain both successful and failed destination entries. It has no winner, cost-of-living score, PPP result, affordability band or automatic reordering primitive.
+
 ## PaymentEstimate
 
 A payment estimate is a deterministic scenario calculation layered on top of a trusted current conversion.
@@ -187,6 +201,20 @@ A bounded record of a successful conversion used for repeat convenience.
 Browser-local recents and account recents are intentionally distinct privacy surfaces.
 
 Account recent history is only recorded after explicit opt-in and does not silently import existing local browser history.
+
+## Browser-local SavedPlace
+
+The shipped My Places contract is browser-local convenience state, not an account-owned Django model.
+
+A local saved place carries reviewed canonical destination identity:
+
+- country code/name;
+- optional canonical city slug/name;
+- current primary currency needed for canonical re-entry.
+
+The local contract is versioned, validated, deduplicated and retention-bounded. It can reopen Converter/City Profile flows and seed exactly one Destination Comparison side while preserving city scope. Sign-in does not silently upload or convert this local state into account-owned persistence.
+
+A future durable account-owned SavedPlace model, migration/sync policy and conflict semantics remain separate product/domain work.
 
 ## SavedScenario
 
