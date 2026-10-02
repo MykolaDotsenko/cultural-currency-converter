@@ -51,20 +51,21 @@ _FORBIDDEN_MARKET_INTERPRETATIONS = (
 _FORBIDDEN_RANKING_PHRASES = (
     "cheaper destination",
     "cheapest destination",
-    "more affordable",
-    "less affordable",
-    "unaffordable",
-    "better value",
-    "best value",
+    "more affordable destination",
+    "less affordable destination",
+    "better value destination",
+    "best value destination",
     "best destination",
-    "winner",
-    "loser",
     "you should choose",
     "recommended destination",
-    "cost-of-living index",
-    "cost of living index",
-    "purchasing power parity",
-    "purchasing-power-parity",
+)
+_FORBIDDEN_RANKING_PATTERNS = (
+    re.compile(
+        r"\b(?:is|looks|seems|appears)\s+(?:the\s+)?"
+        r"(?:cheaper|cheapest|more affordable|less affordable|unaffordable|"
+        r"better value|best value|winner|loser)\b"
+    ),
+    re.compile(r"\b(?:recommend|recommended|recommends)\s+(?:choosing\s+)?(?:this|that|the)\b"),
 )
 
 
@@ -193,8 +194,12 @@ def _validate_semantics(text: str, *, packet: ExplanationPacket) -> None:
         raise ExplanationValidationError("Explanation contains financial or timing advice.")
     if _contains_forbidden_phrase(lowered, _FORBIDDEN_MARKET_INTERPRETATIONS):
         raise ExplanationValidationError("Explanation adds unsupported market interpretation.")
-    if _contains_forbidden_phrase(lowered, _FORBIDDEN_RANKING_PHRASES):
-        raise ExplanationValidationError("Explanation adds an unsupported ranking or affordability claim.")
+    if _contains_forbidden_phrase(lowered, _FORBIDDEN_RANKING_PHRASES) or any(
+        pattern.search(lowered) for pattern in _FORBIDDEN_RANKING_PATTERNS
+    ):
+        raise ExplanationValidationError(
+            "Explanation adds an unsupported ranking or affordability claim."
+        )
     if "%" in text:
         raise ExplanationValidationError("Explanation introduces an unsupported percentage.")
 
