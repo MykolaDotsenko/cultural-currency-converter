@@ -6,37 +6,34 @@ It is an execution and release-readiness plan, not a replacement for the product
 
 > The PR numbers below are the intended sequence from the current repository state. If GitHub numbering changes, preserve the order and scope rather than the literal number.
 
+> Actual GitHub numbering has diverged from this original sequence. Treat the headings below as planned scope IDs, not as claims that GitHub PR #N implemented that exact scope. Current-production notes are authoritative where present.
+
 ## Current baseline
 
-The program baseline was reviewed against `master` at the start of this execution plan:
+The plan was originally created from an earlier repository baseline. It is now synchronized through `master`:
 
-`c5b4f0d4191f72a69ea9e0555427eb309ad6826e`
+`26594476429fe146dd2bfeda36b7feec7a36f247`
 
 The current product already includes:
 
-- current and historical FX conversion;
-- temporal country/currency modelling;
-- historical ranges and Then & Now;
+- current and historical FX conversion with explicit provider/effective-date semantics;
+- temporal country/currency modelling, historical ranges, chronological landmarks and Then & Now;
 - smart current/historical country-currency filtering;
 - explicit-assumption Real Payment Estimate;
-- Money Context Engine composition;
-- canonical city identity and city/national scope;
-- Destination Mode;
-- deterministic Budget Interpretation;
-- SavedScenario persistence and saved-trip flows;
-- explicit rate re-check with immutable observations;
-- Destination Comparison;
-- Trip Budget Remaining;
-- Camera extraction, confirmation and idempotent spend handoff;
-- self-contained Offline Destination Pack;
+- Money Context Engine composition with canonical city/national scope;
+- Destination Mode, Destination Comparison and Same Amount Across Destinations;
+- deterministic Budget Interpretation, SavedScenario persistence, explicit rate re-check, Trip Budget Remaining, Camera spend handoff and Offline Destination Pack;
 - Returning-user Trip Home;
-- first provider-free Explore production slice;
-- managed provenance-aware media;
-- optional AI explanation with deterministic fallback;
-- browser-local and account-owned saved state;
-- Chromium/Firefox/WebKit quality coverage and Python/PostgreSQL CI.
+- provider-free Explore GET with five provenance-bearing collections and canonical region → country → city navigation;
+- one-sided canonical Compare handoffs from Explore and Saved continuity surfaces;
+- browser-local My Places with exact country/city identity preservation;
+- provider-free City Money Profile;
+- optional grounded AI explanation with deterministic fallback, including explicit reviewed-destination Explore intents;
+- managed provenance-aware media, restrained source → destination presentation and historical/currency-era story exploration;
+- demand-loaded frontend enhancement routing with consolidated Saved and rate-chart lazy chunks;
+- Chromium/Firefox/WebKit quality coverage, 640px/320px reflow evidence, forced-colors/reduced-motion checks and Python/PostgreSQL CI.
 
-The current web product is treated as approximately **92/100**. The remaining work is mainly product depth, city/data coverage, contextual AI UX, cultural/history depth, personalization, PWA/offline completeness, premium visual polish, and production evidence.
+The original **92/100** figure is a historical planning snapshot, not a current score. Remaining work is concentrated in broader reviewed media coverage, durable account-owned SavedPlace/saved-comparison persistence, richer scenario/personalization flows, PWA/offline lifecycle work and final production evidence.
 
 ## 100/100 definition of done
 
@@ -314,7 +311,7 @@ Create a coherent city money profile using existing canonical context:
 - Compare;
 - Save/My Places handoff.
 
-**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. The current save handoff remains truthful: users continue into existing account-owned budget/scenario saving; standalone My Places persistence is still reserved for PR #208 rather than being duplicated here.
+**Current production slice:** a dedicated provider-free city profile now resolves one canonical active city through the current-primary currency relationship and the existing `build_destination_context()` contract. A profile exists only when direct city evidence survives the same freshness/provenance rules; national data alone cannot manufacture a city page. Visible price rows retain explicit city versus national-fallback scope, observation date, source class, confidence and provenance, while country-level payment guidance is shown only when reviewed. Convert, destination-budget and destination-comparison handoffs preserve the canonical city token. Reviewed country/city identity can now be saved through browser-local My Places and reopened from Saved & recent; durable account-owned SavedPlace persistence/sync is still future work.
 
 ## PR #193 — City/national fallback trust audit
 
@@ -370,21 +367,29 @@ Each destination independently retains:
 
 No winner, PPP claim, direct “cheapest” ranking or generic cost-of-living score.
 
+**Current production slice:** shipped as a separate Explore decision surface for two to four explicit destinations. It reuses canonical current conversion/Money Context composition, preserves destination order and independent provider/date/scope/provenance semantics, allows partial success, and never derives a winner, PPP or affordability ranking.
+
 ## PR #197 — Explore → Compare handoff
 
 Allow selected Explore destinations to open the canonical Destination Comparison flow.
 
 No comparison business logic belongs in Explore.
 
+**Current production slice:** shipped. Reviewed Explore country/city rows and destination-oriented collections can seed exactly one canonical comparison side. City tokens are preserved, Destination B remains unset and all comparison assumptions stay owned by the canonical Compare flow.
+
 ## PR #198 — Explore → My Places handoff
 
 Add save-place interaction contract; durable persistence is completed in the personalization phase.
+
+**Current production slice:** shipped as browser-local persistence. Reviewed country/city rows use the versioned local SavedPlace contract with validation, dedupe and bounded retention; no-JS/storage-unavailable states do not render fake controls. Durable account ownership/sync remains future work.
 
 ## PR #199 — Explore → contextual AI
 
 Expose only prompts grounded in reviewed Explore context.
 
 AI must never create discovery cards or substitute for missing data.
+
+**Current production slice:** shipped as an explicit POST over one reviewed destination plus one server-approved intent. The server revalidates the destination against current Explore state, rebuilds trusted DestinationContext and sends only a bounded structured fact packet through the existing validated AI stack. Explore GET remains provider-free; provider failure returns deterministic grounded fallback.
 
 ## PR #200 — Explore quality pass
 
@@ -401,6 +406,8 @@ Test and polish:
 - Firefox/WebKit;
 - no-JS where appropriate.
 
+**Current production slice:** the major Explore/City/Same Amount quality pass is shipped: premium hierarchy, reduced CTA duplication, 320/360/390/430 mobile coverage, keyboard/axe checks, no-JS continuity, forced-colors/reduced-motion handling and Chromium full + Firefox/WebKit smoke coverage.
+
 ---
 
 # Phase 4 — Currency and cultural history
@@ -408,6 +415,8 @@ Test and polish:
 ## PR #201 — Currency story entry point
 
 Add a progressive-disclosure entry from a current conversion/context into currency history.
+
+**Current production slice:** shipped through the Money & culture / historical-series handoff. Currency history stays progressive-disclosure and reuses existing temporal/provenance contracts rather than creating a second historical truth path.
 
 ## PR #202 — Previous-currency story
 
@@ -421,6 +430,8 @@ Surface:
 
 No unsourced macroeconomic explanation.
 
+**Current production slice:** Money & culture now separates temporal country–currency eras from independently reviewed story moments, keeps source/destination era identity explicit and preserves opt-in historical replay. No unsourced causality or purchasing-power inference is introduced.
+
 ## PR #203 — Currency timeline
 
 Compose:
@@ -430,11 +441,15 @@ Compose:
 - selected historical observations;
 - provenance.
 
+**Current production slice:** Historical Series now exposes factual chronological range landmarks plus selected/minimum/maximum/last observations and stronger Then & Now semantics. The adjacent Money & culture era/story surface supplies reviewed temporal context without inventing currency events.
+
 ## PR #204 — Historical media integration
 
 Only reviewed and adequately licensed/attributed media may support timeline/Then & Now surfaces.
 
 Historical media must be temporally scoped.
+
+**Current production slice:** managed media already enforces provenance/review and graceful omission when suitable media is absent. Broader authentic archival coverage remains future breadth work; historical FX is never converted into an unsourced historical purchasing-power claim.
 
 ## PR #205 — Cultural-history portal
 
@@ -452,6 +467,8 @@ Create one compact exploration surface for:
 
 Keep source and destination culturally legible together without creating two unrelated visual themes.
 
+**Current production slice:** successful converter results now include a restrained Source → Destination identity rail using existing presentation context and country themes. Reviewed destination media can accompany the result without becoming financial truth; missing media leaves a clean, complete converter.
+
 ## PR #207 — Historical semantics audit
 
 Enforce the invariant:
@@ -459,6 +476,8 @@ Enforce the invariant:
 **historical FX is not historical purchasing power.**
 
 Audit code, templates, copy and tests for misleading language.
+
+**Current production slice:** the historical-series and Money & culture surfaces now state and test this boundary directly. Factual FX extrema/timeline landmarks remain reference-rate observations, not affordability or purchasing-power claims.
 
 ---
 
@@ -478,6 +497,8 @@ Constraints:
 - city belongs to country;
 - owner duplicates prevented;
 - ownership enforced.
+
+**Current status:** this durable account-owned domain is **not shipped**. What is shipped is a browser-local versioned SavedPlace contract plus Saved & recent continuity. Sign-in does not silently migrate or sync those local places.
 
 ## PR #209 — My Places UX
 
@@ -523,6 +544,8 @@ From recent history allow:
 - open destination.
 
 Historical records preserve original requested/effective-date semantics.
+
+**Current production slice:** recent conversions already support canonical Repeat and one-sided destination Compare handoffs; Reverse/Swap remains a separate tertiary action and requested/effective-date meaning is preserved. Save/create-trip/open-destination expansion is still future work where no canonical handoff exists.
 
 ## PR #213 — Next-trip defaults
 

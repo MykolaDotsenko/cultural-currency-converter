@@ -27,7 +27,9 @@ Current web ownership:
 - Django templates render the page and HTMX fragments;
 - HTMX handles server-driven partial updates;
 - TypeScript adds focused behaviour such as pickers, persistence helpers and chart loading;
-- Vite builds frontend assets;
+- the small core entry keeps HTMX coordination, typography and race-sensitive AI lifecycle handling, while converter/picker, consolidated Saved-state and rate-chart behaviour are demand-loaded only when matching DOM contracts exist;
+- enhancement discovery reruns after HTMX swaps so lazy modules do not depend on initial `DOMContentLoaded` timing;
+- Vite builds frontend assets and the browser-quality suite certifies route isolation so low-interaction pages do not eagerly pull unrelated dynamic chunks;
 - Tailwind/project CSS provide the visual system;
 - project-owned CSP middleware constrains executable/browser content on public responses, with an explicit report-only/enforce rollout mode and a separate Django-admin compatibility policy.
 
@@ -99,11 +101,15 @@ The Money Context Engine is not a second datastore, rate provider or calculation
 
 Destination mode is deliberately an entry adapter, not a second conversion engine. It resolves an explicit current country/city selection to the current primary destination currency, then redirects to the canonical converter with normalized destination scope. It performs no FX-provider call itself; conversion truth, source/effective-date semantics and context composition remain centralized.
 
-`apps/culture/explore.py` is a provider-free discovery query over that same reviewed context layer. It first identifies published/fresh candidate country and canonical-city scopes, then reuses `build_destination_context()` as the final provenance/freshness gate. A city is publishable in Explore only when explicit canonical city price evidence survives that gate; national fallback cannot create a city card by itself. The query exposes no rate, affordability score, ranking or AI output and stops composing contexts once the requested result limit is satisfied. The web adapter only renders descriptive coverage/freshness metadata and links the selected scope back into the canonical converter.
+`apps/culture/explore.py` is a provider-free discovery query over that same reviewed context layer. It first identifies published/fresh candidate country and canonical-city scopes, then reuses `build_destination_context()` as the final provenance/freshness gate. A city is publishable in Explore only when explicit canonical city price evidence survives that gate; national fallback cannot create a city card by itself. The GET query exposes no live rate, affordability score or ranking. Its presentation layer composes five provenance-bearing collections plus canonical region → country → city navigation, and hands exact scope into Converter, City Money Profile, one-sided Destination Comparison and browser-local My Places without creating a second geography or price model.
+
+Explore contextual AI is a separate explicit POST boundary, not part of the provider-free GET query. The POST accepts only a currently reviewed canonical destination plus a server-approved intent, rebuilds trusted DestinationContext server-side and forwards a bounded structured fact packet through the existing validated AI explanation stack. Raw prompts and arbitrary destination facts do not become application truth.
 
 `apps/exchange/budget.py` is the first pure-domain consumer of that contract. It compares an explicitly selected destination amount basis with a user/editorial daily basket built from already-sourced `TypicalPriceContext` values. It does not query providers, infer missing categories or establish a universal cost-of-living truth. Country-level interpretation excludes city-only observations; city-level interpretation may use the selected city plus visibly national fallback rows already present in the MoneyContext.
 
 `apps/exchange/comparison.py` composes two current MoneyContext values only when they share the same source amount/currency and use different destination scopes. It applies one shared reference-budget assumption set to both sides, preserves each destination's full ConversionResult, MoneyContext availability state, local currency/scope/provenance and intentionally exposes no winner/ranking primitive. The shipped web adapter obtains both trusted conversions through the canonical converter application path using one shared current-rate gateway, then passes the two MoneyContext values into this domain contract. It does not create an independent comparison-rate calculation path; GET remains provider-free and provider failure on either side prevents a misleading partial financial comparison.
+
+The Same Amount Across Destinations surface is a separate orchestration over canonical current conversions and MoneyContext, not a new rate or cost-of-living engine. It evaluates two to four explicit destination scopes independently, preserves submitted order and each destination's provider/effective-date/stale/provenance meaning, and may surface partial success without synthesizing a winner, PPP claim or affordability rank.
 
 ### Budget interpretation web trust boundary
 

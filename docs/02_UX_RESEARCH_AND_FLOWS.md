@@ -147,6 +147,8 @@ A useful pattern is:
 
 The first Smart result summary slice is now shipped as a deterministic part of the successful conversion result, before optional AI. It uses one concise sentence, keeps historical/stale/exact trust meaning ahead of destination enrichment and may reference only reviewed local-price/payment context already shown by the product. This keeps the top-line implication useful without turning it into a recommendation, hidden ranking or generated factual layer.
 
+Explore now reuses the same trust boundary for destination-level AI: there is no empty chatbot and no arbitrary prompt. The user selects one reviewed destination plus a bounded intent such as overview, cash/card or price evidence. The server revalidates that destination against current Explore state, rebuilds trusted DestinationContext and sends only structured fact IDs/values to the existing validated explanation stack. Provider failure falls back deterministically and does not weaken discovery truth.
+
 AI answers must remain downstream of trusted structured data. The interface should make it easy to dismiss or ignore AI without weakening the core conversion experience.
 
 ## Cultural-history portal
@@ -197,7 +199,7 @@ Current UX rules:
 - changing the destination country or swapping sides clears stale city scope rather than applying a city to the wrong country;
 - users can still change currency manually once they reach the converter.
 
-Future work may add My Places or optional coarse location assistance. Returning-user continuity is already available on the clean converter home for relevant saved trips. Any location assistance must remain opt-in and must never silently persist travel history.
+Browser-local My Places is now shipped for reviewed Explore country/city scopes and reopens canonical destination flows without account sync. Optional coarse location assistance remains future work. Returning-user continuity is already available on the clean converter home for relevant saved trips. Any location assistance must remain opt-in and must never silently persist travel history.
 
 ## Destination comparison flow
 
@@ -219,21 +221,23 @@ UX rules:
 - a provider failure on either required side produces a neutral recoverable state rather than silently comparing one real side with one inferred side;
 - the surface remains usable without JavaScript and has browser QA coverage.
 
-Saved comparisons remain future work. The first Explore discovery slice is now shipped and hands reviewed country/canonical-city scopes back to the canonical converter.
+Saved comparisons remain future work. Explore, My Places, saved scenarios, favourites and recent conversions can now seed exactly one canonical Destination Comparison side when they already know a destination; the second side and all comparison assumptions remain explicit user choices.
 
 ## Discovery / Explore experience
 
-The first Explore surface is now shipped as a provider-free discovery page over reviewed current destination context. It is alphabetical, requires explicit canonical city price evidence before presenting a city card, keeps national fallback visibly scoped, and hands a selected destination back to the canonical converter. It performs no live FX or AI request and does not rank destinations.
+Explore is now a provider-free GET over reviewed current destination context with five provenance-bearing deterministic collections and canonical region → country → city navigation. Direct city evidence is required before a city scope is exposed; national fallback remains visibly scoped. Unknown geography falls into an explicit reviewed fallback group rather than disappearing.
 
-Future discovery expansion may add:
+Current Explore actions can:
 
-- what the same source amount roughly means across destinations;
-- card-first versus cash-relevant destinations;
-- currency stories and historical transitions;
-- region-based exploration;
-- destination alternatives with comparable sourced money context.
+- open the canonical Converter or City Money Profile with exact country/city scope;
+- seed exactly one side of Destination Comparison without choosing a peer;
+- save/remove reviewed country/city identity in browser-local My Places;
+- open Same Amount Across Destinations, where one source amount is viewed across two to four explicit destinations without ranking;
+- request a bounded contextual AI explanation only after the user explicitly chooses a reviewed destination and server-approved intent.
 
-Discovery rankings or labels should appear only when the underlying data is comparable enough to support them. Avoid pseudo-precise global “cheapest/most expensive” claims built from inconsistent country or city data.
+Explore GET itself performs no live FX or AI call. The AI POST rebuilds trusted current context server-side and sends only a bounded structured fact packet; it cannot manufacture discovery cards, FX, prices, payment guidance, affordability, PPP or rankings.
+
+Future discovery expansion may still add richer destination alternatives or additional evidence-backed cash/card-oriented exploration, but only when the underlying data is comparable enough to support it. Avoid pseudo-precise global “cheapest/most expensive” claims built from inconsistent country or city data.
 
 ## Saved and recent state
 
@@ -242,6 +246,8 @@ Anonymous browser storage is useful for convenience but should be described as l
 Repeated saved/recent row actions should keep concise visible verbs while exposing row-specific accessible names. Collection-wide clear operations are destructive actions and should be visually distinguishable from routine secondary navigation without adding unnecessary confirmation friction.
 
 Signed-in data should respect ownership. Cross-device recent history is separately opt-in; signing in should not silently upload existing local recent activity.
+
+**Current continuity slice:** Saved & recent now gives account-owned scenarios/favourites/recent history and browser-local My Places/favourites/recent conversions a restrained re-entry hierarchy. Primary actions reopen the canonical flow, secondary Compare actions seed only a known destination, tertiary Reverse/Swap/City Profile actions stay visually subordinate, and destructive actions remain explicit. Browser-local My Places preserve reviewed city scope when available. Account-owned SavedPlace sync and a durable SavedComparison model are still future work.
 
 ### Actionable history
 

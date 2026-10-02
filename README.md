@@ -21,7 +21,7 @@ The arithmetic is the easy part. A useful currency product also has to answer:
 - **Which rate was used?** Current and historical conversions keep source and effective-date semantics explicit.
 - **What happens when a provider fails?** Core conversion still works if optional media, enrichment or AI is unavailable.
 - **Where did local context come from?** Destination content and managed media keep provenance instead of presenting generated filler as fact.
-- **Who owns saved data?** Anonymous favourites/recent conversions stay browser-local; signed-in favourites, saved scenarios and account history are owner-scoped, while cross-device recent history is opt-in.
+- **Who owns saved data?** Anonymous favourites, recent conversions and My Places stay browser-local; signed-in favourites, saved scenarios and opt-in account history are owner-scoped. Browser-local My Places do not silently become account data.
 
 Those boundaries are more important to this project than adding another conversion widget.
 
@@ -41,13 +41,17 @@ Those boundaries are more important to this project than adding another conversi
 - returning-user home continuity for the most relevant active/upcoming saved trip, using stored FX observations, confirmed spend and reviewed local-context freshness without silent rate refresh;
 - optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing, mandatory user confirmation and a separate idempotent Add-to-trip-budget handoff;
 - self-contained offline destination-pack export using stored FX/freshness semantics and reviewed destination context;
-- provider-free Explore discovery over reviewed country/canonical-city money context with canonical converter handoff and no destination ranking;
+- provider-free regional Explore discovery over reviewed country/canonical-city money context, with five provenance-bearing collections, region → country → city navigation and canonical Converter/City Profile handoffs;
+- Same Amount Across Destinations for two to four explicit destinations, preserving independent rate/provider/date/scope/provenance semantics without ranking, PPP or affordability claims;
+- canonical one-sided Compare handoffs from Explore, browser-local My Places, saved scenarios, favourites and recent conversions; Destination B is never inferred;
+- browser-local My Places with reviewed country/city identity, bounded/deduplicated persistence and Saved-page continuity into Convert, Compare and City Profile; account-owned SavedPlace sync remains future work;
+- provider-free City Money Profile pages with direct-city evidence requirements, explicit city/national scope, reviewed price/payment context and provenance;
 - read-only `report_city_coverage` maintenance diagnostics for reviewed city-price freshness, national fallback and provenance gaps; its score is operational only, never a cost-of-living ranking;
-- deterministic Money & culture stories;
-- provenance-aware photographic media;
-- optional Gemini structured insight with deterministic fallback, server-approved contextual quick prompts and per-section grounding against the signed conversion snapshot;
-- browser-local anonymous favourites and recent conversions;
-- signed-in favourite ownership and opt-in cross-device history.
+- Historical Series chronology with factual range landmarks and Then & Now, plus Money & culture currency-era / reviewed-story exploration that keeps historical FX separate from historical purchasing power;
+- restrained source → destination result identity and provenance-aware managed destination media with graceful no-media rendering;
+- optional Gemini structured insight with deterministic fallback, server-approved contextual quick prompts and per-section grounding against trusted structured packets; Explore AI is an explicit POST over a reviewed destination/intent while Explore GET remains provider-free;
+- demand-loaded converter/picker, saved-state and rate-chart enhancements with HTMX re-discovery and browser route-isolation checks;
+- browser-local anonymous favourites and recent conversions, signed-in favourite ownership and opt-in cross-device history.
 
 ## Architecture
 
