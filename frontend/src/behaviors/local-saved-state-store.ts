@@ -1,6 +1,7 @@
 const STORAGE_VERSION = 1 as const;
 const MAX_FAVOURITES = 12;
 const MAX_RECENTS = 10;
+const MAX_PLACES = 24;
 const STORAGE_PROBE_KEY = "cultural-currency:storage-probe";
 
 export const STORAGE_KEY = "cultural-currency:local-preferences:v1";
@@ -22,6 +23,17 @@ export interface FavouritePair extends PairContext {
   savedAt: string;
 }
 
+export interface SavedPlace {
+  id: string;
+  token: string;
+  countryCode: string;
+  countryName: string;
+  citySlug: string;
+  cityName: string;
+  currencyCode: string;
+  savedAt: string;
+}
+
 export interface RecentConversion extends PairContext {
   id: string;
   amount: string;
@@ -35,6 +47,7 @@ export interface RecentConversion extends PairContext {
 export interface LocalPreferencesV1 {
   version: typeof STORAGE_VERSION;
   favourites: FavouritePair[];
+  places: SavedPlace[];
   recent: RecentConversion[];
 }
 
@@ -46,7 +59,7 @@ export interface ReadResult {
 let cachedStorage: Storage | null | undefined;
 
 function emptyState(): LocalPreferencesV1 {
-  return { version: STORAGE_VERSION, favourites: [], recent: [] };
+  return { version: STORAGE_VERSION, favourites: [], places: [], recent: [] };
 }
 
 function localStorageOrNull(): Storage | null {
@@ -137,6 +150,44 @@ export function pairId(pair: PairContext): string {
   ].join(":");
 }
 
+function normalizedCitySlug(value: unknown): string | null {
+  if (value === "") return "";
+  if (typeof value !== "string" || value.length > 120) return null;
+  const slug = value.toLowerCase().trim();
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? slug : null;
+}
+
+export function normalizePlace(value: unknown): SavedPlace | null {
+  if (!isRecord(value)) return null;
+  const countryCode = normalizedCountryCode(value.countryCode);
+  const countryName = normalizedString(value.countryName, 120);
+  const citySlug = normalizedCitySlug(value.citySlug);
+  const cityName = normalizedString(value.cityName, 120);
+  const currencyCode = normalizedCurrencyCode(value.currencyCode);
+  const savedAt = normalizedTimestamp(value.savedAt);
+  if (
+    !countryCode ||
+    countryName === null ||
+    citySlug === null ||
+    cityName === null ||
+    currencyCode === null ||
+    savedAt === null
+  ) {
+    return null;
+  }
+  const token = citySlug ? `${countryCode}:${citySlug}` : countryCode;
+  return {
+    id: token,
+    token,
+    countryCode,
+    countryName,
+    citySlug,
+    cityName,
+    currencyCode,
+    savedAt,
+  };
+}
+
 function normalizeFavourite(value: unknown): FavouritePair | null {
   if (!isRecord(value)) return null;
   const pair = normalizePair(value);
@@ -216,10 +267,15 @@ export function readState(): ReadResult {
     }
 
     const rawFavourites = Array.isArray(parsed.favourites) ? parsed.favourites : [];
+    const rawPlaces = Array.isArray(parsed.places) ? parsed.places : [];
     const rawRecent = Array.isArray(parsed.recent) ? parsed.recent : [];
     const favourites = dedupeById(
       rawFavourites.map(normalizeFavourite).filter((item): item is FavouritePair => item !== null),
       MAX_FAVOURITES,
+    );
+    const places = dedupeById(
+      rawPlaces.map(normalizePlace).filter((item): item is SavedPlace => item !== null),
+      MAX_PLACES,
     );
     const recent = dedupeById(
       rawRecent.map(normalizeRecent).filter((item): item is RecentConversion => item !== null),
@@ -229,10 +285,11 @@ export function readState(): ReadResult {
       !Array.isArray(parsed.favourites) ||
       !Array.isArray(parsed.recent) ||
       favourites.length !== Math.min(rawFavourites.length, MAX_FAVOURITES) ||
+      places.length !== Math.min(rawPlaces.length, MAX_PLACES) ||
       recent.length !== Math.min(rawRecent.length, MAX_RECENTS);
 
     return {
-      state: { version: STORAGE_VERSION, favourites, recent },
+      state: { version: STORAGE_VERSION, favourites, places, recent },
       status: recovered ? "recovered" : "ok",
     };
   } catch {
@@ -271,6 +328,28 @@ export function toggleFavouriteInState(
 
   return {
     state: { ...state, favourites },
+    saved: !existed,
+  };
+}
+
+export function isPlaceSaved(token: string, state: LocalPreferencesV1): boolean {
+  return state.places.some((item) => item.token === token);
+}
+
+export function togglePlaceInState(
+  state: LocalPreferencesV1,
+  place: Omit<SavedPlace, "id" | "savedAt">,
+  savedAt = new Date().toISOString(),
+): { state: LocalPreferencesV1; saved: boolean } {
+  const existed = state.places.some((item) => item.token === place.token);
+  const places = existed
+    ? state.places.filter((item) => item.token !== place.token)
+    : [
+        { ...place, id: place.token, savedAt },
+        ...state.places.filter((item) => item.token !== place.token),
+      ].slice(0, MAX_PLACES);
+  return {
+    state: { ...state, places },
     saved: !existed,
   };
 }
