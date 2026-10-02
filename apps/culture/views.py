@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from decimal import DecimalException
 
+from django.conf import settings
 from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -17,6 +18,7 @@ from apps.culture.explore import build_explore_destinations
 from apps.culture.explore_collections import build_explore_collections
 from apps.culture.explore_navigation import build_explore_regions
 from apps.culture.explore_presentation import (
+    build_explore_ai_component,
     build_explore_collection_components,
     build_explore_destination_cards,
     build_explore_region_components,
@@ -145,6 +147,11 @@ def explore(request: HttpRequest) -> HttpResponse:
         "region_count": len(region_components),
         "collection_count": len(collection_components),
     }
+    explore_ai = (
+        build_explore_ai_component(destinations)
+        if settings.AI_RUNTIME_EXPLANATION_ENABLED
+        else None
+    )
 
     return render(
         request,
@@ -158,6 +165,7 @@ def explore(request: HttpRequest) -> HttpResponse:
             "explore_collection_error": collection_error,
             "explore_navigation_error": navigation_error,
             "explore_as_of": selected_date,
+            "explore_ai": explore_ai,
         },
     )
 
