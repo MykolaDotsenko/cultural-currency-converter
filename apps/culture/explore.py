@@ -38,6 +38,14 @@ class ExploreDestination:
         return self.country_name
 
     @property
+    def token(self) -> str:
+        return (
+            f"{self.country_code}:{self.city_slug}"
+            if self.city_slug
+            else self.country_code
+        )
+
+    @property
     def is_city_scope(self) -> bool:
         return bool(self.city_slug)
 
