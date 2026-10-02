@@ -36,6 +36,14 @@
        data-storage-tone="neutral"
        aria-live="off">Checking browser storage…</p>
     <noscript>
+      <style>
+        [data-local-storage-status],
+        [data-places-empty],
+        [data-favourites-empty],
+        [data-recents-empty] {
+          display: none !important;
+        }
+      </style>
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
           Account-saved scenarios, pairs and account recent history remain available. JavaScript is
