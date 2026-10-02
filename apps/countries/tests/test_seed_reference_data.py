@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from django.core.management import call_command
 
-from apps.countries.models import CountryCurrency, Currency
+from apps.countries.models import Country, CountryCurrency, Currency
 
 
 @pytest.mark.django_db
