@@ -101,6 +101,22 @@ class RuntimeExplanationService:
             schema_version=schema_version,
         )
 
+        cache_hit_event = (
+            "AI runtime explanation cache hit"
+            if capability == "runtime_explanation"
+            else "AI grounded explanation cache hit"
+        )
+        fallback_event = (
+            "AI runtime explanation fallback"
+            if capability == "runtime_explanation"
+            else "AI grounded explanation fallback"
+        )
+        success_event = (
+            "AI runtime explanation success"
+            if capability == "runtime_explanation"
+            else "AI grounded explanation success"
+        )
+
         cached = _safe_persistent_cache_get(cache_key)
         if cached is not None:
             try:
@@ -120,7 +136,7 @@ class RuntimeExplanationService:
                 _safe_persistent_cache_delete(cached)
             else:
                 logger.info(
-                    "AI grounded explanation cache hit",
+                    cache_hit_event,
                     extra={
                         "capability": capability,
                         "provider": cached.provider,
@@ -139,7 +155,7 @@ class RuntimeExplanationService:
         def fallback(reason: str) -> ExplanationDelivery:
             return ExplanationDelivery(
                 result=fallback_factory(reason),
-                cache_status="fallback",
+                cache_status="deterministic_fallback",
                 packet_hash=packet.packet_hash,
             )
 
@@ -174,7 +190,7 @@ class RuntimeExplanationService:
                     timeout=_COOLDOWN_SECONDS,
                 )
                 logger.warning(
-                    "AI grounded explanation fallback",
+                    fallback_event,
                     extra={
                         "capability": capability,
                         "provider": "google",
@@ -220,7 +236,7 @@ class RuntimeExplanationService:
                     exc_info=True,
                 )
             logger.info(
-                "AI grounded explanation success",
+                success_event,
                 extra={
                     "capability": capability,
                     "provider": "google",
