@@ -1959,13 +1959,22 @@ async function assertSameAmountQuality(page) {
     .locator('input[name="destinations"]:checked')
     .evaluateAll((elements) => elements.map((element) => element.value));
 
+  const requestPromise = page.waitForRequest(
+    (request) =>
+      request.url().endsWith("/explore/same-amount/") && request.method() === "POST",
+  );
   const responsePromise = page.waitForResponse(
     (response) =>
       response.url().endsWith("/explore/same-amount/") && response.request().method() === "POST",
   );
   await form.getByRole("button", { name: "View across destinations", exact: true }).click();
-  const response = await responsePromise;
+  const [request, response] = await Promise.all([requestPromise, responsePromise]);
   assert(response.ok(), `same-amount: form submission returned ${response.status()}`);
+  const submittedOrder = new URLSearchParams(request.postData() ?? "").getAll("destinations");
+  assert(
+    submittedOrder.length === 2,
+    `same-amount: expected two submitted destinations, got ${JSON.stringify(submittedOrder)}`,
+  );
 
   await page.getByRole("heading", { name: /across your selected destinations/ }).waitFor();
   const cards = page.locator(".qa-same-amount-card");
@@ -1974,15 +1983,16 @@ async function assertSameAmountQuality(page) {
     `same-amount: expected 2 result cards, found ${await cards.count()}`,
   );
 
-  const headings = await cards.locator("h3").allTextContents();
-  const expectedHeadings = selectedOrder.map((token) => {
-    if (token === "JP:tokyo") return "Tokyo, Japan";
-    if (token === "CA:toronto") return "Toronto, Canada";
-    throw new Error(`same-amount: unexpected selected destination token ${token}`);
-  });
   assert(
-    JSON.stringify(headings) === JSON.stringify(expectedHeadings),
-    `same-amount: explicit destination order drifted: selected=${JSON.stringify(selectedOrder)} rendered=${JSON.stringify(headings)}`,
+    JSON.stringify(selectedOrder) === JSON.stringify(["CA:toronto", "JP:tokyo"]),
+    `same-amount: deterministic checkbox selection drifted: ${JSON.stringify(selectedOrder)}`,
+  );
+  const renderedOrder = await cards.evaluateAll((elements) =>
+    elements.map((element) => element.dataset.destinationToken ?? ""),
+  );
+  assert(
+    JSON.stringify(renderedOrder) === JSON.stringify(submittedOrder),
+    `same-amount: submitted destination order drifted: submitted=${JSON.stringify(submittedOrder)} rendered=${JSON.stringify(renderedOrder)}`,
   );
   assert(
     (await page.getByText("No winner is calculated.", { exact: true }).count()) === 1,
