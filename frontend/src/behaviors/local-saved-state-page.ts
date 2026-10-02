@@ -123,7 +123,7 @@ function setEmptyState(
   const copy = document.createElement("span");
   copy.textContent = message;
   const action = document.createElement("a");
-  action.className = "qa-saved-empty__action";
+  action.className = "qa-saved-row__text-action qa-saved-empty__action";
   action.href = href;
   action.textContent = actionText;
   element.replaceChildren(copy, action);
