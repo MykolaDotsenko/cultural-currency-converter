@@ -46,7 +46,7 @@ The following previously planned items are now part of the current product basel
 - **Money Context Engine application contract — foundation shipped.** Trusted conversion output now composes with optional current destination context through one reusable application contract with explicit available/empty/not-applicable/degraded states. Canonical destination city scope travels through the same contract instead of using a parallel path. Budget, destination comparison, saved-trip, Camera, offline-pack, returning-home and Explore slices now consume this shared meaning; native/mobile consumers remain future work.
 - **#34 Destination mode — shipped first production slice.** Manual country/canonical-city selection resolves the current primary local currency, preserves explicit city scope where available and redirects into the canonical converter. The destination entry surface makes no FX-provider call and uses no device location.
 
-## Now: finish durable personalization and trusted contextual AI
+## Now: finish trusted contextual AI and final release evidence
 
 The large October 2026 frontend/media quality pass has already shipped:
 
@@ -60,15 +60,14 @@ The large October 2026 frontend/media quality pass has already shipped:
 - sourced showcase P01–P04 selections for Finland, Japan and France, each with executable reviewed focal coordinates and deterministic responsive-width plans;
 - idempotent curated derivative generation plus read-only strict readiness reporting, while keeping ingestion/review/publication separate and explicit;
 - stronger Historical Series chronology/Then & Now and Money & culture currency-era/story exploration;
-- browser-local My Places, one-sided Compare handoffs and a bounded Saved & recent action hierarchy.
+- browser-local plus owner-scoped My Places, explicit local→account migration, durable input-only SavedComparison and canonical provider-free Reopen / explicit Re-check semantics.
 
 The remaining premium/product priorities are narrower:
 
 - extend sourced photography beyond the Finland/Japan/France showcase wave only when a reviewed destination earns the visual slot; do not add placeholder imagery for coverage statistics;
 - treat deployment publication of curated source/derivative families as explicit operational evidence: source selection in Git is not runtime readiness, and `report_curated_media_coverage --strict` is the auditable check;
 - treat further focal/crop and CSS/spacing/typography edits as evidence-driven refinements rather than separate cleanup phases;
-- keep account-owned SavedPlace persistence/sync separate until its ownership/migration contract is deliberately implemented;
-- add durable saved comparisons only if they provide value beyond the current one-sided canonical Compare handoffs;
+- extend durable personalization only through evidence-backed use cases; do not turn saved inputs into hidden financial truth;
 - add Budget AI / Comparison AI only after each surface has a trusted bounded server packet equivalent to the current conversion/Explore AI contracts;
 - continue profiling real-media performance within the current frontend guardrails.
 
