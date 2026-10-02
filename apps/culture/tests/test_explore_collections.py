@@ -8,8 +8,8 @@ from django.core.management import call_command
 
 from apps.countries.models import CountryCurrency
 from apps.culture.explore_collections import (
-    build_explore_collections,
     ExploreCollectionKind,
+    build_explore_collections,
 )
 from apps.culture.models import CulturalProfile, StoryMoment
 
