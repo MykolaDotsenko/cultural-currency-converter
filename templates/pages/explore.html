@@ -133,6 +133,8 @@
                                 <div class="qa-saved-row__actions">
                                   <a class="qa-secondary-button"
                                      href="{{ city.converter_url }}">Convert</a>
+                                  <a class="qa-secondary-button"
+                                     href="{{ city.comparison_url }}">Compare</a>
                                 </div>
                               </div>
                             {% endfor %}
@@ -145,6 +147,8 @@
                         <div class="qa-saved-row__actions">
                           <a class="qa-secondary-button"
                              href="{{ country.converter_url }}">Open country context</a>
+                          <a class="qa-secondary-button"
+                             href="{{ country.comparison_url }}">Compare</a>
                         </div>
                       {% endif %}
                     </article>
@@ -179,6 +183,8 @@
                       <a class="qa-secondary-button"
                          href="{{ card.converter_url }}">Open destination</a>
                     {% endif %}
+                    <a class="qa-secondary-button"
+                       href="{{ card.comparison_url }}">Compare</a>
                   </div>
                 </article>
               {% endwith %}
@@ -251,10 +257,16 @@
                           </ul>
                         </details>
                       </div>
-                      {% if item.action_url %}
+                      {% if item.action_url or item.comparison_url %}
                         <div class="qa-saved-row__actions">
-                          <a class="qa-secondary-button"
-                             href="{{ item.action_url }}">{{ item.action_label }}</a>
+                          {% if item.action_url %}
+                            <a class="qa-secondary-button"
+                               href="{{ item.action_url }}">{{ item.action_label }}</a>
+                          {% endif %}
+                          {% if item.comparison_url %}
+                            <a class="qa-secondary-button"
+                               href="{{ item.comparison_url }}">Compare</a>
+                          {% endif %}
                         </div>
                       {% endif %}
                     </article>
