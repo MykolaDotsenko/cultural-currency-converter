@@ -15,10 +15,9 @@ def test_saved_state_page_is_anonymous_browser_local_shell(client):
     assert "Checking browser storage" in content
     assert "Checking saved pairs in this browser" in content
     assert "Checking recent conversions in this browser" in content
-    assert "[data-local-storage-status]" in content
-    assert "[data-favourites-empty]" in content
-    assert "[data-recents-empty]" in content
+    assert content.count("data-local-pending") >= 4
     assert "<noscript>" in content
+    assert "<noscript>\n      <style>" not in content
     assert (
         "JavaScript is required to read browser-local saved places, saved pairs and recent history."
         in content
