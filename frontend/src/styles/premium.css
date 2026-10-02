@@ -1227,30 +1227,6 @@ h3 {
 }
 
 @media (max-width: 30rem) {
-  .qa-shell__header-inner {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    padding-block: var(--qa-space-4);
-  }
-
-  .qa-header-actions {
-    width: auto;
-    flex: 1 1 auto;
-    flex-direction: row;
-    justify-content: flex-end;
-  }
-
-  .qa-header-actions form {
-    width: auto;
-  }
-
-  .qa-header-link {
-    width: auto;
-    justify-content: flex-start;
-    text-align: start;
-  }
-
   .qa-shell__main {
     padding-block-start: 2.25rem;
   }
