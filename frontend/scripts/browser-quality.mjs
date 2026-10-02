@@ -2733,8 +2733,7 @@ async function assertDestinationComparisonQuality(page) {
 
   const comparisonResponsePromise = page.waitForResponse(
     (response) =>
-      response.request().method() === "POST" &&
-      new URL(response.url()).pathname === "/compare/",
+      response.request().method() === "POST" && new URL(response.url()).pathname === "/compare/",
   );
   await form.getByRole("button", { name: "Compare destinations", exact: true }).click();
   const comparisonResponse = await comparisonResponsePromise;
@@ -2775,9 +2774,7 @@ async function assertDestinationComparisonQuality(page) {
   );
   assert(
     await page.evaluate(() =>
-      document.activeElement?.matches(
-        "#comparison-explanation-region [data-ai-explanation-focus]",
-      ),
+      document.activeElement?.matches("#comparison-explanation-region [data-ai-explanation-focus]"),
     ),
     "destination-comparison/ai: swapped explanation did not receive focus",
   );
