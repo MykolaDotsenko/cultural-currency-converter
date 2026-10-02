@@ -183,6 +183,9 @@
 }
 
 .qa-rate-series__table summary {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
   max-width: 100%;
   cursor: pointer;
