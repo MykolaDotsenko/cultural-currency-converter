@@ -5,19 +5,40 @@ import {
 } from "./account-favourites";
 import {
   isFavourite,
+  isPlaceSaved,
   type LocalPreferencesV1,
   normalizePair,
   normalizeRecent,
   type PairContext,
   type ReadStatus,
   readState,
+  type SavedPlace,
   STORAGE_KEY,
   toggleFavouriteInState,
+  togglePlaceInState,
   upsertRecent,
   writeState,
 } from "./local-saved-state-store";
 
 let savedPageModulePromise: Promise<typeof import("./local-saved-state-page")> | null = null;
+
+type PlaceContext = Omit<SavedPlace, "id" | "savedAt">;
+
+function placeFromElement(element: HTMLElement): PlaceContext | null {
+  const token = element.dataset.placeToken ?? "";
+  const countryCode = element.dataset.placeCountryCode ?? "";
+  const countryName = element.dataset.placeCountryName ?? "";
+  const citySlug = element.dataset.placeCitySlug ?? "";
+  const cityName = element.dataset.placeCityName ?? "";
+  const currencyCode = element.dataset.placeCurrencyCode ?? "";
+
+  if (!token || !countryCode || !countryName || !currencyCode) return null;
+  return { token, countryCode, countryName, citySlug, cityName, currencyCode };
+}
+
+function placeLabel(place: PlaceContext): string {
+  return place.cityName ? `${place.cityName}, ${place.countryName}` : place.countryName;
+}
 
 function pairFromSnapshot(element: HTMLElement): PairContext | null {
   return normalizePair({
@@ -144,6 +165,78 @@ function toggleAnonymousFavourite(snapshot: HTMLElement): void {
   saveStatus(snapshot, toggled.saved ? "Saved in this browser." : "Removed from saved.");
 }
 
+function setExplorePlaceButtonState(
+  element: HTMLElement,
+  state: LocalPreferencesV1,
+  storageStatus: ReadStatus,
+): void {
+  const button = element.querySelector<HTMLButtonElement>("[data-save-place]");
+  const label = element.querySelector<HTMLElement>("[data-save-place-label]");
+  const place = placeFromElement(element);
+  if (!button || !label || !place) return;
+
+  if (storageStatus === "unavailable") {
+    button.hidden = true;
+    return;
+  }
+
+  const saved = isPlaceSaved(place.token, state);
+  button.hidden = false;
+  button.disabled = false;
+  button.setAttribute("aria-pressed", saved ? "true" : "false");
+  button.setAttribute(
+    "aria-label",
+    saved ? `Remove saved place: ${placeLabel(place)}` : `Save place: ${placeLabel(place)}`,
+  );
+  button.dataset.saved = saved ? "true" : "false";
+  label.textContent = saved ? "Saved" : "Save";
+}
+
+function setExplorePlaceStatus(element: HTMLElement, message: string): void {
+  const status = element.querySelector<HTMLElement>("[data-save-place-status]");
+  if (status) status.textContent = message;
+}
+
+function toggleExplorePlace(element: HTMLElement): void {
+  const place = placeFromElement(element);
+  if (!place) return;
+
+  const read = readState();
+  if (read.status === "unavailable") {
+    setExplorePlaceButtonState(element, read.state, read.status);
+    return;
+  }
+
+  const toggled = togglePlaceInState(read.state, place);
+  if (!writeState(toggled.state)) {
+    setExplorePlaceStatus(element, "This place could not be saved in this browser.");
+    return;
+  }
+
+  for (const matching of document.querySelectorAll<HTMLElement>(
+    `[data-local-saved-place][data-place-token="${CSS.escape(place.token)}"]`,
+  )) {
+    setExplorePlaceButtonState(matching, toggled.state, "ok");
+  }
+  setExplorePlaceStatus(
+    element,
+    toggled.saved ? "Place saved in this browser." : "Place removed from this browser.",
+  );
+}
+
+function enhanceExploreSavedPlaces(): void {
+  const read = readState();
+  for (const element of document.querySelectorAll<HTMLElement>("[data-local-saved-place]")) {
+    setExplorePlaceButtonState(element, read.state, read.status);
+    if (element.dataset.localPlaceWired === "true") continue;
+
+    element.dataset.localPlaceWired = "true";
+    element.querySelector<HTMLButtonElement>("[data-save-place]")?.addEventListener("click", () => {
+      toggleExplorePlace(element);
+    });
+  }
+}
+
 function enhanceConversionSnapshots(): void {
   const read = readState();
   const accountMode = accountFavouriteSyncAvailable();
@@ -230,6 +323,7 @@ function syncLocalAccountFavourites(): void {
 
 function enhanceLocalSavedState(): void {
   enhanceConversionSnapshots();
+  enhanceExploreSavedPlaces();
   enhanceSavedPage();
   syncLocalAccountFavourites();
 }
