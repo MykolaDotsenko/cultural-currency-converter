@@ -149,23 +149,10 @@
 }
 
 .qa-saved-empty__action {
-  min-block-size: 2.75rem;
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
   margin-block-start: var(--qa-space-3);
   color: var(--color-ink);
-  font-size: var(--text-body-sm);
   font-weight: 700;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 0.2em;
-}
-
-.qa-saved-empty__action:focus-visible {
-  border-radius: var(--radius-sm);
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
 }
 
 .qa-saved-state__privacy {
