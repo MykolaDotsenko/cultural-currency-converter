@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Same amount across destinations · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="View one explicit amount across several reviewed destinations with independent FX observations, local scope and provenance.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-product-intro" aria-labelledby="same-amount-title">
+    <p class="qa-foundation-kicker">Explore · one amount, several destinations</p>
+    <h1 id="same-amount-title">See the same amount in local money contexts.</h1>
+    <p class="qa-foundation-lede">
+      Each destination is calculated independently through the canonical current-rate flow and
+      keeps its own effective date, provider attribution, city/country scope and reviewed evidence.
+      There is no winner, purchasing-power score or “cheapest” ranking.
+    </p>
+  </section>
+
+  <div class="qa-saved-state qa-explore-amount-page">
+    <section class="qa-saved-section" aria-labelledby="same-amount-form-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Set the reference</p>
+          <h2 id="same-amount-form-title">Choose 2–4 places.</h2>
+          <p>Use one source amount, then inspect each destination on its own terms.</p>
+        </div>
+      </div>
+      {% if reference_data_ready %}
+        <form method="post" class="qa-explore-amount-form">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="qa-inline-alert qa-inline-alert--error" role="alert">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="qa-explore-amount-form__core">
+            <div>
+              <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+              {{ form.amount }}
+              {% if form.amount.errors %}<p class="qa-field-error">{{ form.amount.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+              <label for="{{ form.source_currency.id_for_label }}">{{ form.source_currency.label }}</label>
+              {{ form.source_currency }}
+              {% if form.source_currency.errors %}<p class="qa-field-error">{{ form.source_currency.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <fieldset class="qa-explore-amount-destinations">
+            <legend>{{ form.destinations.label }}</legend>
+            <p class="qa-saved-row__meta">Select at least two and no more than four reviewed country or city scopes.</p>
+            {{ form.destinations }}
+            {% if form.destinations.errors %}<p class="qa-field-error">{{ form.destinations.errors.0 }}</p>{% endif %}
+          </fieldset>
+          <button class="qa-primary-button" type="submit">View across destinations</button>
+        </form>
+      {% else %}
+        <div class="qa-saved-empty" role="status">
+          <h3>Destination reference data is temporarily unavailable.</h3>
+          <p>The main converter remains available.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    {% if cards %}
+      <section class="qa-saved-section" aria-labelledby="same-amount-results-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Independent reference results</p>
+            <h2 id="same-amount-results-title">{{ successful_card_count }} destination result{{ successful_card_count|pluralize }} available.</h2>
+            <p>Read across the cards, but do not treat them as a cost-of-living ranking.</p>
+          </div>
+        </div>
+        <div class="qa-explore-amount-grid">
+          {% for card in cards %}
+            <article class="qa-explore-amount-card">
+              <div>
+                <p class="qa-foundation-kicker">{{ card.currency_code }}</p>
+                <h3>{{ card.scope_label }}</h3>
+              </div>
+              {% if card.available %}
+                <p class="qa-explore-amount-card__value">{{ card.converted_amount }} {{ card.currency_code }}</p>
+                <dl class="qa-context-facts">
+                  <div><dt>Reference rate</dt><dd>{{ card.rate }}</dd></div>
+                  <div><dt>Effective</dt><dd>{{ card.effective_date }}</dd></div>
+                  <div><dt>Source</dt><dd>{{ card.provider }}</dd></div>
+                  <div><dt>Context</dt><dd>{{ card.context_state|capfirst }}</dd></div>
+                </dl>
+                {% if card.stale %}
+                  <p class="qa-context-freshness-note">Cached reference · not presented as fresh.</p>
+                {% endif %}
+                {% if card.price_rows %}
+                  <div class="qa-explore-amount-card__anchors">
+                    <h4>Reviewed local anchors</h4>
+                    {% for price in card.price_rows %}
+                      <div class="qa-explore-amount-anchor">
+                        <p><strong>{{ price.label }}</strong> · {{ price.price_text }}</p>
+                        <p class="qa-saved-row__meta">{{ price.scope_label }} · observed {{ price.observed_at }}</p>
+                        <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <div class="qa-saved-row__actions">
+                  <a class="qa-secondary-button" href="{{ card.converter_url }}">Open in converter</a>
+                  <a class="qa-secondary-button"
+                     href="{% url 'destination_comparison' %}?left_destination={{ card.token|urlencode }}">Compare</a>
+                  <a class="qa-secondary-button"
+                     href="{% url 'saved_state' %}?place={{ card.token|urlencode }}">Save / My Places</a>
+                </div>
+              {% else %}
+                <div class="qa-inline-alert" role="status">
+                  <h4>Reference unavailable</h4>
+                  <p>{{ card.error }}</p>
+                </div>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+{% endblock %}
