@@ -1961,7 +1961,10 @@ async function assertSameAmountQuality(page) {
 
   await page.getByRole("heading", { name: /across your selected destinations/ }).waitFor();
   const cards = page.locator(".qa-same-amount-card");
-  assert((await cards.count()) === 2, `same-amount: expected 2 result cards, found ${await cards.count()}`);
+  assert(
+    (await cards.count()) === 2,
+    `same-amount: expected 2 result cards, found ${await cards.count()}`,
+  );
 
   const headings = await cards.locator("h3").allTextContents();
   assert(
