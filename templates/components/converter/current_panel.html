@@ -266,6 +266,30 @@
         <p class="qa-result-update-note"
            data-previous-result-note
            hidden>Previous result — waiting for a successful update.</p>
+        <div class="qa-bilateral-result"
+             data-bilateral-route
+             role="group"
+             aria-label="Conversion context">
+          <div class="qa-bilateral-result__side qa-bilateral-result__side--source"
+               {% if source.theme %}data-country-theme="{{ source.theme }}"{% endif %}>
+            <span class="qa-bilateral-result__role">Source</span>
+            <strong class="qa-bilateral-result__place">
+              {% if source.country_code %}{{ source.country_name }}{% else %}Source currency{% endif %}
+            </strong>
+            <span class="qa-bilateral-result__currency">{{ source.currency_code }}</span>
+          </div>
+          <span class="qa-bilateral-result__connector" aria-hidden="true">
+            <span></span>
+          </span>
+          <div class="qa-bilateral-result__side qa-bilateral-result__side--destination"
+               {% if destination.theme %}data-country-theme="{{ destination.theme }}"{% endif %}>
+            <span class="qa-bilateral-result__role">Destination</span>
+            <strong class="qa-bilateral-result__place">
+              {% if destination.country_code %}{{ destination.country_name }}{% else %}Destination currency{% endif %}
+            </strong>
+            <span class="qa-bilateral-result__currency">{{ destination.currency_code }}</span>
+          </div>
+        </div>
         {% with component=result_component %}
           {% include "components/converter/primitives.html#conversion-result" %}
         {% endwith %}
