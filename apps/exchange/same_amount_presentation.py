@@ -124,20 +124,39 @@ def build_same_amount_component(
     *,
     source_minor_units: int,
     failed_destinations: tuple[dict[str, str], ...] = (),
+    destination_order: tuple[str, ...] = (),
 ) -> dict[str, object]:
     """Build premium descriptive cards without ranking or reordering destinations."""
+
+    destinations = tuple(
+        _destination_component(
+            item,
+            source_currency_code=result.source_currency_code,
+            source_amount=result.source_amount,
+        )
+        for item in result.destinations
+    )
+
+    success_by_token = {
+        str(item["token"]): {**item, "available": True}
+        for item in destinations
+    }
+    failure_by_token = {
+        str(item["token"]): {**item, "available": False}
+        for item in failed_destinations
+    }
+    item_by_token = {**success_by_token, **failure_by_token}
+
+    if destination_order:
+        items = tuple(item_by_token[token] for token in destination_order if token in item_by_token)
+    else:
+        items = tuple(success_by_token.values()) + tuple(failure_by_token.values())
 
     return {
         "source_amount": _money_text(result.source_amount, minor_units=source_minor_units),
         "source_currency_code": result.source_currency_code,
-        "destinations": tuple(
-            _destination_component(
-                item,
-                source_currency_code=result.source_currency_code,
-                source_amount=result.source_amount,
-            )
-            for item in result.destinations
-        ),
+        "destinations": destinations,
         "failed_destinations": failed_destinations,
+        "items": items,
         "partial": bool(failed_destinations),
     }
