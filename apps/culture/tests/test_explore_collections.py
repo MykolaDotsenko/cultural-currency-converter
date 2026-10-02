@@ -13,7 +13,6 @@ from apps.culture.explore_collections import (
 )
 from apps.culture.models import CulturalProfile, StoryMoment
 
-
 AS_OF = date(2026, 10, 1)
 
 
