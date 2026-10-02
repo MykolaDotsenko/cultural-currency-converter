@@ -326,6 +326,10 @@ Add invariants proving:
 - stale-only context fails closed;
 - city references cannot cross country boundaries.
 
+**Current production slice:** the fallback trust audit is executable and closes the City Money Intelligence trust boundary. National-only evidence may support a selected city only as explicitly labelled national fallback; it cannot create an Explore city card or City Money Profile. Wrong-currency and stale price rows are excluded from visible current context. Cross-country canonical city references are rejected by the model quality contract, and the context query now defensively accepts only same-country canonical city rows or explicit national rows even if invalid data reached storage by bypassing `full_clean()`. Dedicated regressions cover national-only scope, fallback presentation, wrong currency, stale-only city context, health/Explore fail-closed behaviour and cross-country storage corruption.
+
+**Phase 2 exit:** the two reviewed city-data waves, City Money Profile and fallback trust audit complete the planned City Money Intelligence phase at the canonical **95/100** milestone without introducing a cost-of-living or affordability ranking.
+
 ---
 
 # Phase 3 — Explore 2.0
