@@ -312,14 +312,8 @@ def build_comparison_explanation_packet(
             id="right_coverage",
             statement=_comparison_coverage_statement(right_destination_name, right.budget),
         ),
-        GroundedFact(
-            id="left_payment",
-            statement=_payment_statement(left_destination_name, left.payment_guidance),
-        ),
-        GroundedFact(
-            id="right_payment",
-            statement=_payment_statement(right_destination_name, right.payment_guidance),
-        ),
+        *_payment_facts("left", left_destination_name, left.payment_guidance),
+        *_payment_facts("right", right_destination_name, right.payment_guidance),
         GroundedFact(
             id="comparison_coverage",
             statement=(
@@ -564,20 +558,61 @@ def _comparison_coverage_statement(name: str, budget: BudgetInterpretation) -> s
     return f"For {name}, sourced basket coverage is partial; missing categories are: {missing}."
 
 
-def _payment_statement(name: str, payment: PaymentContext | None) -> str:
+def _payment_facts(
+    prefix: str,
+    name: str,
+    payment: PaymentContext | None,
+) -> tuple[GroundedFact, ...]:
     if payment is None:
-        return f"No reviewed current payment-guidance record is available for {name}."
-    parts = [
-        (payment.summary or "").strip(),
-        (payment.cash_usage or "").strip(),
-        (payment.dcc_warning or "").strip(),
+        return (
+            GroundedFact(
+                id=f"{prefix}_payment",
+                statement=f"No reviewed current payment-guidance record is available for {name}.",
+            ),
+        )
+
+    summary = (payment.summary or "").strip()
+    cash_usage = (payment.cash_usage or "").strip()
+    dcc_warning = (payment.dcc_warning or "").strip()
+
+    facts = [
+        GroundedFact(
+            id=f"{prefix}_payment",
+            statement=_bounded_fact_statement(
+                (
+                    f"For {name}, the reviewed payment context summary says: {summary}"
+                    if summary
+                    else f"A reviewed current payment-guidance record exists for {name}."
+                )
+            ),
+        )
     ]
-    detail = " ".join(part for part in parts if part)
-    return (
-        f"For {name}, the reviewed payment context says: {detail}"
-        if detail
-        else f"A reviewed current payment-guidance record exists for {name}."
-    )
+    if cash_usage:
+        facts.append(
+            GroundedFact(
+                id=f"{prefix}_payment_cash",
+                statement=_bounded_fact_statement(
+                    f"For {name}, the reviewed cash-use guidance says: {cash_usage}"
+                ),
+            )
+        )
+    if dcc_warning:
+        facts.append(
+            GroundedFact(
+                id=f"{prefix}_payment_dcc",
+                statement=_bounded_fact_statement(
+                    f"For {name}, the reviewed DCC guidance says: {dcc_warning}"
+                ),
+            )
+        )
+    return tuple(facts)
+
+
+def _bounded_fact_statement(value: str, *, maximum: int = 700) -> str:
+    normalized = " ".join(value.split())
+    if len(normalized) <= maximum:
+        return normalized
+    return normalized[: maximum - 2].rstrip() + " …"
 
 
 def _fact_insight(fact: GroundedFact) -> ExplanationInsight:
