@@ -4,8 +4,8 @@ import {
   type RateMode,
   type ReadResult,
   type RecentConversion,
-  type SavedPlace,
   readState,
+  type SavedPlace,
   writeState,
 } from "./local-saved-state-store";
 
@@ -176,11 +176,7 @@ function placeConverterUrl(converterUrl: string, place: SavedPlace): string {
   return `${url.pathname}${url.search}`;
 }
 
-function renderPlaces(
-  page: HTMLElement,
-  state: LocalPreferencesV1,
-  converterUrl: string,
-): void {
+function renderPlaces(page: HTMLElement, state: LocalPreferencesV1, converterUrl: string): void {
   const list = page.querySelector<HTMLElement>("[data-places-list]");
   const empty = page.querySelector<HTMLElement>("[data-places-empty]");
   if (!list || !empty) return;
@@ -197,7 +193,9 @@ function renderPlaces(
     copy.className = "qa-saved-row__copy";
     const kicker = document.createElement("p");
     kicker.className = "qa-foundation-kicker";
-    kicker.textContent = place.citySlug ? "City · saved in this browser" : "Country · saved in this browser";
+    kicker.textContent = place.citySlug
+      ? "City · saved in this browser"
+      : "Country · saved in this browser";
     const title = document.createElement("h3");
     title.textContent = placeLabel(place);
     const meta = document.createElement("p");
@@ -411,10 +409,7 @@ export function wireSavedPage(): void {
     page.querySelector<HTMLButtonElement>("[data-clear-places]")?.addEventListener("click", () => {
       const read = readState();
       if (read.status === "unavailable") return renderSavedPage();
-      persistAndRender(
-        { ...read.state, places: [] },
-        "Saved places cleared from this browser.",
-      );
+      persistAndRender({ ...read.state, places: [] }, "Saved places cleared from this browser.");
     });
     page.querySelector<HTMLButtonElement>("[data-clear-recents]")?.addEventListener("click", () => {
       const read = readState();
