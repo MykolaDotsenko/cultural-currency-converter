@@ -113,9 +113,7 @@ def _city_profile_items(
         )
         if not evidence:
             continue
-        reviewed_on = max(
-            item.evidence_date for item in evidence if item.evidence_date is not None
-        )
+        reviewed_on = max(item.evidence_date for item in evidence if item.evidence_date is not None)
         items.append(
             ExploreCollectionItem(
                 key=f"city:{profile.country_code}:{profile.city_slug}",
@@ -179,9 +177,7 @@ def _payment_items(*, as_of: date, limit: int) -> tuple[ExploreCollectionItem, .
     links = {
         link.country_id: link
         for link in (
-            CountryCurrency.objects.current(as_of)
-            .primary()
-            .select_related("country", "currency")
+            CountryCurrency.objects.current(as_of).primary().select_related("country", "currency")
         )
     }
     profiles = (
@@ -335,10 +331,7 @@ def _recent_destination_items(
         evidence = _destination_evidence(destination, as_of=as_of)
         if not evidence:
             continue
-        reviewed_on = (
-            destination.latest_price_observed_at
-            or destination.payment_verified_at
-        )
+        reviewed_on = destination.latest_price_observed_at or destination.payment_verified_at
         if reviewed_on is None:
             continue
         items.append(
