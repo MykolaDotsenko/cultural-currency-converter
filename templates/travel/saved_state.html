@@ -26,6 +26,31 @@
       </p>
     {% endif %}
   </section>
+  {% if selected_place_intent %}
+    <section class="qa-saved-section qa-selected-place-intent" aria-labelledby="selected-place-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Selected from Explore</p>
+          <h2 id="selected-place-title">{{ selected_place_intent.scope_label }}</h2>
+          <p>
+            {{ selected_place_intent.currency_code }} · this canonical place is ready for the
+            product flows that already persist real state. Opening this handoff does not silently
+            save a place to your account or browser.
+          </p>
+        </div>
+      </div>
+      <div class="qa-saved-row__actions">
+        <a class="qa-primary-button" href="{{ selected_place_intent.converter_url }}">Convert</a>
+        <a class="qa-secondary-button" href="{{ selected_place_intent.budget_url }}">Create budget / trip</a>
+        <a class="qa-secondary-button" href="{{ selected_place_intent.compare_url }}">Compare</a>
+      </div>
+      <p class="qa-saved-state__privacy">
+        Durable My Places persistence remains a separate explicit account action in the
+        personalization phase. Until then, use a saved scenario when you want this destination to
+        persist across sessions.
+      </p>
+    </section>
+  {% endif %}
   <div class="qa-saved-state"
        data-local-saved-state-page
        data-account-mode="{% if user.is_authenticated %}true{% else %}false{% endif %}"
