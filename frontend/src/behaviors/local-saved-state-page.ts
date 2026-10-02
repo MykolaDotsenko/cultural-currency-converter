@@ -1,7 +1,4 @@
-import {
-  accountPlaceSyncAvailable,
-  importLocalPlacesToAccount,
-} from "./account-places";
+import { accountPlaceSyncAvailable, importLocalPlacesToAccount } from "./account-places";
 import {
   type LocalPreferencesV1,
   type PairContext,
@@ -511,8 +508,7 @@ function renderSavedPage(overrideMessage = ""): void {
       importSummary.textContent =
         "No browser-only places are waiting to be imported on this device.";
     } else {
-      importSummary.textContent =
-        `${read.state.places.length} browser-only place${read.state.places.length === 1 ? "" : "s"} remain on this device. Import is always explicit.`;
+      importSummary.textContent = `${read.state.places.length} browser-only place${read.state.places.length === 1 ? "" : "s"} remain on this device. Import is always explicit.`;
     }
   }
   if (clearRecents) {
