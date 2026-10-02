@@ -2065,3 +2065,86 @@ h3 {
     border-color: CanvasText;
   }
 }
+
+
+/* Frontend continuity and degraded-state pass. */
+.qa-continuity-note {
+  max-width: 72rem;
+  display: flex;
+  align-items: baseline;
+  gap: var(--qa-space-3) var(--qa-space-5);
+  margin-block: calc(var(--qa-space-8) * -0.5) var(--qa-space-8);
+  padding-block: var(--qa-space-4);
+  border-block: 1px solid var(--qa-hairline);
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+}
+
+.qa-continuity-note strong {
+  flex: 0 0 auto;
+  color: var(--color-ink);
+  font-size: var(--text-meta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.qa-context-empty,
+.qa-saved-empty {
+  min-block-size: 5.5rem;
+  display: grid;
+  align-content: center;
+  max-width: 48rem;
+  margin: 0;
+  padding: var(--qa-space-5);
+  border: 1px dashed var(--color-border-control);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-soft) 66%, transparent);
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.qa-media__caption {
+  min-width: 0;
+  align-items: baseline;
+}
+
+.qa-media__caption > *,
+.qa-media__caption a {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.qa-media__authenticity,
+.qa-media__change-note {
+  color: var(--color-tertiary);
+}
+
+.qa-media__caption a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 40rem) {
+  .qa-continuity-note {
+    display: grid;
+    gap: var(--qa-space-2);
+    margin-block-start: calc(var(--qa-space-4) * -1);
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-continuity-note,
+  .qa-context-empty,
+  .qa-saved-empty {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .qa-media__caption a {
+    color: LinkText;
+  }
+}
