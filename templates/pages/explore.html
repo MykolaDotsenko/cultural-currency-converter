@@ -2,7 +2,7 @@
 {% block title %}Explore travel money · Cultural Currency Converter{% endblock %}
 {% block head_meta %}
   <meta name="description"
-        content="Explore reviewed city and country money context by region, evidence-backed collection and canonical destination scope.">
+        content="Explore reviewed travel-money context by region, country, city and sourced collection.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
@@ -64,15 +64,19 @@
       {% elif explore_navigation.regions %}
         <nav class="qa-saved-row__actions qa-explore-region-nav"
              aria-label="Explore regions">
-          <a class="{% if not explore_navigation.selected_region_slug %}qa-primary-button{% else %}qa-secondary-button{% endif %}"
+          <a class="qa-secondary-button"
              href="{% url 'explore' %}"
-             {% if not explore_navigation.selected_region_slug %}aria-current="page"{% endif %}>
+             {% if not explore_navigation.selected_region_slug %}
+               aria-current="page"
+             {% endif %}>
             All destinations · {{ explore_navigation.country_count }}
           </a>
           {% for region in explore_navigation.regions %}
-            <a class="{% if region.slug == explore_navigation.selected_region_slug %}qa-primary-button{% else %}qa-secondary-button{% endif %}"
+            <a class="qa-secondary-button"
                href="{{ region.filter_url }}"
-               {% if region.slug == explore_navigation.selected_region_slug %}aria-current="page"{% endif %}>
+               {% if region.slug == explore_navigation.selected_region_slug %}
+                 aria-current="page"
+               {% endif %}>
               {{ region.name }} · {{ region.country_count }}
             </a>
           {% endfor %}
@@ -87,14 +91,19 @@
                 <h3>{{ country.country_name }}</h3>
                 <p>
                   {% if country.subregion_name %}{{ country.subregion_name }} ·{% endif %}
-                  {{ country.reviewed_scope_count }} reviewed scope{{ country.reviewed_scope_count|pluralize }}
-                  {% if country.city_count %}· {{ country.city_count }} cit{{ country.city_count|pluralize:"y,ies" }}{% endif %}
+                  {{ country.reviewed_scope_count }} reviewed
+                  scope{{ country.reviewed_scope_count|pluralize }}
+                  {% if country.city_count %}
+                    · {{ country.city_count }} cit{{ country.city_count|pluralize:"y,ies" }}
+                  {% endif %}
                 </p>
               </div>
               <div class="qa-saved-row__actions">
-                <a class="{% if country.country_code == explore_navigation.selected_country_code %}qa-primary-button{% else %}qa-secondary-button{% endif %}"
+                <a class="qa-secondary-button"
                    href="{{ country.filter_url }}"
-                   {% if country.country_code == explore_navigation.selected_country_code %}aria-current="page"{% endif %}>
+                   {% if country.country_code == explore_navigation.selected_country_code %}
+                     aria-current="page"
+                   {% endif %}>
                   {% if country.country_code == explore_navigation.selected_country_code %}
                     Viewing {{ country.country_name }}
                   {% else %}
@@ -132,22 +141,31 @@
                       <h3>{{ destination.scope_label }}</h3>
                       <p>
                         {% if destination.city_price_anchor_count %}
-                          {{ destination.city_price_anchor_count }} direct city anchor{{ destination.city_price_anchor_count|pluralize }}
+                          {{ destination.city_price_anchor_count }} direct city
+                          anchor{{ destination.city_price_anchor_count|pluralize }}
                         {% endif %}
-                        {% if destination.city_price_anchor_count and destination.national_price_anchor_count %}·{% endif %}
+                        {% if destination.city_price_anchor_count and destination.national_price_anchor_count %}
+                          ·
+                        {% endif %}
                         {% if destination.national_price_anchor_count %}
-                          {{ destination.national_price_anchor_count }} national anchor{{ destination.national_price_anchor_count|pluralize }}
+                          {{ destination.national_price_anchor_count }} national
+                          anchor{{ destination.national_price_anchor_count|pluralize }}
                         {% endif %}
                         {% if destination.payment_available %}
-                          {% if destination.city_price_anchor_count or destination.national_price_anchor_count %}·{% endif %}
+                          {% if destination.city_price_anchor_count or destination.national_price_anchor_count %}
+                            ·
+                          {% endif %}
                           payment guidance
                         {% endif %}
                       </p>
                       <p class="qa-saved-row__meta">
                         {% if destination.latest_price_observed_at %}
-                          Prices observed through {{ destination.latest_price_observed_at|date:"j M Y" }}
+                          Prices observed through
+                          {{ destination.latest_price_observed_at|date:"j M Y" }}
                         {% endif %}
-                        {% if destination.latest_price_observed_at and destination.payment_verified_at %}·{% endif %}
+                        {% if destination.latest_price_observed_at and destination.payment_verified_at %}
+                          ·
+                        {% endif %}
                         {% if destination.payment_verified_at %}
                           payments reviewed {{ destination.payment_verified_at|date:"j M Y" }}
                         {% endif %}
@@ -216,7 +234,9 @@
                    aria-labelledby="explore-collection-{{ collection.slug }}">
             <div class="qa-saved-section__heading">
               <div>
-                <p class="qa-foundation-kicker">Collection {{ forloop.counter|stringformat:"02d" }}</p>
+                <p class="qa-foundation-kicker">
+                  Collection {{ forloop.counter|stringformat:"02d" }}
+                </p>
                 <h2 id="explore-collection-{{ collection.slug }}">{{ collection.title }}</h2>
                 <p>{{ collection.description }}</p>
               </div>
@@ -250,7 +270,9 @@
                     <div class="qa-saved-row__actions">
                       <a class="qa-secondary-button"
                          href="{{ item.primary_url }}"
-                         {% if item.primary_external %}rel="noreferrer"{% endif %}>{{ item.primary_label }}</a>
+                         {% if item.primary_external %}rel="noreferrer"{% endif %}>
+                        {{ item.primary_label }}
+                      </a>
                     </div>
                   {% endif %}
                 </article>
