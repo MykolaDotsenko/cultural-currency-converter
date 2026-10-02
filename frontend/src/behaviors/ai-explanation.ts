@@ -67,7 +67,8 @@ document.addEventListener("htmx:beforeRequest", (event) => {
   if (!explanationTrigger(event.target)) return;
   clearClientStatus();
   setPending(1);
-  const label = explanationTrigger(event.target)?.textContent?.trim();
+  const trigger = explanationTrigger(event.target);
+  const label = trigger?.dataset.aiExplanationLabel ?? trigger?.textContent?.trim();
   announce(label ? `Generating explanation: ${label}` : "Generating explanation.");
 });
 
