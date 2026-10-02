@@ -20,12 +20,17 @@ class _Coverage:
     focal_matches: bool
     existing_widths: tuple[int, ...]
     published_widths: tuple[int, ...]
+    derivative_contract_matches: bool
 
     @property
     def ready(self) -> bool:
         if self.source is None or self.source.status not in _REVIEWED_SOURCE_STATUSES:
             return False
-        if not self.source.storage_file or not self.focal_matches:
+        if (
+            not self.source.storage_file
+            or not self.focal_matches
+            or not self.derivative_contract_matches
+        ):
             return False
         return set(self.spec.responsive_widths).issubset(self.published_widths)
 
@@ -47,31 +52,64 @@ def _coverage(spec: CuratedMediaSpec) -> _Coverage:
             focal_matches=False,
             existing_widths=(),
             published_widths=(),
+            derivative_contract_matches=False,
         )
 
-    derivatives = MediaAsset.objects.filter(
-        derivative_of=source,
-        variant_width__in=spec.responsive_widths,
-    ).exclude(variant_width__isnull=True)
-    existing_widths = tuple(
-        sorted(set(derivatives.values_list("variant_width", flat=True)))
+    derivatives = tuple(
+        MediaAsset.objects.select_related("country", "currency")
+        .filter(
+            derivative_of=source,
+            variant_width__in=spec.responsive_widths,
+        )
+        .exclude(variant_width__isnull=True)
+        .order_by("variant_width", "pk")
     )
+    raw_widths = tuple(
+        derivative.variant_width
+        for derivative in derivatives
+        if derivative.variant_width is not None
+    )
+    existing_widths = tuple(sorted(set(raw_widths)))
     published_widths = tuple(
         sorted(
-            set(
-                derivatives.filter(status=MediaStatus.PUBLISHED).values_list(
-                    "variant_width",
-                    flat=True,
-                )
-            )
+            {
+                derivative.variant_width
+                for derivative in derivatives
+                if derivative.status == MediaStatus.PUBLISHED
+                and derivative.variant_width is not None
+            }
         )
     )
+
+    derivative_contract_matches = len(raw_widths) == len(existing_widths)
+    for derivative in derivatives:
+        country_code = derivative.country.iso2 if derivative.country_id else ""
+        currency_code = derivative.currency.code if derivative.currency_id else ""
+        derivative_contract_matches = derivative_contract_matches and (
+            derivative.role == spec.role
+            and derivative.kind == spec.kind
+            and country_code == spec.country_code
+            and currency_code == spec.currency_code
+            and derivative.city == spec.city
+            and derivative.focal_x == spec.focal_x
+            and derivative.focal_y == spec.focal_y
+            and derivative.source_name == source.source_name
+            and derivative.source_url == source.source_url
+            and derivative.source_media_url == source.source_media_url
+            and derivative.licence_id == source.licence_id
+            and derivative.licence_url == source.licence_url
+            and derivative.rights_statement == source.rights_statement
+            and derivative.attribution_text == source.attribution_text
+            and derivative.status not in {MediaStatus.REJECTED, MediaStatus.RETIRED}
+        )
+
     return _Coverage(
         spec=spec,
         source=source,
         focal_matches=source.focal_x == spec.focal_x and source.focal_y == spec.focal_y,
         existing_widths=existing_widths,
         published_widths=published_widths,
+        derivative_contract_matches=derivative_contract_matches,
     )
 
 
@@ -84,11 +122,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         selection = parser.add_mutually_exclusive_group()
         selection.add_argument("--slug", choices=sorted(CURATED_MEDIA))
-        selection.add_argument(
-            "--all-destination",
-            action="store_true",
-            help="Report every curated item that declares responsive widths.",
-        )
         parser.add_argument(
             "--strict",
             action="store_true",
@@ -126,6 +159,7 @@ class Command(BaseCommand):
                 f"{state}: slug={row.spec.slug} source={source_id} "
                 f"source_status={source_status} bytes={str(has_bytes).lower()} "
                 f"focal_match={str(row.focal_matches).lower()} "
+                f"derivative_contract={str(row.derivative_contract_matches).lower()} "
                 f"planned={row.spec.responsive_widths!r} "
                 f"existing={row.existing_widths!r} published={row.published_widths!r}"
             )
