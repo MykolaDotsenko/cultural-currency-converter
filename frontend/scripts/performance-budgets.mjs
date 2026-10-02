@@ -7,10 +7,15 @@ const BUILD_MANIFEST_PATH = resolve(process.cwd(), "../static/build/.vite/manife
 const VITE_ENTRY = "frontend/src/app.ts";
 
 export const PERFORMANCE_BUDGETS = Object.freeze({
-  coreJavaScriptGzipBytes: 32 * 1024,
-  totalJavaScriptGzipBytes: 96 * 1024,
+  coreJavaScriptGzipBytes: 22 * 1024,
+  totalJavaScriptGzipBytes: 92 * 1024,
   stylesheetGzipBytes: 20 * 1024,
   rateChartGzipBytes: 64 * 1024,
+  rateChartLoaderGzipBytes: 1 * 1024,
+  aiExplanationGzipBytes: 2 * 1024,
+  currentConverterGzipBytes: 3 * 1024,
+  pickerGzipBytes: 4 * 1024,
+  localSavedStateGzipBytes: 6 * 1024,
   savedStateGzipBytes: 8 * 1024,
   initialRequestCount: 5,
 });
@@ -39,10 +44,14 @@ function total(files, key) {
   return files.reduce((sum, file) => sum + file[key], 0);
 }
 
-function uniquePrefixedAsset(files, prefix, label) {
-  const matches = files.filter((file) => file.name.startsWith(prefix));
+function uniqueMatchingAsset(files, predicate, label) {
+  const matches = files.filter(predicate);
   assert(matches.length === 1, `expected one ${label} asset, found ${matches.length}`);
   return matches[0];
+}
+
+function uniquePrefixedAsset(files, prefix, label) {
+  return uniqueMatchingAsset(files, (file) => file.name.startsWith(prefix), label);
 }
 
 export async function measureBuildAssets() {
@@ -88,8 +97,32 @@ export async function measureBuildAssets() {
     coreFiles,
     dynamicFiles,
     namedDynamicFiles: {
+      aiExplanation: uniquePrefixedAsset(dynamicFiles, "ai-explanation-", "AI explanation"),
+      currentConverter: uniquePrefixedAsset(
+        dynamicFiles,
+        "current-converter-",
+        "current-converter",
+      ),
+      picker: uniquePrefixedAsset(dynamicFiles, "picker-", "picker"),
+      localSavedState: uniqueMatchingAsset(
+        dynamicFiles,
+        (file) =>
+          file.name.startsWith("local-saved-state-") &&
+          !file.name.startsWith("local-saved-state-page-"),
+        "local-saved-state",
+      ),
       savedState: uniquePrefixedAsset(dynamicFiles, "local-saved-state-page-", "saved-state"),
-      rateChart: uniquePrefixedAsset(dynamicFiles, "rate-chart-", "rate-chart"),
+      rateChartLoader: uniquePrefixedAsset(
+        dynamicFiles,
+        "rate-chart-loader-",
+        "rate-chart-loader",
+      ),
+      rateChart: uniqueMatchingAsset(
+        dynamicFiles,
+        (file) =>
+          file.name.startsWith("rate-chart-") && !file.name.startsWith("rate-chart-loader-"),
+        "rate-chart",
+      ),
     },
     coreRawBytes: total(coreFiles, "rawBytes"),
     coreGzipBytes: total(coreFiles, "gzipBytes"),
@@ -115,7 +148,32 @@ export function assertBuildPerformanceBudgets(evidence, budgets = PERFORMANCE_BU
       budgets.rateChartGzipBytes,
     ],
     [
-      "saved-state chunk gzip",
+      "rate-chart loader chunk gzip",
+      evidence.namedDynamicFiles.rateChartLoader.gzipBytes,
+      budgets.rateChartLoaderGzipBytes,
+    ],
+    [
+      "AI explanation chunk gzip",
+      evidence.namedDynamicFiles.aiExplanation.gzipBytes,
+      budgets.aiExplanationGzipBytes,
+    ],
+    [
+      "current-converter chunk gzip",
+      evidence.namedDynamicFiles.currentConverter.gzipBytes,
+      budgets.currentConverterGzipBytes,
+    ],
+    [
+      "picker chunk gzip",
+      evidence.namedDynamicFiles.picker.gzipBytes,
+      budgets.pickerGzipBytes,
+    ],
+    [
+      "local saved-state chunk gzip",
+      evidence.namedDynamicFiles.localSavedState.gzipBytes,
+      budgets.localSavedStateGzipBytes,
+    ],
+    [
+      "saved-state page chunk gzip",
       evidence.namedDynamicFiles.savedState.gzipBytes,
       budgets.savedStateGzipBytes,
     ],
