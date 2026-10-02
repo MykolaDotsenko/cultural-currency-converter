@@ -240,6 +240,13 @@
 }
 
 @media (max-width: 44rem) {
+  .qa-explore-city-row .qa-saved-row__actions > *,
+  .qa-explore-country > .qa-saved-row__actions > *,
+  .qa-explore-collection-item .qa-saved-row__actions > * {
+    width: fit-content;
+    justify-content: flex-start;
+  }
+
   .qa-explore-page {
     gap: var(--qa-space-12);
   }
