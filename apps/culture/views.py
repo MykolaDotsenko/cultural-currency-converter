@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from decimal import DecimalException
+
 from django.db import DatabaseError
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
