@@ -20,6 +20,15 @@
       scope, rate date, provider attribution and local-price provenance.
     </p>
   </section>
+  {% if request.GET.left_destination and not comparison %}
+    <aside class="qa-continuity-note" aria-label="Explore comparison handoff">
+      <strong>From Explore</strong>
+      <span>
+        Destination A is already selected. Choose Destination B to complete the pair; you can still
+        change A before comparing.
+      </span>
+    </aside>
+  {% endif %}
   <section class="qa-destination-comparison"
            aria-labelledby="destination-comparison-form-title">
     <div class="qa-destination-comparison__instrument">
