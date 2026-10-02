@@ -12,7 +12,6 @@ export const PERFORMANCE_BUDGETS = Object.freeze({
   stylesheetGzipBytes: 20 * 1024,
   rateChartGzipBytes: 64 * 1024,
   rateChartLoaderGzipBytes: 1 * 1024,
-  aiExplanationGzipBytes: 2 * 1024,
   converterEnhancementsGzipBytes: 6 * 1024,
   localSavedStateGzipBytes: 6 * 1024,
   savedStateGzipBytes: 8 * 1024,
@@ -97,7 +96,6 @@ export async function measureBuildAssets() {
     coreFiles,
     dynamicFiles,
     namedDynamicFiles: {
-      aiExplanation: uniquePrefixedAsset(dynamicFiles, "ai-explanation-", "AI explanation"),
       converterEnhancements: uniquePrefixedAsset(
         dynamicFiles,
         "converter-enhancements-",
@@ -146,11 +144,6 @@ export function assertBuildPerformanceBudgets(evidence, budgets = PERFORMANCE_BU
       "rate-chart loader chunk gzip",
       evidence.namedDynamicFiles.rateChartLoader.gzipBytes,
       budgets.rateChartLoaderGzipBytes,
-    ],
-    [
-      "AI explanation chunk gzip",
-      evidence.namedDynamicFiles.aiExplanation.gzipBytes,
-      budgets.aiExplanationGzipBytes,
     ],
     [
       "converter enhancement chunk gzip",
