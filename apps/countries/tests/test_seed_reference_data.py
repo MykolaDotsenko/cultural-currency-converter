@@ -74,9 +74,7 @@ def test_reference_seed_exposes_canonical_region_and_subregion_metadata():
 
     assert {
         country.iso2: (country.region, country.subregion)
-        for country in Country.objects.filter(
-            iso2__in={"FI", "JP", "CA", "NZ"}
-        ).order_by("iso2")
+        for country in Country.objects.filter(iso2__in={"FI", "JP", "CA", "NZ"}).order_by("iso2")
     } == {
         "CA": ("Americas", "North America"),
         "FI": ("Europe", "Northern Europe"),
