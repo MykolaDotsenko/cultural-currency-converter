@@ -11,6 +11,7 @@ from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET
 
 from apps.countries.models import Country, Currency
+from apps.culture.ai_web import explore_explanation_view
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
 from apps.culture.explore_collections import build_explore_collections
@@ -27,6 +28,7 @@ from apps.culture.services import build_destination_context
 from apps.culture.story import compose_story
 from apps.media.models import MediaRole
 from apps.media.presentation import select_media_for_display
+from apps.exchange.ai.service import build_runtime_explanation_service
 
 logger = logging.getLogger("cultural_currency.culture")
 
@@ -157,6 +159,13 @@ def explore(request: HttpRequest) -> HttpResponse:
             "explore_navigation_error": navigation_error,
             "explore_as_of": selected_date,
         },
+    )
+
+
+def explore_explanation(request: HttpRequest) -> HttpResponse:
+    return explore_explanation_view(
+        request,
+        explanation_service_factory=build_runtime_explanation_service,
     )
 
 
