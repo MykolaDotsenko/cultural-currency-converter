@@ -1,0 +1,6 @@
+{% if social_preview %}
+  <meta property="og:image" content="{{ social_preview.url }}">
+  <meta property="og:image:alt" content="{{ social_preview.alt }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="{{ social_preview.url }}">
+{% endif %}
