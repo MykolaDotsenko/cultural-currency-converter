@@ -574,9 +574,13 @@ class BudgetInterpretationForm(forms.Form):
         self,
         *args,
         category_options: tuple[tuple[str, str], ...],
+        basis: BudgetBasis = BudgetBasis.REFERENCE_CONVERSION,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        if not isinstance(basis, BudgetBasis):
+            raise ValueError("Budget form basis must be a BudgetBasis value.")
+        self.budget_basis = basis
         allowed_categories = {value for value, _label in TypicalPriceCategory.choices}
         visible_labels: dict[str, str] = {}
         for category, label in category_options:
@@ -663,7 +667,7 @@ class BudgetInterpretationForm(forms.Form):
                 duration_days=cleaned["duration_days"],
                 travelers=cleaned["travelers"],
                 categories=tuple(categories),
-                basis=BudgetBasis.REFERENCE_CONVERSION,
+                basis=self.budget_basis,
             )
         except BudgetInterpretationError as exc:
             raise forms.ValidationError(str(exc)) from exc
