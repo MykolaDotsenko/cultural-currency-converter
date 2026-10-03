@@ -232,9 +232,10 @@ def test_payment_adjusted_budget_can_be_saved_and_reopens_with_adjusted_baseline
 
     offline = client.get(reverse("download_offline_destination_pack", args=(scenario.pk,)))
     assert offline.status_code == 200
-    assert b"Payment-adjusted Trip Budget Remaining" in offline.content
-    assert b"Saved planning basis 101292 JPY" in offline.content
-    assert b"stored FX reference remains separate" in offline.content
+    offline_text = " ".join(offline.content.decode("utf-8").split())
+    assert "Payment-adjusted Trip Budget Remaining" in offline_text
+    assert "Saved planning basis 101292 JPY" in offline_text
+    assert "stored FX reference remains separate" in offline_text
 
 
 @pytest.mark.django_db
@@ -543,7 +544,8 @@ def test_owner_can_recheck_scenario_without_overwriting_initial_observation(
     assert b"What the offline money pack contains" in detail.content
     assert b"Save offline copy" in detail.content
     assert b"never silently refreshes offline" in detail.content
-    assert b"does not recommend when to exchange money" in detail.content
+    detail_text = " ".join(detail.content.decode("utf-8").split())
+    assert "does not recommend when to exchange money" in detail_text
 
 
 @pytest.mark.django_db
