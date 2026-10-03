@@ -549,9 +549,6 @@ def test_comparison_then_requires_explicit_currency_scope_before_approval(media_
         approve_media_asset(asset)
 
 
-
-
-
 @pytest.mark.django_db
 def test_comparison_now_requires_explicit_currency_scope_before_approval(media_root):
     asset = _sourced_asset(title="Unscoped current comparison", role=MediaRole.COMPARISON_NOW)
