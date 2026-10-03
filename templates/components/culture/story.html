@@ -94,10 +94,10 @@
                       <h4>{{ chapter.title }}</h4>
                     </div>
                     <p>{{ chapter.body }}</p>
-                <p class="qa-story-chapter__meta">
-                  Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
-                  {% if chapter.causal_support %}· source-reviewed causal wording{% endif %}
-                </p>
+                    <p class="qa-story-chapter__meta">
+                      Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
+                      {% if chapter.causal_support %}· source-reviewed causal wording{% endif %}
+                    </p>
                     {% if chapter.source_refs %}
                       <details class="qa-source-details qa-story-source-details">
                         <summary>Source &amp; review details</summary>
@@ -106,19 +106,44 @@
                             <a href="{{ source.url }}">{{ source.label }}</a>
                             <dl class="qa-story-source-record__facts">
                               {% if source.source_kind %}
-                                <div><dt>Source type</dt><dd>{{ source.source_kind }}</dd></div>
+                                <div>
+                                  <dt>Source type</dt>
+                                  <dd>
+                                    {{ source.source_kind }}
+                                  </dd>
+                                </div>
                               {% endif %}
                               {% if source.published_label %}
-                                <div><dt>Published</dt><dd>{{ source.published_label }}</dd></div>
+                                <div>
+                                  <dt>Published</dt>
+                                  <dd>
+                                    {{ source.published_label }}
+                                  </dd>
+                                </div>
                               {% endif %}
                               {% if source.retrieved_label %}
-                                <div><dt>Retrieved</dt><dd>{{ source.retrieved_label }}</dd></div>
+                                <div>
+                                  <dt>Retrieved</dt>
+                                  <dd>
+                                    {{ source.retrieved_label }}
+                                  </dd>
+                                </div>
                               {% endif %}
                               {% if source.verified_label %}
-                                <div><dt>Reviewed</dt><dd>{{ source.verified_label }}</dd></div>
+                                <div>
+                                  <dt>Reviewed</dt>
+                                  <dd>
+                                    {{ source.verified_label }}
+                                  </dd>
+                                </div>
                               {% endif %}
                               {% if source.external_id %}
-                                <div><dt>Source ID</dt><dd>{{ source.external_id }}</dd></div>
+                                <div>
+                                  <dt>Source ID</dt>
+                                  <dd>
+                                    {{ source.external_id }}
+                                  </dd>
+                                </div>
                               {% endif %}
                               <div>
                                 <dt>Causal wording</dt>
