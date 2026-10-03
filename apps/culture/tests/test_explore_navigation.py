@@ -27,6 +27,7 @@ def seeded_explore_ux(db):
     call_command("seed_story_data", stdout=StringIO())
     call_command("seed_destination_context", stdout=StringIO())
 
+
 @pytest.mark.django_db
 def test_regional_explore_groups_only_reviewed_destination_scopes(seeded_explore_ux):
     destinations = build_explore_destinations(as_of=AS_OF, limit=24)
@@ -65,6 +66,7 @@ def test_regional_explore_groups_only_reviewed_destination_scopes(seeded_explore
     # The reference seed contains the US, but Explore has no reviewed US context yet.
     assert all(country.country_code != "US" for region in regions for country in region.countries)
 
+
 @pytest.mark.django_db
 def test_regional_explore_keeps_unknown_geography_visible_but_last(seeded_explore_ux):
     Country.objects.filter(iso2="JP").update(region="", subregion="")
@@ -75,6 +77,7 @@ def test_regional_explore_keeps_unknown_geography_visible_but_last(seeded_explor
     japan = regions[-1].countries[0]
     assert japan.country_code == "JP"
     assert japan.cities[0].name == "Tokyo"
+
 
 @pytest.mark.django_db
 def test_regional_presentation_preserves_canonical_converter_and_profile_handoffs(
@@ -107,6 +110,7 @@ def test_regional_presentation_preserves_canonical_converter_and_profile_handoff
     city_compare_url = urlparse(str(tokyo["comparison_url"]))
     assert city_compare_url.path == reverse("destination_comparison")
     assert parse_qs(city_compare_url.query)["left_destination"] == ["JP:tokyo"]
+
 
 
 @pytest.mark.django_db
@@ -145,6 +149,7 @@ def test_collection_presentation_uses_curated_country_teaser_without_changing_ac
     assert japan_items
     assert all(item["teaser_image"] is teaser for item in japan_items)
     assert all(item["action_url"] for item in japan_items)
+
 
 @pytest.mark.django_db
 def test_collection_presentation_exposes_evidence_and_useful_actions(seeded_explore_ux):
