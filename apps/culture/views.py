@@ -390,56 +390,78 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
             try:
                 country = _country_for_story(story_request.destination_country)
                 currency = _currency_for_story(story_request.destination_currency)
-                story_media = select_media_for_display(
-                    role=MediaRole.STORY_COVER,
-                    country=country,
-                    currency=currency,
-                    target_date=story_request.selected_date if story_request.historical else None,
-                )
-                story_social_preview = select_media_for_display(
-                    role=MediaRole.SOCIAL_PREVIEW,
-                    country=country,
-                    currency=currency,
-                )
-            except (DatabaseError, ValueError) as exc:
+            except DatabaseError as exc:
                 logger.warning(
-                    "Money and culture story primary media unavailable",
+                    "Money and culture story media metadata unavailable",
                     extra={
                         "error_code": exc.__class__.__name__,
-                        "culture.status": "media_unavailable",
+                        "culture.status": "media_metadata_unavailable",
                         "culture.historical": story_request.historical,
                     },
                 )
-
-            try:
-                country = _country_for_story(story_request.destination_country)
-                currency = _currency_for_story(story_request.destination_currency)
-                used_sources = {
-                    selection.image.src for selection in (story_media,) if selection is not None
-                }
-                chapter_items = []
-                for chapter in story.historical_moment_chapters:
-                    chapter_media = select_media_for_display(
-                        role=MediaRole.STORY_CHAPTER,
+            else:
+                try:
+                    story_media = select_media_for_display(
+                        role=MediaRole.STORY_COVER,
                         country=country,
                         currency=currency,
-                        target_date=chapter.target_date,
+                        target_date=(
+                            story_request.selected_date if story_request.historical else None
+                        ),
                     )
-                    if chapter_media is not None and chapter_media.image.src in used_sources:
-                        chapter_media = None
-                    if chapter_media is not None:
-                        used_sources.add(chapter_media.image.src)
-                    chapter_items.append({"chapter": chapter, "media": chapter_media})
-                story_chapter_items = tuple(chapter_items)
-            except (DatabaseError, ValueError) as exc:
-                logger.warning(
-                    "Money and culture story chapter media unavailable",
-                    extra={
-                        "error_code": exc.__class__.__name__,
-                        "culture.status": "chapter_media_unavailable",
-                        "culture.historical": story_request.historical,
-                    },
-                )
+                except (DatabaseError, ValueError) as exc:
+                    logger.warning(
+                        "Money and culture story cover media unavailable",
+                        extra={
+                            "error_code": exc.__class__.__name__,
+                            "culture.status": "cover_media_unavailable",
+                            "culture.historical": story_request.historical,
+                        },
+                    )
+
+                try:
+                    story_social_preview = select_media_for_display(
+                        role=MediaRole.SOCIAL_PREVIEW,
+                        country=country,
+                        currency=currency,
+                    )
+                except (DatabaseError, ValueError) as exc:
+                    logger.warning(
+                        "Money and culture story social preview unavailable",
+                        extra={
+                            "error_code": exc.__class__.__name__,
+                            "culture.status": "social_preview_unavailable",
+                            "culture.historical": story_request.historical,
+                        },
+                    )
+
+                try:
+                    used_sources = {
+                        selection.image.src for selection in (story_media,) if selection is not None
+                    }
+                    chapter_items = []
+                    for chapter in story.historical_moment_chapters:
+                        chapter_media = select_media_for_display(
+                            role=MediaRole.STORY_CHAPTER,
+                            country=country,
+                            currency=currency,
+                            target_date=chapter.target_date,
+                        )
+                        if chapter_media is not None and chapter_media.image.src in used_sources:
+                            chapter_media = None
+                        if chapter_media is not None:
+                            used_sources.add(chapter_media.image.src)
+                        chapter_items.append({"chapter": chapter, "media": chapter_media})
+                    story_chapter_items = tuple(chapter_items)
+                except (DatabaseError, ValueError) as exc:
+                    logger.warning(
+                        "Money and culture story chapter media unavailable",
+                        extra={
+                            "error_code": exc.__class__.__name__,
+                            "culture.status": "chapter_media_unavailable",
+                            "culture.historical": story_request.historical,
+                        },
+                    )
 
     context = {
         "story": story,
