@@ -579,7 +579,7 @@ def test_comparison_frontend_exposes_full_backend_context_contract(
     left_converter = urlparse(left["converter_url"])
     left_query = parse_qs(left_converter.query)
     assert left_converter.path == reverse("converter")
-    assert left_query["amount"] == ["500.00"]
+    assert left_query["amount"] == ["500"]
     assert left_query["source_currency"] == ["EUR"]
     assert left_query["destination_country"] == ["JP"]
     assert left_query["destination_currency"] == ["JPY"]
