@@ -84,7 +84,6 @@ def _destination_component(
 ) -> dict[str, object]:
     conversion = item.context.conversion
     quote = conversion.quote
-    destination_context = item.context.destination_context
     payment = item.context.payment_guidance
     prices = tuple(
         _price_component(
