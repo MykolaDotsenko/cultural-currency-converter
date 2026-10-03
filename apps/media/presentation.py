@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 
 from django.db.models import Q
+from django.utils.formats import date_format
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
@@ -63,6 +64,51 @@ def _temporal_label(asset: MediaAsset) -> str:
 
     precision = asset.get_date_precision_display()
     return f"{scope} · {precision}"
+
+
+def _evidence_label(asset: MediaAsset) -> str:
+    if asset.generated_by_ai:
+        return "AI-generated editorial illustration"
+    labels = {
+        "archival_photo": "Archival sourced evidence",
+        "heritage_object": "Sourced heritage object",
+        "artwork": "Sourced artwork",
+        "map": "Sourced map",
+        "contemporary_photo": "Sourced contemporary photograph",
+    }
+    return labels.get(asset.kind, "Sourced managed media")
+
+
+def _temporal_match_label(quality: str) -> str:
+    labels = {
+        "exact": "Exact-date reviewed match",
+        "month": "Month-level reviewed match",
+        "year": "Year-level reviewed match",
+        "decade": "Decade-level reviewed match",
+        "range": "Reviewed period match",
+        "era": "Reviewed era match",
+        "unknown": "Historical date match not specified",
+        "not_requested": "",
+    }
+    return labels.get(quality, "")
+
+
+def _with_selection_provenance(
+    image: ImageViewModel,
+    *,
+    temporal_match_quality: str,
+    authenticity_class: str,
+) -> ImageViewModel:
+    evidence_label = image.evidence_label
+    if authenticity_class == "ai_generated_illustration":
+        evidence_label = "AI-generated editorial illustration"
+    elif authenticity_class == "sourced_media" and not evidence_label:
+        evidence_label = "Sourced managed media"
+    return replace(
+        image,
+        evidence_label=evidence_label,
+        temporal_match_label=_temporal_match_label(temporal_match_quality),
+    )
 
 
 def _responsive_srcsets(assets: tuple[MediaAsset, ...]) -> dict[int, str]:
@@ -157,6 +203,16 @@ def _build_media_asset_image_view_model(
         ),
         authenticity_label=asset.ai_label if asset.generated_by_ai else "",
         temporal_label=_temporal_label(asset),
+        source_name=asset.source_name,
+        creator=asset.creator,
+        rights_statement=asset.rights_statement,
+        original_source_url=asset.source_media_url,
+        retrieved_label=(
+            date_format(asset.source_retrieved_at, "j M Y")
+            if asset.source_retrieved_at is not None
+            else ""
+        ),
+        evidence_label=_evidence_label(asset),
     )
 
 
@@ -200,6 +256,11 @@ def select_media_for_display_roles(
             )
         except ValueError:
             continue
+        image = _with_selection_provenance(
+            image,
+            temporal_match_quality=stored.temporal_match_quality,
+            authenticity_class=stored.authenticity_class,
+        )
         displayed[role] = DisplayMediaSelection(
             image=image,
             selection_reason=stored.selection_reason,
@@ -230,8 +291,13 @@ def select_media_for_display(
     if stored is None:
         return None
 
+    image = _with_selection_provenance(
+        build_media_asset_image_view_model(stored.asset),
+        temporal_match_quality=stored.temporal_match_quality,
+        authenticity_class=stored.authenticity_class,
+    )
     return DisplayMediaSelection(
-        image=build_media_asset_image_view_model(stored.asset),
+        image=image,
         selection_reason=stored.selection_reason,
         temporal_match_quality=stored.temporal_match_quality,
         authenticity_class=stored.authenticity_class,
