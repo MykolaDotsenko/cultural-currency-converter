@@ -128,6 +128,22 @@
         </ol>
       </section>
     {% endif %}
+    {% if series_component.timeline_media %}
+      <section class="qa-historical-evidence"
+               aria-labelledby="historical-evidence-title">
+        <div class="qa-historical-evidence__copy">
+          <p class="qa-foundation-kicker">Reviewed historical evidence</p>
+          <h3 id="historical-evidence-title">A sourced visual from the selected period</h3>
+          <p>
+            This media is selected independently from the FX series. Its temporal and source
+            provenance are shown with the image; it does not explain or cause the rate movement.
+          </p>
+        </div>
+        <div class="qa-historical-evidence__media">
+          {% include "components/media/image_frame.html" with image=series_component.timeline_media display_ratio="3 / 2" sizes="(max-width: 52rem) calc(100vw - 3rem), 28rem" %}
+        </div>
+      </section>
+    {% endif %}
     {% if series_component.points %}
       <section class="qa-rate-chart" aria-labelledby="historical-rate-chart-title">
         <div class="qa-rate-chart__heading">
@@ -259,6 +275,11 @@
             <article>
               <p class="qa-workspace__role">Latest reference</p>
               <h4>{{ comparison.latest.date_label }}</h4>
+              {% if series_component.now_media %}
+                <div class="qa-then-now__media">
+                  {% include "components/media/image_frame.html" with image=series_component.now_media display_ratio="3 / 2" sizes="(max-width: 42rem) calc(100vw - 4rem), 32rem" %}
+                </div>
+              {% endif %}
               <p class="qa-then-now__amount">
                 {{ comparison.input_amount }} {{ comparison.base_currency }}
                 ≈ {{ comparison.latest.output_amount }} {{ comparison.quote_currency }}
