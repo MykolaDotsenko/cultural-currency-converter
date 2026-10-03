@@ -13,7 +13,7 @@
          {% if fetchpriority %}fetchpriority="{{ fetchpriority }}"{% endif %}
          {% if image.decorative %}aria-hidden="true"{% endif %}>
   </div>
-  {% if caption or image.caption or image.authenticity_label or image.temporal_label or image.attribution_text or image.licence_id or image.change_note %}
+  {% if caption or image.caption or image.authenticity_label or image.temporal_label or image.attribution_text or image.licence_id or image.change_note or image.evidence_label or image.temporal_match_label or image.creator or image.rights_statement or image.retrieved_label or image.original_source_url %}
     <figcaption class="qa-media__caption">
       {% if caption %}
         <span>{{ caption }}</span>
@@ -42,6 +42,54 @@
       {% endif %}
       {% if image.change_note %}
         <span class="qa-media__change-note">{{ image.change_note }}</span>
+      {% endif %}
+      {% if image.evidence_label or image.temporal_match_label or image.creator or image.rights_statement or image.retrieved_label or image.original_source_url %}
+        <details class="qa-media__provenance">
+          <summary>Image provenance</summary>
+          <dl class="qa-media__provenance-list">
+            {% if image.evidence_label %}
+              <div>
+                <dt>Evidence</dt>
+                <dd>{{ image.evidence_label }}</dd>
+              </div>
+            {% endif %}
+            {% if image.temporal_match_label %}
+              <div>
+                <dt>Temporal match</dt>
+                <dd>{{ image.temporal_match_label }}</dd>
+              </div>
+            {% endif %}
+            {% if image.creator %}
+              <div>
+                <dt>Creator</dt>
+                <dd>{{ image.creator }}</dd>
+              </div>
+            {% endif %}
+            {% if image.source_name %}
+              <div>
+                <dt>Source</dt>
+                <dd>{{ image.source_name }}</dd>
+              </div>
+            {% endif %}
+            {% if image.rights_statement %}
+              <div>
+                <dt>Rights</dt>
+                <dd>{{ image.rights_statement }}</dd>
+              </div>
+            {% endif %}
+            {% if image.retrieved_label %}
+              <div>
+                <dt>Retrieved</dt>
+                <dd>{{ image.retrieved_label }}</dd>
+              </div>
+            {% endif %}
+          </dl>
+          {% if image.original_source_url %}
+            <a class="qa-media__original-source"
+               href="{{ image.original_source_url }}"
+               rel="noopener noreferrer">Open original media record</a>
+          {% endif %}
+        </details>
       {% endif %}
     </figcaption>
   {% endif %}
