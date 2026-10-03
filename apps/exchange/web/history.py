@@ -41,25 +41,27 @@ if TYPE_CHECKING:
 logger = logging.getLogger("cultural_currency.exchange")
 
 
-def _select_then_media(
+def _select_history_media(
     *,
+    role: str,
     quote_currency: Currency | None,
-    selected_date,
+    target_date=None,
 ) -> ImageViewModel | None:
     if quote_currency is None:
         return None
     try:
         selection = select_media_for_display(
-            role=MediaRole.COMPARISON_THEN,
+            role=role,
             currency=quote_currency,
-            target_date=selected_date,
+            target_date=target_date,
             aspect_ratio="3 / 2",
         )
     except (DatabaseError, ValueError) as exc:
         logger.warning(
-            "Historical comparison media lookup failed",
+            "Historical media lookup failed",
             extra={
                 "exchange.currency": quote_currency.code,
+                "media.role": role,
                 "error_code": exc.__class__.__name__,
             },
         )
@@ -254,12 +256,26 @@ def historical_series_view(
                 compare_historical_to_latest_fn=compare_historical_to_latest_fn,
             )
             then_media = (
-                _select_then_media(
+                _select_history_media(
+                    role=MediaRole.COMPARISON_THEN,
                     quote_currency=quote_currency,
-                    selected_date=cleaned["selected_date"],
+                    target_date=cleaned["selected_date"],
                 )
                 if then_now is not None
                 else None
+            )
+            now_media = (
+                _select_history_media(
+                    role=MediaRole.COMPARISON_NOW,
+                    quote_currency=quote_currency,
+                )
+                if then_now is not None
+                else None
+            )
+            timeline_media = _select_history_media(
+                role=MediaRole.HISTORICAL_TIMELINE,
+                quote_currency=quote_currency,
+                target_date=cleaned["selected_date"],
             )
             component = build_rate_series_component(
                 result,
@@ -269,6 +285,8 @@ def historical_series_view(
                 amount=cleaned.get("amount_decimal"),
                 then_now=then_now,
                 then_media=then_media,
+                now_media=now_media,
+                timeline_media=timeline_media,
                 comparison_notice=comparison_notice,
             )
         except (
