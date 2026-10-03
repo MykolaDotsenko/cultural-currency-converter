@@ -541,6 +541,7 @@ def test_owner_can_recheck_scenario_without_overwriting_initial_observation(
     assert b"fetched" in detail.content
     assert b"Initial saved reference" in detail.content
     assert b"Re-check" in detail.content
+    assert detail.content.count(b"fetched ") >= 2
     assert b"Travel money mode" in detail.content
     assert b"What the offline money pack contains" in detail.content
     assert b"Save offline copy" in detail.content
