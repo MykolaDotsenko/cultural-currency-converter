@@ -75,7 +75,12 @@
                 <article class="qa-budget-interpretation__line">
                   <div>
                     <p class="qa-budget-interpretation__line-title">{{ line.label }}</p>
-                    <p class="qa-field__message">{{ line.units }} per person / day · {{ line.scope_label }}</p>
+                    <p class="qa-field__message">
+                      <span class="qa-city-profile__scope-badge{% if line.scope_is_fallback %} qa-city-profile__scope-badge--fallback{% endif %}">
+                        {{ line.scope_badge }}
+                      </span>
+                      {{ line.units }} per person / day · {{ line.scope_label }}
+                    </p>
                   </div>
                   <div class="qa-budget-interpretation__line-values">
                     <span>
@@ -88,7 +93,8 @@
                     </strong>
                   </div>
                   <p class="qa-context-source">
-                    Observed {{ line.observed_at }} · {{ line.confidence }} confidence ·
+                    Observed {{ line.observed_at }} · {{ line.source_class }} ·
+                    {{ line.confidence }} confidence ·
                     <a href="{{ line.source_url }}"
                        rel="noopener noreferrer">{{ line.source_name }}</a>
                   </p>
@@ -212,11 +218,15 @@
                       id="{{ item.field.html_name }}-error">{{ item.field.errors.0 }}</span>
               {% endif %}
               <span class="qa-field__message" id="{{ item.field.html_name }}-anchor">
+                <span class="qa-city-profile__scope-badge{% if item.scope_is_fallback %} qa-city-profile__scope-badge--fallback{% endif %}">
+                  {{ item.scope_badge }}
+                </span>
                 Anchor {{ item.price_low }}{% if item.price_high %}–{{ item.price_high }}{% endif %}
                 {{ item.currency_code }} · {{ item.scope_label }}
               </span>
               <span class="qa-context-source" id="{{ item.field.html_name }}-source">
-                Observed {{ item.observed_at }} · {{ item.confidence }} confidence ·
+                Observed {{ item.observed_at }} · {{ item.source_class }} ·
+                {{ item.confidence }} confidence ·
                 <a href="{{ item.source_url }}" rel="noopener noreferrer">{{ item.source_name }}</a>
               </span>
             </div>

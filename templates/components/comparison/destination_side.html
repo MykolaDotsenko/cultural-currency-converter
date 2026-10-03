@@ -28,6 +28,20 @@
       </dd>
     </div>
   </dl>
+  <div class="qa-context-freshness-note"
+       role="status"
+       aria-label="{{ side.destination_name }} reviewed local context status">
+    {% if side.context_state == "available" %}
+      Reviewed local context assembled as of {{ side.context_as_of }}.
+    {% elif side.context_state == "degraded" %}
+      Reviewed local context is temporarily unavailable as of {{ side.context_as_of }}.
+      The trusted FX observation above remains valid and missing local facts are not inferred.
+    {% elif side.context_state == "empty" %}
+      No reviewed current local price or payment context is available as of {{ side.context_as_of }}.
+    {% else %}
+      Local context is not applicable to this comparison side as of {{ side.context_as_of }}.
+    {% endif %}
+  </div>
   <section class="qa-destination-comparison-side__budget"
            aria-label="{{ side.destination_name }} budget interpretation">
     <div class="qa-destination-comparison-side__budget-heading">
@@ -75,13 +89,19 @@
           <div class="qa-destination-comparison-side__line">
             <div>
               <strong>{{ line.label }}</strong>
-              <span>{{ line.units }} / person / day · {{ line.scope_label }}</span>
+              <span>
+                <span class="qa-city-profile__scope-badge{% if line.scope_kind == 'national' %} qa-city-profile__scope-badge--fallback{% endif %}">
+                  {% if line.scope_kind == "city" %}City evidence{% else %}National fallback{% endif %}
+                </span>
+                {{ line.units }} / person / day · {{ line.scope_label }}
+              </span>
             </div>
             <div class="qa-destination-comparison-side__line-value">
               {{ line.total_low }}–{{ line.total_high }} {{ side.currency_code }}
             </div>
             <p class="qa-context-source">
-              Observed {{ line.observed_at }} · {{ line.confidence }} confidence ·
+              Observed {{ line.observed_at }} · {{ line.source_class }} ·
+              {{ line.confidence }} confidence ·
               <a href="{{ line.source_url }}" rel="noopener noreferrer">{{ line.source_name }}</a>
             </p>
           </div>
@@ -106,5 +126,18 @@
            rel="noopener noreferrer">{{ side.payment.source_name }}</a>
       </p>
     </section>
+  {% else %}
+    <div class="qa-saved-empty" role="status">
+      No reviewed payment guidance is available for {{ side.destination_name }}.
+      No payment behaviour is inferred from price or FX data.
+    </div>
   {% endif %}
+  <div class="qa-saved-row__actions"
+       aria-label="{{ side.destination_name }} canonical actions">
+    <a class="qa-primary-button" href="{{ side.converter_url }}">Open conversion</a>
+    <a class="qa-secondary-button" href="{{ side.budget_url }}">Build budget</a>
+    {% if side.city_profile_url %}
+      <a class="qa-saved-row__text-action" href="{{ side.city_profile_url }}">City money profile</a>
+    {% endif %}
+  </div>
 </article>

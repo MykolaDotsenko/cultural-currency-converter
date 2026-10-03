@@ -156,6 +156,7 @@ def test_city_money_profile_view_renders_reviewed_scope_without_fx(client, seede
     assert response.status_code == 200
     assert b"Tokyo, Japan" in response.content
     assert b"Japanese yen" in response.content
+    assert b"Context assembled as of" in response.content
     assert b"Tokyo Metro regular ticket" in response.content
     assert b"does not request a live FX rate" in response.content
     assert b"cost-of-living score" in response.content

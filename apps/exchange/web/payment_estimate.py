@@ -10,9 +10,16 @@ from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 
 from apps.countries.models import Currency
+from apps.exchange.budget_snapshot import (
+    BudgetContextTokenError,
+    TrustedBudgetContextSnapshot,
+    load_budget_context_snapshot_token,
+)
 from apps.exchange.forms import PaymentEstimateForm
+from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_token
 from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.trusted_snapshot import (
+    TrustedConversionSnapshot,
     TrustedSnapshotTokenError,
     load_trusted_conversion_snapshot_token,
 )
@@ -25,9 +32,32 @@ def _money_text(value, *, minor_units: int) -> str:
     return f"{value:.{minor_units}f}"
 
 
+def _matching_budget_context(
+    snapshot: TrustedConversionSnapshot,
+    budget: TrustedBudgetContextSnapshot,
+) -> bool:
+    conversion = budget.conversion
+    quote = conversion.quote
+    return (
+        conversion.input_amount == snapshot.input_amount
+        and conversion.output_amount == snapshot.output_amount
+        and quote.base_currency == snapshot.base_currency
+        and quote.quote_currency == snapshot.quote_currency
+        and quote.rate == snapshot.rate
+        and quote.requested_date == snapshot.requested_date
+        and quote.effective_date == snapshot.effective_date
+        and quote.historical == snapshot.historical
+        and quote.observation_granularity == snapshot.observation_granularity
+        and quote.provider_keys == snapshot.provider_keys
+        and conversion.stale == snapshot.stale
+    )
+
+
 @require_POST
 def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     token = request.POST.get("payment_estimate_token", "")
+    submitted_budget_context_token = str(request.POST.get("budget_context_token") or "")
+    trusted_budget_context_token = ""
     estimate = None
     estimate_error = None
     form = None
@@ -49,6 +79,23 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
             "detail": "Run the conversion again, then reopen the payment estimate.",
         }
     else:
+        if submitted_budget_context_token:
+            try:
+                budget_snapshot = load_budget_context_snapshot_token(submitted_budget_context_token)
+            except BudgetContextTokenError as exc:
+                logger.warning(
+                    "payment_estimate_budget_context_rejected",
+                    extra={"error_code": str(exc)},
+                )
+            else:
+                if _matching_budget_context(snapshot, budget_snapshot):
+                    trusted_budget_context_token = submitted_budget_context_token
+                else:
+                    logger.warning(
+                        "payment_estimate_budget_context_mismatch",
+                        extra={"error_code": "conversion_mismatch"},
+                    )
+
         if snapshot.historical:
             response_status = 422
             estimate_error = {
@@ -120,6 +167,15 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                     else:
                         component = {
                             "token": token,
+                            "budget_context_token": trusted_budget_context_token,
+                            "budget_handoff_token": (
+                                build_payment_budget_handoff_token(
+                                    budget_context_token=trusted_budget_context_token,
+                                    estimate=estimate,
+                                )
+                                if trusted_budget_context_token
+                                else ""
+                            ),
                             "form": form,
                             "source_currency": source_currency.code,
                             "destination_currency": destination_currency.code,
@@ -157,6 +213,8 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                 if component is None:
                     component = {
                         "token": token,
+                        "budget_context_token": trusted_budget_context_token,
+                        "budget_handoff_token": "",
                         "form": form,
                         "source_currency": source_currency.code,
                         "destination_currency": destination_currency.code,

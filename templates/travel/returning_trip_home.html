@@ -11,12 +11,11 @@
     <div class="qa-saved-row__actions">
       <a class="qa-primary-button"
          href="{{ returning_trip_home.detail_url }}">{{ returning_trip_home.primary_action_label }}</a>
+      <a class="qa-secondary-button"
+         href="{{ returning_trip_home.converter_url }}">Open money context</a>
       {% if returning_trip_home.camera_url %}
         <a class="qa-secondary-button"
            href="{{ returning_trip_home.camera_url }}">Scan a price</a>
-      {% else %}
-        <a class="qa-secondary-button"
-           href="{{ returning_trip_home.converter_url }}">Open money context</a>
       {% endif %}
       {% if returning_trip_home.offline_pack_url %}
         <a class="qa-secondary-button"
