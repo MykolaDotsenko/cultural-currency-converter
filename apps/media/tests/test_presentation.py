@@ -64,7 +64,6 @@ def test_sourced_media_attribution_links_to_canonical_source():
     assert 'href="https://commons.wikimedia.org/wiki/File:Example.jpg"' in html
 
 
-
 def test_historical_media_temporal_scope_is_visible_with_reviewed_precision():
     asset = MediaAsset(
         kind=MediaKind.ARCHIVAL_PHOTO,
@@ -127,7 +126,6 @@ def test_partial_managed_media_focal_point_defaults_missing_axis_to_center():
     image = build_media_asset_image_view_model(asset)
 
     assert image.focal_position == "12.5% 50%"
-
 
 @pytest.mark.django_db
 def test_published_media_family_builds_width_descriptor_srcset():
