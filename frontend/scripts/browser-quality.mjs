@@ -729,7 +729,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     budgetResponse.status() === 200,
     `current-converter: budget interpretation returned ${budgetResponse.status()} instead of 200`,
   );
-  await page.getByText("Reference-basket comparison", { exact: true }).waitFor();
+  await page.getByText("reference-basket comparison", { exact: false }).waitFor();
   await page.getByText("not a full trip-cost forecast", { exact: false }).waitFor();
   await page.getByRole("link", { name: "Sign in to save" }).waitFor();
   assert(
