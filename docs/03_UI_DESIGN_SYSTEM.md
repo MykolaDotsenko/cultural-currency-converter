@@ -75,11 +75,15 @@ A photo should communicate place or everyday value without becoming a tourism cl
 
 ## Historical imagery
 
-Historical surfaces should prefer authentic archival photography, documents, currency objects or museum/heritage material with provenance.
+Historical surfaces should prefer authentic archival photography, documents, currency objects or museum/heritage material with provenance. Story-chapter and timeline evidence are date-scoped and may show a concise human-readable temporal-match label such as exact-date, year-level or reviewed-period match.
 
-Do not use a photorealistic reconstruction as if it were archival evidence.
+Do not use a photorealistic reconstruction as if it were archival evidence. AI-generated media is not eligible for historical-evidence roles.
 
 If an illustration or generated reconstruction is ever used for a non-factual supporting role, its status should be clear and it should not compete visually with authentic evidence.
+
+Historical/editorial media should use progressive provenance rather than dense permanent metadata. The default caption may show attribution/licence and temporal scope; **Image provenance** may reveal creator, source/institution, rights statement, retrieval date, original media record, evidence class and temporal-match quality. Internal selector reason/fallback level remain implementation details and are not user-facing trust labels.
+
+Explore may use reviewed `COUNTRY_TEASER` photography only on curated editorial cards where it strengthens place recognition without turning the page into a tourism gallery. Managed `SOCIAL_PREVIEW` media may populate OG/Twitter metadata downstream of canonical page data; it never creates a second content/calculation path.
 
 ## Image formats
 
