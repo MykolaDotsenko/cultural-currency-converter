@@ -6,7 +6,6 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 from apps.common.presentation.media_view_models import ImageViewModel
-
 from apps.culture.explore import ExploreDestination
 from apps.culture.explore_collections import (
     ExploreCollection,
