@@ -2888,7 +2888,8 @@ async function assertDestinationComparisonQuality(page) {
     );
   }
   assert(
-    (await sides.first().getByRole("link", { name: "City money profile", exact: true }).count()) === 1,
+    (await sides.first().getByRole("link", { name: "City money profile", exact: true }).count()) ===
+      1,
     "destination-comparison: city-scoped side lost its City Money Profile handoff",
   );
   const deterministicBeforeAi = await results
