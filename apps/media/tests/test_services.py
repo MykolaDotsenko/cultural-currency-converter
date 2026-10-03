@@ -516,7 +516,7 @@ def test_ai_generated_story_chapter_cannot_be_approved_as_historical_evidence(me
     )
     attach_media_bytes(asset, _png_bytes((80, 90, 100)), filename="chapter.png")
 
-    with pytest.raises(MediaPublicationError, match="(?i)historical evidence"):
+    with pytest.raises(MediaPublicationError, match=r"(?i)historical evidence"):
         approve_media_asset(asset)
 
 
