@@ -401,7 +401,7 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                 country = _country_for_story(story_request.destination_country)
                 currency = _currency_for_story(story_request.destination_currency)
                 used_sources = {
-                    story_media.image.src
+                    selection.image.src
                     for selection in (story_media,)
                     if selection is not None
                 }
