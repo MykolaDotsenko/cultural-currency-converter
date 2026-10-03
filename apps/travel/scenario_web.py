@@ -261,6 +261,12 @@ def _scenario_trip_budget_component(
             summary.reference_budget,
             minor_units=minor_units,
         ),
+        "basis": scenario.budget_basis,
+        "basis_label": (
+            "Payment-adjusted saved baseline"
+            if scenario.budget_basis == SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
+            else "Saved FX reference baseline"
+        ),
         "confirmed_spend": _format_currency_amount(
             summary.confirmed_spend,
             minor_units=minor_units,
