@@ -13,8 +13,10 @@ from apps.culture.services import DestinationContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
+from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_token
+from apps.exchange.payment_estimate import estimate_payment_value
 from apps.exchange.providers.base import FxProviderUnavailable
-from apps.travel.models import SavedScenario, SavedScenarioKind
+from apps.travel.models import SavedScenario, SavedScenarioBudgetBasis, SavedScenarioKind
 
 User = get_user_model()
 
@@ -99,6 +101,23 @@ class UnavailableLatestGateway:
         raise FxProviderUnavailable("provider unavailable")
 
 
+def _payment_budget_token() -> str:
+    conversion = _conversion()
+    estimate = estimate_payment_value(
+        source_budget=conversion.input_amount,
+        reference_destination_amount=conversion.output_amount,
+        rate=conversion.quote.rate,
+        fx_markup_percent=Decimal("2"),
+        source_fixed_fee=Decimal("5"),
+        destination_fixed_fee=Decimal("500"),
+        destination_minor_units=0,
+    )
+    return build_payment_budget_handoff_token(
+        budget_context_token=_budget_token(),
+        estimate=estimate,
+    )
+
+
 def _budget_token() -> str:
     destination = DestinationContext(
         country_code="JP",
@@ -167,6 +186,52 @@ def test_signed_in_user_can_save_budget_without_second_live_price_lookup(
     assert observation.output_amount == Decimal("104700.000000000000")
     assert observation.effective_date == date(2026, 9, 30)
     assert observation.provider_keys == ["ecb"]
+
+
+@pytest.mark.django_db
+def test_payment_adjusted_budget_can_be_saved_and_reopens_with_adjusted_baseline(
+    client,
+    scenario_reference_data,
+):
+    _eur, _jpy, _fi, _jp, _tokyo = scenario_reference_data
+    user = User.objects.create_user(username="payment-save-owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "payment_budget_token": _payment_budget_token(),
+            "title": "Tokyo payment budget",
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+
+    scenario = SavedScenario.objects.get(user=user)
+    assert response.status_code == 302
+    assert response.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+    assert scenario.budget_basis == SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
+    assert scenario.planning_destination_amount == Decimal("101292.000000000000")
+    assert scenario.fx_markup_percent == Decimal("2.00")
+    assert scenario.source_fixed_fee == Decimal("5.000000000000")
+    assert scenario.destination_fixed_fee == Decimal("500.000000000000")
+    assert scenario.observations.get().output_amount == Decimal("104700.000000000000")
+
+    detail = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    assert detail.status_code == 200
+    assert b"Payment-adjusted trip budget" not in detail.content
+    assert b"payment-adjusted amount you explicitly saved" in detail.content
+    assert b"101292 JPY remaining" in detail.content
+    assert b"Saved payment assumptions" in detail.content
+    assert b"104700" in detail.content
+
+    offline = client.get(reverse("download_offline_destination_pack", args=(scenario.pk,)))
+    assert offline.status_code == 200
+    assert b"Payment-adjusted Trip Budget Remaining" in offline.content
+    assert b"Saved planning basis 101292 JPY" in offline.content
+    assert b"stored FX reference remains separate" in offline.content
 
 
 @pytest.mark.django_db
