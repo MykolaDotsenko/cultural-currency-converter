@@ -29,7 +29,7 @@ from apps.exchange.payment_budget_snapshot import (
     PaymentBudgetHandoffTokenError,
     load_payment_budget_handoff_token,
 )
-from apps.exchange.payment_estimate import estimate_payment_value
+from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.web.gateways import build_latest_quote_gateway
@@ -512,15 +512,30 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     source_fixed_fee = None
     destination_fixed_fee = None
     if payment_handoff is not None:
-        estimate = estimate_payment_value(
-            source_budget=snapshot.conversion.input_amount,
-            reference_destination_amount=snapshot.conversion.output_amount,
-            rate=snapshot.conversion.quote.rate,
-            fx_markup_percent=payment_handoff.fx_markup_percent,
-            source_fixed_fee=payment_handoff.source_fixed_fee,
-            destination_fixed_fee=payment_handoff.destination_fixed_fee,
-            destination_minor_units=destination_currency.minor_units,
-        )
+        try:
+            estimate = estimate_payment_value(
+                source_budget=snapshot.conversion.input_amount,
+                reference_destination_amount=snapshot.conversion.output_amount,
+                rate=snapshot.conversion.quote.rate,
+                fx_markup_percent=payment_handoff.fx_markup_percent,
+                source_fixed_fee=payment_handoff.source_fixed_fee,
+                destination_fixed_fee=payment_handoff.destination_fixed_fee,
+                destination_minor_units=destination_currency.minor_units,
+            )
+        except PaymentEstimateError as exc:
+            logger.warning(
+                "saved_budget_scenario_rejected",
+                extra={
+                    "error_code": "invalid_payment_assumptions",
+                    "detail_code": exc.__class__.__name__,
+                },
+            )
+            messages.error(
+                request,
+                "These payment assumptions can no longer be saved safely. "
+                "Recalculate the payment estimate.",
+            )
+            return redirect("converter")
         saved_budget_basis = SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
         planning_destination_amount = estimate.estimated_destination_amount
         fx_markup_percent = estimate.fx_markup_percent
