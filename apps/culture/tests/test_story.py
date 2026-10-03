@@ -120,6 +120,50 @@ def test_composer_adds_reviewed_story_moment(context_data):
     assert story.historical_moment_chapters == (chapter,)
 
 
+
+@pytest.mark.django_db
+def test_story_chapter_exposes_reviewed_source_lifecycle_and_causal_support(context_data):
+    fi, _jp, eur, _jpy = context_data
+    retrieved_at = timezone.now()
+    verified_at = timezone.now()
+    moment = StoryMoment.objects.create(
+        category=StoryMomentCategory.MONETARY_UNION,
+        title="Reviewed causal source",
+        summary="A reviewed source explicitly describes this monetary transition.",
+        start_date=date(1999, 1, 1),
+        end_date=date(1999, 1, 1),
+        date_precision=StoryDatePrecision.EXACT_DAY,
+        source_kind=StorySourceKind.OFFICIAL,
+        source_name="Official archive",
+        source_url="https://example.org/causal-source",
+        external_id="archive-1999-001",
+        source_published_at=date(2000, 2, 3),
+        source_retrieved_at=retrieved_at,
+        verified_at=verified_at,
+        supports_causality=True,
+        causal_support_note="The reviewed source explicitly links the transition described here.",
+        relevance_weight=90,
+        status=StoryMomentStatus.NEEDS_REVIEW,
+    )
+    moment.countries.add(fi)
+    moment.currencies.add(eur)
+    approve_story_moment(moment)
+    publish_story_moment(moment)
+
+    story = compose_story(_request())
+    chapter = next(c for c in story.chapters if c.title == "Reviewed causal source")
+    source = chapter.source_refs[0]
+
+    assert chapter.target_date == date(1999, 1, 1)
+    assert chapter.causal_support is True
+    assert chapter.causal_support_note.startswith("The reviewed source explicitly")
+    assert source.source_kind == "Official"
+    assert source.external_id == "archive-1999-001"
+    assert source.published_label
+    assert source.retrieved_label
+    assert source.verified_label
+
+
 @pytest.mark.django_db
 def test_historical_story_excludes_future_moment_but_keeps_currency_era(context_data):
     fi, _jp, eur, _jpy = context_data
