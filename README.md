@@ -31,7 +31,7 @@ Those boundaries are more important to this project than adding another conversi
 - visible source/effective-date meaning;
 - bilateral country/currency context with smart current/historical picker filtering;
 - historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now comparison;
-- explicit-assumption Real Payment Estimate for known FX markup and fixed fees;
+- explicit-assumption Real Payment Estimate for known FX markup and fixed fees, with a signed handoff into payment-adjusted Budget Interpretation;
 - sourced everyday-value and payment context;
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
