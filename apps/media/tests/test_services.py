@@ -450,7 +450,6 @@ def test_database_rejects_duplicate_derivative_width_identity(media_root):
             variant_width=16,
         )
 
-
 @pytest.mark.django_db
 def test_story_chapter_is_sourced_date_scoped_historical_evidence(finland, media_root):
     chapter = _sourced_asset(
