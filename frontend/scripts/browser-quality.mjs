@@ -1696,6 +1696,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
+  await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const baselineSummary = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
