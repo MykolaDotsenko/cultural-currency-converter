@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.conf import settings
+from django.urls import reverse
 from django.utils.formats import date_format
 
 from apps.exchange.ai.contextual import (
@@ -36,6 +38,47 @@ def _band_label(band: BudgetBand | None) -> str:
     return labels.get(band, "")
 
 
+def _destination_token(side: DestinationComparisonSide) -> str:
+    return (
+        f"{side.destination_country_code}:{side.destination_city_slug}"
+        if side.destination_city_slug
+        else side.destination_country_code
+    )
+
+
+def _side_action_urls(side: DestinationComparisonSide) -> dict[str, str]:
+    token = _destination_token(side)
+    quote = side.conversion.quote
+    converter_params = {
+        "convert": "1",
+        "amount": format(side.conversion.input_amount, "f"),
+        "source_currency": quote.base_currency,
+        "destination_country": side.destination_country_code,
+        "destination_currency": side.currency_code,
+        "rate_mode": "latest",
+    }
+    if side.destination_city_slug:
+        converter_params["destination_city_slug"] = side.destination_city_slug
+
+    city_profile_url = ""
+    if side.destination_city_slug:
+        city_profile_url = reverse(
+            "city_money_profile",
+            kwargs={
+                "country_code": side.destination_country_code,
+                "city_slug": side.destination_city_slug,
+            },
+        )
+
+    return {
+        "converter_url": f"{reverse('converter')}?{urlencode(converter_params)}",
+        "budget_url": (
+            f"{reverse('destination_mode')}?{urlencode({'destination': token})}"
+        ),
+        "city_profile_url": city_profile_url,
+    }
+
+
 def _side_component(
     side: DestinationComparisonSide,
     *,
@@ -44,6 +87,8 @@ def _side_component(
 ) -> dict[str, object]:
     budget = side.budget
     payment = side.payment_guidance
+
+    actions = _side_action_urls(side)
 
     return {
         "destination_name": destination_name,
@@ -59,6 +104,8 @@ def _side_component(
         ),
         "stale": side.conversion.stale,
         "context_state": side.destination_state.value,
+        "context_as_of": date_format(side.context_as_of, "j M Y"),
+        **actions,
         "budget": {
             "complete": budget.state is BudgetInterpretationState.COMPLETE,
             "band_label": _band_label(budget.band),
