@@ -55,7 +55,7 @@
       <div class="qa-trip-money-pass__actions" aria-label="Trip money quick actions">
         {% if camera_extraction_available %}
           <a class="qa-primary-button"
-             href="{% url 'saved_scenario_camera' scenario.pk %}">Scan amount</a>
+             href="{% url 'camera_scan_saved_scenario' scenario.pk %}">Scan amount</a>
         {% endif %}
         <a class="qa-secondary-button" href="{{ converter_url }}">Convert</a>
         <a class="qa-secondary-button"
