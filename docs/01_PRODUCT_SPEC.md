@@ -292,7 +292,7 @@ The web product currently supports:
 - self-contained Offline Destination Pack export with stored-FX freshness semantics and reviewed destination context;
 - demand-loaded converter/picker, consolidated Saved-state and rate-chart enhancements with HTMX re-discovery and browser route-isolation quality checks.
 
-Current Real Payment Estimate does not persist a reusable fee profile and does not estimate historical card/ATM/merchant costs. Durable My Places and SavedComparison are now shipped with explicit ownership/migration/re-check semantics. Budget/Comparison-specific AI remains future work until equivalent bounded trusted server packets exist.
+Current Real Payment Estimate does not persist a reusable fee profile and does not estimate historical card/ATM/merchant costs. Durable My Places and SavedComparison are shipped with explicit ownership/migration/re-check semantics. Budget and Destination Comparison contextual AI are also shipped as optional interpretation layers over server-signed capability-scoped fact packets built only after deterministic calculation; those endpoints cannot recalculate FX/prices, fill missing coverage, rank destinations or become financial truth.
 
 Current code and tests are the authoritative detail for these capabilities.
 
