@@ -51,7 +51,6 @@ def _request(*, selected_date=date(2026, 9, 21), historical=False):
         historical=historical,
     )
 
-
 @pytest.mark.django_db
 def test_composer_builds_currency_eras_without_inventing_filler(context_data):
     story = compose_story(_request())
@@ -66,7 +65,6 @@ def test_composer_builds_currency_eras_without_inventing_filler(context_data):
     assert story.currency_era_chapters == story.chapters
     assert story.historical_moment_chapters == ()
 
-
 @pytest.mark.django_db
 def test_composer_suppresses_credentialed_currency_relationship_source(context_data):
     fi, _jp, eur, _jpy = context_data
@@ -80,7 +78,6 @@ def test_composer_suppresses_credentialed_currency_relationship_source(context_d
         chapter for chapter in story.chapters if chapter.kind == "source_currency_era"
     )
     assert source_chapter.source_refs == ()
-
 
 @pytest.mark.django_db
 def test_composer_adds_reviewed_story_moment(context_data):
@@ -118,7 +115,6 @@ def test_composer_adds_reviewed_story_moment(context_data):
         "destination_currency_era",
     ]
     assert story.historical_moment_chapters == (chapter,)
-
 
 
 @pytest.mark.django_db
@@ -162,7 +158,6 @@ def test_story_chapter_exposes_reviewed_source_lifecycle_and_causal_support(cont
     assert source.retrieved_label
     assert source.verified_label
 
-
 @pytest.mark.django_db
 def test_historical_story_excludes_future_moment_but_keeps_currency_era(context_data):
     fi, _jp, eur, _jpy = context_data
@@ -189,7 +184,6 @@ def test_historical_story_excludes_future_moment_but_keeps_currency_era(context_
     assert all(chapter.title != "Future from selected date" for chapter in story.chapters)
     assert any(chapter.kind == "destination_currency_era" for chapter in story.chapters)
 
-
 @pytest.mark.django_db
 def test_no_relationships_and_no_story_moments_returns_unavailable(db):
     story = compose_story(
@@ -205,7 +199,6 @@ def test_no_relationships_and_no_story_moments_returns_unavailable(db):
 
     assert story.status == "unavailable"
     assert story.chapters == ()
-
 
 @pytest.mark.django_db
 def test_story_composer_has_bounded_query_count_with_reviewed_fact(context_data):
