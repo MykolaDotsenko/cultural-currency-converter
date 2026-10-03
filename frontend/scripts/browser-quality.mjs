@@ -2375,6 +2375,22 @@ async function assertMoneyCultureStoryQuality(page) {
     "money-culture-story: historical purchasing-power boundary is missing",
   );
 
+  const chapterMedia = story.locator(".qa-story-chapter__media .qa-media");
+  for (const media of await chapterMedia.all()) {
+    assert(
+      Number(await media.locator("img").getAttribute("width")) > 0 &&
+        Number(await media.locator("img").getAttribute("height")) > 0,
+      "money-culture-story: chapter media lost intrinsic dimensions",
+    );
+    const provenance = media.locator(".qa-media__provenance");
+    if ((await provenance.count()) === 1) {
+      assert(
+        !(await provenance.evaluate((element) => element.hasAttribute("open"))),
+        "money-culture-story: image provenance should be collapsed by default",
+      );
+    }
+  }
+
   const sourceDetails = story.locator(".qa-story-source-details");
   for (const details of await sourceDetails.all()) {
     assert(
@@ -2457,6 +2473,41 @@ async function assertHistoricalSeriesQuality(page) {
       document.querySelector("[data-rate-chart]")?.getAttribute("data-rate-chart-enhanced") ===
       "true",
   );
+
+  const historicalEvidence = page.locator(".qa-historical-evidence");
+  if ((await historicalEvidence.count()) === 1) {
+    assert(
+      (await historicalEvidence.locator(".qa-media").count()) === 1,
+      "rate-series: historical evidence surface rendered without managed media",
+    );
+    const provenance = historicalEvidence.locator(".qa-media__provenance");
+    if ((await provenance.count()) === 1) {
+      assert(
+        !(await provenance.evaluate((element) => element.hasAttribute("open"))),
+        "rate-series: image provenance should be collapsed by default",
+      );
+      await provenance.locator("summary").click();
+      assert(
+        /Evidence|Temporal match|Creator|Rights|Retrieved/i.test(await provenance.innerText()),
+        "rate-series: opened image provenance has no reviewed provenance facts",
+      );
+    }
+  }
+
+  const thenNow = page.locator(".qa-then-now");
+  if ((await thenNow.count()) === 1) {
+    assert(
+      (await thenNow.locator(".qa-then-now__grid > article").count()) === 2,
+      "rate-series: Then & Now lost its two-sided comparison structure",
+    );
+    for (const media of await thenNow.locator(".qa-then-now__media .qa-media").all()) {
+      assert(
+        Number(await media.locator("img").getAttribute("width")) > 0 &&
+          Number(await media.locator("img").getAttribute("height")) > 0,
+        "rate-series: Then & Now managed media lost intrinsic dimensions",
+      );
+    }
+  }
 
   const table = page.locator(".qa-rate-series__table");
   assert(
