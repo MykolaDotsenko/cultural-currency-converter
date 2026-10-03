@@ -81,9 +81,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
     else:
         if submitted_budget_context_token:
             try:
-                budget_snapshot = load_budget_context_snapshot_token(
-                    submitted_budget_context_token
-                )
+                budget_snapshot = load_budget_context_snapshot_token(submitted_budget_context_token)
             except BudgetContextTokenError as exc:
                 logger.warning(
                     "payment_estimate_budget_context_rejected",
