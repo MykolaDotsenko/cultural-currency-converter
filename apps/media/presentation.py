@@ -8,7 +8,7 @@ from django.db.models import Q
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
-from apps.media.models import MediaAsset, MediaStatus
+from apps.media.models import DatePrecision, MediaAsset, MediaStatus
 from apps.media.services import select_published_media, select_published_media_for_roles
 
 
@@ -35,6 +35,35 @@ def _focal_position(asset: MediaAsset) -> str:
     focal_x = asset.focal_x if asset.focal_x is not None else Decimal("0.5")
     focal_y = asset.focal_y if asset.focal_y is not None else Decimal("0.5")
     return f"{_format_focal_percent(focal_x)} {_format_focal_percent(focal_y)}"
+
+
+def _temporal_label(asset: MediaAsset) -> str:
+    if asset.valid_from is None and asset.valid_to is None:
+        return ""
+
+    def format_date(value: date) -> str:
+        if asset.date_precision == DatePrecision.YEAR:
+            return str(value.year)
+        if asset.date_precision == DatePrecision.MONTH:
+            return value.strftime("%B %Y")
+        if asset.date_precision == DatePrecision.DECADE:
+            return f"{value.year // 10 * 10}s"
+        if asset.date_precision == DatePrecision.ERA:
+            return str(value.year)
+        return value.isoformat()
+
+    if asset.valid_from and asset.valid_to:
+        if asset.valid_from == asset.valid_to:
+            scope = format_date(asset.valid_from)
+        else:
+            scope = f"{format_date(asset.valid_from)}–{format_date(asset.valid_to)}"
+    elif asset.valid_from:
+        scope = f"{format_date(asset.valid_from)} onward"
+    else:
+        scope = f"through {format_date(asset.valid_to)}"
+
+    precision = asset.get_date_precision_display()
+    return f"{scope} · {precision}"
 
 
 def _responsive_srcsets(assets: tuple[MediaAsset, ...]) -> dict[int, str]:
@@ -128,6 +157,7 @@ def _build_media_asset_image_view_model(
             )
         ),
         authenticity_label=asset.ai_label if asset.generated_by_ai else "",
+        temporal_label=_temporal_label(asset),
     )
 
 
