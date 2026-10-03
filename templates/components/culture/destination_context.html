@@ -3,7 +3,7 @@
            aria-labelledby="destination-context-title">
     <div class="qa-destination-context__heading">
       <div>
-        <p class="qa-foundation-kicker">Explore</p>
+        <p class="qa-foundation-kicker">Money Context Lens</p>
         <h3 id="destination-context-title">What does this amount mean in {{ destination_context.country_name }}?</h3>
       </div>
       {% if destination_context.show_explore_nav %}
@@ -112,6 +112,33 @@
         {% endif %}
       </section>
     </div>
+    <details class="qa-source-details qa-money-context-trust">
+      <summary>Sources &amp; freshness</summary>
+      <div class="qa-money-context-trust__grid">
+        <div>
+          <strong>Context assembled</strong>
+          <span>{{ destination_context.as_of }}</span>
+        </div>
+        <div>
+          <strong>Price evidence</strong>
+          <span>{{ destination_context.price_count }} reviewed anchor{{ destination_context.price_count|pluralize }}</span>
+        </div>
+        <div>
+          <strong>Payment guidance</strong>
+          <span>
+            {% if destination_context.payment_verified %}
+              reviewed {{ destination_context.payment_verified }}
+            {% else %}
+              no reviewed payment record
+            {% endif %}
+          </span>
+        </div>
+        <div>
+          <strong>Trust boundary</strong>
+          <span>Context never changes the trusted FX result above.</span>
+        </div>
+      </div>
+    </details>
     {% if destination_context.local_detail_image %}
       <div class="qa-context-detail" data-media-role="local-detail">
         <p class="qa-media-role-label">Reviewed local detail</p>
