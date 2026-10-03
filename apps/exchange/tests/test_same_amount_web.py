@@ -98,7 +98,7 @@ def same_amount_reference_data(db):
             jp,
             None,
             jpy,
-            "local_transit",
+            "transit",
             "Japan transit fallback",
             Decimal("180"),
             Decimal("240"),
