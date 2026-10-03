@@ -187,6 +187,11 @@ def test_same_amount_post_preserves_selection_order_and_independent_fx_semantics
     assert b"Tokyo coffee source" in body
     assert b"Norway coffee source" in body
     assert b"Reviewed payment source" in body
+    assert b"Reviewed local context assembled as of" in body
+    assert b"City evidence" in body
+    assert b"National fallback" in body
+    assert b"Curated factual" in body
+    assert b"High confidence" in body
     assert b"No winner is calculated." in body
     assert b"cost-of-living index" in body
     assert b"PPP estimate" in body
