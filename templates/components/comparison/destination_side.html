@@ -114,12 +114,26 @@
              aria-label="{{ side.destination_name }} payment context">
       <p class="qa-foundation-kicker">Payment context</p>
       {% if side.payment.summary %}<p>{{ side.payment.summary }}</p>{% endif %}
-      {% if side.payment.cash_usage %}
-        <p><strong>Cash:</strong> {{ side.payment.cash_usage }}</p>
-      {% endif %}
-      {% if side.payment.dcc_warning %}
-        <p><strong>DCC:</strong> {{ side.payment.dcc_warning }}</p>
-      {% endif %}
+      <details class="qa-source-details qa-payment-guide">
+        <summary>Full payment guide</summary>
+        <dl class="qa-payment-guide__list">
+          {% if side.payment.payment_customs %}
+            <div><dt>Cards</dt><dd>{{ side.payment.payment_customs }}</dd></div>
+          {% endif %}
+          {% if side.payment.cash_usage %}
+            <div><dt>Cash</dt><dd>{{ side.payment.cash_usage }}</dd></div>
+          {% endif %}
+          {% if side.payment.atm_notes %}
+            <div><dt>ATMs</dt><dd>{{ side.payment.atm_notes }}</dd></div>
+          {% endif %}
+          {% if side.payment.tipping %}
+            <div><dt>Tipping</dt><dd>{{ side.payment.tipping }}</dd></div>
+          {% endif %}
+          {% if side.payment.dcc_warning %}
+            <div><dt>Dynamic currency conversion</dt><dd>{{ side.payment.dcc_warning }}</dd></div>
+          {% endif %}
+        </dl>
+      </details>
       <p class="qa-context-source">
         Verified {{ side.payment.verified_at }} ·
         <a href="{{ side.payment.source_url }}"
