@@ -108,7 +108,6 @@ def test_regional_presentation_preserves_canonical_converter_and_profile_handoff
     assert city_compare_url.path == reverse("destination_comparison")
     assert parse_qs(city_compare_url.query)["left_destination"] == ["JP:tokyo"]
 
-
 @pytest.mark.django_db
 def test_collection_presentation_uses_curated_country_teaser_without_changing_actions(
     seeded_explore_ux,
