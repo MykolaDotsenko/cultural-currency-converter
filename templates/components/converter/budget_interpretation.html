@@ -76,8 +76,8 @@
                   <div>
                     <p class="qa-budget-interpretation__line-title">{{ line.label }}</p>
                     <p class="qa-field__message">
-                      <span class="qa-city-profile__scope-badge{% if line.scope_kind == 'national' %} qa-city-profile__scope-badge--fallback{% endif %}">
-                        {% if line.scope_kind == 'city' %}City evidence{% else %}National fallback{% endif %}
+                      <span class="qa-city-profile__scope-badge{% if line.scope_is_fallback %} qa-city-profile__scope-badge--fallback{% endif %}">
+                        {{ line.scope_badge }}
                       </span>
                       {{ line.units }} per person / day · {{ line.scope_label }}
                     </p>
@@ -218,8 +218,8 @@
                       id="{{ item.field.html_name }}-error">{{ item.field.errors.0 }}</span>
               {% endif %}
               <span class="qa-field__message" id="{{ item.field.html_name }}-anchor">
-                <span class="qa-city-profile__scope-badge{% if not item.is_city_scope %} qa-city-profile__scope-badge--fallback{% endif %}">
-                  {% if item.is_city_scope %}City evidence{% else %}National fallback{% endif %}
+                <span class="qa-city-profile__scope-badge{% if item.scope_is_fallback %} qa-city-profile__scope-badge--fallback{% endif %}">
+                  {{ item.scope_badge }}
                 </span>
                 Anchor {{ item.price_low }}{% if item.price_high %}–{{ item.price_high }}{% endif %}
                 {{ item.currency_code }} · {{ item.scope_label }}
