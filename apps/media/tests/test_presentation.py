@@ -89,7 +89,6 @@ def test_historical_media_temporal_scope_is_visible_with_reviewed_precision():
     assert "1998 · Year" in html
 
 
-
 def test_managed_media_deep_provenance_is_progressively_rendered():
     retrieved_at = timezone.now()
     asset = MediaAsset(
@@ -166,7 +165,6 @@ def test_partial_managed_media_focal_point_defaults_missing_axis_to_center():
 
     assert image.focal_position == "12.5% 50%"
 
-
 @pytest.mark.django_db
 def test_published_media_family_builds_width_descriptor_srcset():
     source = MediaAsset.objects.create(
@@ -211,7 +209,6 @@ def test_published_media_family_builds_width_descriptor_srcset():
 
     assert image.srcset == (f"{small.storage_file.url} 800w, {large.storage_file.url} 1600w")
     assert image.sizes == "100vw"
-
 
 @pytest.mark.django_db
 def test_published_full_size_source_is_excluded_from_derivative_srcset():
@@ -258,7 +255,6 @@ def test_published_full_size_source_is_excluded_from_derivative_srcset():
     assert image.srcset == (f"{small.storage_file.url} 800w, {large.storage_file.url} 1600w")
     assert source.storage_file.url not in image.srcset
 
-
 @pytest.mark.django_db
 def test_single_published_derivative_does_not_force_a_srcset_candidate():
     source = MediaAsset.objects.create(
@@ -290,7 +286,6 @@ def test_single_published_derivative_does_not_force_a_srcset_candidate():
 
     assert image.srcset == ""
     assert image.sizes == ""
-
 
 @pytest.mark.django_db
 def test_multi_role_presentation_batches_selection_and_srcset_queries():
