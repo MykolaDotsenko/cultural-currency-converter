@@ -89,6 +89,7 @@ def _publish_sourced(asset: MediaAsset, *, color=(10, 20, 30)) -> MediaAsset:
     publish_media_asset(asset)
     return asset
 
+
 @pytest.mark.django_db
 def test_candidate_service_rejects_incomplete_historical_scope_before_writes(euro):
     candidate = MediaCandidate(
@@ -130,6 +131,7 @@ def test_candidate_service_rejects_incomplete_historical_scope_before_writes(eur
 
     assert not MediaAsset.objects.filter(external_id="historical-incomplete").exists()
 
+
 @pytest.mark.django_db
 def test_comparison_candidate_service_rejects_country_scope(finland, euro):
     candidate = MediaCandidate(
@@ -153,6 +155,7 @@ def test_comparison_candidate_service_rejects_country_scope(finland, euro):
         )
 
     assert not MediaAsset.objects.filter(external_id="country-scoped-comparison").exists()
+
 
 @pytest.mark.django_db
 def test_candidate_service_persists_historical_scope(euro):
@@ -181,6 +184,7 @@ def test_candidate_service_persists_historical_scope(euro):
     assert asset.valid_to == date(1998, 12, 31)
     assert asset.date_precision == DatePrecision.YEAR
     assert asset.status == MediaStatus.NEEDS_REVIEW
+
 
 @pytest.mark.django_db
 def test_candidate_ingestion_is_unpublished_idempotent_and_dry_runnable(finland):
@@ -228,6 +232,7 @@ def test_candidate_ingestion_is_unpublished_idempotent_and_dry_runnable(finland)
     assert repeated.unchanged == 1
     assert MediaAsset.objects.count() == 1
 
+
 @pytest.mark.django_db
 def test_unclear_rights_candidate_cannot_be_approved(media_root):
     candidate = MediaCandidate(
@@ -256,6 +261,7 @@ def test_unclear_rights_candidate_cannot_be_approved(media_root):
     asset.refresh_from_db()
     assert asset.status == MediaStatus.NEEDS_REVIEW
 
+
 @pytest.mark.django_db
 def test_attached_bytes_are_hashed_stored_outside_database_and_deduplicated(media_root):
     first = _sourced_asset(title="First", role=MediaRole.STORY_COVER)
@@ -271,6 +277,7 @@ def test_attached_bytes_are_hashed_stored_outside_database_and_deduplicated(medi
         attach_media_bytes(second, payload, filename="second.png")
     assert exc.value.existing_asset_id == first.pk
 
+
 @pytest.mark.django_db
 def test_sourced_media_requires_review_then_explicit_publish(media_root):
     asset = _sourced_asset(title="Reviewed", role=MediaRole.HISTORICAL_TIMELINE)
@@ -284,6 +291,7 @@ def test_sourced_media_requires_review_then_explicit_publish(media_root):
     publish_media_asset(asset)
     assert asset.status == MediaStatus.PUBLISHED
     assert asset.published_at is not None
+
 
 @pytest.mark.django_db
 def test_ai_generated_media_cannot_be_published_as_historical_evidence(media_root):
@@ -310,6 +318,7 @@ def test_ai_generated_media_cannot_be_published_as_historical_evidence(media_roo
         approve_media_asset(asset)
 
     assert asset.status == MediaStatus.NEEDS_REVIEW
+
 
 @pytest.mark.django_db
 def test_selector_prefers_relevant_real_media_over_ai_even_with_coarser_date(
@@ -353,6 +362,7 @@ def test_selector_prefers_relevant_real_media_over_ai_even_with_coarser_date(
     assert selected.authenticity_class == "sourced_media"
     assert selected.temporal_match_quality == "decade"
 
+
 @pytest.mark.django_db
 def test_missing_or_nonphotographic_country_media_renders_no_placeholder(media_root, finland):
     artwork = _sourced_asset(
@@ -391,6 +401,7 @@ def test_missing_or_nonphotographic_country_media_renders_no_placeholder(media_r
     assert selection.authenticity_class == "sourced_media"
     assert selection.image.label == "Premium destination photograph"
 
+
 @pytest.mark.django_db
 def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
     source = _publish_sourced(
@@ -419,6 +430,7 @@ def test_responsive_derivative_is_hashed_but_never_auto_published(media_root):
         create_responsive_derivative(source, width=16)
 
     assert MediaAsset.objects.filter(derivative_of=source, variant_width=16).count() == 1
+
 
 @pytest.mark.django_db
 def test_database_rejects_duplicate_derivative_width_identity(media_root):
@@ -449,6 +461,7 @@ def test_database_rejects_duplicate_derivative_width_identity(media_root):
             derivative_of=source,
             variant_width=16,
         )
+
 
 @pytest.mark.django_db
 def test_story_chapter_is_sourced_date_scoped_historical_evidence(finland, media_root):
@@ -486,6 +499,7 @@ def test_story_chapter_is_sourced_date_scoped_historical_evidence(finland, media
     assert selected.authenticity_class == "sourced_media"
     assert selected.temporal_match_quality == "decade"
 
+
 @pytest.mark.django_db
 def test_ai_generated_story_chapter_cannot_be_approved_as_historical_evidence(media_root):
     asset = MediaAsset.objects.create(
@@ -505,6 +519,7 @@ def test_ai_generated_story_chapter_cannot_be_approved_as_historical_evidence(me
     with pytest.raises(MediaPublicationError, match="historical evidence"):
         approve_media_asset(asset)
 
+
 @pytest.mark.django_db
 def test_comparison_then_requires_explicit_currency_scope_before_approval(media_root):
     asset = _sourced_asset(title="Unscoped comparison", role=MediaRole.COMPARISON_THEN)
@@ -512,6 +527,7 @@ def test_comparison_then_requires_explicit_currency_scope_before_approval(media_
 
     with pytest.raises(MediaPublicationError, match="currency scope"):
         approve_media_asset(asset)
+
 
 @pytest.mark.django_db
 def test_comparison_then_selector_requires_target_date(euro):
@@ -537,6 +553,7 @@ def test_comparison_then_selector_requires_target_date(euro):
         )
         is None
     )
+
 
 @pytest.mark.django_db
 def test_historical_comparison_selector_is_sourced_currency_and_date_scoped(euro):
@@ -606,6 +623,7 @@ def test_historical_comparison_selector_is_sourced_currency_and_date_scoped(euro
     assert selected.asset.pk == archival.pk
     assert selected.authenticity_class == "sourced_media"
 
+
 @pytest.mark.django_db
 def test_selector_prefers_published_derivative_over_newer_full_size_source(finland):
     source = MediaAsset.objects.create(
@@ -645,6 +663,7 @@ def test_selector_prefers_published_derivative_over_newer_full_size_source(finla
     assert selected is not None
     assert selected.asset.pk == derivative.pk
 
+
 @pytest.mark.django_db
 def test_supporting_role_allows_labelled_generated_media_when_no_sourced_option(finland):
     generated = MediaAsset.objects.create(
@@ -670,6 +689,7 @@ def test_supporting_role_allows_labelled_generated_media_when_no_sourced_option(
     assert selected is not None
     assert selected.asset.pk == generated.pk
     assert selected.authenticity_class == "ai_generated_illustration"
+
 
 @pytest.mark.django_db
 def test_selector_matches_equivalent_aspect_ratios(finland):
@@ -706,6 +726,7 @@ def test_selector_matches_equivalent_aspect_ratios(finland):
 
     assert selected is not None
     assert selected.asset.pk == matching.pk
+
 
 @pytest.mark.django_db
 def test_batch_selector_uses_one_query_and_preserves_role_authenticity_policy(finland):
@@ -767,6 +788,7 @@ def test_batch_selector_uses_one_query_and_preserves_role_authenticity_policy(fi
     assert selected[MediaRole.EVERYDAY_VALUE].asset.pk == everyday_sourced.pk
     assert hero_generated.pk != hero_sourced.pk
     assert everyday_generated.pk != everyday_sourced.pk
+
 
 @pytest.mark.django_db
 def test_historical_selector_prefers_dated_ai_over_undated_neutral_sourced_media(media_root):
