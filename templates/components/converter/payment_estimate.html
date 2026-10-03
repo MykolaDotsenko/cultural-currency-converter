@@ -59,19 +59,27 @@
           <dl class="qa-payment-estimate__facts">
             <div>
               <dt>Starting source budget</dt>
-              <dd>{{ payment_estimate.source_budget }} {{ payment_estimate.source_currency }}</dd>
+              <dd>
+                {{ payment_estimate.source_budget }} {{ payment_estimate.source_currency }}
+              </dd>
             </div>
             <div>
               <dt>Effective source amount after explicit fee / markup</dt>
-              <dd>{{ payment_estimate.effective_source_amount }} {{ payment_estimate.source_currency }}</dd>
+              <dd>
+                {{ payment_estimate.effective_source_amount }} {{ payment_estimate.source_currency }}
+              </dd>
             </div>
             <div>
               <dt>Reference destination value</dt>
-              <dd>{{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}</dd>
+              <dd>
+                {{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}
+              </dd>
             </div>
             <div>
               <dt>Estimated destination value</dt>
-              <dd>{{ payment_estimate.estimated_amount }} {{ payment_estimate.destination_currency }}</dd>
+              <dd>
+                {{ payment_estimate.estimated_amount }} {{ payment_estimate.destination_currency }}
+              </dd>
             </div>
           </dl>
           <p class="qa-field__message">
