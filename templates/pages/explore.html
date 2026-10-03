@@ -3,7 +3,13 @@
 {% block head_meta %}
   <meta name="description"
         content="Explore reviewed city and country money context by region, story, payment behaviour and current currency evidence.">
-{% endblock %}
+  {% if social_preview %}
+    <meta property="og:image" content="{{ social_preview.url }}">
+    <meta property="og:image:alt" content="{{ social_preview.alt }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ social_preview.url }}">
+  {% endif %}
+{% endblock %>
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
   <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan</a>
