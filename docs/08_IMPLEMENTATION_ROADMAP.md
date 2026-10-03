@@ -179,6 +179,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Create a compact share surface from trusted conversion and destination-context data.
    - Include effective-date/source context when a shared number could otherwise look current forever.
    - Keep social/OG presentation downstream of the canonical product data rather than introducing a second calculation path.
+   - **Current slice:** managed `SOCIAL_PREVIEW` media now feeds OG/Twitter image metadata on Explore, City Money Profile and Money & Culture when a reviewed published asset exists. Missing preview media degrades to normal text metadata; no FX/context calculation is duplicated. A dedicated exportable share-card renderer remains future work.
 
 20. **Personalized trip/scenario covers — 62/100**
    - Allow an optional decorative cover for a saved scenario when it adds delight without affecting factual meaning.
@@ -195,6 +196,7 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
    - Provide one compact progressive-disclosure destination for cultural snapshot, currency story, previous currency, money etiquette, travel-money tip and a sourced memorable fact.
    - Treat this as an exploration surface, not a generic help dialog; the trigger must have an accessible name even if the visual design uses a compact icon.
    - Reuse reviewed story/provenance data and the existing currency-history domain rather than generating unsourced filler.
+   - **Current production slice:** Money & Culture combines canonical currency-era chapters with reviewed historical moments, honest temporal precision, source publication/retrieval/review metadata and explicit causal-support semantics. Optional `STORY_CHAPTER` imagery is independently selected by chapter date under the same sourced historical-evidence rules as timeline media; duplicates are suppressed and missing media never blocks the story. Historical Series separately supports reviewed `COMPARISON_THEN`, `COMPARISON_NOW` and `HISTORICAL_TIMELINE` roles without implying that imagery explains FX movement.
 
 22. **Pre-trip reminder / saved-scenario re-check — 82/100**
    - Let an opted-in user receive a reminder to re-open a saved trip/budget scenario near its planned travel date.
