@@ -6,6 +6,7 @@ from decimal import Decimal
 import pytest
 from django.db import connection
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.test.utils import CaptureQueriesContext
 
 from apps.common.presentation.media_view_models import ImageViewModel
@@ -86,6 +87,44 @@ def test_historical_media_temporal_scope_is_visible_with_reviewed_precision():
     assert image.temporal_label == "1998 · Year"
     assert "qa-media__temporal" in html
     assert "1998 · Year" in html
+
+
+
+def test_managed_media_deep_provenance_is_progressively_rendered():
+    retrieved_at = timezone.now()
+    asset = MediaAsset(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.HISTORICAL_TIMELINE,
+        title="Archive source",
+        alt_text="Historical archive source.",
+        storage_file="sourced/archive-source.webp",
+        width=1200,
+        height=900,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        source_name="Example Archive",
+        source_url="https://example.org/archive",
+        source_media_url="https://example.org/archive/original.jpg",
+        creator="Example Photographer",
+        rights_statement="Public-domain dedication",
+        source_retrieved_at=retrieved_at,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    image = build_media_asset_image_view_model(asset)
+    html = render_to_string("components/media/image_frame.html", {"image": image})
+
+    assert image.creator == "Example Photographer"
+    assert image.rights_statement == "Public-domain dedication"
+    assert image.original_source_url == "https://example.org/archive/original.jpg"
+    assert image.evidence_label == "Archival sourced evidence"
+    assert "Image provenance" in html
+    assert "Example Photographer" in html
+    assert "Public-domain dedication" in html
+    assert "Open original media record" in html
+    assert "Example Archive" in html
 
 
 def test_managed_media_focal_point_reaches_image_view_model():
