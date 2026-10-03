@@ -414,7 +414,7 @@ def explain_reviewed_destination(
     intent: ExploreExplanationIntent,
     service: RuntimeExplanationService,
     locale: str = "en",
-) -> tuple[DestinationContext, ExplanationDelivery]:
+) -> tuple[DestinationContext, ExplanationPacket, ExplanationDelivery]:
     context = build_explore_explanation_context(destination)
     packet = build_explore_explanation_packet(
         destination,
@@ -434,4 +434,4 @@ def explain_reviewed_destination(
         schema_version=SCHEMA_VERSION,
         capability="explore_explanation",
     )
-    return context, delivery
+    return context, packet, delivery
