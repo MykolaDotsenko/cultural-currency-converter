@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from django.conf import settings
 from django.db import transaction
 
+from apps.exchange.ai.providers.deterministic_camera import DeterministicTestCameraAmountExtractor
 from apps.exchange.ai.providers.gemini_camera import GeminiCameraAmountExtractor
 from apps.exchange.camera import (
     CameraAmountExtractor,
@@ -139,6 +140,12 @@ def build_camera_extraction_service() -> CameraExtractionService:
     enabled = bool(settings.AI_CAMERA_EXTRACTION_ENABLED)
     if not enabled:
         return CameraExtractionService(enabled=False, extractor=None)
+
+    if settings.AI_CAMERA_TEST_FIXTURE_ENABLED:
+        return CameraExtractionService(
+            enabled=True,
+            extractor=DeterministicTestCameraAmountExtractor(),
+        )
 
     client = GeminiStructuredClient(
         api_key=settings.GEMINI_API_KEY,

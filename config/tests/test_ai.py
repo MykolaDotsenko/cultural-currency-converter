@@ -14,6 +14,7 @@ def test_ai_config_defaults_to_disabled_without_secret():
     assert config.runtime_explanation_enabled is False
     assert config.runtime_test_fixture_enabled is False
     assert config.camera_extraction_enabled is False
+    assert config.camera_test_fixture_enabled is False
     assert config.gemini_api_key == ""
     assert config.fallback_mode == "deterministic"
     assert config.timeout_seconds == 5
@@ -85,6 +86,42 @@ def test_camera_extraction_has_separate_opt_in_and_requires_server_key():
     assert config.runtime_explanation_enabled is False
 
 
+def test_camera_test_fixture_is_test_only_and_does_not_require_gemini_key():
+    config = load_ai_config(
+        {
+            "APP_ENV": "test",
+            "AI_CAMERA_EXTRACTION_ENABLED": "true",
+            "AI_CAMERA_TEST_FIXTURE_ENABLED": "true",
+        }
+    )
+
+    assert config.camera_extraction_enabled is True
+    assert config.camera_test_fixture_enabled is True
+    assert config.gemini_api_key == ""
+    assert config.has_live_camera_extraction is False
+
+
+def test_camera_test_fixture_is_rejected_outside_test_environment():
+    with pytest.raises(ConfigurationError, match="allowed only when APP_ENV=test"):
+        load_ai_config(
+            {
+                "APP_ENV": "production",
+                "AI_CAMERA_EXTRACTION_ENABLED": "true",
+                "AI_CAMERA_TEST_FIXTURE_ENABLED": "true",
+            }
+        )
+
+
+def test_camera_test_fixture_requires_camera_feature_flag():
+    with pytest.raises(ConfigurationError, match="requires AI_CAMERA_EXTRACTION_ENABLED"):
+        load_ai_config(
+            {
+                "APP_ENV": "test",
+                "AI_CAMERA_TEST_FIXTURE_ENABLED": "true",
+            }
+        )
+
+
 @pytest.mark.parametrize(
     ("name", "value", "message"),
     [
@@ -95,6 +132,7 @@ def test_camera_extraction_has_separate_opt_in_and_requires_server_key():
         ("AI_IMAGE_GENERATION_ENABLED", "true", "IMAGE"),
         ("AI_RUNTIME_EXPLANATION_ENABLED", "maybe", "boolean"),
         ("AI_CAMERA_EXTRACTION_ENABLED", "maybe", "boolean"),
+        ("AI_CAMERA_TEST_FIXTURE_ENABLED", "maybe", "boolean"),
     ],
 )
 def test_ai_config_rejects_unpromoted_or_unsafe_runtime_configuration(name, value, message):

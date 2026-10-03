@@ -26,6 +26,8 @@ on:
       - "static/**"
       - ".github/workflows/django-tests.yml"
 
+  workflow_dispatch:
+
 permissions:
   contents: read
 

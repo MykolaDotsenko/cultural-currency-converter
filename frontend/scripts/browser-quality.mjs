@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import AxeBuilder from "@axe-core/playwright";
@@ -1670,23 +1670,71 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: new saved budget did not start at zero confirmed spend: ${baselineSummary}`,
   );
 
-  await page.locator("#id_spend_amount").fill("4700");
+  // Exercise the real Camera confirmation boundary with the test-only
+  // deterministic extractor. The image still goes through decode/re-encode,
+  // candidate signing, explicit user confirmation and a separate spend POST.
+  await page.getByRole("link", { name: "Scan a price", exact: true }).click();
+  await page.getByRole("heading", { name: "Scan a visible price", level: 1 }).waitFor();
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "qa-price.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKUlEQVR4nO3NMQEAAAjDMMC/52ECvlRA00nqs3m9AwAAAAAAAAAAgMMWx/EDPS4YA2MAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        /\/saved\/scenarios\/\d+\/camera\/$/.test(new URL(response.url()).pathname),
+    ),
+    page.getByRole("button", { name: "Extract visible amounts", exact: true }).click(),
+  ]);
+  await page.getByRole("heading", { name: "Choose and confirm a candidate", level: 2 }).waitFor();
+  await page.getByRole("heading", { name: "4800 JPY", level: 3 }).waitFor();
+  assert(
+    (await page.getByText("Image processing is ephemeral", { exact: true }).count()) === 1,
+    "camera/e2e: ephemeral-processing privacy boundary is missing",
+  );
+  await assertAxe(page, "camera/e2e/candidate");
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        /\/saved\/scenarios\/\d+\/camera\/$/.test(new URL(response.url()).pathname),
+    ),
+    page.getByRole("button", { name: "Confirm this amount", exact: true }).click(),
+  ]);
+  await page.getByRole("heading", { name: "4800 JPY", level: 1 }).waitFor();
+  await page
+    .getByRole("heading", { name: "Ready for an explicit spend handoff", level: 2 })
+    .waitFor();
+  assert(
+    (await page
+      .getByText("The uploaded image itself was not persisted.", { exact: false })
+      .count()) >= 1,
+    "camera/e2e: confirmation page lost the no-raw-media persistence boundary",
+  );
+  await assertAxe(page, "camera/e2e/confirmed");
+
   await Promise.all([
     page.waitForURL((url) => /^\/saved\/scenarios\/\d+\/$/.test(url.pathname)),
-    page.getByRole("button", { name: "Add spend" }).click(),
+    page.getByRole("button", { name: "Add to trip budget", exact: true }).click(),
   ]);
-  await page.getByText("Confirmed spend added to this saved budget.", { exact: true }).waitFor();
+  await page.getByText("4800 JPY added to confirmed spend.", { exact: true }).waitFor();
 
   const updatedSummary = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
     .innerText();
   assert(
-    updatedSummary.includes("Confirmed spend 4700 JPY"),
-    `trip-budget/e2e: confirmed spend did not update the saved budget: ${updatedSummary}`,
+    updatedSummary.includes("Confirmed spend 4800 JPY"),
+    `trip-budget/e2e: Camera-confirmed spend did not update the saved budget: ${updatedSummary}`,
   );
   assert(
     !updatedSummary.includes("Confirmed spend 0 JPY"),
-    "trip-budget/e2e: stale zero-spend state remained after confirmation",
+    "trip-budget/e2e: stale zero-spend state remained after Camera confirmation",
   );
   const remainingMatch = updatedSummary.match(/([0-9]+(?:\.[0-9]+)?) JPY remaining/);
   assert(
@@ -1694,6 +1742,43 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: updated saved budget omitted remaining amount: ${updatedSummary}`,
   );
   const expectedRemainingText = `${remainingMatch[1]} JPY remaining`;
+
+  // Browser-level Offline Pack evidence: download the actual attachment,
+  // inspect its self-contained HTML, then render that HTML without network.
+  const [offlineDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("link", { name: "Download offline pack", exact: true }).click(),
+  ]);
+  assert(
+    /^cultural-currency-.*-offline-\d{4}-\d{2}-\d{2}\.html$/.test(
+      offlineDownload.suggestedFilename(),
+    ),
+    `offline-pack/e2e: unexpected filename ${offlineDownload.suggestedFilename()}`,
+  );
+  const offlinePath = await offlineDownload.path();
+  assert(offlinePath, "offline-pack/e2e: browser did not materialize the downloaded pack");
+  const offlineHtml = await readFile(offlinePath, "utf8");
+  assert(
+    offlineHtml.includes("Offline means stored, not live."),
+    "offline-pack/e2e: stored-not-live freshness semantics are missing",
+  );
+  assert(
+    /confirmed spend\s+4800 JPY/i.test(offlineHtml),
+    "offline-pack/e2e: Camera-confirmed spend is missing from the downloaded pack",
+  );
+  assert(
+    offlineHtml.includes('data-offline-pack-version="1"') &&
+      !offlineHtml.toLowerCase().includes("<script") &&
+      !offlineHtml.toLowerCase().includes('rel="stylesheet"'),
+    "offline-pack/e2e: downloaded pack is not a self-contained script-free artifact",
+  );
+  const offlinePage = await page.context().newPage();
+  await offlinePage.setContent(offlineHtml, { waitUntil: "load" });
+  await offlinePage.getByText("Offline means stored, not live.", { exact: true }).waitFor();
+  await assertNoHorizontalOverflow(offlinePage, "offline-pack/e2e");
+  await assertAxe(offlinePage, "offline-pack/e2e");
+  await offlinePage.close();
+
   await page.getByRole("button", { name: "Remove entry" }).waitFor();
   await assertNoHorizontalOverflow(page, "trip-budget/e2e");
   await assertAxe(page, "trip-budget/e2e");
@@ -2794,6 +2879,61 @@ async function assertDestinationComparisonQuality(page) {
   await assertAxe(page, "destination-comparison/interactive");
 }
 
+async function assertConstrainedNetworkCoreFlow(browser) {
+  if (BROWSER_ENGINE !== "chromium") return { applicable: false };
+
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Network.enable");
+  await cdp.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: 180,
+    downloadThroughput: 128 * 1024,
+    uploadThroughput: 64 * 1024,
+    connectionType: "cellular3g",
+  });
+
+  try {
+    const url = new URL("/", BASE_URL);
+    url.searchParams.set("convert", "1");
+    url.searchParams.set("amount", "100");
+    url.searchParams.set("source_country", "FI");
+    url.searchParams.set("source_currency", "EUR");
+    url.searchParams.set("destination_country", "JP");
+    url.searchParams.set("destination_currency", "JPY");
+    url.searchParams.set("rate_mode", "latest");
+
+    const response = await page.goto(url.toString(), {
+      waitUntil: "networkidle",
+      timeout: 30_000,
+    });
+    assert(response?.ok(), "constrained-network: converter request failed");
+    const result = page.locator("#current-conversion-result");
+    await result.waitFor();
+    const output = result.locator(".qa-result__output");
+    await output.waitFor();
+    const normalizedOutput = (await output.innerText()).replace(/[\s,\u00a0]/g, "");
+    assert(
+      normalizedOutput.includes("17450JPY"),
+      `constrained-network: visible converter output drifted from the deterministic 17450 JPY result: ${JSON.stringify(normalizedOutput)}`,
+    );
+    await assertNoHorizontalOverflow(page, "constrained-network/current-converter");
+    await assertAxe(page, "constrained-network/current-converter");
+    return {
+      applicable: true,
+      latencyMs: 180,
+      downloadBytesPerSecond: 128 * 1024,
+      uploadBytesPerSecond: 64 * 1024,
+      conversionVisible: true,
+    };
+  } finally {
+    await context.close();
+  }
+}
+
 async function openSurface(page, surface) {
   const response = await page.goto(`${BASE_URL}${surface.path}`, { waitUntil: "networkidle" });
   await waitForStableLayout(page);
@@ -2815,6 +2955,7 @@ const activeSurfaces =
     : SURFACES.filter((surface) =>
         [
           "current-converter",
+          "destination-mode",
           "destination-comparison",
           "explore",
           "city-money-profile",
@@ -2967,6 +3108,7 @@ try {
     evidence.noJavaScriptExplore = await assertNoJavaScriptExplore(browser);
     evidence.serverRenderedExploreAccessibility =
       await assertServerRenderedExploreAccessibility(browser);
+    evidence.constrainedNetwork = await assertConstrainedNetworkCoreFlow(browser);
     evidence.compressedAssets = await measureBuildAssets();
     assertBuildPerformanceBudgets(evidence.compressedAssets);
 

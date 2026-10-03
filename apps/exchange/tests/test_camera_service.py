@@ -19,6 +19,7 @@ from apps.exchange.camera_service import (
     CameraFeatureDisabled,
     CameraProviderUnavailable,
     CameraTransactionPolicyError,
+    build_camera_extraction_service,
 )
 from integrations.gemini.errors import AIProviderUnavailable
 
@@ -130,3 +131,20 @@ def test_live_camera_provider_call_is_forbidden_inside_database_transaction():
         )
 
     assert extractor.calls == []
+
+
+@pytest.mark.django_db(transaction=True)
+def test_camera_service_factory_uses_deterministic_fixture_without_live_client(settings):
+    settings.AI_CAMERA_EXTRACTION_ENABLED = True
+    settings.AI_CAMERA_TEST_FIXTURE_ENABLED = True
+
+    service = build_camera_extraction_service()
+    delivery = service.scan(
+        _png_bytes(),
+        content_type="image/png",
+        expected_currency="JPY",
+    )
+
+    assert delivery.extraction.provider_model == "deterministic-camera-fixture"
+    assert delivery.extraction.candidates[0].amount == Decimal("4800")
+    assert delivery.extraction.candidates[0].currency_code == "JPY"
