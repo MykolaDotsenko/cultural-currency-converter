@@ -59,6 +59,8 @@ def _price_component(price) -> dict[str, object]:
         "scope": price.scope_label,
         "is_city_scope": bool(price.city_slug),
         "observed": date_format(price.observed_at, "j M Y"),
+        "source_class": price.source_class.replace("_", " ").capitalize(),
+        "confidence": price.confidence.capitalize(),
         "source_name": price.source_name,
         "source_url": price.source_url,
     }
@@ -104,6 +106,9 @@ def _destination_component(
         "payment_summary": payment.summary if payment is not None else "",
         "payment_source_name": payment.source_name if payment is not None else "",
         "payment_source_url": payment.source_url if payment is not None else "",
+        "payment_verified_at": (
+            date_format(payment.verified_at, "j M Y") if payment is not None else ""
+        ),
         "context_as_of": date_format(item.context.as_of, "j M Y"),
         "converter_url": _converter_url(
             item,
