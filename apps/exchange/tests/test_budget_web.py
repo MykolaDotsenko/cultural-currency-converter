@@ -150,6 +150,7 @@ def _signed_budget_context() -> str:
     )
     return build_budget_context_snapshot_token(context)
 
+
 @pytest.mark.django_db
 def test_current_conversion_offers_budget_interpretation_from_sourced_anchors(
     client,
@@ -167,7 +168,6 @@ def test_current_conversion_offers_budget_interpretation_from_sourced_anchors(
     converter_close = response.content.index(b"</form>")
     budget_heading = response.content.index(b"Budget interpretation")
     assert converter_close < budget_heading
-
 
 
 @pytest.mark.django_db
