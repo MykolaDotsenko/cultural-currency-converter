@@ -91,7 +91,7 @@
               <strong>{{ line.label }}</strong>
               <span>
                 <span class="qa-city-profile__scope-badge{% if line.scope_kind == 'national' %} qa-city-profile__scope-badge--fallback{% endif %}">
-                  {% if line.scope_kind == 'city' %}City evidence{% else %}National fallback{% endif %}
+                  {% if line.scope_kind == "city" %}City evidence{% else %}National fallback{% endif %}
                 </span>
                 {{ line.units }} / person / day · {{ line.scope_label }}
               </span>
@@ -137,8 +137,7 @@
     <a class="qa-primary-button" href="{{ side.converter_url }}">Open conversion</a>
     <a class="qa-secondary-button" href="{{ side.budget_url }}">Build budget</a>
     {% if side.city_profile_url %}
-      <a class="qa-saved-row__text-action"
-         href="{{ side.city_profile_url }}">City money profile</a>
+      <a class="qa-saved-row__text-action" href="{{ side.city_profile_url }}">City money profile</a>
     {% endif %}
   </div>
 </article>
