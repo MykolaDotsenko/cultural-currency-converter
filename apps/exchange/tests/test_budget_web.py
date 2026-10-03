@@ -21,6 +21,8 @@ from apps.exchange.ai.service import RuntimeExplanationService
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
+from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_token
+from apps.exchange.payment_estimate import estimate_payment_value
 
 User = get_user_model()
 
@@ -99,6 +101,21 @@ def _extract_budget_token(content: bytes) -> str:
     return match.group(1).decode()
 
 
+def _payment_budget_handoff() -> str:
+    return build_payment_budget_handoff_token(
+        budget_context_token=_signed_budget_context(),
+        estimate=estimate_payment_value(
+            source_budget=Decimal("100.00"),
+            reference_destination_amount=Decimal("17450"),
+            rate=Decimal("174.50"),
+            fx_markup_percent=Decimal("2"),
+            source_fixed_fee=Decimal("1"),
+            destination_fixed_fee=Decimal("220"),
+            destination_minor_units=0,
+        ),
+    )
+
+
 def _signed_budget_context() -> str:
     quote = RateQuote(
         base_currency="EUR",
@@ -151,6 +168,50 @@ def test_current_conversion_offers_budget_interpretation_from_sourced_anchors(
     converter_close = response.content.index(b"</form>")
     budget_heading = response.content.index(b"Budget interpretation")
     assert converter_close < budget_heading
+
+
+
+@pytest.mark.django_db
+def test_payment_adjusted_budget_handoff_preserves_explicit_basis(
+    client,
+    reference_data,
+):
+    handoff = _payment_budget_handoff()
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {"payment_budget_token": handoff},
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    component = response.context["budget_interpretation"]
+    assert component["basis"] == "payment_estimate"
+    assert component["basis_label"] == "Payment-adjusted estimate"
+    assert component["planning_amount"] == "16717"
+    assert component["reference_amount"] == "17450"
+    assert component["payment_estimate"]["fx_markup_percent"] == "2"
+    assert b"Use this estimate" not in response.content
+    assert b"Payment-adjusted estimate" in response.content
+    assert b'name="payment_budget_token"' in response.content
+
+    interpreted = client.post(
+        reverse("budget_interpretation"),
+        {
+            "payment_budget_token": handoff,
+            "duration_days": "10",
+            "travelers": "1",
+            "units_coffee": "1",
+            "units_casual_meal": "2",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert interpreted.status_code == 200
+    result = interpreted.context["budget_interpretation"]
+    assert result["basis"] == "payment_estimate"
+    assert result["result"]["available_budget"] == "16717"
+    assert b"Reference FX value: 17450 JPY" in interpreted.content
 
 
 @pytest.mark.django_db
@@ -401,6 +462,7 @@ def test_budget_ai_builtin_fallback_uses_signed_deterministic_result(
     assert b"2 travelers" in response.content
     assert b"Live AI is unavailable" in response.content
     assert b"deterministic result above is unchanged" in response.content
+    assert b"Facts used" in response.content
 
 
 @pytest.mark.django_db
