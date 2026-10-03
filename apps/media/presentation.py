@@ -271,6 +271,45 @@ def select_media_for_display_roles(
     return displayed
 
 
+def select_media_for_display_countries(
+    *,
+    role: str,
+    countries: tuple[Country, ...],
+    aspect_ratio: str | None = None,
+) -> dict[str, ImageViewModel]:
+    """Return reviewed country media without an N+1 selection/srcset query pattern."""
+
+    stored_by_country = select_published_country_media(
+        role=role,
+        countries=countries,
+        aspect_ratio=aspect_ratio,
+    )
+    if not stored_by_country:
+        return {}
+
+    assets = tuple(selection.asset for selection in stored_by_country.values())
+    srcsets = _responsive_srcsets(assets)
+    displayed: dict[str, ImageViewModel] = {}
+    for country_code, stored in stored_by_country.items():
+        asset = stored.asset
+        if asset.pk is None:
+            continue
+        source_id = asset.derivative_of_id or asset.pk
+        try:
+            image = _build_media_asset_image_view_model(
+                asset,
+                responsive_srcset=srcsets.get(source_id, ""),
+            )
+        except ValueError:
+            continue
+        displayed[country_code] = _with_selection_provenance(
+            image,
+            temporal_match_quality=stored.temporal_match_quality,
+            authenticity_class=stored.authenticity_class,
+        )
+    return displayed
+
+
 def select_media_for_display(
     *,
     role: str,
