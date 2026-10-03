@@ -84,7 +84,10 @@ def same_amount_reference_data(db):
         CulturalProfile.objects.create(
             country=country,
             summary=summary,
+            payment_customs="Cards are commonly accepted for routine purchases.",
             cash_usage="Carry cash when the local situation calls for it.",
+            tipping="Follow reviewed local tipping customs.",
+            atm_notes="Use clearly identified ATMs and review disclosed fees.",
             dcc_warning="Review any dynamic currency conversion offer carefully.",
             source_name="Reviewed payment source",
             source_url="https://example.com/payment-context",
@@ -200,6 +203,9 @@ def test_same_amount_post_preserves_selection_order_and_independent_fx_semantics
     assert b"Japan transit fallback source" in body
     assert b"Norway coffee source" in body
     assert b"Reviewed payment source" in body
+    assert b"Cards are commonly accepted for routine purchases." in body
+    assert b"Use clearly identified ATMs and review disclosed fees." in body
+    assert b"Follow reviewed local tipping customs." in body
     assert b"Reviewed local context assembled as of" in body
     assert b"City evidence" in body
     assert b"National fallback" in body
