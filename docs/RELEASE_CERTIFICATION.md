@@ -46,6 +46,8 @@ PR #217 was merged only after that exact-head matrix was green. Post-merge `mast
 
 ## Deployment-side evidence still required
 
+A read-only Render audit on **2026-10-03** found that the configured `master` web service's current live deploy (`dep-davuj0rtqb8s73ds11c0`) still points to repository commit `75cf9a7e337f1de15a4e80549cdee9b5621effc7`, while the repository-side certification implementation has advanced to `650d07729b8ed91c9380394d2ed4ad6e478b0dca`. Therefore the hosted service is **not** the current release candidate and cannot supply the final RC smoke evidence yet.
+
 The following cannot be honestly certified from repository CI alone:
 
 | Evidence | Why it is deployment-specific | Required proof |
