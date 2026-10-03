@@ -119,6 +119,11 @@ def _destination_component(
         "price_count": len(item.context.local_value),
         "prices": prices,
         "payment_summary": payment.summary if payment is not None else "",
+        "payment_customs": payment.payment_customs if payment is not None else "",
+        "cash_usage": payment.cash_usage if payment is not None else "",
+        "atm_notes": payment.atm_notes if payment is not None else "",
+        "tipping": payment.tipping if payment is not None else "",
+        "dcc_warning": payment.dcc_warning if payment is not None else "",
         "payment_source_name": payment.source_name if payment is not None else "",
         "payment_source_url": payment.source_url if payment is not None else "",
         "payment_verified_at": (
