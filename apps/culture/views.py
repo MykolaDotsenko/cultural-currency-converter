@@ -306,6 +306,8 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
     story = None
     story_error = None
     story_media = None
+    story_social_preview = None
+    story_chapter_items = ()
     response_status = 200
 
     if not form.is_valid():
@@ -341,6 +343,38 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                     currency=currency,
                     target_date=story_request.selected_date if story_request.historical else None,
                 )
+                story_social_preview = select_media_for_display(
+                    role=MediaRole.SOCIAL_PREVIEW,
+                    country=country,
+                    currency=currency,
+                )
+                used_sources = {
+                    story_media.image.src
+                    for story_media in (story_media,)
+                    if story_media is not None
+                }
+                chapter_items = []
+                for chapter in story.historical_moment_chapters:
+                    chapter_media = select_media_for_display(
+                        role=MediaRole.STORY_CHAPTER,
+                        country=country,
+                        currency=currency,
+                        target_date=chapter.target_date,
+                    )
+                    if (
+                        chapter_media is not None
+                        and chapter_media.image.src in used_sources
+                    ):
+                        chapter_media = None
+                    if chapter_media is not None:
+                        used_sources.add(chapter_media.image.src)
+                    chapter_items.append(
+                        {
+                            "chapter": chapter,
+                            "media": chapter_media,
+                        }
+                    )
+                story_chapter_items = tuple(chapter_items)
             except (DatabaseError, ValueError) as exc:
                 logger.warning(
                     "Money and culture story cover media unavailable",
@@ -355,6 +389,15 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
         "story": story,
         "story_error": story_error,
         "story_media": story_media,
+        "story_chapter_items": story_chapter_items,
+        "social_preview": (
+            {
+                "url": request.build_absolute_uri(story_social_preview.image.src),
+                "alt": story_social_preview.image.alt,
+            }
+            if story_social_preview is not None
+            else None
+        ),
     }
     fragment = bool(request.htmx)
     template = "components/culture/story.html" if fragment else "pages/money_culture_story.html"
