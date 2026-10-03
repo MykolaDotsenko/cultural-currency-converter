@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -9,6 +10,7 @@ from django.db import DatabaseError
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.explore import build_explore_destinations
 from apps.culture.explore_ai import (
@@ -19,6 +21,7 @@ from apps.culture.explore_ai import (
 from apps.culture.models import CulturalProfile, TypicalPrice, TypicalPriceCategory
 from apps.culture.services import PRICE_CONTEXT_MAX_AGE
 from apps.exchange.ai.service import RuntimeExplanationService
+from apps.media.models import MediaRole
 
 
 @pytest.fixture(autouse=True)
@@ -240,6 +243,50 @@ def test_explore_page_is_provider_free_and_links_back_to_canonical_converter(
     assert b'data-place-token="JP"' in response.content
     assert b"data-save-place" in response.content
     latest_gateway_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_explore_uses_country_teasers_and_managed_social_preview(
+    client,
+    explore_reference_data,
+):
+    teaser = ImageViewModel(
+        src="/media/japan-teaser.webp",
+        ratio="4 / 3",
+        alt="Reviewed Japan money-context teaser.",
+        decorative=False,
+        kind="contemporary_photo",
+        label="Japan teaser",
+        width=1200,
+        height=900,
+    )
+    social = ImageViewModel(
+        src="/media/explore-social.webp",
+        ratio="16 / 9",
+        alt="Explore reviewed travel-money context.",
+        decorative=False,
+        kind="contemporary_photo",
+        label="Explore social preview",
+        width=1600,
+        height=900,
+    )
+
+    def fake_media(*, role, country=None, **_kwargs):
+        if role == MediaRole.COUNTRY_TEASER and country is not None and country.iso2 == "JP":
+            return SimpleNamespace(image=teaser)
+        if role == MediaRole.SOCIAL_PREVIEW:
+            return SimpleNamespace(image=social)
+        return None
+
+    with patch("apps.culture.views.select_media_for_display", side_effect=fake_media):
+        response = client.get(reverse("explore"))
+
+    assert response.status_code == 200
+    assert b"/media/japan-teaser.webp" in response.content
+    assert b"Reviewed Japan money-context teaser." in response.content
+    assert b'property="og:image"' in response.content
+    assert b"http://testserver/media/explore-social.webp" in response.content
+    assert b'name="twitter:card" content="summary_large_image"' in response.content
 
 
 @pytest.mark.django_db
