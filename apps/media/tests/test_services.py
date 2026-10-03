@@ -132,9 +132,6 @@ def test_candidate_service_rejects_incomplete_historical_scope_before_writes(eur
     assert not MediaAsset.objects.filter(external_id="historical-incomplete").exists()
 
 
-
-
-
 @pytest.mark.django_db
 def test_comparison_now_candidate_requires_explicit_currency_scope():
     candidate = MediaCandidate(
