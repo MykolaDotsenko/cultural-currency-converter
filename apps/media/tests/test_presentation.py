@@ -6,8 +6,8 @@ from decimal import Decimal
 import pytest
 from django.db import connection
 from django.template.loader import render_to_string
-from django.utils import timezone
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.media.models import (
