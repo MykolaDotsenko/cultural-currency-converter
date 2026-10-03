@@ -332,7 +332,12 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for item in collection.items %}
-                    <article class="qa-saved-row qa-explore-collection-item">
+                    <article class="qa-saved-row qa-explore-collection-item{% if item.teaser_image %} qa-explore-collection-item--with-media{% endif %}">
+                      {% if item.teaser_image %}
+                        <div class="qa-explore-collection-item__media">
+                          {% include "components/media/image_frame.html" with image=item.teaser_image display_ratio="4 / 3" sizes="(max-width: 42rem) calc(100vw - 3rem), 15rem" %}
+                        </div>
+                      {% endif %}
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {% if item.currency_codes %}{{ item.currency_codes|join:" · " }}{% endif %}
