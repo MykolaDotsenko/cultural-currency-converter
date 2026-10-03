@@ -30,7 +30,7 @@ Those boundaries are more important to this project than adding another conversi
 - current and historical FX conversion;
 - visible source/effective-date meaning;
 - bilateral country/currency context with smart current/historical picker filtering;
-- historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations and Then & Now comparison;
+- historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations, date-scoped historical evidence and symmetric Then & Now media when reviewed assets exist;
 - explicit-assumption Real Payment Estimate for known FX markup and fixed fees, with a signed handoff into payment-adjusted Budget Interpretation;
 - sourced everyday-value and payment context;
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
@@ -41,15 +41,15 @@ Those boundaries are more important to this project than adding another conversi
 - returning-user home continuity for the most relevant active/upcoming saved trip, using stored FX observations, confirmed spend and reviewed local-context freshness without silent rate refresh;
 - optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing, mandatory user confirmation and a separate idempotent Add-to-trip-budget handoff;
 - self-contained offline destination-pack export using stored FX/freshness semantics and reviewed destination context;
-- provider-free regional Explore discovery over reviewed country/canonical-city money context, with five provenance-bearing collections, region → country → city navigation and canonical Converter/City Profile handoffs;
+- provider-free regional Explore discovery over reviewed country/canonical-city money context, with five provenance-bearing collections, region → country → city navigation, curated country teaser media and canonical Converter/City Profile handoffs;
 - Same Amount Across Destinations for two to four explicit destinations, preserving independent rate/provider/date/scope/provenance semantics without ranking, PPP or affordability claims;
 - canonical one-sided Compare handoffs from Explore, My Places, saved scenarios, favourites and recent conversions; Destination B is never inferred;
 - durable My Places with owner-scoped canonical country/city identity, current-currency re-resolution, explicit browser-local → account import and Saved-page continuity into Convert, Budget, Compare and City Profile;
 - owner-scoped SavedComparison persistence that stores only canonical inputs/explicit basket assumptions; Reopen is provider-free and Re-check returns through the canonical comparison POST path;
-- provider-free City Money Profile pages with direct-city evidence requirements, explicit city/national scope, reviewed price/payment context and provenance;
+- provider-free City Money Profile pages with direct-city evidence requirements, explicit city/national scope, reviewed price/payment context, provenance and managed social-preview metadata when available;
 - read-only `report_city_coverage` maintenance diagnostics for reviewed city-price freshness, national fallback and provenance gaps; its score is operational only, never a cost-of-living ranking;
-- Historical Series chronology with factual range landmarks and Then & Now, plus Money & culture currency-era / reviewed-story exploration that keeps historical FX separate from historical purchasing power;
-- restrained source → destination result identity and provenance-aware managed destination media with graceful no-media rendering, plus sourced Finland/Japan/France P01–P04 showcase manifests with reviewed focal points, responsive-width plans, idempotent derivative generation and strict deployment-readiness reporting;
+- Historical Series chronology with factual range landmarks, date-scoped historical-timeline media and symmetric Then & Now imagery, plus Money & culture currency-era / reviewed-story exploration with chapter-scoped sourced media and publication/retrieval/review provenance while keeping historical FX separate from historical purchasing power;
+- restrained source → destination result identity and provenance-aware managed media with graceful no-media rendering, public-safe creator/rights/retrieval/original-source disclosure, human-readable authenticity/temporal-match labels, managed social previews, plus sourced Finland/Japan/France P01–P04 showcase manifests with reviewed focal points, responsive-width plans, idempotent derivative generation and strict deployment-readiness reporting;
 - optional Gemini structured insight with deterministic fallback, server-approved contextual quick prompts and per-section grounding against trusted structured packets; Explore AI is an explicit POST over a reviewed destination/intent while Explore GET remains provider-free;
 - demand-loaded converter/picker, saved-state and rate-chart enhancements with HTMX re-discovery and browser route-isolation checks;
 - browser-local anonymous favourites and recent conversions, signed-in favourite ownership and opt-in cross-device history.
