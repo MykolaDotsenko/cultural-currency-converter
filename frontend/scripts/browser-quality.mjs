@@ -2925,10 +2925,18 @@ async function assertDestinationComparisonQuality(page) {
       (await side.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
       "destination-comparison: canonical budget handoff is missing on a side",
     );
-    assert(
-      (await side.getByText("Full payment guide", { exact: true }).count()) === 1,
-      "destination-comparison: full reviewed payment guide is missing on a side",
-    );
+    const reviewedPayment = side.locator(".qa-destination-comparison-side__payment");
+    if ((await reviewedPayment.count()) === 1) {
+      assert(
+        (await reviewedPayment.getByText("Full payment guide", { exact: true }).count()) === 1,
+        "destination-comparison: reviewed payment context is missing its full guide",
+      );
+    } else {
+      assert(
+        (await side.getByText(/No reviewed payment guidance is available/i).count()) === 1,
+        "destination-comparison: payment-context absence is not explicit",
+      );
+    }
   }
   assert(
     (await sides.first().getByRole("link", { name: "City money profile", exact: true }).count()) ===
