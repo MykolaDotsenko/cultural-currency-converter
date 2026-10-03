@@ -72,9 +72,7 @@ def _side_action_urls(side: DestinationComparisonSide) -> dict[str, str]:
 
     return {
         "converter_url": f"{reverse('converter')}?{urlencode(converter_params)}",
-        "budget_url": (
-            f"{reverse('destination_mode')}?{urlencode({'destination': token})}"
-        ),
+        "budget_url": (f"{reverse('destination_mode')}?{urlencode({'destination': token})}"),
         "city_profile_url": city_profile_url,
     }
 
