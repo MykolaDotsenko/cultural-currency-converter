@@ -203,12 +203,22 @@
 @media (max-width: 48rem) {
   .qa-saved-section__heading,
   .qa-saved-row {
+    inline-size: 100%;
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 
+  .qa-saved-section__heading > *,
+  .qa-saved-section__heading form {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
   .qa-saved-section__heading .qa-secondary-button {
+    max-inline-size: 100%;
     justify-self: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .qa-saved-row__actions {
