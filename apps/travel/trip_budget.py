@@ -79,9 +79,10 @@ def calculate_trip_budget_summary(
 ) -> TripBudgetSummary:
     """Calculate lightweight remaining-budget meaning from explicit saved state.
 
-    The immutable initial destination-currency observation is the reference
-    budget. Later FX re-checks never move this baseline. Confirmed spend is
-    subtracted in the same destination currency.
+    The supplied reference budget is an immutable saved planning baseline:
+    either the initial destination-currency observation or the deterministic
+    payment-adjusted amount captured at save time. Later FX re-checks never
+    move this baseline. Confirmed spend is subtracted in the same destination currency.
     """
 
     _validate_non_negative_decimal(reference_budget, label="Reference budget")
