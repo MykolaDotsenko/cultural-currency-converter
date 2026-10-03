@@ -160,7 +160,6 @@ def test_city_money_profile_view_renders_reviewed_scope_without_fx(client, seede
     assert b"cost-of-living score" in response.content
     assert b"Convert for Tokyo" in response.content
 
-
 @pytest.mark.django_db
 def test_city_money_profile_uses_managed_social_preview_metadata(client, seeded_city_context):
     image = ImageViewModel(
