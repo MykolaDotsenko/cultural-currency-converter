@@ -68,6 +68,7 @@ _HISTORICAL_EVIDENCE_KINDS = {
 }
 _CURRENCY_SCOPED_ROLES = {
     MediaRole.COMPARISON_THEN,
+    MediaRole.COMPARISON_NOW,
 }
 _DATE_SCOPED_ROLES = {
     MediaRole.STORY_CHAPTER,
@@ -119,7 +120,7 @@ def _validate_publishable_metadata(asset: MediaAsset) -> None:
     if asset.reviewed_at is None:
         raise MediaPublicationError("Published media requires explicit editorial review.")
     if asset.role in _CURRENCY_SCOPED_ROLES and asset.currency_id is None:
-        raise MediaPublicationError("Comparison historical media requires explicit currency scope.")
+        raise MediaPublicationError("Comparison media requires explicit currency scope.")
 
     if asset.generated_by_ai and asset.role in _HISTORICAL_ROLES:
         raise MediaPublicationError(
@@ -410,10 +411,10 @@ def validate_candidate_media_scope(
     if role in _CURRENCY_SCOPED_ROLES:
         if country is not None:
             raise ValueError(
-                "Comparison historical media must be countryless; runtime selection is currency-scoped."
+                "Comparison media must be countryless; runtime selection is currency-scoped."
             )
         if currency is None:
-            raise ValueError("Comparison historical media requires explicit currency scope.")
+            raise ValueError("Comparison media requires explicit currency scope.")
 
 
 def upsert_media_candidates(
