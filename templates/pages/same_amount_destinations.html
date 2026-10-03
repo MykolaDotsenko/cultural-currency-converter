@@ -175,6 +175,22 @@
                   </dd>
                 </div>
               </dl>
+              <div class="qa-context-freshness-note"
+                   role="status"
+                   aria-label="{{ item.scope_label }} reviewed local context status">
+                {% if item.context_state == "available" %}
+                  Reviewed local context assembled as of {{ item.context_as_of }}.
+                  City and national evidence keep their original scope below.
+                {% elif item.context_state == "degraded" %}
+                  Reviewed local context is temporarily unavailable as of {{ item.context_as_of }}.
+                  The FX observation above remains valid and no missing local facts are inferred.
+                {% elif item.context_state == "empty" %}
+                  No reviewed current local price or payment context is available as of
+                  {{ item.context_as_of }}. The FX observation above remains usable on its own.
+                {% else %}
+                  Local context is not applicable to this destination view as of {{ item.context_as_of }}.
+                {% endif %}
+              </div>
               {% if item.prices or item.payment_summary %}
                 <details class="qa-same-amount-card__context">
                   <summary>
