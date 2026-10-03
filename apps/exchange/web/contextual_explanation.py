@@ -101,11 +101,24 @@ def _contextual_explanation_view(
                 ),
             }
         else:
+            supporting_fact_ids = {
+                fact_id
+                for insight in (
+                    delivery.result.short_answer,
+                    *delivery.result.key_factors,
+                    delivery.result.watch_out_for,
+                    delivery.result.next_step,
+                )
+                for fact_id in insight.supporting_fact_ids
+            }
             explanation = {
                 "result": delivery.result,
                 "cache_status": delivery.cache_status,
                 "question": packet.intent_question,
                 "surface_label": surface_label,
+                "facts_used": tuple(
+                    fact for fact in packet.facts if fact.id in supporting_fact_ids
+                ),
             }
 
     fragment = is_htmx(request)
