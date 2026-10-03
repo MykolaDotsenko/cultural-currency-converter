@@ -5,6 +5,8 @@ from urllib.parse import urlencode
 
 from django.urls import reverse
 
+from apps.common.presentation.media_view_models import ImageViewModel
+
 from apps.culture.explore import ExploreDestination
 from apps.culture.explore_collections import (
     ExploreCollection,
@@ -196,8 +198,10 @@ def build_explore_collection_components(
     collections: tuple[ExploreCollection, ...],
     *,
     selected_date: date,
+    teaser_media_by_country: dict[str, ImageViewModel] | None = None,
 ) -> tuple[dict[str, object], ...]:
     components: list[dict[str, object]] = []
+    teaser_media = teaser_media_by_country or {}
     for collection in collections:
         items: list[dict[str, object]] = []
         for item in collection.items:
@@ -235,6 +239,11 @@ def build_explore_collection_components(
                     "action_url": action_url,
                     "action_label": action_label,
                     "comparison_url": comparison_url,
+                    "teaser_image": (
+                        teaser_media.get(item.country_codes[0])
+                        if len(item.country_codes) == 1
+                        else None
+                    ),
                 }
             )
         components.append(
