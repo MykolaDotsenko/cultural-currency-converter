@@ -52,7 +52,8 @@
           </div>
         {% endif %}
       </div>
-      <div class="qa-trip-money-pass__actions" aria-label="Trip money quick actions">
+      <div class="qa-trip-money-pass__actions"
+           aria-label="Trip money quick actions">
         {% if camera_extraction_available %}
           <a class="qa-primary-button"
              href="{% url 'camera_scan_saved_scenario' scenario.pk %}">Scan amount</a>
