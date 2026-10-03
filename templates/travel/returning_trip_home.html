@@ -27,7 +27,13 @@
     {% if returning_trip_home.trip_budget %}
       <article class="qa-saved-row">
         <div class="qa-saved-row__copy">
-          <h3>Saved trip budget</h3>
+          <h3>
+            {% if returning_trip_home.scenario.budget_basis == "payment_estimate" %}
+              Payment-adjusted trip budget
+            {% else %}
+              Saved trip budget
+            {% endif %}
+          </h3>
           {% if returning_trip_home.trip_budget.is_over_reference %}
             <p>
               {{ returning_trip_home.trip_budget.over_reference|floatformat:"-12" }}
