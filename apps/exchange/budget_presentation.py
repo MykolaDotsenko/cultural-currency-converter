@@ -80,6 +80,18 @@ def build_budget_component(
                 "label": anchor.label,
                 "scope_label": anchor.scope_label,
                 "is_city_scope": bool(anchor.city_slug),
+                "scope_badge": (
+                    "City evidence"
+                    if anchor.city_slug
+                    else (
+                        "National fallback"
+                        if context.destination_city_slug
+                        else "National evidence"
+                    )
+                ),
+                "scope_is_fallback": bool(
+                    context.destination_city_slug and not anchor.city_slug
+                ),
                 "observed_at": date_format(anchor.observed_at, "j M Y"),
                 "source_class": anchor.source_class.replace("_", " ").capitalize(),
                 "source_name": anchor.source_name,
@@ -147,6 +159,18 @@ def build_budget_component(
                     "label": line.label,
                     "scope_label": line.scope_label,
                     "scope_kind": line.scope.value,
+                    "scope_badge": (
+                        "City evidence"
+                        if line.scope.value == "city"
+                        else (
+                            "National fallback"
+                            if interpretation.destination_city_slug
+                            else "National evidence"
+                        )
+                    ),
+                    "scope_is_fallback": bool(
+                        interpretation.destination_city_slug and line.scope.value == "national"
+                    ),
                     "units": _decimal_text(line.units_per_person_per_day),
                     "daily_low": _money_text(
                         line.per_person_daily_low,
