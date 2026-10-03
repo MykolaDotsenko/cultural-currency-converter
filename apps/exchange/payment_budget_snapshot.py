@@ -62,9 +62,7 @@ def load_payment_budget_handoff_token(
         raise PaymentBudgetHandoffTokenError("Payment-budget handoff token is invalid.") from exc
 
     if not isinstance(payload, dict) or payload.get("v") != 1:
-        raise PaymentBudgetHandoffTokenError(
-            "Payment-budget handoff token version is unsupported."
-        )
+        raise PaymentBudgetHandoffTokenError("Payment-budget handoff token version is unsupported.")
 
     expected_fields = {
         "v",
@@ -97,11 +95,7 @@ def load_payment_budget_handoff_token(
 
 
 def _budget_context_token(value: Any) -> str:
-    if (
-        not isinstance(value, str)
-        or not value
-        or len(value) > _MAX_BUDGET_CONTEXT_TOKEN_LENGTH
-    ):
+    if not isinstance(value, str) or not value or len(value) > _MAX_BUDGET_CONTEXT_TOKEN_LENGTH:
         raise PaymentBudgetHandoffTokenError("Budget context token is invalid.")
     return value
 
@@ -117,9 +111,7 @@ def _decimal(
     try:
         parsed = Decimal(value)
     except InvalidOperation as exc:
-        raise PaymentBudgetHandoffTokenError(
-            f"Payment-budget {field} is invalid."
-        ) from exc
+        raise PaymentBudgetHandoffTokenError(f"Payment-budget {field} is invalid.") from exc
     if not parsed.is_finite() or parsed < 0:
         raise PaymentBudgetHandoffTokenError(f"Payment-budget {field} is invalid.")
     if maximum is not None and parsed > maximum:
