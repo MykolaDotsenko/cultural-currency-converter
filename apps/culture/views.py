@@ -201,6 +201,20 @@ def explore(request: HttpRequest) -> HttpResponse:
         else None
     )
 
+    social_preview = None
+    try:
+        selection = select_media_for_display(role=MediaRole.SOCIAL_PREVIEW)
+        if selection is not None:
+            social_preview = {
+                "url": request.build_absolute_uri(selection.image.src),
+                "alt": selection.image.alt,
+            }
+    except (DatabaseError, ValueError) as exc:
+        logger.warning(
+            "Explore social preview unavailable",
+            extra={"error_code": exc.__class__.__name__},
+        )
+
     return render(
         request,
         "pages/explore.html",
@@ -215,6 +229,7 @@ def explore(request: HttpRequest) -> HttpResponse:
             "explore_as_of": selected_date,
             "explore_ai_form": explore_ai_form,
             "explore_ai_prompts": available_explore_explanation_intents(),
+            "social_preview": social_preview,
         },
     )
 
