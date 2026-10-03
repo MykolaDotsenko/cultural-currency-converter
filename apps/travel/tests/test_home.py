@@ -321,3 +321,32 @@ def test_loaded_converter_pair_keeps_focus_on_requested_pair_not_trip_home(
 
     assert response.status_code == 200
     assert b"qa-returning-trip-home" not in response.content
+
+
+@pytest.mark.django_db
+def test_returning_trip_home_keeps_money_context_visible_when_camera_is_enabled(
+    client,
+    home_reference_data,
+    settings,
+):
+    settings.AI_CAMERA_EXTRACTION_ENABLED = True
+    user = User.objects.create_user(username="camera-home-owner", password="StrongPass-482!")
+    scenario = _scenario(
+        user,
+        home_reference_data,
+        title="Tokyo camera trip",
+        start=date(2099, 4, 12),
+        end=date(2099, 4, 18),
+    )
+    client.force_login(user)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    detail = reverse("saved_scenario_detail", args=(scenario.pk,))
+    camera = reverse("camera_scan_saved_scenario", args=(scenario.pk,))
+    assert detail.encode() in response.content
+    assert camera.encode() in response.content
+    assert b"Open money context" in response.content
+    assert b"Scan a price" in response.content
+    assert b"Offline pack" in response.content
