@@ -30,6 +30,7 @@ from apps.media.services import (
     attach_media_bytes,
     create_responsive_derivative,
     publish_media_asset,
+    select_published_country_media,
     select_published_media,
     select_published_media_for_roles,
     upsert_media_candidates,
@@ -792,6 +793,43 @@ def test_selector_matches_equivalent_aspect_ratios(finland):
 
     assert selected is not None
     assert selected.asset.pk == matching.pk
+
+
+@pytest.mark.django_db
+def test_country_media_batch_selector_uses_one_query_and_keeps_country_specificity(finland):
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    global_teaser = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COUNTRY_TEASER,
+        title="Global teaser",
+        storage_file="sourced/global-teaser.webp",
+        width=1200,
+        height=900,
+        status=MediaStatus.PUBLISHED,
+    )
+    finland_teaser = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COUNTRY_TEASER,
+        country=finland,
+        title="Finland teaser",
+        storage_file="sourced/finland-teaser.webp",
+        width=1200,
+        height=900,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    with CaptureQueriesContext(connection) as captured:
+        selected = select_published_country_media(
+            role=MediaRole.COUNTRY_TEASER,
+            countries=(finland, japan),
+            aspect_ratio="4 / 3",
+        )
+
+    assert len(captured) == 1
+    assert selected["FI"].asset.pk == finland_teaser.pk
+    assert selected["JP"].asset.pk == global_teaser.pk
 
 
 @pytest.mark.django_db
