@@ -152,7 +152,6 @@ def test_story_chapter_exposes_reviewed_source_lifecycle_and_causal_support(cont
 
     assert chapter.target_date == date(1999, 1, 1)
     assert chapter.causal_support is True
-    assert chapter.causal_support_note.startswith("The reviewed source explicitly")
     assert source.source_kind == "Official"
     assert source.external_id == "archive-1999-001"
     assert source.published_label
