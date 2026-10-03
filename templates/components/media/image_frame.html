@@ -13,7 +13,7 @@
          {% if fetchpriority %}fetchpriority="{{ fetchpriority }}"{% endif %}
          {% if image.decorative %}aria-hidden="true"{% endif %}>
   </div>
-  {% if caption or image.caption or image.authenticity_label or image.attribution_text or image.licence_id or image.change_note %}
+  {% if caption or image.caption or image.authenticity_label or image.temporal_label or image.attribution_text or image.licence_id or image.change_note %}
     <figcaption class="qa-media__caption">
       {% if caption %}
         <span>{{ caption }}</span>
@@ -22,6 +22,9 @@
       {% endif %}
       {% if image.authenticity_label %}
         <span class="qa-media__authenticity">{{ image.authenticity_label }}</span>
+      {% endif %}
+      {% if image.temporal_label %}
+        <span class="qa-media__temporal">{{ image.temporal_label }}</span>
       {% endif %}
       {% if image.attribution_text %}
         {% if image.source_url %}
