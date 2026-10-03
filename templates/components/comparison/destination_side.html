@@ -118,19 +118,44 @@
         <summary>Full payment guide</summary>
         <dl class="qa-payment-guide__list">
           {% if side.payment.payment_customs %}
-            <div><dt>Cards</dt><dd>{{ side.payment.payment_customs }}</dd></div>
+            <div>
+              <dt>Cards</dt>
+              <dd>
+                {{ side.payment.payment_customs }}
+              </dd>
+            </div>
           {% endif %}
           {% if side.payment.cash_usage %}
-            <div><dt>Cash</dt><dd>{{ side.payment.cash_usage }}</dd></div>
+            <div>
+              <dt>Cash</dt>
+              <dd>
+                {{ side.payment.cash_usage }}
+              </dd>
+            </div>
           {% endif %}
           {% if side.payment.atm_notes %}
-            <div><dt>ATMs</dt><dd>{{ side.payment.atm_notes }}</dd></div>
+            <div>
+              <dt>ATMs</dt>
+              <dd>
+                {{ side.payment.atm_notes }}
+              </dd>
+            </div>
           {% endif %}
           {% if side.payment.tipping %}
-            <div><dt>Tipping</dt><dd>{{ side.payment.tipping }}</dd></div>
+            <div>
+              <dt>Tipping</dt>
+              <dd>
+                {{ side.payment.tipping }}
+              </dd>
+            </div>
           {% endif %}
           {% if side.payment.dcc_warning %}
-            <div><dt>Dynamic currency conversion</dt><dd>{{ side.payment.dcc_warning }}</dd></div>
+            <div>
+              <dt>Dynamic currency conversion</dt>
+              <dd>
+                {{ side.payment.dcc_warning }}
+              </dd>
+            </div>
           {% endif %}
         </dl>
       </details>
