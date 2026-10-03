@@ -210,6 +210,7 @@ def build_explore_explanation_packet(
             ("payment_customs", context.payment.payment_customs),
             ("cash_usage", context.payment.cash_usage),
             ("atm_notes", context.payment.atm_notes),
+            ("tipping", context.payment.tipping),
             ("dcc_warning", context.payment.dcc_warning),
         )
         facts.extend(
@@ -273,6 +274,7 @@ def build_explore_explanation_packet(
                 "cash_usage",
                 "payment_customs",
                 "atm_notes",
+                "tipping",
                 "dcc_warning",
                 "payment_verified",
             )
@@ -337,6 +339,7 @@ def build_explore_fallback_result(
                 "cash_usage",
                 "payment_customs",
                 "atm_notes",
+                "tipping",
                 "dcc_warning",
                 "payment_verified",
             )
