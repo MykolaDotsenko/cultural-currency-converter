@@ -567,9 +567,7 @@ def _explore_collection_teaser_media(collections) -> dict[str, ImageViewModel]:
         country.iso2: country for country in Country.objects.filter(iso2__in=country_codes[:12])
     }
     ordered_countries = tuple(
-        country
-        for code in country_codes[:12]
-        if (country := countries.get(code)) is not None
+        country for code in country_codes[:12] if (country := countries.get(code)) is not None
     )
     return select_media_for_display_countries(
         role=MediaRole.COUNTRY_TEASER,
