@@ -271,7 +271,7 @@ The web product currently supports:
 
 - current and historical FX conversion with explicit requested/effective dates and provider semantics;
 - bilateral country/currency selection with smart current, shared and historical relationship filtering;
-- historical trend views with 1Y / 5Y / 10Y / custom ranges, selected/minimum/maximum/last observations and Then & Now;
+- historical trend views with 1Y / 5Y / 10Y / custom ranges, selected/minimum/maximum/last observations and Then & Now, including separately selected reviewed Then/Now imagery plus date-scoped historical-timeline evidence when published media exists;
 - explicit-assumption Real Payment Estimate for current non-identity conversions, using signed trusted conversion snapshots plus user-entered FX markup and source/destination fixed fees;
 - canonical Money Context composition with sourced everyday-value examples and reviewed cash/card/ATM/tipping guidance;
 - Destination Mode for reviewed country/canonical-city scopes, preserving city identity into the canonical converter;
@@ -282,11 +282,11 @@ The web product currently supports:
 - canonical one-sided Destination Comparison handoffs from Explore, My Places, saved scenarios, favourites and recent conversions, without inferring Destination B;
 - browser-local My Places with versioned, validated, deduplicated and retention-bounded storage plus owner-scoped durable My Places with explicit local→account import and current-currency re-resolution;
 - SavedComparison persistence for canonical inputs/explicit basket assumptions only, with provider-free Reopen and explicit canonical Re-check;
-- deterministic money/culture storytelling, Historical Series chronology and reviewed currency-era / previous-currency exploration while keeping historical FX separate from historical purchasing power;
-- restrained source → destination presentation with provenance-aware managed destination media and graceful no-media rendering;
+- deterministic money/culture storytelling, Historical Series chronology and reviewed currency-era / previous-currency exploration while keeping historical FX separate from historical purchasing power; historical story chapters can carry independently selected date-scoped sourced evidence plus source publication/retrieval/review metadata and explicit causal-support semantics;
+- restrained source → destination presentation with provenance-aware managed destination media and graceful no-media rendering; managed media exposes public-safe creator/rights/retrieval/original-source provenance, human-readable authenticity/temporal-match labels, curated Explore country teasers and managed social-preview metadata without exposing internal fallback/selection mechanics;
 - optional structured AI explanation with deterministic fallback and server-approved grounded quick prompts; Explore AI uses a separate explicit POST over one reviewed destination and intent while Explore GET remains provider-free;
 - anonymous browser-local favourites and recent conversions, account-owned favourites and separately opt-in account recent history;
-- account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, Trip Budget Remaining and confirmed-spend tracking;
+- account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, Trip Budget Remaining and confirmed-spend tracking; saved FX history distinguishes provider fetched-at time from user-recorded time;
 - returning-user Trip Home continuity based on stored scenario state without silent live-rate refresh;
 - optional Camera amount extraction with ephemeral metadata-stripped processing, mandatory confirmation and a separate idempotent Add-to-trip-budget handoff;
 - self-contained Offline Destination Pack export with stored-FX freshness semantics and reviewed destination context;
