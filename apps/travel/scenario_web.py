@@ -287,6 +287,9 @@ def _scenario_detail_context(
         .first()
     )
     latest_observation = scenario.observations.order_by("-recorded_at", "-id").first()
+    observation_history = tuple(
+        scenario.observations.order_by("-recorded_at", "-id")
+    )
     budget_item_rows = tuple(
         {
             "item": item,
@@ -322,6 +325,8 @@ def _scenario_detail_context(
         "budget_item_rows": budget_item_rows,
         "initial_observation": initial_observation,
         "latest_observation": latest_observation,
+        "observation_history": observation_history,
+        "observation_history_count": len(observation_history),
         "rate_comparison": rate_comparison,
         "trip_schedule": trip_schedule,
         "trip_budget": trip_budget,
@@ -343,7 +348,7 @@ def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedS
             "source_country",
             "destination_country",
             "destination_city",
-        ).prefetch_related("budget_items", "spend_entries"),
+        ).prefetch_related("budget_items", "spend_entries", "observations"),
         pk=scenario_id,
         user=request.user,
     )
