@@ -41,7 +41,10 @@ from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import build_destination_context
 from apps.culture.story import compose_story
 from apps.media.models import MediaRole
-from apps.media.presentation import select_media_for_display
+from apps.media.presentation import (
+    select_media_for_display,
+    select_media_for_display_countries,
+)
 
 logger = logging.getLogger("cultural_currency.culture")
 
@@ -563,18 +566,16 @@ def _explore_collection_teaser_media(collections) -> dict[str, ImageViewModel]:
     countries = {
         country.iso2: country for country in Country.objects.filter(iso2__in=country_codes[:12])
     }
-    media: dict[str, ImageViewModel] = {}
-    for code in country_codes[:12]:
-        country = countries.get(code)
-        if country is None:
-            continue
-        selection = select_media_for_display(
-            role=MediaRole.COUNTRY_TEASER,
-            country=country,
-        )
-        if selection is not None:
-            media[code] = selection.image
-    return media
+    ordered_countries = tuple(
+        country
+        for code in country_codes[:12]
+        if (country := countries.get(code)) is not None
+    )
+    return select_media_for_display_countries(
+        role=MediaRole.COUNTRY_TEASER,
+        countries=ordered_countries,
+        aspect_ratio="4 / 3",
+    )
 
 
 def _country_for_story(code: str) -> Country | None:
