@@ -7,6 +7,7 @@
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
   <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan by destination</a>
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
   <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
 {% endblock %}
 {% block content %}
@@ -193,6 +194,25 @@
             Coverage is partial. Known rows remain visible; missing rows are not estimated.
           {% endif %}
         </p>
+      </div>
+      <div class="qa-continuity-note"
+           aria-label="Shared comparison assumptions">
+        <div>
+          <strong>Same explicit basket on both sides</strong>
+          <span>
+            {% for item in comparison.selected_categories %}
+              {{ item.label }} {{ item.units }}/person/day{% if not forloop.last %} · {% endif %}
+            {% endfor %}
+          </span>
+        </div>
+        <span>
+          Shared sourced coverage:
+          {% if comparison.shared_categories %}
+            {{ comparison.shared_categories|join:", " }}
+          {% else %}
+            none of the selected categories are sourced on both sides
+          {% endif %}
+        </span>
       </div>
       <div class="qa-destination-comparison__grid">
         {% with side=comparison.left %}
