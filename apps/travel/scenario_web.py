@@ -402,7 +402,10 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
                 "This payment-adjusted budget is no longer valid. Recalculate the payment estimate.",
             )
             return redirect("converter")
-        if submitted_budget_token and payment_handoff.budget_context_token != submitted_budget_token:
+        if (
+            submitted_budget_token
+            and payment_handoff.budget_context_token != submitted_budget_token
+        ):
             logger.warning(
                 "saved_budget_scenario_rejected",
                 extra={"error_code": "payment_budget_context_mismatch"},
