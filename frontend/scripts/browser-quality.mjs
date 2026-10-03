@@ -652,6 +652,28 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     .waitFor();
   await assertAxe(page, "current-converter/payment-estimate");
 
+  // Carry the exact signed payment assumptions into Budget Interpretation.
+  // The browser never recalculates financial state: it forwards the server-built
+  // capability token and the budget endpoint rebuilds the trusted context.
+  const paymentBudgetHandoff = page.getByRole("button", {
+    name: "Plan with this estimate",
+    exact: true,
+  });
+  await paymentBudgetHandoff.waitFor();
+  const paymentBudgetResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await paymentBudgetHandoff.click();
+  const paymentBudgetResponse = await paymentBudgetResponsePromise;
+  assert(
+    paymentBudgetResponse.status() === 200,
+    `current-converter: payment→budget handoff returned ${paymentBudgetResponse.status()} instead of 200`,
+  );
+  await page.getByText("Payment-adjusted estimate", { exact: false }).first().waitFor();
+  await page.getByText("Reference FX value:", { exact: false }).waitFor();
+
   // Budget interpretation is a separate deterministic progressive surface. It
   // must carry a signed Money Context scope, keep its assumptions explicit,
   // and leave the successful conversion untouched.
@@ -660,9 +682,16 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   const budgetContextToken = await budgetForm
     .locator('input[name="budget_context_token"]')
     .inputValue();
+  const paymentBudgetToken = await budgetForm
+    .locator('input[name="payment_budget_token"]')
+    .inputValue();
   assert(
     budgetContextToken.length > 40 && budgetContextToken.split(":").length >= 3,
     `current-converter: budget context token is missing or malformed; length=${budgetContextToken.length}`,
+  );
+  assert(
+    paymentBudgetToken.length > 40,
+    `current-converter: payment-adjusted budget handoff token is missing; length=${paymentBudgetToken.length}`,
   );
 
   const waitForBudgetInterpretation = () =>
