@@ -184,6 +184,7 @@ def payload(**overrides):
     values.update(overrides)
     return values
 
+
 @pytest.mark.django_db
 def test_initial_page_does_not_request_rate(client, reference_data):
     with patch("apps.exchange.views.build_latest_quote_gateway") as factory:
@@ -756,7 +757,6 @@ def test_historical_htmx_and_full_get_render_equivalent_numeric_semantics(client
         assert b"15 Jun 1998" in response.content
         assert b"12 Jun 1998" in response.content
         assert b"Previous available observation" in response.content
-
 
 
 @pytest.mark.django_db
