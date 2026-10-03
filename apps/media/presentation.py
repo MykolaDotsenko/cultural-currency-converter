@@ -53,10 +53,9 @@ def _temporal_label(asset: MediaAsset) -> str:
         return value.isoformat()
 
     if asset.valid_from and asset.valid_to:
-        if asset.valid_from == asset.valid_to:
-            scope = format_date(asset.valid_from)
-        else:
-            scope = f"{format_date(asset.valid_from)}–{format_date(asset.valid_to)}"
+        start_text = format_date(asset.valid_from)
+        end_text = format_date(asset.valid_to)
+        scope = start_text if start_text == end_text else f"{start_text}–{end_text}"
     elif asset.valid_from:
         scope = f"{format_date(asset.valid_from)} onward"
     else:
