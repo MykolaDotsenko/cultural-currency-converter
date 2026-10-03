@@ -1170,3 +1170,29 @@
     color: LinkText;
   }
 }
+
+.qa-explore-collection-item--with-media {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.3fr) minmax(0, 1fr) auto;
+  gap: var(--qa-space-5);
+  align-items: start;
+}
+
+.qa-explore-collection-item__media {
+  min-width: 0;
+  max-width: 15rem;
+}
+
+.qa-explore-collection-item__media .qa-media__caption {
+  font-size: 0.68rem;
+}
+
+@media (max-width: 52rem) {
+  .qa-explore-collection-item--with-media {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qa-explore-collection-item__media {
+    max-width: 20rem;
+  }
+}
