@@ -274,7 +274,7 @@ def test_story_cover_media_failure_keeps_story_available(client, reference_data,
     assert b"The sourced story behind this currency context" in response.content
     assert b"temporarily unavailable" not in response.content
     assert any(
-        record.msg == "Money and culture story cover media unavailable" for record in caplog.records
+        record.msg == "Money and culture story primary media unavailable" for record in caplog.records
     )
 
 
