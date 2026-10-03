@@ -104,11 +104,7 @@ def _destination_component(
         "payment_summary": payment.summary if payment is not None else "",
         "payment_source_name": payment.source_name if payment is not None else "",
         "payment_source_url": payment.source_url if payment is not None else "",
-        "context_as_of": (
-            date_format(destination_context.as_of, "j M Y")
-            if destination_context is not None
-            else ""
-        ),
+        "context_as_of": date_format(item.context.as_of, "j M Y"),
         "converter_url": _converter_url(
             item,
             source_currency_code=source_currency_code,
