@@ -779,6 +779,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     ),
     "current-converter/budget-ai: explanation introduced ranking or affordability language",
   );
+  await budgetAiRegion.getByText("Facts used", { exact: false }).waitFor();
   await assertAxe(page, "current-converter/budget-ai");
 
   await page.evaluate((key) => localStorage.removeItem(key), LOCAL_STATE_KEY);
@@ -880,6 +881,8 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
 
   await page.getByRole("link", { name: "Everyday value" }).waitFor();
   await page.getByRole("link", { name: "Payment context" }).waitFor();
+  await page.getByText("Money Context Lens", { exact: true }).waitFor();
+  await page.getByText("Sources & freshness", { exact: true }).waitFor();
 
   const exploreLabels = (await page.locator(".qa-explore-nav a").allTextContents()).map((label) =>
     label.trim(),
@@ -1691,6 +1694,9 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
 
   await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
+  await page.getByText("Travel money mode", { exact: true }).waitFor();
+  await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
+  await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const baselineSummary = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
     .innerText();
@@ -2915,6 +2921,10 @@ async function assertDestinationComparisonQuality(page) {
       (await side.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
       "destination-comparison: canonical budget handoff is missing on a side",
     );
+    assert(
+      (await side.getByText("Full payment guide", { exact: true }).count()) === 1,
+      "destination-comparison: full reviewed payment guide is missing on a side",
+    );
   }
   assert(
     (await sides.first().getByRole("link", { name: "City money profile", exact: true }).count()) ===
@@ -2965,6 +2975,7 @@ async function assertDestinationComparisonQuality(page) {
     ),
     "destination-comparison/ai: explanation introduced ranking or affordability language",
   );
+  await aiRegion.getByText("Facts used", { exact: false }).waitFor();
 
   await assertNoHorizontalOverflow(page, "destination-comparison/interactive");
   await assertAxe(page, "destination-comparison/interactive");
