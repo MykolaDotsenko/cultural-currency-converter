@@ -270,8 +270,9 @@
             <p class="qa-foundation-kicker">Keep this plan</p>
             <h4>Save this budget scenario</h4>
             <p class="qa-field__message">
-              Save the trusted conversion, destination scope and your explicit daily basket
-              assumptions to your account. Nothing is inferred or uploaded from browser history.
+              Save the trusted conversion, destination scope, planning basis and your explicit
+              daily basket assumptions to your account. Nothing is inferred or uploaded from
+              browser history.
             </p>
           </div>
           <form method="post"
@@ -281,6 +282,11 @@
             <input type="hidden"
                    name="budget_context_token"
                    value="{{ budget_interpretation.token }}">
+            {% if budget_interpretation.save_payload.payment_handoff_token %}
+              <input type="hidden"
+                     name="payment_budget_token"
+                     value="{{ budget_interpretation.save_payload.payment_handoff_token }}">
+            {% endif %}
             <input type="hidden"
                    name="duration_days"
                    value="{{ budget_interpretation.save_payload.duration_days }}">
