@@ -518,6 +518,7 @@ class SavedScenario(models.Model):
                         destination_fixed_fee__isnull=True,
                     )
                     | Q(
+                        kind=SavedScenarioKind.BUDGET,
                         budget_basis=SavedScenarioBudgetBasis.PAYMENT_ESTIMATE,
                         planning_destination_amount__isnull=False,
                         planning_destination_amount__gte=0,
