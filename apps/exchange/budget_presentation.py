@@ -15,6 +15,7 @@ from apps.exchange.ai.packet_tokens import GroundedPacketTokenError, build_groun
 from apps.exchange.budget import (
     BudgetAssumptions,
     BudgetBand,
+    BudgetBasis,
     BudgetInterpretation,
     BudgetInterpretationState,
     available_budget_categories,
@@ -52,6 +53,7 @@ def build_budget_component(
     token: str | None = None,
     interpretation: BudgetInterpretation | None = None,
     assumptions: BudgetAssumptions | None = None,
+    payment_handoff_token: str = "",
 ) -> dict[str, object] | None:
     anchors = available_budget_categories(context)
     if not anchors:
@@ -60,6 +62,14 @@ def build_budget_component(
     category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
     budget_form = form or BudgetInterpretationForm(category_options=category_options)
     budget_token = token or build_budget_context_snapshot_token(context)
+    budget_basis = (
+        interpretation.basis
+        if interpretation is not None
+        else budget_form.budget_basis
+    )
+    uses_payment_estimate = budget_basis is BudgetBasis.PAYMENT_ESTIMATE
+    if uses_payment_estimate and context.payment_estimate is None:
+        raise ValueError("Payment-estimate budget presentation requires a payment estimate.")
 
     destination_context = context.destination_context
     destination_name = (
@@ -114,7 +124,11 @@ def build_budget_component(
         )
 
     save_payload = None
-    if interpretation is not None and assumptions is not None:
+    if (
+        interpretation is not None
+        and assumptions is not None
+        and interpretation.basis is BudgetBasis.REFERENCE_CONVERSION
+    ):
         save_payload = {
             "duration_days": assumptions.duration_days,
             "travelers": assumptions.travelers,
@@ -224,8 +238,37 @@ def build_budget_component(
         if prompts:
             ai_explanation = {"prompts": tuple(prompts)}
 
+    payment_estimate_component = None
+    if uses_payment_estimate and context.payment_estimate is not None:
+        payment_estimate_component = {
+            "estimated_amount": _money_text(
+                context.payment_estimate.estimated_destination_amount,
+                minor_units=destination_minor_units,
+            ),
+            "difference_amount": _money_text(
+                context.payment_estimate.destination_value_lost,
+                minor_units=destination_minor_units,
+            ),
+            "fx_markup_percent": _decimal_text(
+                context.payment_estimate.fx_markup_percent
+            ),
+            "source_fixed_fee": _decimal_text(context.payment_estimate.source_fixed_fee),
+            "destination_fixed_fee": _money_text(
+                context.payment_estimate.destination_fixed_fee,
+                minor_units=destination_minor_units,
+            ),
+            "source_currency": context.conversion.quote.base_currency,
+        }
+
     return {
         "token": budget_token,
+        "payment_handoff_token": payment_handoff_token,
+        "basis": budget_basis.value,
+        "basis_label": (
+            "Payment-adjusted estimate"
+            if uses_payment_estimate
+            else "Reference conversion"
+        ),
         "form": budget_form,
         "fields": tuple(fields),
         "destination_name": destination_name,
@@ -234,6 +277,15 @@ def build_budget_component(
             context.conversion.output_amount,
             minor_units=destination_minor_units,
         ),
+        "planning_amount": _money_text(
+            (
+                context.payment_estimate.estimated_destination_amount
+                if uses_payment_estimate and context.payment_estimate is not None
+                else context.conversion.output_amount
+            ),
+            minor_units=destination_minor_units,
+        ),
+        "payment_estimate": payment_estimate_component,
         "as_of": date_format(context.as_of, "j M Y"),
         "result": result_component,
         "save_payload": save_payload,
