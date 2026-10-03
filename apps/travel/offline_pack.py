@@ -81,6 +81,11 @@ class OfflineDestinationPack:
     travel_end_date: date | None
     duration_days: int | None
     travelers: int
+    budget_basis: str
+    planning_destination_amount: Decimal | None
+    fx_markup_percent: Decimal | None
+    source_fixed_fee: Decimal | None
+    destination_fixed_fee: Decimal | None
     fx_reference: OfflineFxReference
     trip_budget: TripBudgetSummary
     destination_context: DestinationContext | None
@@ -186,6 +191,11 @@ def build_offline_destination_pack(
         travel_end_date=scenario.travel_end_date,
         duration_days=scenario.duration_days,
         travelers=scenario.travelers,
+        budget_basis=scenario.budget_basis,
+        planning_destination_amount=scenario.planning_destination_amount,
+        fx_markup_percent=scenario.fx_markup_percent,
+        source_fixed_fee=scenario.source_fixed_fee,
+        destination_fixed_fee=scenario.destination_fixed_fee,
         fx_reference=_fx_reference(scenario, latest),
         trip_budget=trip_budget,
         destination_context=destination_context,
