@@ -2509,6 +2509,10 @@ h3 {
   border-block: 1px solid var(--qa-hairline);
 }
 
+.qa-ai-explanation__facts > summary {
+  color: var(--color-ink);
+}
+
 .qa-ai-explanation__fact-list {
   display: grid;
   gap: var(--qa-space-3);
