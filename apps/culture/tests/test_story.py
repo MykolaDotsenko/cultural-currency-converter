@@ -110,6 +110,9 @@ def test_composer_adds_reviewed_story_moment(context_data):
     chapter = next(c for c in story.chapters if c.title == "Finland adopted the euro")
     assert chapter.body == "Finland adopted the euro in a sourced transition."
     assert chapter.source_refs[0].label == "Official source"
+    assert chapter.temporal_scope == "1999-01-01"
+    assert chapter.temporal_precision == "Exact day"
+    assert chapter.causal_support is False
     assert [item.kind for item in story.currency_era_chapters] == [
         "source_currency_era",
         "destination_currency_era",
