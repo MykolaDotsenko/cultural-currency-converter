@@ -271,14 +271,18 @@ def test_explore_uses_country_teasers_and_managed_social_preview(
         height=900,
     )
 
-    def fake_media(*, role, country=None, **_kwargs):
-        if role == MediaRole.COUNTRY_TEASER and country is not None and country.iso2 == "JP":
-            return SimpleNamespace(image=teaser)
+    def fake_media(*, role, **_kwargs):
         if role == MediaRole.SOCIAL_PREVIEW:
             return SimpleNamespace(image=social)
         return None
 
-    with patch("apps.culture.views.select_media_for_display", side_effect=fake_media):
+    with (
+        patch(
+            "apps.culture.views.select_media_for_display_countries",
+            return_value={"JP": teaser},
+        ),
+        patch("apps.culture.views.select_media_for_display", side_effect=fake_media),
+    ):
         response = client.get(reverse("explore"))
 
     assert response.status_code == 200
