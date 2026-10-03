@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
@@ -368,6 +369,10 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                 "detail": "The conversion remains valid. Try the story again later.",
             }
         else:
+            story_chapter_items = tuple(
+                {"chapter": chapter, "media": None}
+                for chapter in story.historical_moment_chapters
+            )
             try:
                 country = _country_for_story(story_request.destination_country)
                 currency = _currency_for_story(story_request.destination_currency)
@@ -382,10 +387,23 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                     country=country,
                     currency=currency,
                 )
+            except (DatabaseError, ValueError) as exc:
+                logger.warning(
+                    "Money and culture story primary media unavailable",
+                    extra={
+                        "error_code": exc.__class__.__name__,
+                        "culture.status": "media_unavailable",
+                        "culture.historical": story_request.historical,
+                    },
+                )
+
+            try:
+                country = _country_for_story(story_request.destination_country)
+                currency = _currency_for_story(story_request.destination_currency)
                 used_sources = {
                     story_media.image.src
-                    for story_media in (story_media,)
-                    if story_media is not None
+                    for selection in (story_media,)
+                    if selection is not None
                 }
                 chapter_items = []
                 for chapter in story.historical_moment_chapters:
@@ -402,19 +420,14 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                         chapter_media = None
                     if chapter_media is not None:
                         used_sources.add(chapter_media.image.src)
-                    chapter_items.append(
-                        {
-                            "chapter": chapter,
-                            "media": chapter_media,
-                        }
-                    )
+                    chapter_items.append({"chapter": chapter, "media": chapter_media})
                 story_chapter_items = tuple(chapter_items)
             except (DatabaseError, ValueError) as exc:
                 logger.warning(
-                    "Money and culture story cover media unavailable",
+                    "Money and culture story chapter media unavailable",
                     extra={
                         "error_code": exc.__class__.__name__,
-                        "culture.status": "media_unavailable",
+                        "culture.status": "chapter_media_unavailable",
                         "culture.historical": story_request.historical,
                     },
                 )
@@ -506,7 +519,7 @@ def current_destination_context(request: HttpRequest) -> HttpResponse:
     return response
 
 
-def _explore_collection_teaser_media(collections) -> dict[str, object]:
+def _explore_collection_teaser_media(collections) -> dict[str, ImageViewModel]:
     country_codes: list[str] = []
     for collection in collections:
         for item in collection.items:
@@ -520,7 +533,7 @@ def _explore_collection_teaser_media(collections) -> dict[str, object]:
         country.iso2: country
         for country in Country.objects.filter(iso2__in=country_codes[:12])
     }
-    media: dict[str, object] = {}
+    media: dict[str, ImageViewModel] = {}
     for code in country_codes[:12]:
         country = countries.get(code)
         if country is None:
