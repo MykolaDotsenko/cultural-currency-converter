@@ -458,6 +458,7 @@
                     {{ observation.input_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
                     → {{ observation.output_amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}
                     · effective {{ observation.effective_date|date:"j M Y" }}
+                    · fetched {{ observation.fetched_at|date:"j M Y, H:i" }}
                     {% if observation.provider_keys %}· {{ observation.provider_keys|join:", " }}{% endif %}
                     {% if observation.stale %}· stored stale{% endif %}
                   </p>
