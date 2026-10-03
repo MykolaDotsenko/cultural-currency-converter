@@ -646,6 +646,7 @@ h3 {
   border: 0;
   border-block: 1px solid var(--qa-hairline);
   background: transparent;
+  color: var(--color-ink);
 }
 
 /* Secondary feature entries become editorial rows. */
@@ -2467,7 +2468,7 @@ h3 {
 }
 
 .qa-budget-interpretation__reference span {
-  color: var(--color-tertiary);
+  color: var(--color-ink);
   font-size: var(--text-body-sm);
 }
 
