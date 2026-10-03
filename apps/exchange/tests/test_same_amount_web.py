@@ -93,15 +93,27 @@ def same_amount_reference_data(db):
         )
 
     prices = (
-        (jp, tokyo, jpy, "Tokyo coffee", Decimal("500"), Decimal("700")),
-        (ca, toronto, cad, "Toronto coffee", Decimal("4"), Decimal("7")),
-        (no, None, nok, "Norway coffee", Decimal("45"), Decimal("65")),
+        (jp, tokyo, jpy, "coffee", "Tokyo coffee", Decimal("500"), Decimal("700")),
+        (
+            jp,
+            None,
+            jpy,
+            "local_transit",
+            "Japan transit fallback",
+            Decimal("180"),
+            Decimal("240"),
+        ),
+        (ca, toronto, cad, "coffee", "Toronto coffee", Decimal("4"), Decimal("7")),
+        (no, None, nok, "coffee", "Norway coffee", Decimal("45"), Decimal("65")),
     )
-    for order, (country, city, currency, label, low, high) in enumerate(prices, start=1):
+    for order, (country, city, currency, category, label, low, high) in enumerate(
+        prices,
+        start=1,
+    ):
         TypicalPrice.objects.create(
             country=country,
             city_ref=city,
-            category="coffee",
+            category=category,
             label=label,
             amount_low=low,
             amount_high=high,
@@ -185,11 +197,13 @@ def test_same_amount_post_preserves_selection_order_and_independent_fx_semantics
     assert body.count(b"ECB") >= 3
     assert b"Toronto coffee source" in body
     assert b"Tokyo coffee source" in body
+    assert b"Japan transit fallback source" in body
     assert b"Norway coffee source" in body
     assert b"Reviewed payment source" in body
     assert b"Reviewed local context assembled as of" in body
     assert b"City evidence" in body
     assert b"National fallback" in body
+    assert b"National evidence" in body
     assert b"Curated factual" in body
     assert b"High confidence" in body
     assert b"No winner is calculated." in body
