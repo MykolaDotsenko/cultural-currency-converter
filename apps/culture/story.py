@@ -41,7 +41,6 @@ class StoryChapter:
     temporal_scope: str
     temporal_precision: str
     causal_support: bool
-    causal_support_note: str
     target_date: date | None
     relevance: int
 
@@ -143,7 +142,6 @@ def _currency_era_chapter(link, *, side: str) -> StoryChapter:
         temporal_scope=_temporal_scope(link.valid_from, link.valid_to),
         temporal_precision="Canonical currency period",
         causal_support=False,
-        causal_support_note="",
         target_date=link.valid_from,
         relevance=100,
     )
@@ -185,7 +183,6 @@ def _moment_chapter(moment: StoryMoment) -> StoryChapter:
         ),
         temporal_precision=_precision_label(moment.date_precision),
         causal_support=moment.supports_causality,
-        causal_support_note=moment.causal_support_note.strip(),
         target_date=moment.start_date or moment.end_date,
         relevance=moment.relevance_weight,
     )
