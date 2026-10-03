@@ -243,3 +243,178 @@
     border-color: CanvasText;
   }
 }
+
+/* Saved trip as a focused travel-money instrument, not a dashboard. */
+.qa-trip-money-pass {
+  display: grid;
+  gap: var(--qa-space-6);
+  margin-block: var(--qa-space-7) var(--qa-space-10);
+  padding: clamp(1.5rem, 4vw, 2.75rem);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface-soft) 76%, transparent);
+}
+
+.qa-trip-money-pass__identity h2,
+.qa-trip-money-pass__identity p {
+  margin: 0;
+}
+
+.qa-trip-money-pass__identity h2 {
+  margin-block-start: var(--qa-space-1);
+  font-size: clamp(1.8rem, 5vw, 3.4rem);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+
+.qa-trip-money-pass__money {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--color-border-subtle);
+}
+
+.qa-trip-money-pass__money > div {
+  display: grid;
+  gap: var(--qa-space-2);
+  padding: var(--qa-space-5) var(--qa-space-4);
+  border-inline-start: 1px solid var(--color-border-subtle);
+}
+
+.qa-trip-money-pass__money > div:first-child {
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+
+.qa-trip-money-pass__money span {
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+}
+
+.qa-trip-money-pass__money strong {
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.qa-trip-money-pass__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qa-space-3);
+}
+
+.qa-trip-money-pass__trust {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+}
+
+.qa-reference-history {
+  margin-block-start: var(--qa-space-6);
+  border-block-start: 1px solid var(--color-border-subtle);
+}
+
+.qa-reference-history summary {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--color-ink);
+  font-weight: 650;
+}
+
+.qa-reference-history__list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qa-reference-history__item {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: var(--qa-space-4);
+  position: relative;
+  padding-block: var(--qa-space-4);
+}
+
+.qa-reference-history__item::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0.45rem;
+  width: 1px;
+  background: var(--color-border-subtle);
+}
+
+.qa-reference-history__marker {
+  z-index: 1;
+  inline-size: 0.7rem;
+  block-size: 0.7rem;
+  margin-block-start: 0.35rem;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-muted);
+  box-shadow: 0 0 0 1px var(--color-border-control);
+}
+
+.qa-reference-history__item--initial .qa-reference-history__marker {
+  background: var(--color-brand);
+}
+
+.qa-reference-history__content p {
+  margin: var(--qa-space-1) 0 0;
+}
+
+.qa-reference-history__heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--qa-space-2) var(--qa-space-4);
+}
+
+.qa-reference-history__heading span {
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+}
+
+@media (max-width: 40rem) {
+  .qa-trip-money-pass__money {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qa-trip-money-pass__money > div {
+    padding-inline: 0;
+    border-block-start: 1px solid var(--color-border-subtle);
+    border-inline-start: 0;
+  }
+
+  .qa-trip-money-pass__money > div:first-child {
+    border-block-start: 0;
+  }
+
+  .qa-trip-money-pass__actions {
+    display: grid;
+  }
+
+  .qa-trip-money-pass__actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-trip-money-pass,
+  .qa-trip-money-pass__money,
+  .qa-trip-money-pass__money > div,
+  .qa-reference-history,
+  .qa-reference-history__item::before {
+    border-color: CanvasText;
+  }
+
+  .qa-reference-history__item::before {
+    background: CanvasText;
+  }
+}
