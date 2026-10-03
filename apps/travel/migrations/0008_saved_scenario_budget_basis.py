@@ -82,6 +82,7 @@ class Migration(migrations.Migration):
                         ("destination_fixed_fee__isnull", True),
                     )
                     | models.Q(
+                        ("kind", "budget"),
                         ("budget_basis", "payment_estimate"),
                         ("planning_destination_amount__isnull", False),
                         ("planning_destination_amount__gte", 0),
