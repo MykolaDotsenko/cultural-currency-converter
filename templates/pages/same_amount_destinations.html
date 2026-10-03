@@ -204,8 +204,8 @@
                           <div>
                             <p><strong>{{ price.label }}</strong></p>
                             <p>
-                              <span class="qa-city-profile__scope-badge{% if not price.is_city_scope %} qa-city-profile__scope-badge--fallback{% endif %}">
-                                {% if price.is_city_scope %}City evidence{% else %}National fallback{% endif %}
+                              <span class="qa-city-profile__scope-badge{% if price.scope_is_fallback %} qa-city-profile__scope-badge--fallback{% endif %}">
+                                {{ price.scope_badge }}
                               </span>
                               {{ price.amount }} {{ price.currency_code }} · {{ price.scope }}
                             </p>
