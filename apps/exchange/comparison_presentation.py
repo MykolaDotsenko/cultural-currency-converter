@@ -214,6 +214,13 @@ def build_destination_comparison_component(
         "duration_days": comparison.assumptions.duration_days,
         "travelers": comparison.assumptions.travelers,
         "coverage_complete": comparison.coverage_complete,
+        "selected_categories": tuple(
+            {
+                "label": item.category.replace("_", " ").title(),
+                "units": _decimal_text(item.units_per_person_per_day),
+            }
+            for item in comparison.assumptions.categories
+        ),
         "shared_categories": tuple(
             category.replace("_", " ").title() for category in comparison.shared_categories
         ),
