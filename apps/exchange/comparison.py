@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 from enum import StrEnum
 
@@ -29,6 +30,7 @@ class DestinationComparisonState(StrEnum):
 class DestinationComparisonSide:
     destination_country_code: str
     destination_city_slug: str
+    context_as_of: date
     conversion: ConversionResult
     destination_state: MoneyContextState
     budget: BudgetInterpretation
@@ -173,6 +175,7 @@ def _build_side(
     return DestinationComparisonSide(
         destination_country_code=context.destination_country_code,
         destination_city_slug=context.destination_city_slug,
+        context_as_of=context.as_of,
         conversion=context.conversion,
         destination_state=context.destination_state,
         budget=budget,
