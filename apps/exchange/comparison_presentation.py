@@ -134,6 +134,18 @@ def _side_component(
                     "label": line.label,
                     "scope_label": line.scope_label,
                     "scope_kind": line.scope.value,
+                    "scope_badge": (
+                        "City evidence"
+                        if line.scope.value == "city"
+                        else (
+                            "National fallback"
+                            if side.destination_city_slug
+                            else "National evidence"
+                        )
+                    ),
+                    "scope_is_fallback": bool(
+                        side.destination_city_slug and line.scope.value == "national"
+                    ),
                     "units": _decimal_text(line.units_per_person_per_day),
                     "daily_low": _money_text(
                         line.per_person_daily_low,
