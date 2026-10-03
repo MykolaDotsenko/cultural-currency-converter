@@ -406,6 +406,11 @@ class SavedScenarioKind(models.TextChoices):
     SHOPPING = "shopping", "Shopping"
 
 
+class SavedScenarioBudgetBasis(models.TextChoices):
+    REFERENCE_CONVERSION = "reference_conversion", "Reference conversion"
+    PAYMENT_ESTIMATE = "payment_estimate", "Payment-adjusted estimate"
+
+
 class SavedScenario(models.Model):
     """User-owned reusable travel-money planning state.
 
@@ -452,6 +457,35 @@ class SavedScenario(models.Model):
         related_name="+",
     )
     source_amount = models.DecimalField(max_digits=40, decimal_places=12)
+    budget_basis = models.CharField(
+        max_length=24,
+        choices=SavedScenarioBudgetBasis.choices,
+        default=SavedScenarioBudgetBasis.REFERENCE_CONVERSION,
+    )
+    planning_destination_amount = models.DecimalField(
+        max_digits=40,
+        decimal_places=12,
+        null=True,
+        blank=True,
+    )
+    fx_markup_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    source_fixed_fee = models.DecimalField(
+        max_digits=40,
+        decimal_places=12,
+        null=True,
+        blank=True,
+    )
+    destination_fixed_fee = models.DecimalField(
+        max_digits=40,
+        decimal_places=12,
+        null=True,
+        blank=True,
+    )
     duration_days = models.PositiveSmallIntegerField(null=True, blank=True)
     travelers = models.PositiveSmallIntegerField(default=1)
     travel_start_date = models.DateField(null=True, blank=True)
@@ -469,6 +503,34 @@ class SavedScenario(models.Model):
             models.CheckConstraint(
                 condition=Q(source_amount__gte=0),
                 name="scenario_source_amount_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=Q(budget_basis__in=SavedScenarioBudgetBasis.values),
+                name="scenario_budget_basis_valid",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        budget_basis=SavedScenarioBudgetBasis.REFERENCE_CONVERSION,
+                        planning_destination_amount__isnull=True,
+                        fx_markup_percent__isnull=True,
+                        source_fixed_fee__isnull=True,
+                        destination_fixed_fee__isnull=True,
+                    )
+                    | Q(
+                        budget_basis=SavedScenarioBudgetBasis.PAYMENT_ESTIMATE,
+                        planning_destination_amount__isnull=False,
+                        planning_destination_amount__gte=0,
+                        fx_markup_percent__isnull=False,
+                        fx_markup_percent__gte=0,
+                        fx_markup_percent__lte=25,
+                        source_fixed_fee__isnull=False,
+                        source_fixed_fee__gte=0,
+                        destination_fixed_fee__isnull=False,
+                        destination_fixed_fee__gte=0,
+                    )
+                ),
+                name="scenario_budget_basis_payload_valid",
             ),
             models.CheckConstraint(
                 condition=Q(duration_days__isnull=True)
