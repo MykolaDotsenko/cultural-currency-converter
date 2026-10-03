@@ -2915,9 +2915,10 @@ async function assertConstrainedNetworkCoreFlow(browser) {
     await result.waitFor();
     const output = result.locator(".qa-result__output");
     await output.waitFor();
+    const normalizedOutput = (await output.innerText()).replace(/[\s,\u00a0]/g, "");
     assert(
-      (await output.innerText()).includes("17450 JPY"),
-      "constrained-network: visible converter output is missing the expected deterministic result",
+      normalizedOutput.includes("17450JPY"),
+      `constrained-network: visible converter output drifted from the deterministic 17450 JPY result: ${JSON.stringify(normalizedOutput)}`,
     );
     await assertNoHorizontalOverflow(page, "constrained-network/current-converter");
     await assertAxe(page, "constrained-network/current-converter");
