@@ -385,8 +385,7 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
             }
         else:
             story_chapter_items = tuple(
-                {"chapter": chapter, "media": None}
-                for chapter in story.historical_moment_chapters
+                {"chapter": chapter, "media": None} for chapter in story.historical_moment_chapters
             )
             try:
                 country = _country_for_story(story_request.destination_country)
@@ -416,9 +415,7 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                 country = _country_for_story(story_request.destination_country)
                 currency = _currency_for_story(story_request.destination_currency)
                 used_sources = {
-                    selection.image.src
-                    for selection in (story_media,)
-                    if selection is not None
+                    selection.image.src for selection in (story_media,) if selection is not None
                 }
                 chapter_items = []
                 for chapter in story.historical_moment_chapters:
@@ -428,10 +425,7 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                         currency=currency,
                         target_date=chapter.target_date,
                     )
-                    if (
-                        chapter_media is not None
-                        and chapter_media.image.src in used_sources
-                    ):
+                    if chapter_media is not None and chapter_media.image.src in used_sources:
                         chapter_media = None
                     if chapter_media is not None:
                         used_sources.add(chapter_media.image.src)
@@ -545,8 +539,7 @@ def _explore_collection_teaser_media(collections) -> dict[str, ImageViewModel]:
                 country_codes.append(code)
 
     countries = {
-        country.iso2: country
-        for country in Country.objects.filter(iso2__in=country_codes[:12])
+        country.iso2: country for country in Country.objects.filter(iso2__in=country_codes[:12])
     }
     media: dict[str, ImageViewModel] = {}
     for code in country_codes[:12]:
