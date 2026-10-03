@@ -26,7 +26,7 @@ The current product already includes:
 - Returning-user Trip Home;
 - provider-free Explore GET with five provenance-bearing collections and canonical region → country → city navigation;
 - one-sided canonical Compare handoffs from Explore and Saved continuity surfaces;
-- browser-local My Places with exact country/city identity preservation;
+- browser-local plus owner-scoped My Places with exact country/city identity preservation, explicit local→account migration and current-currency re-resolution;
 - provider-free City Money Profile;
 - optional grounded AI explanation with deterministic fallback across conversion, reviewed Explore destinations, Budget Interpretation and Destination Comparison;
 - managed provenance-aware media, restrained source → destination presentation and historical/currency-era story exploration;
