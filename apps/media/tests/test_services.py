@@ -463,6 +463,64 @@ def test_database_rejects_duplicate_derivative_width_identity(media_root):
         )
 
 
+
+@pytest.mark.django_db
+def test_story_chapter_is_sourced_date_scoped_historical_evidence(finland, media_root):
+    chapter = _sourced_asset(
+        title="Reviewed story chapter",
+        role=MediaRole.STORY_CHAPTER,
+        country=finland,
+    )
+    _publish_sourced(chapter)
+
+    assert (
+        select_published_media(
+            role=MediaRole.STORY_CHAPTER,
+            country=finland,
+        )
+        is None
+    )
+    assert (
+        select_published_media(
+            role=MediaRole.STORY_CHAPTER,
+            country=finland,
+            target_date=date(2005, 1, 1),
+        )
+        is None
+    )
+
+    selected = select_published_media(
+        role=MediaRole.STORY_CHAPTER,
+        country=finland,
+        target_date=date(1995, 6, 1),
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == chapter.pk
+    assert selected.authenticity_class == "sourced_media"
+    assert selected.temporal_match_quality == "decade"
+
+
+@pytest.mark.django_db
+def test_ai_generated_story_chapter_cannot_be_approved_as_historical_evidence(media_root):
+    asset = MediaAsset.objects.create(
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+        role=MediaRole.STORY_CHAPTER,
+        title="Generated chapter reconstruction",
+        alt_text="Editorial illustration of a historical chapter.",
+        generated_by_ai=True,
+        ai_label="AI-generated editorial illustration",
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+    )
+    attach_media_bytes(asset, _png_bytes((80, 90, 100)), filename="chapter.png")
+
+    with pytest.raises(MediaPublicationError, match="historical evidence"):
+        approve_media_asset(asset)
+
+
 @pytest.mark.django_db
 def test_comparison_then_requires_explicit_currency_scope_before_approval(media_root):
     asset = _sourced_asset(title="Unscoped comparison", role=MediaRole.COMPARISON_THEN)
