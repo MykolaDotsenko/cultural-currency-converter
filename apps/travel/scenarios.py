@@ -62,7 +62,7 @@ class SavedScenarioSpec:
     travel_start_date: date | None = None
     travel_end_date: date | None = None
     budget_categories: tuple[BudgetCategoryAssumption, ...] = ()
-    budget_basis: SavedScenarioBudgetBasis = SavedScenarioBudgetBasis.REFERENCE_CONVERSION
+    budget_basis: str = "reference_conversion"
     planning_destination_amount: Decimal | None = None
     fx_markup_percent: Decimal | None = None
     source_fixed_fee: Decimal | None = None
@@ -344,7 +344,7 @@ def _validate_budget_basis(
     *,
     conversion: ConversionResult,
 ) -> None:
-    if not isinstance(spec.budget_basis, SavedScenarioBudgetBasis):
+    if spec.budget_basis not in SavedScenarioBudgetBasis.values:
         raise SavedScenarioError("Scenario budget basis is invalid.")
 
     payment_fields = (
@@ -353,7 +353,7 @@ def _validate_budget_basis(
         spec.source_fixed_fee,
         spec.destination_fixed_fee,
     )
-    if spec.budget_basis is SavedScenarioBudgetBasis.REFERENCE_CONVERSION:
+    if spec.budget_basis == "reference_conversion":
         if any(value is not None for value in payment_fields):
             raise SavedScenarioError(
                 "Reference-conversion scenarios cannot carry payment-estimate assumptions."
