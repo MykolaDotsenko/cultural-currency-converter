@@ -80,12 +80,37 @@ def city_money_profile(
     if profile is None:
         raise Http404("Reviewed city money context is not available.")
 
+    social_preview = None
+    try:
+        country = Country.objects.filter(iso2=profile.country_code).first()
+        currency = Currency.objects.filter(code=profile.currency_code).first()
+        selection = select_media_for_display(
+            role=MediaRole.SOCIAL_PREVIEW,
+            country=country,
+            currency=currency,
+        )
+        if selection is not None:
+            social_preview = {
+                "url": request.build_absolute_uri(selection.image.src),
+                "alt": selection.image.alt,
+            }
+    except (DatabaseError, ValueError) as exc:
+        logger.warning(
+            "City money profile social preview unavailable",
+            extra={
+                "error_code": exc.__class__.__name__,
+                "culture.country": profile.country_code,
+                "culture.city": profile.city_slug,
+            },
+        )
+
     return render(
         request,
         "pages/city_money_profile.html",
         {
             "city_profile": build_city_money_profile_component(profile),
             "city_profile_error": None,
+            "social_preview": social_preview,
         },
     )
 
@@ -135,9 +160,18 @@ def explore(request: HttpRequest) -> HttpResponse:
                 item_limit=3,
                 destinations=destinations,
             )
+            teaser_media = {}
+            try:
+                teaser_media = _explore_collection_teaser_media(collections)
+            except (DatabaseError, ValueError) as exc:
+                logger.warning(
+                    "Explore teaser media unavailable",
+                    extra={"error_code": exc.__class__.__name__},
+                )
             collection_components = build_explore_collection_components(
                 collections,
                 selected_date=selected_date,
+                teaser_media_by_country=teaser_media,
             )
         except DatabaseError as exc:
             logger.warning(
@@ -470,6 +504,34 @@ def current_destination_context(request: HttpRequest) -> HttpResponse:
     response = render(request, template, context, status=response_status)
     patch_vary_headers(response, ["HX-Request"])
     return response
+
+
+def _explore_collection_teaser_media(collections) -> dict[str, object]:
+    country_codes: list[str] = []
+    for collection in collections:
+        for item in collection.items:
+            if len(item.country_codes) != 1:
+                continue
+            code = item.country_codes[0]
+            if code not in country_codes:
+                country_codes.append(code)
+
+    countries = {
+        country.iso2: country
+        for country in Country.objects.filter(iso2__in=country_codes[:12])
+    }
+    media: dict[str, object] = {}
+    for code in country_codes[:12]:
+        country = countries.get(code)
+        if country is None:
+            continue
+        selection = select_media_for_display(
+            role=MediaRole.COUNTRY_TEASER,
+            country=country,
+        )
+        if selection is not None:
+            media[code] = selection.image
+    return media
 
 
 def _country_for_story(code: str) -> Country | None:
