@@ -572,7 +572,10 @@ def _payment_facts(
         )
 
     summary = (payment.summary or "").strip()
+    payment_customs = (payment.payment_customs or "").strip()
     cash_usage = (payment.cash_usage or "").strip()
+    atm_notes = (payment.atm_notes or "").strip()
+    tipping = (payment.tipping or "").strip()
     dcc_warning = (payment.dcc_warning or "").strip()
 
     facts = [
@@ -585,12 +588,39 @@ def _payment_facts(
             ),
         )
     ]
+    if payment_customs:
+        facts.append(
+            GroundedFact(
+                id=f"{prefix}_payment_cards",
+                statement=_bounded_fact_statement(
+                    f"For {name}, the reviewed card/payment guidance says: {payment_customs}"
+                ),
+            )
+        )
     if cash_usage:
         facts.append(
             GroundedFact(
                 id=f"{prefix}_payment_cash",
                 statement=_bounded_fact_statement(
                     f"For {name}, the reviewed cash-use guidance says: {cash_usage}"
+                ),
+            )
+        )
+    if atm_notes:
+        facts.append(
+            GroundedFact(
+                id=f"{prefix}_payment_atm",
+                statement=_bounded_fact_statement(
+                    f"For {name}, the reviewed ATM guidance says: {atm_notes}"
+                ),
+            )
+        )
+    if tipping:
+        facts.append(
+            GroundedFact(
+                id=f"{prefix}_payment_tipping",
+                statement=_bounded_fact_statement(
+                    f"For {name}, the reviewed tipping guidance says: {tipping}"
                 ),
             )
         )
