@@ -127,6 +127,7 @@ def test_partial_managed_media_focal_point_defaults_missing_axis_to_center():
 
     assert image.focal_position == "12.5% 50%"
 
+
 @pytest.mark.django_db
 def test_published_media_family_builds_width_descriptor_srcset():
     source = MediaAsset.objects.create(
