@@ -1095,6 +1095,49 @@ def test_historical_series_then_now_renders_scoped_archival_media(client, refere
         attribution_text="Example photographer · CC BY-SA 4.0",
         status=MediaStatus.PUBLISHED,
     )
+    MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.COMPARISON_NOW,
+        currency=jpy,
+        title="Tokyo current street",
+        alt_text="A sourced contemporary street photograph from Tokyo.",
+        storage_file="sourced/jpy-now.webp",
+        width=1500,
+        height=1000,
+        aspect_ratio="1500 / 1000",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Now.jpg",
+        creator="Current photographer",
+        licence_id="CC BY-SA 4.0",
+        licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+        rights_statement="CC BY-SA 4.0",
+        attribution_text="Current photographer · CC BY-SA 4.0",
+        status=MediaStatus.PUBLISHED,
+    )
+    MediaAsset.objects.create(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.HISTORICAL_TIMELINE,
+        currency=jpy,
+        title="Tokyo timeline archive",
+        alt_text="A sourced historical timeline photograph from Tokyo in 1998.",
+        storage_file="sourced/jpy-timeline-1998.webp",
+        width=1500,
+        height=1000,
+        aspect_ratio="1500 / 1000",
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Timeline.jpg",
+        creator="Timeline photographer",
+        licence_id="CC BY-SA 4.0",
+        licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+        rights_statement="CC BY-SA 4.0",
+        attribution_text="Timeline photographer · CC BY-SA 4.0",
+        status=MediaStatus.PUBLISHED,
+    )
 
     with (
         patch(
@@ -1120,7 +1163,12 @@ def test_historical_series_then_now_renders_scoped_archival_media(client, refere
     assert response.status_code == 200
     assert b"Same amount, two reference observations" in response.content
     assert b"A sourced archival street photograph from Tokyo in 1998." in response.content
+    assert b"A sourced contemporary street photograph from Tokyo." in response.content
+    assert b"A sourced historical timeline photograph from Tokyo in 1998." in response.content
+    assert b"Reviewed historical evidence" in response.content
     assert b"Example photographer" in response.content
+    assert b"Current photographer" in response.content
+    assert b"Timeline photographer" in response.content
     assert b"CC BY-SA 4.0" in response.content
     assert b'loading="lazy"' in response.content
 

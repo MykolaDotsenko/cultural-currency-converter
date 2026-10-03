@@ -80,28 +80,89 @@
             </p>
           </div>
           <div class="qa-story-chapters">
-            {% for chapter in story.historical_moment_chapters %}
-              <article class="qa-story-chapter">
-                <div>
-                  <p class="qa-foundation-kicker">{{ chapter.label }}</p>
-                  <h4>{{ chapter.title }}</h4>
-                </div>
-                <p>{{ chapter.body }}</p>
-                <p class="qa-story-chapter__meta">
-                  Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
-                  {% if chapter.causal_support %}· source-reviewed causal wording{% endif %}
-                </p>
-                {% if chapter.source_refs %}
-                  <details class="qa-source-details qa-story-source-details">
-                    <summary>Source &amp; scope</summary>
-                    <div class="qa-story-source-list" aria-label="Historical moment sources">
-                      {% for source in chapter.source_refs %}
-                        <a href="{{ source.url }}">{{ source.label }}</a>
-                      {% endfor %}
+            {% for item in story_chapter_items %}
+              {% with chapter=item.chapter %}
+                <article class="qa-story-chapter{% if item.media %} qa-story-chapter--with-media{% endif %}">
+                  {% if item.media %}
+                    <div class="qa-story-chapter__media">
+                      {% include "components/media/image_frame.html" with image=item.media.image display_ratio="3 / 2" sizes="(max-width: 48rem) calc(100vw - 3rem), 24rem" %}
                     </div>
-                  </details>
-                {% endif %}
-              </article>
+                  {% endif %}
+                  <div class="qa-story-chapter__body">
+                    <div>
+                      <p class="qa-foundation-kicker">{{ chapter.label }}</p>
+                      <h4>{{ chapter.title }}</h4>
+                    </div>
+                    <p>{{ chapter.body }}</p>
+                    <p class="qa-story-chapter__meta">
+                      Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
+                      {% if chapter.causal_support %}· source-reviewed causal wording{% endif %}
+                    </p>
+                    {% if chapter.source_refs %}
+                      <details class="qa-source-details qa-story-source-details">
+                        <summary>Source &amp; review details</summary>
+                        {% for source in chapter.source_refs %}
+                          <div class="qa-story-source-record">
+                            <a href="{{ source.url }}">{{ source.label }}</a>
+                            <dl class="qa-story-source-record__facts">
+                              {% if source.source_kind %}
+                                <div>
+                                  <dt>Source type</dt>
+                                  <dd>
+                                    {{ source.source_kind }}
+                                  </dd>
+                                </div>
+                              {% endif %}
+                              {% if source.published_label %}
+                                <div>
+                                  <dt>Published</dt>
+                                  <dd>
+                                    {{ source.published_label }}
+                                  </dd>
+                                </div>
+                              {% endif %}
+                              {% if source.retrieved_label %}
+                                <div>
+                                  <dt>Retrieved</dt>
+                                  <dd>
+                                    {{ source.retrieved_label }}
+                                  </dd>
+                                </div>
+                              {% endif %}
+                              {% if source.verified_label %}
+                                <div>
+                                  <dt>Reviewed</dt>
+                                  <dd>
+                                    {{ source.verified_label }}
+                                  </dd>
+                                </div>
+                              {% endif %}
+                              {% if source.external_id %}
+                                <div>
+                                  <dt>Source ID</dt>
+                                  <dd>
+                                    {{ source.external_id }}
+                                  </dd>
+                                </div>
+                              {% endif %}
+                              <div>
+                                <dt>Causal wording</dt>
+                                <dd>
+                                  {% if chapter.causal_support %}
+                                    Explicitly supported by reviewed source material
+                                  {% else %}
+                                    No causal relationship asserted
+                                  {% endif %}
+                                </dd>
+                              </div>
+                            </dl>
+                          </div>
+                        {% endfor %}
+                      </details>
+                    {% endif %}
+                  </div>
+                </article>
+              {% endwith %}
             {% endfor %}
           </div>
         </section>

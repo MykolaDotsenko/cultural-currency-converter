@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 from io import StringIO
+from types import SimpleNamespace
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
@@ -10,6 +12,7 @@ from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import City, Country
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.models import (
@@ -161,6 +164,31 @@ def test_city_money_profile_view_renders_reviewed_scope_without_fx(client, seede
     assert b"does not request a live FX rate" in response.content
     assert b"cost-of-living score" in response.content
     assert b"Convert for Tokyo" in response.content
+
+
+@pytest.mark.django_db
+def test_city_money_profile_uses_managed_social_preview_metadata(client, seeded_city_context):
+    image = ImageViewModel(
+        src="/media/tokyo-social.webp",
+        ratio="16 / 9",
+        alt="Tokyo reviewed money context.",
+        decorative=False,
+        kind="contemporary_photo",
+        label="Tokyo social preview",
+        width=1600,
+        height=900,
+    )
+
+    with patch(
+        "apps.culture.views.select_media_for_display",
+        return_value=SimpleNamespace(image=image),
+    ):
+        response = client.get(reverse("city_money_profile", args=("JP", "tokyo")))
+
+    assert response.status_code == 200
+    assert b'property="og:image"' in response.content
+    assert b"http://testserver/media/tokyo-social.webp" in response.content
+    assert b'name="twitter:card" content="summary_large_image"' in response.content
 
 
 @pytest.mark.django_db

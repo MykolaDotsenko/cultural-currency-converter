@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import pytest
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.exchange.domain import (
     DEFAULT_SOURCE_POLICY,
     ConversionRepresentationError,
@@ -138,6 +139,37 @@ def test_rate_series_component_exposes_chart_state_and_optional_query_context():
         provider_policy=DEFAULT_SOURCE_POLICY,
     )
 
+    then_image = ImageViewModel(
+        src="/media/then.webp",
+        ratio="3 / 2",
+        alt="Then image",
+        decorative=False,
+        kind="archival_photo",
+        label="Then",
+        width=1200,
+        height=800,
+    )
+    now_image = ImageViewModel(
+        src="/media/now.webp",
+        ratio="3 / 2",
+        alt="Now image",
+        decorative=False,
+        kind="contemporary_photo",
+        label="Now",
+        width=1200,
+        height=800,
+    )
+    timeline_image = ImageViewModel(
+        src="/media/timeline.webp",
+        ratio="3 / 2",
+        alt="Timeline image",
+        decorative=False,
+        kind="archival_photo",
+        label="Timeline",
+        width=1200,
+        height=800,
+    )
+
     component = build_rate_series_component(
         RateSeriesResult(series=series, stale=True),
         selected_date=selected,
@@ -145,6 +177,9 @@ def test_rate_series_component_exposes_chart_state_and_optional_query_context():
         period="5y",
         amount=Decimal("12.50"),
         then_now={"difference_percent": "2.0"},
+        then_media=then_image,
+        now_media=now_image,
+        timeline_media=timeline_image,
         comparison_notice="Reference comparison note.",
     )
 
@@ -167,6 +202,9 @@ def test_rate_series_component_exposes_chart_state_and_optional_query_context():
     assert component["last_point"]["rate"] == "160"
     assert component["providers"] == "ECB, FED"
     assert component["stale"] is True
+    assert component["then_media"] is then_image
+    assert component["now_media"] is now_image
+    assert component["timeline_media"] is timeline_image
     assert next(item for item in component["period_links"] if item["key"] == "5y")["active"]
     assert "requested_date=2025-01-02" in component["custom_url"]
     assert "amount=12.50" in component["custom_url"]

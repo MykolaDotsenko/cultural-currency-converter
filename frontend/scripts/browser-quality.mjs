@@ -1701,6 +1701,12 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
   await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
+  const rateHistory = page.locator(".qa-reference-history");
+  await rateHistory.locator("summary").click();
+  assert(
+    (await rateHistory.getByText(/fetched/i).count()) > 0,
+    "trip-budget/e2e: provider fetch timestamp is missing from saved FX history",
+  );
   const baselineSummary = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
     .innerText();
@@ -2369,6 +2375,22 @@ async function assertMoneyCultureStoryQuality(page) {
     "money-culture-story: historical purchasing-power boundary is missing",
   );
 
+  const chapterMedia = story.locator(".qa-story-chapter__media .qa-media");
+  for (const media of await chapterMedia.all()) {
+    assert(
+      Number(await media.locator("img").getAttribute("width")) > 0 &&
+        Number(await media.locator("img").getAttribute("height")) > 0,
+      "money-culture-story: chapter media lost intrinsic dimensions",
+    );
+    const provenance = media.locator(".qa-media__provenance");
+    if ((await provenance.count()) === 1) {
+      assert(
+        !(await provenance.evaluate((element) => element.hasAttribute("open"))),
+        "money-culture-story: image provenance should be collapsed by default",
+      );
+    }
+  }
+
   const sourceDetails = story.locator(".qa-story-source-details");
   for (const details of await sourceDetails.all()) {
     assert(
@@ -2385,6 +2407,13 @@ async function assertMoneyCultureStoryQuality(page) {
       "money-culture-story: provenance disclosure lost its HTTPS source",
     );
   }
+  assert(
+    (await story.getByText("Source type", { exact: true }).count()) > 0 &&
+      (await story.getByText("Reviewed", { exact: true }).count()) > 0 &&
+      (await story.getByText("Source ID", { exact: true }).count()) > 0 &&
+      (await story.getByText("Causal wording", { exact: true }).count()) > 0,
+    "money-culture-story: deep reviewed source provenance is incomplete",
+  );
 
   await assertPremiumResponsiveTargets(
     page,
@@ -2444,6 +2473,41 @@ async function assertHistoricalSeriesQuality(page) {
       document.querySelector("[data-rate-chart]")?.getAttribute("data-rate-chart-enhanced") ===
       "true",
   );
+
+  const historicalEvidence = page.locator(".qa-historical-evidence");
+  if ((await historicalEvidence.count()) === 1) {
+    assert(
+      (await historicalEvidence.locator(".qa-media").count()) === 1,
+      "rate-series: historical evidence surface rendered without managed media",
+    );
+    const provenance = historicalEvidence.locator(".qa-media__provenance");
+    if ((await provenance.count()) === 1) {
+      assert(
+        !(await provenance.evaluate((element) => element.hasAttribute("open"))),
+        "rate-series: image provenance should be collapsed by default",
+      );
+      await provenance.locator("summary").click();
+      assert(
+        /Evidence|Temporal match|Creator|Rights|Retrieved/i.test(await provenance.innerText()),
+        "rate-series: opened image provenance has no reviewed provenance facts",
+      );
+    }
+  }
+
+  const thenNow = page.locator(".qa-then-now");
+  if ((await thenNow.count()) === 1) {
+    assert(
+      (await thenNow.locator(".qa-then-now__grid > article").count()) === 2,
+      "rate-series: Then & Now lost its two-sided comparison structure",
+    );
+    for (const media of await thenNow.locator(".qa-then-now__media .qa-media").all()) {
+      assert(
+        Number(await media.locator("img").getAttribute("width")) > 0 &&
+          Number(await media.locator("img").getAttribute("height")) > 0,
+        "rate-series: Then & Now managed media lost intrinsic dimensions",
+      );
+    }
+  }
 
   const table = page.locator(".qa-rate-series__table");
   assert(

@@ -681,3 +681,44 @@
     color: LinkText;
   }
 }
+
+.qa-historical-evidence {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.72fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+  margin-block: var(--qa-space-8);
+  padding-block: var(--qa-space-6);
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-historical-evidence__copy h3,
+.qa-historical-evidence__copy p {
+  margin-block-start: 0;
+}
+
+.qa-historical-evidence__copy p:last-child {
+  max-width: 52ch;
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+
+.qa-historical-evidence__media {
+  min-width: 0;
+}
+
+@media (max-width: 52rem) {
+  .qa-historical-evidence {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qa-historical-evidence__media {
+    max-width: 32rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-historical-evidence {
+    border-color: CanvasText;
+  }
+}

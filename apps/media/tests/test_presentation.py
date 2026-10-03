@@ -7,6 +7,7 @@ import pytest
 from django.db import connection
 from django.template.loader import render_to_string
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.media.models import (
@@ -19,6 +20,7 @@ from apps.media.models import (
 )
 from apps.media.presentation import (
     build_media_asset_image_view_model,
+    select_media_for_display_countries,
     select_media_for_display_roles,
 )
 
@@ -88,6 +90,43 @@ def test_historical_media_temporal_scope_is_visible_with_reviewed_precision():
     assert "1998 · Year" in html
 
 
+def test_managed_media_deep_provenance_is_progressively_rendered():
+    retrieved_at = timezone.now()
+    asset = MediaAsset(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.HISTORICAL_TIMELINE,
+        title="Archive source",
+        alt_text="Historical archive source.",
+        storage_file="sourced/archive-source.webp",
+        width=1200,
+        height=900,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        source_name="Example Archive",
+        source_url="https://example.org/archive",
+        source_media_url="https://example.org/archive/original.jpg",
+        creator="Example Photographer",
+        rights_statement="Public-domain dedication",
+        source_retrieved_at=retrieved_at,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    image = build_media_asset_image_view_model(asset)
+    html = render_to_string("components/media/image_frame.html", {"image": image})
+
+    assert image.creator == "Example Photographer"
+    assert image.rights_statement == "Public-domain dedication"
+    assert image.original_source_url == "https://example.org/archive/original.jpg"
+    assert image.evidence_label == "Archival sourced evidence"
+    assert "Image provenance" in html
+    assert "Example Photographer" in html
+    assert "Public-domain dedication" in html
+    assert "Open original media record" in html
+    assert "Example Archive" in html
+
+
 def test_managed_media_focal_point_reaches_image_view_model():
     asset = MediaAsset(
         kind=MediaKind.CONTEMPORARY_PHOTO,
@@ -126,6 +165,40 @@ def test_partial_managed_media_focal_point_defaults_missing_axis_to_center():
     image = build_media_asset_image_view_model(asset)
 
     assert image.focal_position == "12.5% 50%"
+
+
+@pytest.mark.django_db
+def test_country_media_presentation_batches_selection_and_responsive_family_queries():
+    from apps.countries.models import Country
+
+    finland = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    for country, slug in ((finland, "fi"), (japan, "jp")):
+        MediaAsset.objects.create(
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+            source_kind=MediaSourceKind.MANUAL,
+            role=MediaRole.COUNTRY_TEASER,
+            country=country,
+            title=f"{country.name} teaser",
+            alt_text=f"Reviewed {country.name} teaser.",
+            storage_file=f"sourced/{slug}-teaser.webp",
+            width=1200,
+            height=900,
+            aspect_ratio="4 / 3",
+            status=MediaStatus.PUBLISHED,
+        )
+
+    with CaptureQueriesContext(connection) as captured:
+        images = select_media_for_display_countries(
+            role=MediaRole.COUNTRY_TEASER,
+            countries=(finland, japan),
+            aspect_ratio="4 / 3",
+        )
+
+    assert len(captured) <= 2
+    assert set(images) == {"FI", "JP"}
+    assert images["FI"].label == "Finland teaser"
+    assert images["JP"].label == "Japan teaser"
 
 
 @pytest.mark.django_db

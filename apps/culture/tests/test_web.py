@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -9,6 +10,7 @@ from django.db import DatabaseError
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import (
     CulturalProfile,
@@ -22,6 +24,7 @@ from apps.culture.models import (
 )
 from apps.culture.services import approve_story_moment, publish_story_moment
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, RateQuote
+from apps.media.models import MediaRole
 
 
 class FakeGateway:
@@ -306,6 +309,73 @@ def test_reviewed_story_fact_appears_with_source_link(client, reference_data):
     assert b"A reviewed sourced transition." in response.content
     assert b"https://example.org/euro" in response.content
     assert b"European Commission" in response.content
+
+
+@pytest.mark.django_db
+def test_reviewed_story_chapter_renders_period_media_and_source_review_details(
+    client,
+    reference_data,
+):
+    fi, _jp, eur, _jpy = reference_data
+    moment = StoryMoment.objects.create(
+        category=StoryMomentCategory.MONETARY_UNION,
+        title="Reviewed chapter with evidence",
+        summary="A sourced monetary chapter.",
+        start_date=date(1999, 1, 1),
+        end_date=date(1999, 1, 1),
+        date_precision=StoryDatePrecision.EXACT_DAY,
+        source_kind=StorySourceKind.OFFICIAL,
+        source_name="Official archive",
+        source_url="https://example.org/story-source",
+        external_id="story-1999",
+        source_published_at=date(2000, 1, 1),
+        source_retrieved_at=timezone.now(),
+        verified_at=timezone.now(),
+        supports_causality=True,
+        causal_support_note="The reviewed source explicitly supports this wording.",
+        status=StoryMomentStatus.NEEDS_REVIEW,
+    )
+    moment.countries.add(fi)
+    moment.currencies.add(eur)
+    approve_story_moment(moment)
+    publish_story_moment(moment)
+
+    image = ImageViewModel(
+        src="/media/story-chapter.webp",
+        ratio="3 / 2",
+        alt="Reviewed archival chapter image.",
+        decorative=False,
+        kind="archival_photo",
+        label="Story chapter",
+        width=1500,
+        height=1000,
+        temporal_label="1999 · Year",
+        evidence_label="Archival sourced evidence",
+        temporal_match_label="Year-level reviewed match",
+    )
+
+    def fake_media(*, role, **_kwargs):
+        if role == MediaRole.STORY_CHAPTER:
+            return SimpleNamespace(image=image)
+        return None
+
+    with patch("apps.culture.views.select_media_for_display", side_effect=fake_media):
+        response = client.get(
+            reverse("money_culture_story"),
+            _story_query(),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"Reviewed chapter with evidence" in response.content
+    assert b"/media/story-chapter.webp" in response.content
+    assert b"Source &amp; review details" in response.content
+    assert b"Official" in response.content
+    assert b"Published" in response.content
+    assert b"Retrieved" in response.content
+    assert b"Reviewed" in response.content
+    assert b"story-1999" in response.content
+    assert b"Explicitly supported by reviewed source material" in response.content
 
 
 @pytest.mark.django_db

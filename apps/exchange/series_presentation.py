@@ -137,6 +137,8 @@ def build_rate_series_component(
     amount=None,
     then_now: dict[str, object] | None = None,
     then_media: ImageViewModel | None = None,
+    now_media: ImageViewModel | None = None,
+    timeline_media: ImageViewModel | None = None,
     comparison_notice: str | None = None,
 ) -> dict[str, object]:
     series = result.series
@@ -231,6 +233,8 @@ def build_rate_series_component(
         },
         "then_now": then_now,
         "then_media": then_media if then_now is not None else None,
+        "now_media": now_media if then_now is not None else None,
+        "timeline_media": timeline_media,
         "comparison_notice": comparison_notice,
         "selected_point": (
             {

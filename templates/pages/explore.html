@@ -1,8 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Explore travel money · Cultural Currency Converter{% endblock %}
+{% block title %}
+  Explore travel money · Cultural Currency Converter
+{% endblock %}
 {% block head_meta %}
   <meta name="description"
         content="Explore reviewed city and country money context by region, story, payment behaviour and current currency evidence.">
+  {% include "components/media/social_preview_meta.html" %}
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
@@ -332,7 +335,12 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for item in collection.items %}
-                    <article class="qa-saved-row qa-explore-collection-item">
+                    <article class="qa-saved-row qa-explore-collection-item{% if item.teaser_image %} qa-explore-collection-item--with-media{% endif %}">
+                      {% if item.teaser_image %}
+                        <div class="qa-explore-collection-item__media">
+                          {% include "components/media/image_frame.html" with image=item.teaser_image display_ratio="4 / 3" sizes="(max-width: 42rem) calc(100vw - 3rem), 15rem" %}
+                        </div>
+                      {% endif %}
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {% if item.currency_codes %}{{ item.currency_codes|join:" · " }}{% endif %}

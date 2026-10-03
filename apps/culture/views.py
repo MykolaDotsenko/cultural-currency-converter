@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.explore import build_explore_destinations
@@ -40,7 +41,10 @@ from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import build_destination_context
 from apps.culture.story import compose_story
 from apps.media.models import MediaRole
-from apps.media.presentation import select_media_for_display
+from apps.media.presentation import (
+    select_media_for_display,
+    select_media_for_display_countries,
+)
 
 logger = logging.getLogger("cultural_currency.culture")
 
@@ -80,12 +84,37 @@ def city_money_profile(
     if profile is None:
         raise Http404("Reviewed city money context is not available.")
 
+    social_preview = None
+    try:
+        country = Country.objects.filter(iso2=profile.country_code).first()
+        currency = Currency.objects.filter(code=profile.currency_code).first()
+        selection = select_media_for_display(
+            role=MediaRole.SOCIAL_PREVIEW,
+            country=country,
+            currency=currency,
+        )
+        if selection is not None:
+            social_preview = {
+                "url": request.build_absolute_uri(selection.image.src),
+                "alt": selection.image.alt,
+            }
+    except (DatabaseError, ValueError) as exc:
+        logger.warning(
+            "City money profile social preview unavailable",
+            extra={
+                "error_code": exc.__class__.__name__,
+                "culture.country": profile.country_code,
+                "culture.city": profile.city_slug,
+            },
+        )
+
     return render(
         request,
         "pages/city_money_profile.html",
         {
             "city_profile": build_city_money_profile_component(profile),
             "city_profile_error": None,
+            "social_preview": social_preview,
         },
     )
 
@@ -135,9 +164,18 @@ def explore(request: HttpRequest) -> HttpResponse:
                 item_limit=3,
                 destinations=destinations,
             )
+            teaser_media = {}
+            try:
+                teaser_media = _explore_collection_teaser_media(collections)
+            except (DatabaseError, ValueError) as exc:
+                logger.warning(
+                    "Explore teaser media unavailable",
+                    extra={"error_code": exc.__class__.__name__},
+                )
             collection_components = build_explore_collection_components(
                 collections,
                 selected_date=selected_date,
+                teaser_media_by_country=teaser_media,
             )
         except DatabaseError as exc:
             logger.warning(
@@ -166,6 +204,20 @@ def explore(request: HttpRequest) -> HttpResponse:
         else None
     )
 
+    social_preview = None
+    try:
+        selection = select_media_for_display(role=MediaRole.SOCIAL_PREVIEW)
+        if selection is not None:
+            social_preview = {
+                "url": request.build_absolute_uri(selection.image.src),
+                "alt": selection.image.alt,
+            }
+    except (DatabaseError, ValueError) as exc:
+        logger.warning(
+            "Explore social preview unavailable",
+            extra={"error_code": exc.__class__.__name__},
+        )
+
     return render(
         request,
         "pages/explore.html",
@@ -180,6 +232,7 @@ def explore(request: HttpRequest) -> HttpResponse:
             "explore_as_of": selected_date,
             "explore_ai_form": explore_ai_form,
             "explore_ai_prompts": available_explore_explanation_intents(),
+            "social_preview": social_preview,
         },
     )
 
@@ -306,6 +359,8 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
     story = None
     story_error = None
     story_media = None
+    story_social_preview = None
+    story_chapter_items = ()
     response_status = 200
 
     if not form.is_valid():
@@ -332,29 +387,98 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                 "detail": "The conversion remains valid. Try the story again later.",
             }
         else:
+            story_chapter_items = tuple(
+                {"chapter": chapter, "media": None} for chapter in story.historical_moment_chapters
+            )
             try:
                 country = _country_for_story(story_request.destination_country)
                 currency = _currency_for_story(story_request.destination_currency)
-                story_media = select_media_for_display(
-                    role=MediaRole.STORY_COVER,
-                    country=country,
-                    currency=currency,
-                    target_date=story_request.selected_date if story_request.historical else None,
-                )
-            except (DatabaseError, ValueError) as exc:
+            except DatabaseError as exc:
                 logger.warning(
-                    "Money and culture story cover media unavailable",
+                    "Money and culture story media metadata unavailable",
                     extra={
                         "error_code": exc.__class__.__name__,
-                        "culture.status": "media_unavailable",
+                        "culture.status": "media_metadata_unavailable",
                         "culture.historical": story_request.historical,
                     },
                 )
+            else:
+                try:
+                    story_media = select_media_for_display(
+                        role=MediaRole.STORY_COVER,
+                        country=country,
+                        currency=currency,
+                        target_date=(
+                            story_request.selected_date if story_request.historical else None
+                        ),
+                    )
+                except (DatabaseError, ValueError) as exc:
+                    logger.warning(
+                        "Money and culture story cover media unavailable",
+                        extra={
+                            "error_code": exc.__class__.__name__,
+                            "culture.status": "cover_media_unavailable",
+                            "culture.historical": story_request.historical,
+                        },
+                    )
+
+                try:
+                    story_social_preview = select_media_for_display(
+                        role=MediaRole.SOCIAL_PREVIEW,
+                        country=country,
+                        currency=currency,
+                    )
+                except (DatabaseError, ValueError) as exc:
+                    logger.warning(
+                        "Money and culture story social preview unavailable",
+                        extra={
+                            "error_code": exc.__class__.__name__,
+                            "culture.status": "social_preview_unavailable",
+                            "culture.historical": story_request.historical,
+                        },
+                    )
+
+                try:
+                    used_sources = {
+                        selection.image.src for selection in (story_media,) if selection is not None
+                    }
+                    chapter_items = []
+                    for chapter in story.historical_moment_chapters:
+                        chapter_media = select_media_for_display(
+                            role=MediaRole.STORY_CHAPTER,
+                            country=country,
+                            currency=currency,
+                            target_date=chapter.target_date,
+                        )
+                        if chapter_media is not None and chapter_media.image.src in used_sources:
+                            chapter_media = None
+                        if chapter_media is not None:
+                            used_sources.add(chapter_media.image.src)
+                        chapter_items.append({"chapter": chapter, "media": chapter_media})
+                    story_chapter_items = tuple(chapter_items)
+                except (DatabaseError, ValueError) as exc:
+                    logger.warning(
+                        "Money and culture story chapter media unavailable",
+                        extra={
+                            "error_code": exc.__class__.__name__,
+                            "culture.status": "chapter_media_unavailable",
+                            "culture.historical": story_request.historical,
+                        },
+                    )
 
     context = {
         "story": story,
         "story_error": story_error,
         "story_media": story_media,
+        "story_chapter_items": story_chapter_items,
+        "social_preview": (
+            {
+                "url": request.build_absolute_uri(story_social_preview.image.src),
+                "alt": story_social_preview.image.alt,
+            }
+            if story_social_preview is not None
+            else None
+        ),
     }
     fragment = bool(request.htmx)
     template = "components/culture/story.html" if fragment else "pages/money_culture_story.html"
@@ -427,6 +551,29 @@ def current_destination_context(request: HttpRequest) -> HttpResponse:
     response = render(request, template, context, status=response_status)
     patch_vary_headers(response, ["HX-Request"])
     return response
+
+
+def _explore_collection_teaser_media(collections) -> dict[str, ImageViewModel]:
+    country_codes: list[str] = []
+    for collection in collections:
+        for item in collection.items:
+            if len(item.country_codes) != 1:
+                continue
+            code = item.country_codes[0]
+            if code not in country_codes:
+                country_codes.append(code)
+
+    countries = {
+        country.iso2: country for country in Country.objects.filter(iso2__in=country_codes[:12])
+    }
+    ordered_countries = tuple(
+        country for code in country_codes[:12] if (country := countries.get(code)) is not None
+    )
+    return select_media_for_display_countries(
+        role=MediaRole.COUNTRY_TEASER,
+        countries=ordered_countries,
+        aspect_ratio="4 / 3",
+    )
 
 
 def _country_for_story(code: str) -> Country | None:

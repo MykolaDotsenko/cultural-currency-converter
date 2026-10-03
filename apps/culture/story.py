@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+from django.utils.formats import date_format
+
 from apps.culture.models import StoryDatePrecision, StoryMoment
 from apps.culture.provenance import is_valid_provenance_url
 from apps.culture.services import currency_era_links, select_story_moments
@@ -22,6 +24,11 @@ class StoryRequest:
 class StorySourceRef:
     label: str
     url: str
+    source_kind: str = ""
+    external_id: str = ""
+    published_label: str = ""
+    retrieved_label: str = ""
+    verified_label: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +41,7 @@ class StoryChapter:
     temporal_scope: str
     temporal_precision: str
     causal_support: bool
+    target_date: date | None
     relevance: int
 
 
@@ -134,6 +142,7 @@ def _currency_era_chapter(link, *, side: str) -> StoryChapter:
         temporal_scope=_temporal_scope(link.valid_from, link.valid_to),
         temporal_precision="Canonical currency period",
         causal_support=False,
+        target_date=link.valid_from,
         relevance=100,
     )
 
@@ -144,7 +153,29 @@ def _moment_chapter(moment: StoryMoment) -> StoryChapter:
         label="Sourced money history",
         title=moment.title,
         body=moment.summary,
-        source_refs=(StorySourceRef(label=moment.source_name, url=moment.source_url),),
+        source_refs=(
+            StorySourceRef(
+                label=moment.source_name,
+                url=moment.source_url,
+                source_kind=moment.get_source_kind_display(),
+                external_id=moment.external_id,
+                published_label=(
+                    date_format(moment.source_published_at, "j M Y")
+                    if moment.source_published_at is not None
+                    else ""
+                ),
+                retrieved_label=(
+                    date_format(moment.source_retrieved_at, "j M Y")
+                    if moment.source_retrieved_at is not None
+                    else ""
+                ),
+                verified_label=(
+                    date_format(moment.verified_at, "j M Y")
+                    if moment.verified_at is not None
+                    else ""
+                ),
+            ),
+        ),
         temporal_scope=_temporal_scope(
             moment.start_date,
             moment.end_date,
@@ -152,6 +183,7 @@ def _moment_chapter(moment: StoryMoment) -> StoryChapter:
         ),
         temporal_precision=_precision_label(moment.date_precision),
         causal_support=moment.supports_causality,
+        target_date=moment.start_date or moment.end_date,
         relevance=moment.relevance_weight,
     )
 

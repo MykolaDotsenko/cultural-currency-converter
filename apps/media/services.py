@@ -56,6 +56,7 @@ class SelectedMedia:
 
 
 _HISTORICAL_ROLES = {
+    MediaRole.STORY_CHAPTER,
     MediaRole.COMPARISON_THEN,
     MediaRole.HISTORICAL_TIMELINE,
 }
@@ -67,9 +68,12 @@ _HISTORICAL_EVIDENCE_KINDS = {
 }
 _CURRENCY_SCOPED_ROLES = {
     MediaRole.COMPARISON_THEN,
+    MediaRole.COMPARISON_NOW,
 }
 _DATE_SCOPED_ROLES = {
+    MediaRole.STORY_CHAPTER,
     MediaRole.COMPARISON_THEN,
+    MediaRole.HISTORICAL_TIMELINE,
 }
 _PHOTOGRAPHIC_ROLES = {
     MediaRole.COUNTRY_HERO,
@@ -116,7 +120,7 @@ def _validate_publishable_metadata(asset: MediaAsset) -> None:
     if asset.reviewed_at is None:
         raise MediaPublicationError("Published media requires explicit editorial review.")
     if asset.role in _CURRENCY_SCOPED_ROLES and asset.currency_id is None:
-        raise MediaPublicationError("Comparison historical media requires explicit currency scope.")
+        raise MediaPublicationError("Comparison media requires explicit currency scope.")
 
     if asset.generated_by_ai and asset.role in _HISTORICAL_ROLES:
         raise MediaPublicationError(
@@ -407,10 +411,10 @@ def validate_candidate_media_scope(
     if role in _CURRENCY_SCOPED_ROLES:
         if country is not None:
             raise ValueError(
-                "Comparison historical media must be countryless; runtime selection is currency-scoped."
+                "Comparison media must be countryless; runtime selection is currency-scoped."
             )
         if currency is None:
-            raise ValueError("Comparison historical media requires explicit currency scope.")
+            raise ValueError("Comparison media requires explicit currency scope.")
 
 
 def upsert_media_candidates(
@@ -689,6 +693,65 @@ def select_published_media_for_roles(
             asset=winner,
             selection_reason="published_media_priority",
             temporal_match_quality=_temporal_quality(winner, target_date),
+            authenticity_class=(
+                "ai_generated_illustration" if winner.generated_by_ai else "sourced_media"
+            ),
+        )
+    return selected
+
+
+def select_published_country_media(
+    *,
+    role: str,
+    countries: tuple[Country, ...],
+    aspect_ratio: str | None = None,
+) -> dict[str, SelectedMedia]:
+    """Select one reviewed country-scoped asset per country in one media query."""
+
+    unique_countries = tuple({country.pk: country for country in countries if country.pk}.values())
+    if not unique_countries:
+        return {}
+    if role not in MediaRole.values:
+        raise ValueError(f"Unknown media role: {role}")
+    if role in _DATE_SCOPED_ROLES or role in _CURRENCY_SCOPED_ROLES:
+        raise ValueError("Country batch selection does not support date/currency-scoped roles.")
+
+    queryset = MediaAsset.objects.filter(
+        status=MediaStatus.PUBLISHED,
+        role=role,
+        currency__isnull=True,
+    ).filter(Q(country__in=unique_countries) | Q(country__isnull=True))
+    if role in _PHOTOGRAPHIC_ROLES:
+        queryset = queryset.filter(
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+            generated_by_ai=False,
+        )
+    if role in _HISTORICAL_ROLES:
+        queryset = queryset.filter(
+            kind__in=_HISTORICAL_EVIDENCE_KINDS,
+            generated_by_ai=False,
+        )
+
+    candidates = tuple(queryset.select_related("country", "currency"))
+    selected: dict[str, SelectedMedia] = {}
+    for country in unique_countries:
+        eligible = tuple(asset for asset in candidates if asset.country_id in {None, country.pk})
+        if not eligible:
+            continue
+        winner = max(
+            eligible,
+            key=lambda asset: _media_score(
+                asset,
+                country=country,
+                currency=None,
+                target_date=None,
+                aspect_ratio=aspect_ratio,
+            ),
+        )
+        selected[country.iso2] = SelectedMedia(
+            asset=winner,
+            selection_reason="published_media_priority",
+            temporal_match_quality="not_requested",
             authenticity_class=(
                 "ai_generated_illustration" if winner.generated_by_ai else "sourced_media"
             ),

@@ -30,6 +30,7 @@ from apps.media.services import (
     attach_media_bytes,
     create_responsive_derivative,
     publish_media_asset,
+    select_published_country_media,
     select_published_media,
     select_published_media_for_roles,
     upsert_media_candidates,
@@ -130,6 +131,26 @@ def test_candidate_service_rejects_incomplete_historical_scope_before_writes(eur
         )
 
     assert not MediaAsset.objects.filter(external_id="historical-incomplete").exists()
+
+
+@pytest.mark.django_db
+def test_comparison_now_candidate_requires_explicit_currency_scope():
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="comparison-now-unscoped",
+        title="Unscoped current comparison",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Current.jpg",
+    )
+
+    with pytest.raises(ValueError, match="currency scope"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.COMPARISON_NOW,
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+        )
+
+    assert not MediaAsset.objects.filter(external_id="comparison-now-unscoped").exists()
 
 
 @pytest.mark.django_db
@@ -464,12 +485,115 @@ def test_database_rejects_duplicate_derivative_width_identity(media_root):
 
 
 @pytest.mark.django_db
+def test_story_chapter_is_sourced_date_scoped_historical_evidence(finland, media_root):
+    chapter = _sourced_asset(
+        title="Reviewed story chapter",
+        role=MediaRole.STORY_CHAPTER,
+        country=finland,
+    )
+    _publish_sourced(chapter)
+
+    assert (
+        select_published_media(
+            role=MediaRole.STORY_CHAPTER,
+            country=finland,
+        )
+        is None
+    )
+    assert (
+        select_published_media(
+            role=MediaRole.STORY_CHAPTER,
+            country=finland,
+            target_date=date(2005, 1, 1),
+        )
+        is None
+    )
+
+    selected = select_published_media(
+        role=MediaRole.STORY_CHAPTER,
+        country=finland,
+        target_date=date(1995, 6, 1),
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == chapter.pk
+    assert selected.authenticity_class == "sourced_media"
+    assert selected.temporal_match_quality == "decade"
+
+
+@pytest.mark.django_db
+def test_ai_generated_story_chapter_cannot_be_approved_as_historical_evidence(media_root):
+    asset = MediaAsset.objects.create(
+        kind=MediaKind.GENERATED_ILLUSTRATION,
+        source_kind=MediaSourceKind.GENERATED,
+        role=MediaRole.STORY_CHAPTER,
+        title="Generated chapter reconstruction",
+        alt_text="Editorial illustration of a historical chapter.",
+        generated_by_ai=True,
+        ai_label="AI-generated editorial illustration",
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+    )
+    attach_media_bytes(asset, _png_bytes((80, 90, 100)), filename="chapter.png")
+
+    with pytest.raises(MediaPublicationError, match=r"(?i)historical evidence"):
+        approve_media_asset(asset)
+
+
+@pytest.mark.django_db
 def test_comparison_then_requires_explicit_currency_scope_before_approval(media_root):
     asset = _sourced_asset(title="Unscoped comparison", role=MediaRole.COMPARISON_THEN)
     attach_media_bytes(asset, _png_bytes((61, 62, 63)), filename="comparison.png")
 
     with pytest.raises(MediaPublicationError, match="currency scope"):
         approve_media_asset(asset)
+
+
+@pytest.mark.django_db
+def test_comparison_now_requires_explicit_currency_scope_before_approval(media_root):
+    asset = _sourced_asset(title="Unscoped current comparison", role=MediaRole.COMPARISON_NOW)
+    asset.kind = MediaKind.CONTEMPORARY_PHOTO
+    asset.valid_from = None
+    asset.valid_to = None
+    asset.date_precision = DatePrecision.UNKNOWN
+    attach_media_bytes(asset, _png_bytes((64, 65, 66)), filename="comparison-now.png")
+
+    with pytest.raises(MediaPublicationError, match="currency scope"):
+        approve_media_asset(asset)
+
+
+@pytest.mark.django_db
+def test_comparison_now_selector_is_strictly_currency_scoped(euro):
+    MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_NOW,
+        title="Generic current comparison",
+        storage_file="sourced/current-generic.webp",
+        width=1500,
+        height=1000,
+        status=MediaStatus.PUBLISHED,
+    )
+    scoped = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_NOW,
+        currency=euro,
+        title="EUR current comparison",
+        storage_file="sourced/current-eur.webp",
+        width=1500,
+        height=1000,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    selected = select_published_media(
+        role=MediaRole.COMPARISON_NOW,
+        currency=euro,
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == scoped.pk
 
 
 @pytest.mark.django_db
@@ -669,6 +793,43 @@ def test_selector_matches_equivalent_aspect_ratios(finland):
 
     assert selected is not None
     assert selected.asset.pk == matching.pk
+
+
+@pytest.mark.django_db
+def test_country_media_batch_selector_uses_one_query_and_keeps_country_specificity(finland):
+    japan = Country.objects.create(iso2="JP", iso3="JPN", name="Japan")
+    global_teaser = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COUNTRY_TEASER,
+        title="Global teaser",
+        storage_file="sourced/global-teaser.webp",
+        width=1200,
+        height=900,
+        status=MediaStatus.PUBLISHED,
+    )
+    finland_teaser = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COUNTRY_TEASER,
+        country=finland,
+        title="Finland teaser",
+        storage_file="sourced/finland-teaser.webp",
+        width=1200,
+        height=900,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    with CaptureQueriesContext(connection) as captured:
+        selected = select_published_country_media(
+            role=MediaRole.COUNTRY_TEASER,
+            countries=(finland, japan),
+            aspect_ratio="4 / 3",
+        )
+
+    assert len(captured) == 1
+    assert selected["FI"].asset.pk == finland_teaser.pk
+    assert selected["JP"].asset.pk == global_teaser.pk
 
 
 @pytest.mark.django_db
