@@ -19,6 +19,7 @@ from apps.exchange.domain import (
     FxDomainError,
     normalize_provider_keys,
 )
+from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetBasis,
@@ -378,14 +379,25 @@ def _validate_budget_basis(
     assert markup is not None
     assert source_fee is not None
     assert destination_fee is not None
-    if planning_amount < 0 or planning_amount > conversion.output_amount:
-        raise SavedScenarioError(
-            "Payment-adjusted planning amount must stay within the trusted reference conversion."
+    try:
+        expected = estimate_payment_value(
+            source_budget=conversion.input_amount,
+            reference_destination_amount=conversion.output_amount,
+            rate=conversion.quote.rate,
+            fx_markup_percent=markup,
+            source_fixed_fee=source_fee,
+            destination_fixed_fee=destination_fee,
+            destination_minor_units=spec.destination_currency.minor_units,
         )
-    if markup < 0 or markup > Decimal("25"):
-        raise SavedScenarioError("Saved FX markup must be between 0 and 25 percent.")
-    if source_fee < 0 or destination_fee < 0:
-        raise SavedScenarioError("Saved payment fees cannot be negative.")
+    except PaymentEstimateError as exc:
+        raise SavedScenarioError(
+            "Saved payment assumptions do not produce a valid planning amount."
+        ) from exc
+
+    if planning_amount != expected.estimated_destination_amount:
+        raise SavedScenarioError(
+            "Payment-adjusted planning amount must match the deterministic payment estimate."
+        )
 
 
 def _validate_spend_amount(amount: Decimal, *, minor_units: int) -> None:
