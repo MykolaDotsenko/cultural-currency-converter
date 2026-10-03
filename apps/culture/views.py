@@ -229,7 +229,7 @@ def explore_explanation(request: HttpRequest) -> HttpResponse:
                     destinations=destinations,
                 )
                 intent = parse_explore_explanation_intent(form.cleaned_data["prompt_id"])
-                context, delivery = explain_reviewed_destination(
+                context, packet, delivery = explain_reviewed_destination(
                     destination,
                     intent=intent,
                     service=build_explore_explanation_service(),
@@ -256,10 +256,23 @@ def explore_explanation(request: HttpRequest) -> HttpResponse:
                     for spec in available_explore_explanation_intents()
                     if spec.intent is intent
                 )
+                supporting_fact_ids = {
+                    fact_id
+                    for insight in (
+                        delivery.result.short_answer,
+                        *delivery.result.key_factors,
+                        delivery.result.watch_out_for,
+                        delivery.result.next_step,
+                    )
+                    for fact_id in insight.supporting_fact_ids
+                }
                 explanation = {
                     "result": delivery.result,
                     "cache_status": delivery.cache_status,
                     "question": spec.question,
+                    "facts_used": tuple(
+                        fact for fact in packet.facts if fact.id in supporting_fact_ids
+                    ),
                     "destination_label": (
                         f"{context.city_name}, {context.country_name}"
                         if context.city_name

@@ -73,7 +73,13 @@
           </p>
         </section>
         <section aria-labelledby="budget-title">
-          <p class="eyebrow">Trip Budget Remaining</p>
+          <p class="eyebrow">
+            {% if pack.budget_basis == "payment_estimate" %}
+              Payment-adjusted Trip Budget Remaining
+            {% else %}
+              Trip Budget Remaining
+            {% endif %}
+          </p>
           <h2 id="budget-title">
             {% if pack.trip_budget.is_over_reference %}
               {{ pack.trip_budget.over_reference|floatformat:"-12" }} {{ pack.fx_reference.destination_currency }} over reference
@@ -86,6 +92,17 @@
             {{ pack.fx_reference.destination_currency }} · confirmed spend
             {{ pack.trip_budget.confirmed_spend|floatformat:"-12" }} {{ pack.fx_reference.destination_currency }}
           </p>
+          {% if pack.budget_basis == "payment_estimate" %}
+            <p class="muted">
+              Saved planning basis {{ pack.planning_destination_amount|floatformat:"-12" }}
+              {{ pack.fx_reference.destination_currency }} · explicit assumptions:
+              {{ pack.fx_markup_percent|floatformat:"-2" }}% FX markup ·
+              {{ pack.source_fixed_fee|floatformat:"-12" }} {{ pack.fx_reference.source_currency }}
+              source fee · {{ pack.destination_fixed_fee|floatformat:"-12" }}
+              {{ pack.fx_reference.destination_currency }} destination fee.
+              The stored FX reference remains separate above.
+            </p>
+          {% endif %}
           {% if pack.trip_budget.remaining_per_day is not None %}
             <p class="muted">
               About {{ pack.trip_budget.remaining_per_day|floatformat:"-12" }}

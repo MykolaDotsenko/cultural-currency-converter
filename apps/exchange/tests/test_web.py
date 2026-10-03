@@ -17,6 +17,7 @@ from apps.exchange.domain import (
     RateSeriesGrouping,
     RateSeriesPoint,
 )
+from apps.exchange.money_context import MoneyContext, MoneyContextState
 from apps.exchange.providers.base import FxProviderUnavailable
 from apps.media.models import (
     DatePrecision,
@@ -756,6 +757,48 @@ def test_historical_htmx_and_full_get_render_equivalent_numeric_semantics(client
         assert b"15 Jun 1998" in response.content
         assert b"12 Jun 1998" in response.content
         assert b"Previous available observation" in response.content
+
+
+@pytest.mark.django_db
+def test_current_conversion_distinguishes_degraded_context_from_empty_context(
+    client,
+    reference_data,
+):
+    def degraded_money_context(
+        *,
+        conversion,
+        destination_country_code,
+        destination_city_slug="",
+        as_of,
+        **_kwargs,
+    ):
+        return MoneyContext(
+            conversion=conversion,
+            destination_country_code=destination_country_code,
+            destination_city_slug=destination_city_slug,
+            as_of=as_of,
+            destination_context=None,
+            destination_state=MoneyContextState.DEGRADED,
+        )
+
+    with (
+        patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()),
+        patch(
+            "apps.exchange.application.build_money_context",
+            side_effect=degraded_money_context,
+        ),
+    ):
+        response = client.post(
+            reverse("converter"),
+            payload(),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b'id="current-conversion-result"' in response.content
+    assert b"Local money context is temporarily unavailable." in response.content
+    assert b"no missing context has been inferred" in response.content
+    assert b"context is being reviewed" not in response.content
 
 
 @pytest.mark.django_db

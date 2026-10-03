@@ -210,6 +210,7 @@ def build_explore_explanation_packet(
             ("payment_customs", context.payment.payment_customs),
             ("cash_usage", context.payment.cash_usage),
             ("atm_notes", context.payment.atm_notes),
+            ("tipping", context.payment.tipping),
             ("dcc_warning", context.payment.dcc_warning),
         )
         facts.extend(
@@ -273,6 +274,7 @@ def build_explore_explanation_packet(
                 "cash_usage",
                 "payment_customs",
                 "atm_notes",
+                "tipping",
                 "dcc_warning",
                 "payment_verified",
             )
@@ -337,6 +339,7 @@ def build_explore_fallback_result(
                 "cash_usage",
                 "payment_customs",
                 "atm_notes",
+                "tipping",
                 "dcc_warning",
                 "payment_verified",
             )
@@ -411,7 +414,7 @@ def explain_reviewed_destination(
     intent: ExploreExplanationIntent,
     service: RuntimeExplanationService,
     locale: str = "en",
-) -> tuple[DestinationContext, ExplanationDelivery]:
+) -> tuple[DestinationContext, ExplanationPacket, ExplanationDelivery]:
     context = build_explore_explanation_context(destination)
     packet = build_explore_explanation_packet(
         destination,
@@ -431,4 +434,4 @@ def explain_reviewed_destination(
         schema_version=SCHEMA_VERSION,
         capability="explore_explanation",
     )
-    return context, delivery
+    return context, packet, delivery

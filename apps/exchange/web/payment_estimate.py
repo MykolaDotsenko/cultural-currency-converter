@@ -191,6 +191,14 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                                 estimate.destination_value_lost,
                                 minor_units=destination_currency.minor_units,
                             ),
+                            "source_budget": _money_text(
+                                estimate.source_budget,
+                                minor_units=source_currency.minor_units,
+                            ),
+                            "effective_source_amount": _money_text(
+                                estimate.effective_source_amount,
+                                minor_units=source_currency.minor_units,
+                            ),
                             "fx_markup_percent": format(estimate.fx_markup_percent, "f"),
                             "source_fixed_fee": _money_text(
                                 estimate.source_fixed_fee,

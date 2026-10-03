@@ -12,8 +12,10 @@ from django.db import IntegrityError
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
+from apps.exchange.payment_estimate import estimate_payment_value
 from apps.travel.models import (
     SavedScenario,
+    SavedScenarioBudgetBasis,
     SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
@@ -125,6 +127,76 @@ def test_create_saved_trip_persists_normalized_assumptions_and_initial_observati
     assert observation.effective_date == date(2026, 9, 30)
     assert observation.provider_keys == ["ecb"]
     assert observation.stale is False
+
+
+@pytest.mark.django_db
+def test_payment_adjusted_saved_scenario_recomputes_and_persists_trusted_basis(reference_data):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="payment-basis-owner", password="StrongPass-482!")
+    conversion = _conversion()
+    estimate = estimate_payment_value(
+        source_budget=conversion.input_amount,
+        reference_destination_amount=conversion.output_amount,
+        rate=conversion.quote.rate,
+        fx_markup_percent=Decimal("2"),
+        source_fixed_fee=Decimal("1"),
+        destination_fixed_fee=Decimal("220"),
+        destination_minor_units=jpy.minor_units,
+    )
+
+    scenario = create_saved_scenario(
+        user,
+        spec=SavedScenarioSpec(
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=eur,
+            destination_currency=jpy,
+            source_country=fi,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=conversion.input_amount,
+            budget_basis=SavedScenarioBudgetBasis.PAYMENT_ESTIMATE,
+            planning_destination_amount=estimate.estimated_destination_amount,
+            fx_markup_percent=estimate.fx_markup_percent,
+            source_fixed_fee=estimate.source_fixed_fee,
+            destination_fixed_fee=estimate.destination_fixed_fee,
+        ),
+        conversion=conversion,
+    )
+
+    assert scenario.budget_basis == SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
+    assert scenario.planning_destination_amount == Decimal("16717")
+    assert scenario.fx_markup_percent == Decimal("2")
+    assert scenario.source_fixed_fee == Decimal("1")
+    assert scenario.destination_fixed_fee == Decimal("220")
+    assert scenario.observations.get().output_amount == Decimal("17450.000000000000")
+
+
+@pytest.mark.django_db
+def test_payment_adjusted_saved_scenario_rejects_planning_amount_not_reproduced_by_assumptions(
+    reference_data,
+):
+    eur, jpy, fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="payment-basis-invalid", password="StrongPass-482!")
+
+    with pytest.raises(SavedScenarioError, match="deterministic payment estimate"):
+        create_saved_scenario(
+            user,
+            spec=SavedScenarioSpec(
+                kind=SavedScenarioKind.BUDGET,
+                source_currency=eur,
+                destination_currency=jpy,
+                source_country=fi,
+                destination_country=jp,
+                destination_city=tokyo,
+                source_amount=Decimal("100.00"),
+                budget_basis=SavedScenarioBudgetBasis.PAYMENT_ESTIMATE,
+                planning_destination_amount=Decimal("16000"),
+                fx_markup_percent=Decimal("2"),
+                source_fixed_fee=Decimal("1"),
+                destination_fixed_fee=Decimal("220"),
+            ),
+            conversion=_conversion(),
+        )
 
 
 @pytest.mark.django_db
@@ -478,6 +550,29 @@ def test_scenario_rejects_end_date_without_start_date(reference_data):
         )
 
     assert not SavedScenario.objects.filter(user=user).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_database_rejects_payment_adjusted_basis_on_non_budget_scenario(reference_data):
+    eur, jpy, _fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="basis-db-owner", password="StrongPass-482!")
+
+    with pytest.raises(IntegrityError):
+        SavedScenario.objects.create(
+            user=user,
+            kind=SavedScenarioKind.TRIP,
+            title="Invalid payment-adjusted trip",
+            source_currency=eur,
+            destination_currency=jpy,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+            budget_basis=SavedScenarioBudgetBasis.PAYMENT_ESTIMATE,
+            planning_destination_amount=Decimal("16717"),
+            fx_markup_percent=Decimal("2"),
+            source_fixed_fee=Decimal("1"),
+            destination_fixed_fee=Decimal("220"),
+        )
 
 
 @pytest.mark.django_db(transaction=True)

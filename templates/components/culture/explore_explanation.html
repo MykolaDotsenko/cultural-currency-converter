@@ -36,6 +36,22 @@
       <p class="qa-foundation-kicker">Check the evidence</p>
       <p>{{ explanation.result.next_step.text }}</p>
     </div>
+    {% if explanation.facts_used %}
+      <details class="qa-source-details qa-ai-explanation__facts">
+        <summary>Reviewed facts used · {{ explanation.facts_used|length }}</summary>
+        <ul class="qa-ai-explanation__fact-list">
+          {% for fact in explanation.facts_used %}
+            <li>
+              <span>{{ fact.statement }}</span>
+              <code>{{ fact.id }}</code>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="qa-field__message">
+          Explore AI cannot add destination facts that are absent from this rebuilt reviewed packet.
+        </p>
+      </details>
+    {% endif %}
     <p class="qa-ai-explanation__meta">
       {{ explanation.result.source_label }}.
       {% if not explanation.result.generated %}

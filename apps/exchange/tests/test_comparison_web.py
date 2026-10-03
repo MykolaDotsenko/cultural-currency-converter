@@ -84,7 +84,10 @@ def comparison_reference_data(db):
         CulturalProfile.objects.create(
             country=country,
             summary=summary,
+            payment_customs="Cards are commonly accepted for routine purchases.",
             cash_usage="Carry cash only when the local situation calls for it.",
+            tipping="Follow reviewed local tipping customs.",
+            atm_notes="Use clearly identified ATMs and review disclosed fees.",
             dcc_warning="If DCC is offered, review the local-currency option carefully.",
             source_name="Official payment source",
             source_url="https://example.com/payment-context",
@@ -606,3 +609,7 @@ def test_comparison_frontend_exposes_full_backend_context_contract(
     assert body.count(b"Open conversion") == 2
     assert body.count(b"Build budget") == 2
     assert b"City money profile" in body
+    assert body.count(b"Full payment guide") == 2
+    assert b"Cards are commonly accepted for routine purchases." in body
+    assert b"Use clearly identified ATMs and review disclosed fees." in body
+    assert b"Follow reviewed local tipping customs." in body

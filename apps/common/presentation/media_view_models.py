@@ -23,3 +23,4 @@ class ImageViewModel:
     licence_url: str = ""
     change_note: str = ""
     authenticity_label: str = ""
+    temporal_label: str = ""

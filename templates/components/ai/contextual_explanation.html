@@ -36,6 +36,23 @@
       <p class="qa-foundation-kicker">Check the source context</p>
       <p>{{ explanation.result.next_step.text }}</p>
     </div>
+    {% if explanation.facts_used %}
+      <details class="qa-source-details qa-ai-explanation__facts">
+        <summary>Facts used · {{ explanation.facts_used|length }}</summary>
+        <ul class="qa-ai-explanation__fact-list">
+          {% for fact in explanation.facts_used %}
+            <li>
+              <span>{{ fact.statement }}</span>
+              <code>{{ fact.id }}</code>
+            </li>
+          {% endfor %}
+        </ul>
+        <p class="qa-field__message">
+          The explanation is allowed to use only this signed server-built fact set and the
+          capability-specific rules for this question.
+        </p>
+      </details>
+    {% endif %}
     <p class="qa-ai-explanation__meta">
       {{ explanation.result.source_label }}.
       {% if not explanation.result.generated %}

@@ -19,7 +19,11 @@ from apps.travel.models import (
     SavedScenarioObservationKind,
     SavedScenarioSpendEntry,
 )
-from apps.travel.trip_budget import TripBudgetSummary, calculate_trip_budget_summary
+from apps.travel.trip_budget import (
+    TripBudgetSummary,
+    calculate_trip_budget_summary,
+    resolve_trip_budget_reference,
+)
 
 logger = logging.getLogger("cultural_currency.travel")
 
@@ -77,6 +81,11 @@ class OfflineDestinationPack:
     travel_end_date: date | None
     duration_days: int | None
     travelers: int
+    budget_basis: str
+    planning_destination_amount: Decimal | None
+    fx_markup_percent: Decimal | None
+    source_fixed_fee: Decimal | None
+    destination_fixed_fee: Decimal | None
     fx_reference: OfflineFxReference
     trip_budget: TripBudgetSummary
     destination_context: DestinationContext | None
@@ -182,6 +191,11 @@ def build_offline_destination_pack(
         travel_end_date=scenario.travel_end_date,
         duration_days=scenario.duration_days,
         travelers=scenario.travelers,
+        budget_basis=scenario.budget_basis,
+        planning_destination_amount=scenario.planning_destination_amount,
+        fx_markup_percent=scenario.fx_markup_percent,
+        source_fixed_fee=scenario.source_fixed_fee,
+        destination_fixed_fee=scenario.destination_fixed_fee,
         fx_reference=_fx_reference(scenario, latest),
         trip_budget=trip_budget,
         destination_context=destination_context,
@@ -218,8 +232,13 @@ def _trip_budget_summary(
         confirmed_spend = sum((entry.amount for entry in spend_entries), Decimal("0"))
 
     try:
+        reference_budget = resolve_trip_budget_reference(
+            budget_basis=scenario.budget_basis,
+            initial_destination_amount=initial.output_amount,
+            planning_destination_amount=scenario.planning_destination_amount,
+        )
         return calculate_trip_budget_summary(
-            reference_budget=initial.output_amount,
+            reference_budget=reference_budget,
             confirmed_spend=confirmed_spend,
             duration_days=scenario.duration_days,
             travel_start_date=scenario.travel_start_date,

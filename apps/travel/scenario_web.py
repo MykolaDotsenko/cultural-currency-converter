@@ -25,12 +25,18 @@ from apps.exchange.budget_snapshot import (
 from apps.exchange.config import FxConfigurationError
 from apps.exchange.domain import FxDomainError
 from apps.exchange.forms import BudgetInterpretationForm
+from apps.exchange.payment_budget_snapshot import (
+    PaymentBudgetHandoffTokenError,
+    load_payment_budget_handoff_token,
+)
+from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.web.gateways import build_latest_quote_gateway
 from apps.travel.forms import SavedScenarioPlanningForm, SavedScenarioSpendForm
 from apps.travel.models import (
     SavedScenario,
+    SavedScenarioBudgetBasis,
     SavedScenarioKind,
     SavedScenarioObservationKind,
     SavedScenarioSpendEntry,
@@ -50,6 +56,7 @@ from apps.travel.scenarios import (
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
+    resolve_trip_budget_reference,
 )
 
 logger = logging.getLogger("cultural_currency.travel")
@@ -219,8 +226,13 @@ def _scenario_trip_budget_component(
         context.prec = 64
         confirmed_spend = sum((entry.amount for entry in spend_entries), Decimal("0"))
     try:
+        reference_budget = resolve_trip_budget_reference(
+            budget_basis=scenario.budget_basis,
+            initial_destination_amount=initial_observation.output_amount,
+            planning_destination_amount=scenario.planning_destination_amount,
+        )
         summary = calculate_trip_budget_summary(
-            reference_budget=initial_observation.output_amount,
+            reference_budget=reference_budget,
             confirmed_spend=confirmed_spend,
             duration_days=scenario.duration_days,
             travel_start_date=scenario.travel_start_date,
@@ -248,6 +260,12 @@ def _scenario_trip_budget_component(
         "reference_budget": _format_currency_amount(
             summary.reference_budget,
             minor_units=minor_units,
+        ),
+        "basis": scenario.budget_basis,
+        "basis_label": (
+            "Payment-adjusted saved baseline"
+            if scenario.budget_basis == SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
+            else "Saved FX reference baseline"
         ),
         "confirmed_spend": _format_currency_amount(
             summary.confirmed_spend,
@@ -287,6 +305,7 @@ def _scenario_detail_context(
         .first()
     )
     latest_observation = scenario.observations.order_by("-recorded_at", "-id").first()
+    observation_history = tuple(scenario.observations.order_by("-recorded_at", "-id"))
     budget_item_rows = tuple(
         {
             "item": item,
@@ -322,6 +341,8 @@ def _scenario_detail_context(
         "budget_item_rows": budget_item_rows,
         "initial_observation": initial_observation,
         "latest_observation": latest_observation,
+        "observation_history": observation_history,
+        "observation_history_count": len(observation_history),
         "rate_comparison": rate_comparison,
         "trip_schedule": trip_schedule,
         "trip_budget": trip_budget,
@@ -343,7 +364,7 @@ def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedS
             "source_country",
             "destination_country",
             "destination_city",
-        ).prefetch_related("budget_items", "spend_entries"),
+        ).prefetch_related("budget_items", "spend_entries", "observations"),
         pk=scenario_id,
         user=request.user,
     )
@@ -363,7 +384,39 @@ def _scenario_default_title(
 @login_required
 @require_POST
 def save_budget_scenario(request: HttpRequest) -> HttpResponse:
-    token = request.POST.get("budget_context_token", "")
+    submitted_budget_token = str(request.POST.get("budget_context_token") or "")
+    payment_budget_token = str(request.POST.get("payment_budget_token") or "")
+    payment_handoff = None
+    token = submitted_budget_token
+
+    if payment_budget_token:
+        try:
+            payment_handoff = load_payment_budget_handoff_token(payment_budget_token)
+        except PaymentBudgetHandoffTokenError as exc:
+            logger.warning(
+                "saved_budget_scenario_rejected",
+                extra={"error_code": "invalid_payment_budget_handoff", "detail_code": str(exc)},
+            )
+            messages.error(
+                request,
+                "This payment-adjusted budget is no longer valid. Recalculate the payment estimate.",
+            )
+            return redirect("converter")
+        if (
+            submitted_budget_token
+            and payment_handoff.budget_context_token != submitted_budget_token
+        ):
+            logger.warning(
+                "saved_budget_scenario_rejected",
+                extra={"error_code": "payment_budget_context_mismatch"},
+            )
+            messages.error(
+                request,
+                "The saved budget basis no longer matches this conversion. Reopen budget planning.",
+            )
+            return redirect("converter")
+        token = payment_handoff.budget_context_token
+
     try:
         snapshot = load_budget_context_snapshot_token(token)
     except BudgetContextTokenError as exc:
@@ -462,6 +515,42 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         destination_city=destination_city,
     )
 
+    saved_budget_basis = SavedScenarioBudgetBasis.REFERENCE_CONVERSION
+    planning_destination_amount = None
+    fx_markup_percent = None
+    source_fixed_fee = None
+    destination_fixed_fee = None
+    if payment_handoff is not None:
+        try:
+            estimate = estimate_payment_value(
+                source_budget=snapshot.conversion.input_amount,
+                reference_destination_amount=snapshot.conversion.output_amount,
+                rate=snapshot.conversion.quote.rate,
+                fx_markup_percent=payment_handoff.fx_markup_percent,
+                source_fixed_fee=payment_handoff.source_fixed_fee,
+                destination_fixed_fee=payment_handoff.destination_fixed_fee,
+                destination_minor_units=destination_currency.minor_units,
+            )
+        except PaymentEstimateError as exc:
+            logger.warning(
+                "saved_budget_scenario_rejected",
+                extra={
+                    "error_code": "invalid_payment_assumptions",
+                    "detail_code": exc.__class__.__name__,
+                },
+            )
+            messages.error(
+                request,
+                "These payment assumptions can no longer be saved safely. "
+                "Recalculate the payment estimate.",
+            )
+            return redirect("converter")
+        saved_budget_basis = SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
+        planning_destination_amount = estimate.estimated_destination_amount
+        fx_markup_percent = estimate.fx_markup_percent
+        source_fixed_fee = estimate.source_fixed_fee
+        destination_fixed_fee = estimate.destination_fixed_fee
+
     spec = SavedScenarioSpec(
         kind=SavedScenarioKind.BUDGET,
         title=title,
@@ -471,6 +560,11 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         destination_country=destination_country,
         destination_city=destination_city,
         source_amount=snapshot.conversion.input_amount,
+        budget_basis=saved_budget_basis,
+        planning_destination_amount=planning_destination_amount,
+        fx_markup_percent=fx_markup_percent,
+        source_fixed_fee=source_fixed_fee,
+        destination_fixed_fee=destination_fixed_fee,
         duration_days=assumptions.duration_days,
         travelers=assumptions.travelers,
         travel_start_date=planning_form.cleaned_data.get("travel_start_date"),

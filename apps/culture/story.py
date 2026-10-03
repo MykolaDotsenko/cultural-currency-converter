@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from apps.culture.models import StoryMoment
+from apps.culture.models import StoryDatePrecision, StoryMoment
 from apps.culture.provenance import is_valid_provenance_url
 from apps.culture.services import currency_era_links, select_story_moments
 
@@ -32,6 +32,8 @@ class StoryChapter:
     body: str
     source_refs: tuple[StorySourceRef, ...]
     temporal_scope: str
+    temporal_precision: str
+    causal_support: bool
     relevance: int
 
 
@@ -130,6 +132,8 @@ def _currency_era_chapter(link, *, side: str) -> StoryChapter:
         body=body,
         source_refs=source_refs,
         temporal_scope=_temporal_scope(link.valid_from, link.valid_to),
+        temporal_precision="Canonical currency period",
+        causal_support=False,
         relevance=100,
     )
 
@@ -141,7 +145,13 @@ def _moment_chapter(moment: StoryMoment) -> StoryChapter:
         title=moment.title,
         body=moment.summary,
         source_refs=(StorySourceRef(label=moment.source_name, url=moment.source_url),),
-        temporal_scope=_temporal_scope(moment.start_date, moment.end_date),
+        temporal_scope=_temporal_scope(
+            moment.start_date,
+            moment.end_date,
+            precision=moment.date_precision,
+        ),
+        temporal_precision=_precision_label(moment.date_precision),
+        causal_support=moment.supports_causality,
         relevance=moment.relevance_weight,
     )
 
@@ -158,11 +168,40 @@ def _range_text(start: date | None, end: date | None) -> str:
     return ""
 
 
-def _temporal_scope(start: date | None, end: date | None) -> str:
+def _precision_label(precision: str) -> str:
+    labels = {
+        StoryDatePrecision.EXACT_DAY: "Exact day",
+        StoryDatePrecision.MONTH: "Month precision",
+        StoryDatePrecision.YEAR: "Year precision",
+        StoryDatePrecision.RANGE: "Reviewed range",
+        StoryDatePrecision.ERA: "Reviewed era",
+        StoryDatePrecision.UNKNOWN: "Precision not specified",
+    }
+    return labels.get(precision, "Precision not specified")
+
+
+def _format_temporal_date(value: date, *, precision: str) -> str:
+    if precision == StoryDatePrecision.YEAR:
+        return str(value.year)
+    if precision == StoryDatePrecision.MONTH:
+        return value.strftime("%B %Y")
+    if precision == StoryDatePrecision.ERA:
+        return str(value.year)
+    return value.isoformat()
+
+
+def _temporal_scope(
+    start: date | None,
+    end: date | None,
+    *,
+    precision: str = StoryDatePrecision.EXACT_DAY,
+) -> str:
     if start and end:
-        return start.isoformat() if start == end else f"{start.isoformat()}–{end.isoformat()}"
+        start_text = _format_temporal_date(start, precision=precision)
+        end_text = _format_temporal_date(end, precision=precision)
+        return start_text if start == end else f"{start_text}–{end_text}"
     if start:
-        return f"{start.isoformat()} onward"
+        return f"{_format_temporal_date(start, precision=precision)} onward"
     if end:
-        return f"through {end.isoformat()}"
+        return f"through {_format_temporal_date(end, precision=precision)}"
     return "undated sourced context"

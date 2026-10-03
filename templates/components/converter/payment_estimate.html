@@ -54,11 +54,67 @@
             </dd>
           </div>
         </dl>
+        <details class="qa-source-details qa-payment-estimate__calculation">
+          <summary>Calculation details</summary>
+          <dl class="qa-payment-estimate__facts">
+            <div>
+              <dt>Starting source budget</dt>
+              <dd>
+                {{ payment_estimate.source_budget }} {{ payment_estimate.source_currency }}
+              </dd>
+            </div>
+            <div>
+              <dt>Effective source amount after explicit fee / markup</dt>
+              <dd>
+                {{ payment_estimate.effective_source_amount }} {{ payment_estimate.source_currency }}
+              </dd>
+            </div>
+            <div>
+              <dt>Reference destination value</dt>
+              <dd>
+                {{ payment_estimate.reference_amount }} {{ payment_estimate.destination_currency }}
+              </dd>
+            </div>
+            <div>
+              <dt>Estimated destination value</dt>
+              <dd>
+                {{ payment_estimate.estimated_amount }} {{ payment_estimate.destination_currency }}
+              </dd>
+            </div>
+          </dl>
+          <p class="qa-field__message">
+            Only the explicit assumptions above are applied. No bank, card, ATM, merchant or DCC
+            fee is inferred.
+          </p>
+        </details>
         <p class="qa-context-source">
           Reference observation {{ payment_estimate.effective_date }} · {{ payment_estimate.provider }}.
           {% if payment_estimate.stale %}The underlying reference quote is cached/stale.{% endif %}
         </p>
       </div>
+      {% if payment_estimate.budget_handoff_token %}
+        <form class="qa-payment-estimate__budget-handoff"
+              method="post"
+              action="{% url 'budget_interpretation' %}"
+              hx-post="{% url 'budget_interpretation' %}"
+              hx-target="#budget-interpretation-region"
+              hx-swap="innerHTML"
+              hx-indicator="#budget-interpretation-loading">
+          {% csrf_token %}
+          <input type="hidden"
+                 name="payment_budget_token"
+                 value="{{ payment_estimate.budget_handoff_token }}">
+          <div>
+            <p class="qa-foundation-kicker">Continue planning</p>
+            <h4>Use this estimate as the budget basis</h4>
+            <p class="qa-field__message">
+              Carry these exact signed fee assumptions into Budget Interpretation. The trusted
+              reference conversion remains visible separately.
+            </p>
+          </div>
+          <button class="qa-primary-button" type="submit">Plan with this estimate</button>
+        </form>
+      {% endif %}
     {% endif %}
     <form class="qa-payment-estimate__form"
           method="post"
@@ -71,6 +127,11 @@
       <input type="hidden"
              name="payment_estimate_token"
              value="{{ payment_estimate.token }}">
+      {% if payment_estimate.budget_context_token %}
+        <input type="hidden"
+               name="budget_context_token"
+               value="{{ payment_estimate.budget_context_token }}">
+      {% endif %}
       {% if payment_estimate.form.non_field_errors %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
           <p>{{ payment_estimate.form.non_field_errors.0 }}</p>

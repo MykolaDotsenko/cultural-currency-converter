@@ -167,7 +167,10 @@ def _side_component(
         "payment": (
             {
                 "summary": payment.summary,
+                "payment_customs": payment.payment_customs,
                 "cash_usage": payment.cash_usage,
+                "atm_notes": payment.atm_notes,
+                "tipping": payment.tipping,
                 "dcc_warning": payment.dcc_warning,
                 "source_name": payment.source_name,
                 "source_url": payment.source_url,

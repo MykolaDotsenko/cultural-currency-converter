@@ -644,13 +644,38 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     validEstimateResponse.status() === 200,
     `current-converter: payment estimate returned ${validEstimateResponse.status()} instead of 200`,
   );
-  await page.getByText("Estimated destination value", { exact: true }).waitFor();
+  await page
+    .locator(".qa-payment-estimate__result > div > .qa-foundation-kicker")
+    .filter({ hasText: /^Estimated destination value$/ })
+    .waitFor();
   await page
     .getByText("This is a scenario estimate, not a bank/card/ATM quote.", {
       exact: false,
     })
     .waitFor();
   await assertAxe(page, "current-converter/payment-estimate");
+
+  // Carry the exact signed payment assumptions into Budget Interpretation.
+  // The browser never recalculates financial state: it forwards the server-built
+  // capability token and the budget endpoint rebuilds the trusted context.
+  const paymentBudgetHandoff = page.getByRole("button", {
+    name: "Plan with this estimate",
+    exact: true,
+  });
+  await paymentBudgetHandoff.waitFor();
+  const paymentBudgetResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await paymentBudgetHandoff.click();
+  const paymentBudgetResponse = await paymentBudgetResponsePromise;
+  assert(
+    paymentBudgetResponse.status() === 200,
+    `current-converter: payment→budget handoff returned ${paymentBudgetResponse.status()} instead of 200`,
+  );
+  await page.getByText("Payment-adjusted estimate", { exact: false }).first().waitFor();
+  await page.getByText("Reference FX value:", { exact: false }).waitFor();
 
   // Budget interpretation is a separate deterministic progressive surface. It
   // must carry a signed Money Context scope, keep its assumptions explicit,
@@ -660,9 +685,16 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   const budgetContextToken = await budgetForm
     .locator('input[name="budget_context_token"]')
     .inputValue();
+  const paymentBudgetToken = await budgetForm
+    .locator('input[name="payment_budget_token"]')
+    .inputValue();
   assert(
     budgetContextToken.length > 40 && budgetContextToken.split(":").length >= 3,
     `current-converter: budget context token is missing or malformed; length=${budgetContextToken.length}`,
+  );
+  assert(
+    paymentBudgetToken.length > 40,
+    `current-converter: payment-adjusted budget handoff token is missing; length=${paymentBudgetToken.length}`,
   );
 
   const waitForBudgetInterpretation = () =>
@@ -700,7 +732,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     budgetResponse.status() === 200,
     `current-converter: budget interpretation returned ${budgetResponse.status()} instead of 200`,
   );
-  await page.getByText("Reference-basket comparison", { exact: true }).waitFor();
+  await page.getByText("reference-basket comparison", { exact: false }).waitFor();
   await page.getByText("not a full trip-cost forecast", { exact: false }).waitFor();
   await page.getByRole("link", { name: "Sign in to save" }).waitFor();
   assert(
@@ -750,6 +782,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     ),
     "current-converter/budget-ai: explanation introduced ranking or affordability language",
   );
+  await budgetAiRegion.getByText("Facts used", { exact: false }).waitFor();
   await assertAxe(page, "current-converter/budget-ai");
 
   await page.evaluate((key) => localStorage.removeItem(key), LOCAL_STATE_KEY);
@@ -851,6 +884,8 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
 
   await page.getByRole("link", { name: "Everyday value" }).waitFor();
   await page.getByRole("link", { name: "Payment context" }).waitFor();
+  await page.getByText("Money Context Lens", { exact: true }).waitFor();
+  await page.getByText("Sources & freshness", { exact: true }).waitFor();
 
   const exploreLabels = (await page.locator(".qa-explore-nav a").allTextContents()).map((label) =>
     label.trim(),
@@ -1662,6 +1697,10 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
 
   await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
+  await page.getByText("Travel money mode", { exact: true }).waitFor();
+  await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
+  await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+  await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const baselineSummary = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
     .innerText();
@@ -2886,6 +2925,18 @@ async function assertDestinationComparisonQuality(page) {
       (await side.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
       "destination-comparison: canonical budget handoff is missing on a side",
     );
+    const reviewedPayment = side.locator(".qa-destination-comparison-side__payment");
+    if ((await reviewedPayment.count()) === 1) {
+      assert(
+        (await reviewedPayment.getByText("Full payment guide", { exact: true }).count()) === 1,
+        "destination-comparison: reviewed payment context is missing its full guide",
+      );
+    } else {
+      assert(
+        (await side.getByText(/No reviewed payment guidance is available/i).count()) === 1,
+        "destination-comparison: payment-context absence is not explicit",
+      );
+    }
   }
   assert(
     (await sides.first().getByRole("link", { name: "City money profile", exact: true }).count()) ===
@@ -2936,6 +2987,7 @@ async function assertDestinationComparisonQuality(page) {
     ),
     "destination-comparison/ai: explanation introduced ranking or affordability language",
   );
+  await aiRegion.getByText("Facts used", { exact: false }).waitFor();
 
   await assertNoHorizontalOverflow(page, "destination-comparison/interactive");
   await assertAxe(page, "destination-comparison/interactive");

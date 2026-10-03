@@ -210,7 +210,7 @@ def test_rate_recheck_never_moves_trip_budget_reference_baseline(client, trip_bu
     assert response.status_code == 200
     text = _normalized_response_text(response)
     assert "100000 JPY remaining" in text
-    assert "saved reference budget 104700 JPY" in text
+    assert "saved fx reference baseline 104700 JPY" in text
     assert "120000 JPY" in text
     assert "Re-checking the FX rate never changes this remaining-budget baseline." in text
 

@@ -28,6 +28,43 @@ class TripBudgetSummary:
         return self.over_reference > 0
 
 
+def resolve_trip_budget_reference(
+    *,
+    budget_basis: str,
+    initial_destination_amount: Decimal,
+    planning_destination_amount: Decimal | None,
+) -> Decimal:
+    """Resolve the immutable spending baseline for one saved budget scenario.
+
+    The raw initial FX observation always remains immutable. A payment-adjusted
+    scenario may additionally persist the deterministic destination amount that
+    resulted from the user's explicit fee assumptions; that amount becomes the
+    spending baseline while later FX re-checks remain informational.
+    """
+
+    _validate_non_negative_decimal(
+        initial_destination_amount,
+        label="Initial destination amount",
+    )
+    if budget_basis == "reference_conversion":
+        if planning_destination_amount is not None:
+            raise ValueError("Reference-conversion budget cannot carry a separate planning amount.")
+        return initial_destination_amount
+    if budget_basis != "payment_estimate":
+        raise ValueError("Saved budget basis is unsupported.")
+    if planning_destination_amount is None:
+        raise ValueError("Payment-adjusted budget requires a planning destination amount.")
+    _validate_non_negative_decimal(
+        planning_destination_amount,
+        label="Planning destination amount",
+    )
+    if planning_destination_amount > initial_destination_amount:
+        raise ValueError(
+            "Payment-adjusted planning amount cannot exceed the trusted reference amount."
+        )
+    return planning_destination_amount
+
+
 def calculate_trip_budget_summary(
     *,
     reference_budget: Decimal,
@@ -39,9 +76,10 @@ def calculate_trip_budget_summary(
 ) -> TripBudgetSummary:
     """Calculate lightweight remaining-budget meaning from explicit saved state.
 
-    The immutable initial destination-currency observation is the reference
-    budget. Later FX re-checks never move this baseline. Confirmed spend is
-    subtracted in the same destination currency.
+    The supplied reference budget is an immutable saved planning baseline:
+    either the initial destination-currency observation or the deterministic
+    payment-adjusted amount captured at save time. Later FX re-checks never
+    move this baseline. Confirmed spend is subtracted in the same destination currency.
     """
 
     _validate_non_negative_decimal(reference_budget, label="Reference budget")

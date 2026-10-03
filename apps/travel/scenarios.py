@@ -19,8 +19,10 @@ from apps.exchange.domain import (
     FxDomainError,
     normalize_provider_keys,
 )
+from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.travel.models import (
     SavedScenario,
+    SavedScenarioBudgetBasis,
     SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
@@ -60,6 +62,11 @@ class SavedScenarioSpec:
     travel_start_date: date | None = None
     travel_end_date: date | None = None
     budget_categories: tuple[BudgetCategoryAssumption, ...] = ()
+    budget_basis: str = "reference_conversion"
+    planning_destination_amount: Decimal | None = None
+    fx_markup_percent: Decimal | None = None
+    source_fixed_fee: Decimal | None = None
+    destination_fixed_fee: Decimal | None = None
 
 
 def create_saved_scenario(
@@ -91,6 +98,7 @@ def create_saved_scenario(
     )
     _validate_city(spec.destination_city, spec.destination_country)
     _validate_budget_categories(spec.budget_categories)
+    _validate_budget_basis(spec, conversion=conversion)
     provider_keys = _provider_keys(conversion.quote.provider_keys)
 
     user_model = get_user_model()
@@ -111,6 +119,11 @@ def create_saved_scenario(
             destination_country=spec.destination_country,
             destination_city=spec.destination_city,
             source_amount=spec.source_amount,
+            budget_basis=spec.budget_basis,
+            planning_destination_amount=spec.planning_destination_amount,
+            fx_markup_percent=spec.fx_markup_percent,
+            source_fixed_fee=spec.source_fixed_fee,
+            destination_fixed_fee=spec.destination_fixed_fee,
             duration_days=spec.duration_days,
             travelers=spec.travelers,
             travel_start_date=spec.travel_start_date,
@@ -324,6 +337,68 @@ def _validate_city(city: City | None, country: Country | None) -> None:
         raise SavedScenarioError("Destination city must belong to the destination country.")
     if not city.is_active:
         raise SavedScenarioError("Destination city must be active when a scenario is created.")
+
+
+def _validate_budget_basis(
+    spec: SavedScenarioSpec,
+    *,
+    conversion: ConversionResult,
+) -> None:
+    if spec.budget_basis not in SavedScenarioBudgetBasis.values:
+        raise SavedScenarioError("Scenario budget basis is invalid.")
+
+    payment_fields = (
+        spec.planning_destination_amount,
+        spec.fx_markup_percent,
+        spec.source_fixed_fee,
+        spec.destination_fixed_fee,
+    )
+    if spec.budget_basis == "reference_conversion":
+        if any(value is not None for value in payment_fields):
+            raise SavedScenarioError(
+                "Reference-conversion scenarios cannot carry payment-estimate assumptions."
+            )
+        return
+
+    if spec.kind is not SavedScenarioKind.BUDGET:
+        raise SavedScenarioError(
+            "Payment-adjusted planning is supported only for budget scenarios."
+        )
+    if any(value is None for value in payment_fields):
+        raise SavedScenarioError("Payment-adjusted scenarios require complete payment assumptions.")
+
+    planning_amount = spec.planning_destination_amount
+    markup = spec.fx_markup_percent
+    source_fee = spec.source_fixed_fee
+    destination_fee = spec.destination_fixed_fee
+    if not all(
+        isinstance(value, Decimal) and value.is_finite()
+        for value in (planning_amount, markup, source_fee, destination_fee)
+    ):
+        raise SavedScenarioError("Payment-adjusted scenario values must be finite decimals.")
+    assert planning_amount is not None
+    assert markup is not None
+    assert source_fee is not None
+    assert destination_fee is not None
+    try:
+        expected = estimate_payment_value(
+            source_budget=conversion.input_amount,
+            reference_destination_amount=conversion.output_amount,
+            rate=conversion.quote.rate,
+            fx_markup_percent=markup,
+            source_fixed_fee=source_fee,
+            destination_fixed_fee=destination_fee,
+            destination_minor_units=spec.destination_currency.minor_units,
+        )
+    except PaymentEstimateError as exc:
+        raise SavedScenarioError(
+            "Saved payment assumptions do not produce a valid planning amount."
+        ) from exc
+
+    if planning_amount != expected.estimated_destination_amount:
+        raise SavedScenarioError(
+            "Payment-adjusted planning amount must match the deterministic payment estimate."
+        )
 
 
 def _validate_spend_amount(amount: Decimal, *, minor_units: int) -> None:

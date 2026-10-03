@@ -29,7 +29,11 @@ from apps.travel.scenario_schedule import (
     TripScheduleState,
     evaluate_trip_schedule,
 )
-from apps.travel.trip_budget import TripBudgetSummary, calculate_trip_budget_summary
+from apps.travel.trip_budget import (
+    TripBudgetSummary,
+    calculate_trip_budget_summary,
+    resolve_trip_budget_reference,
+)
 
 logger = logging.getLogger("cultural_currency.travel")
 
@@ -237,8 +241,13 @@ def _trip_budget(
         with localcontext() as context:
             context.prec = 64
             confirmed_spend = Decimal(confirmed_spend)
+        reference_budget = resolve_trip_budget_reference(
+            budget_basis=scenario.budget_basis,
+            initial_destination_amount=initial.output_amount,
+            planning_destination_amount=scenario.planning_destination_amount,
+        )
         return calculate_trip_budget_summary(
-            reference_budget=initial.output_amount,
+            reference_budget=reference_budget,
             confirmed_spend=confirmed_spend,
             duration_days=scenario.duration_days,
             travel_start_date=scenario.travel_start_date,

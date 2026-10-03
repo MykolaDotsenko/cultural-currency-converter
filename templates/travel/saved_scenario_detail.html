@@ -19,6 +19,95 @@
       with your account. It does not silently refresh rates or local prices.
     </p>
   </section>
+  {% if trip_budget %}
+    <section class="qa-trip-money-pass" aria-labelledby="trip-money-pass-title">
+      <div class="qa-trip-money-pass__identity">
+        <p class="qa-foundation-kicker">Travel money mode</p>
+        <h2 id="trip-money-pass-title">
+          {% if scenario.destination_city %}
+            {{ scenario.destination_city.name }}
+          {% elif scenario.destination_country %}
+            {{ scenario.destination_country.name }}
+          {% else %}
+            Saved trip
+          {% endif %}
+        </h2>
+        {% if trip_schedule %}
+          <p>{{ trip_schedule.headline }}</p>
+        {% endif %}
+      </div>
+      <div class="qa-trip-money-pass__money">
+        <div>
+          <span>Remaining</span>
+          <strong>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }}</strong>
+        </div>
+        <div>
+          <span>Confirmed spend</span>
+          <strong>{{ trip_budget.confirmed_spend }} {{ scenario.destination_currency.code }}</strong>
+        </div>
+        {% if trip_budget.has_remaining_per_day %}
+          <div>
+            <span>{{ trip_budget.day_label|capfirst }}</span>
+            <strong>{{ trip_budget.remaining_per_day }} {{ scenario.destination_currency.code }}</strong>
+          </div>
+        {% endif %}
+      </div>
+      <div class="qa-trip-money-pass__actions"
+           aria-label="Trip money quick actions">
+        {% if camera_extraction_available %}
+          <a class="qa-primary-button"
+             href="{% url 'camera_scan_saved_scenario' scenario.pk %}">Scan amount</a>
+        {% endif %}
+        <a class="qa-secondary-button" href="{{ converter_url }}">Convert</a>
+        <a class="qa-secondary-button"
+           href="{% url 'download_offline_destination_pack' scenario.pk %}">Offline money pack</a>
+      </div>
+      <p class="qa-trip-money-pass__trust">
+        {% if scenario.budget_basis == "payment_estimate" %}
+          Remaining budget is anchored to the payment-adjusted amount you explicitly saved.
+          The raw FX observation stays visible separately, and later rate re-checks never move
+          this spending baseline.
+        {% else %}
+          Remaining budget is anchored to the immutable initial saved FX observation. Rate re-checks
+          are informational and never move this spending baseline.
+        {% endif %}
+      </p>
+      <details class="qa-offline-pack-preview">
+        <summary>What the offline money pack contains</summary>
+        <div class="qa-offline-pack-preview__grid">
+          <div>
+            <span>Stored FX reference</span>
+            <strong>
+              {% if latest_observation %}
+                {{ latest_observation.output_amount|floatformat:"-12" }}
+                {{ scenario.destination_currency.code }}
+              {% else %}
+                Saved scenario reference
+              {% endif %}
+            </strong>
+          </div>
+          <div>
+            <span>Trip budget</span>
+            <strong>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</strong>
+          </div>
+          <div>
+            <span>Local money guide</span>
+            <strong>Reviewed prices &amp; payment context when available</strong>
+          </div>
+          <div>
+            <span>Freshness model</span>
+            <strong>Stored snapshot · never silently refreshes offline</strong>
+          </div>
+        </div>
+        <p class="qa-trip-money-pass__trust">
+          The self-contained HTML is assembled only when you download it. It includes no receipt
+          image, merchant identity, account/card data or purchase description.
+        </p>
+        <a class="qa-secondary-button"
+           href="{% url 'download_offline_destination_pack' scenario.pk %}">Save offline copy</a>
+      </details>
+    </section>
+  {% endif %}
   <div class="qa-saved-state">
     <section class="qa-saved-section" aria-labelledby="scenario-summary-title">
       <div class="qa-saved-section__heading">
@@ -112,8 +201,13 @@
             <h2 id="scenario-trip-budget-title">Trip budget remaining</h2>
             <p>
               This is a lightweight reference budget in {{ scenario.destination_currency.code }}.
-              It subtracts only amounts you explicitly confirm and keeps the original saved FX
-              observation as the baseline.
+              It subtracts only amounts you explicitly confirm.
+              {% if scenario.budget_basis == "payment_estimate" %}
+                The spending baseline is the deterministic payment-adjusted amount saved from your
+                explicit fee assumptions; the original FX observation remains separate evidence.
+              {% else %}
+                The original saved FX observation remains the spending baseline.
+              {% endif %}
             </p>
           </div>
         </div>
@@ -127,14 +221,14 @@
                 </h3>
                 <p>
                   Confirmed spend {{ trip_budget.confirmed_spend }}
-                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ scenario.destination_currency.code }} · {{ trip_budget.basis_label|lower }}
                   {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
                 </p>
               {% else %}
                 <h3>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</h3>
                 <p>
                   Confirmed spend {{ trip_budget.confirmed_spend }}
-                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ scenario.destination_currency.code }} · {{ trip_budget.basis_label|lower }}
                   {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
                 </p>
               {% endif %}
@@ -205,6 +299,39 @@
           </div>
         {% else %}
           <p class="qa-saved-empty">No confirmed spend has been added yet.</p>
+        {% endif %}
+        {% if scenario.budget_basis == "payment_estimate" %}
+          <details class="qa-source-details">
+            <summary>Saved payment assumptions</summary>
+            <dl class="qa-context-facts">
+              <div>
+                <dt>FX markup</dt>
+                <dd>
+                  {{ scenario.fx_markup_percent|floatformat:"-2" }}%
+                </dd>
+              </div>
+              <div>
+                <dt>Source fixed fee</dt>
+                <dd>
+                  {{ scenario.source_fixed_fee|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                </dd>
+              </div>
+              <div>
+                <dt>Destination fixed fee</dt>
+                <dd>
+                  {{ scenario.destination_fixed_fee|floatformat:"-12" }}
+                  {{ scenario.destination_currency.code }}
+                </dd>
+              </div>
+              <div>
+                <dt>Saved planning amount</dt>
+                <dd>
+                  {{ scenario.planning_destination_amount|floatformat:"-12" }}
+                  {{ scenario.destination_currency.code }}
+                </dd>
+              </div>
+            </dl>
+          </details>
         {% endif %}
         <p class="qa-saved-state__privacy">
           Re-checking the FX rate never changes this remaining-budget baseline. This is a planning
@@ -306,6 +433,43 @@
           No later distinct reference observation is stored yet. Re-checking is informational and
           does not recommend when to exchange money.
         </p>
+      {% endif %}
+      {% if observation_history %}
+        <details class="qa-reference-history">
+          <summary>
+            Reference-rate history · {{ observation_history_count }} stored observation{{ observation_history_count|pluralize }}
+          </summary>
+          <ol class="qa-reference-history__list">
+            {% for observation in observation_history %}
+              <li class="qa-reference-history__item{% if observation.pk == initial_observation.pk %} qa-reference-history__item--initial{% endif %}">
+                <div class="qa-reference-history__marker" aria-hidden="true"></div>
+                <div class="qa-reference-history__content">
+                  <div class="qa-reference-history__heading">
+                    <strong>
+                      {% if observation.kind == "initial" %}Initial saved reference{% else %}Re-check{% endif %}
+                    </strong>
+                    <span>{{ observation.recorded_at|date:"j M Y, H:i" }}</span>
+                  </div>
+                  <p>
+                    1 {{ scenario.source_currency.code }} =
+                    {{ observation.rate|floatformat:"-18" }} {{ scenario.destination_currency.code }}
+                  </p>
+                  <p class="qa-saved-row__meta">
+                    {{ observation.input_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                    → {{ observation.output_amount|floatformat:"-12" }} {{ scenario.destination_currency.code }}
+                    · effective {{ observation.effective_date|date:"j M Y" }}
+                    {% if observation.provider_keys %}· {{ observation.provider_keys|join:", " }}{% endif %}
+                    {% if observation.stale %}· stored stale{% endif %}
+                  </p>
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+          <p class="qa-saved-state__privacy">
+            Every distinct stored observation is immutable. This timeline is descriptive and does
+            not recommend when to exchange money.
+          </p>
+        </details>
       {% endif %}
       {% if initial_observation and latest_observation and initial_observation.pk != latest_observation.pk %}
         <p class="qa-saved-state__privacy">

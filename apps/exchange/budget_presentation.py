@@ -118,14 +118,11 @@ def build_budget_component(
         )
 
     save_payload = None
-    if (
-        interpretation is not None
-        and assumptions is not None
-        and interpretation.basis is BudgetBasis.REFERENCE_CONVERSION
-    ):
+    if interpretation is not None and assumptions is not None:
         save_payload = {
             "duration_days": assumptions.duration_days,
             "travelers": assumptions.travelers,
+            "payment_handoff_token": (payment_handoff_token if uses_payment_estimate else ""),
             "categories": tuple(
                 {
                     "field_name": BudgetInterpretationForm.units_field_name(item.category),

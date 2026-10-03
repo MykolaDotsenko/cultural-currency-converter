@@ -258,6 +258,9 @@ def build_result_component(
             if settings.AI_RUNTIME_EXPLANATION_ENABLED and not same_currency
             else None
         ),
+        "destination_context_state": (
+            money_context.destination_state.value if money_context is not None else ""
+        ),
         "budget_interpretation": budget_interpretation,
         "payment_estimate": (
             {
