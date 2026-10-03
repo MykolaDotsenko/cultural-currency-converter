@@ -553,6 +553,29 @@ def test_scenario_rejects_end_date_without_start_date(reference_data):
 
 
 @pytest.mark.django_db(transaction=True)
+def test_database_rejects_payment_adjusted_basis_on_non_budget_scenario(reference_data):
+    eur, jpy, _fi, jp, tokyo, _ = reference_data
+    user = User.objects.create_user(username="basis-db-owner", password="StrongPass-482!")
+
+    with pytest.raises(IntegrityError):
+        SavedScenario.objects.create(
+            user=user,
+            kind=SavedScenarioKind.TRIP,
+            title="Invalid payment-adjusted trip",
+            source_currency=eur,
+            destination_currency=jpy,
+            destination_country=jp,
+            destination_city=tokyo,
+            source_amount=Decimal("100"),
+            budget_basis=SavedScenarioBudgetBasis.PAYMENT_ESTIMATE,
+            planning_destination_amount=Decimal("16717"),
+            fx_markup_percent=Decimal("2"),
+            source_fixed_fee=Decimal("1"),
+            destination_fixed_fee=Decimal("220"),
+        )
+
+
+@pytest.mark.django_db(transaction=True)
 def test_database_rejects_trip_end_without_start_date(reference_data):
     eur, jpy, _fi, jp, tokyo, _ = reference_data
     user = User.objects.create_user(username="db-date-owner", password="StrongPass-482!")
