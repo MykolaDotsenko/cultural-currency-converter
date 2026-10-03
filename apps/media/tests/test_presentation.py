@@ -84,9 +84,9 @@ def test_historical_media_temporal_scope_is_visible_with_reviewed_precision():
     image = build_media_asset_image_view_model(asset)
     html = render_to_string("components/media/image_frame.html", {"image": image})
 
-    assert image.temporal_label == "1998–1998 · Year"
+    assert image.temporal_label == "1998 · Year"
     assert "qa-media__temporal" in html
-    assert "1998–1998 · Year" in html
+    assert "1998 · Year" in html
 
 
 def test_managed_media_focal_point_reaches_image_view_model():
