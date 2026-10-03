@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -8,7 +9,14 @@ from django.template.loader import render_to_string
 from django.test.utils import CaptureQueriesContext
 
 from apps.common.presentation.media_view_models import ImageViewModel
-from apps.media.models import MediaAsset, MediaKind, MediaRole, MediaSourceKind, MediaStatus
+from apps.media.models import (
+    DatePrecision,
+    MediaAsset,
+    MediaKind,
+    MediaRole,
+    MediaSourceKind,
+    MediaStatus,
+)
 from apps.media.presentation import (
     build_media_asset_image_view_model,
     select_media_for_display_roles,
@@ -54,6 +62,31 @@ def test_sourced_media_attribution_links_to_canonical_source():
 
     assert "Example Archive · CC BY-SA 4.0" in html
     assert 'href="https://commons.wikimedia.org/wiki/File:Example.jpg"' in html
+
+
+
+def test_historical_media_temporal_scope_is_visible_with_reviewed_precision():
+    asset = MediaAsset(
+        kind=MediaKind.ARCHIVAL_PHOTO,
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        role=MediaRole.HISTORICAL_TIMELINE,
+        title="Archive scene",
+        alt_text="Historical archive scene.",
+        storage_file="sourced/archive.webp",
+        width=1200,
+        height=900,
+        valid_from=date(1998, 1, 1),
+        valid_to=date(1998, 12, 31),
+        date_precision=DatePrecision.YEAR,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    image = build_media_asset_image_view_model(asset)
+    html = render_to_string("components/media/image_frame.html", {"image": image})
+
+    assert image.temporal_label == "1998–1998 · Year"
+    assert "qa-media__temporal" in html
+    assert "1998–1998 · Year" in html
 
 
 def test_managed_media_focal_point_reaches_image_view_model():
