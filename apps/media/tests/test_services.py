@@ -132,6 +132,29 @@ def test_candidate_service_rejects_incomplete_historical_scope_before_writes(eur
     assert not MediaAsset.objects.filter(external_id="historical-incomplete").exists()
 
 
+
+
+
+@pytest.mark.django_db
+def test_comparison_now_candidate_requires_explicit_currency_scope():
+    candidate = MediaCandidate(
+        source_kind=MediaSourceKind.WIKIMEDIA_COMMONS,
+        external_id="comparison-now-unscoped",
+        title="Unscoped current comparison",
+        source_name="Wikimedia Commons",
+        source_url="https://commons.wikimedia.org/wiki/File:Current.jpg",
+    )
+
+    with pytest.raises(ValueError, match="currency scope"):
+        upsert_media_candidates(
+            (candidate,),
+            role=MediaRole.COMPARISON_NOW,
+            kind=MediaKind.CONTEMPORARY_PHOTO,
+        )
+
+    assert not MediaAsset.objects.filter(external_id="comparison-now-unscoped").exists()
+
+
 @pytest.mark.django_db
 def test_comparison_candidate_service_rejects_country_scope(finland, euro):
     candidate = MediaCandidate(
@@ -527,6 +550,55 @@ def test_comparison_then_requires_explicit_currency_scope_before_approval(media_
 
     with pytest.raises(MediaPublicationError, match="currency scope"):
         approve_media_asset(asset)
+
+
+
+
+
+@pytest.mark.django_db
+def test_comparison_now_requires_explicit_currency_scope_before_approval(media_root):
+    asset = _sourced_asset(title="Unscoped current comparison", role=MediaRole.COMPARISON_NOW)
+    asset.kind = MediaKind.CONTEMPORARY_PHOTO
+    asset.valid_from = None
+    asset.valid_to = None
+    asset.date_precision = DatePrecision.UNKNOWN
+    attach_media_bytes(asset, _png_bytes((64, 65, 66)), filename="comparison-now.png")
+
+    with pytest.raises(MediaPublicationError, match="currency scope"):
+        approve_media_asset(asset)
+
+
+@pytest.mark.django_db
+def test_comparison_now_selector_is_strictly_currency_scoped(euro):
+    MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_NOW,
+        title="Generic current comparison",
+        storage_file="sourced/current-generic.webp",
+        width=1500,
+        height=1000,
+        status=MediaStatus.PUBLISHED,
+    )
+    scoped = MediaAsset.objects.create(
+        kind=MediaKind.CONTEMPORARY_PHOTO,
+        source_kind=MediaSourceKind.MANUAL,
+        role=MediaRole.COMPARISON_NOW,
+        currency=euro,
+        title="EUR current comparison",
+        storage_file="sourced/current-eur.webp",
+        width=1500,
+        height=1000,
+        status=MediaStatus.PUBLISHED,
+    )
+
+    selected = select_published_media(
+        role=MediaRole.COMPARISON_NOW,
+        currency=euro,
+    )
+
+    assert selected is not None
+    assert selected.asset.pk == scoped.pk
 
 
 @pytest.mark.django_db
