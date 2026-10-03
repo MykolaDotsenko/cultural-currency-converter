@@ -203,9 +203,15 @@
                         {% for price in item.prices %}
                           <div>
                             <p><strong>{{ price.label }}</strong></p>
-                            <p>{{ price.amount }} {{ price.currency_code }} · {{ price.scope }}</p>
                             <p>
-                              observed {{ price.observed }} ·
+                              <span class="qa-city-profile__scope-badge{% if not price.is_city_scope %} qa-city-profile__scope-badge--fallback{% endif %}">
+                                {% if price.is_city_scope %}City evidence{% else %}National fallback{% endif %}
+                              </span>
+                              {{ price.amount }} {{ price.currency_code }} · {{ price.scope }}
+                            </p>
+                            <p>
+                              observed {{ price.observed }} · {{ price.source_class }} ·
+                              {{ price.confidence }} confidence ·
                               <a href="{{ price.source_url }}">{{ price.source_name }}</a>
                             </p>
                           </div>
@@ -217,7 +223,10 @@
                         <p class="qa-field__label">Payment context</p>
                         <p>{{ item.payment_summary }}</p>
                         {% if item.payment_source_url %}
-                          <p><a href="{{ item.payment_source_url }}">Source: {{ item.payment_source_name }}</a></p>
+                          <p>
+                            Reviewed {{ item.payment_verified_at }} ·
+                            <a href="{{ item.payment_source_url }}">Source: {{ item.payment_source_name }}</a>
+                          </p>
                         {% endif %}
                       </div>
                     {% endif %}
