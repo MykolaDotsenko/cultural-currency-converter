@@ -1800,6 +1800,15 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     returningTripText.includes("does not refresh the FX rate automatically"),
     "returning-trip/e2e: home continuity omitted the no-auto-refresh trust boundary",
   );
+  assert(
+    (await returningTrip.getByRole("link", { name: "Open money context", exact: true }).count()) ===
+      1,
+    "returning-trip/e2e: canonical money-context re-entry disappeared when Camera is available",
+  );
+  assert(
+    (await returningTrip.getByRole("link", { name: "Scan a price", exact: true }).count()) === 1,
+    "returning-trip/e2e: Camera action is missing from the active continuity surface",
+  );
   await assertNoHorizontalOverflow(page, "returning-trip/e2e");
   await assertAxe(page, "returning-trip/e2e");
 }
@@ -2492,6 +2501,10 @@ async function assertSameAmountQuality(page) {
       "same-amount: canonical conversion action is missing",
     );
     assert(
+      (await card.locator(".qa-context-freshness-note").count()) === 1,
+      "same-amount: reviewed local-context availability/freshness is not explicit",
+    );
+    assert(
       (await card.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
       "same-amount: canonical budget action is missing",
     );
@@ -2533,6 +2546,14 @@ async function assertSameAmountQuality(page) {
       (await context.locator("a[href^='https://']").count()) > 0,
       "same-amount: opened local context lost provenance links",
     );
+    assert(
+      (await context.locator(".qa-city-profile__scope-badge").count()) > 0,
+      "same-amount: city-versus-national evidence scope is not explicitly labelled",
+    );
+    assert(
+      /confidence/i.test(await context.innerText()),
+      "same-amount: reviewed price confidence is not visible in provenance detail",
+    );
   }
 
   await assertPremiumResponsiveTargets(
@@ -2547,6 +2568,10 @@ async function assertCityProfileQuality(page) {
 
   const priceCards = page.locator(".qa-city-profile__price-card");
   assert((await priceCards.count()) > 0, "city-profile: expected at least one reviewed price card");
+  assert(
+    (await page.getByText("Context assembled as of", { exact: false }).count()) === 1,
+    "city-profile: current context assembly date is not visible",
+  );
   assert(
     (await page.locator(".qa-city-profile__hero-actions .qa-primary-button").count()) === 1,
     "city-profile: hero must expose exactly one primary action",
@@ -2830,6 +2855,42 @@ async function assertDestinationComparisonQuality(page) {
   const results = page.locator(".qa-destination-comparison__results");
   await results.waitFor();
   await results.getByText("No winner is calculated.", { exact: true }).waitFor();
+  assert(
+    (await page.getByRole("link", { name: "Explore", exact: true }).count()) === 1,
+    "destination-comparison: Explore discovery handoff is missing",
+  );
+  const assumptionNote = results.getByLabel("Shared comparison assumptions");
+  await assumptionNote.waitFor();
+  const assumptionText = await assumptionNote.innerText();
+  assert(
+    /Coffee 1\/person\/day/i.test(assumptionText) &&
+      /Casual Meal 2\/person\/day/i.test(assumptionText) &&
+      /Transit 2\/person\/day/i.test(assumptionText),
+    `destination-comparison: explicit shared basket assumptions are incomplete: ${assumptionText}`,
+  );
+  const sides = results.locator(".qa-destination-comparison-side");
+  assert(
+    (await sides.count()) === 2,
+    `destination-comparison: expected two result sides, found ${await sides.count()}`,
+  );
+  for (const side of await sides.all()) {
+    assert(
+      (await side.locator(".qa-context-freshness-note").count()) === 1,
+      "destination-comparison: local-context availability/freshness is not explicit per side",
+    );
+    assert(
+      (await side.getByRole("link", { name: "Open conversion", exact: true }).count()) === 1,
+      "destination-comparison: canonical conversion handoff is missing on a side",
+    );
+    assert(
+      (await side.getByRole("link", { name: "Build budget", exact: true }).count()) === 1,
+      "destination-comparison: canonical budget handoff is missing on a side",
+    );
+  }
+  assert(
+    (await sides.first().getByRole("link", { name: "City money profile", exact: true }).count()) === 1,
+    "destination-comparison: city-scoped side lost its City Money Profile handoff",
+  );
   const deterministicBeforeAi = await results
     .locator(".qa-destination-comparison__grid")
     .innerText();
