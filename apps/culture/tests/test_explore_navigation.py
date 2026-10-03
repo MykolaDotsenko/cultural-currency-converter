@@ -8,6 +8,7 @@ import pytest
 from django.core.management import call_command
 from django.urls import reverse
 
+from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country
 from apps.culture.explore import build_explore_destinations
 from apps.culture.explore_collections import build_explore_collections
@@ -109,6 +110,45 @@ def test_regional_presentation_preserves_canonical_converter_and_profile_handoff
     city_compare_url = urlparse(str(tokyo["comparison_url"]))
     assert city_compare_url.path == reverse("destination_comparison")
     assert parse_qs(city_compare_url.query)["left_destination"] == ["JP:tokyo"]
+
+
+
+@pytest.mark.django_db
+def test_collection_presentation_uses_curated_country_teaser_without_changing_actions(
+    seeded_explore_ux,
+):
+    destinations = build_explore_destinations(as_of=AS_OF, limit=24)
+    collections = build_explore_collections(
+        as_of=AS_OF,
+        item_limit=6,
+        destinations=destinations,
+    )
+    teaser = ImageViewModel(
+        src="/media/japan-teaser.webp",
+        ratio="4 / 3",
+        alt="Reviewed Japan destination teaser.",
+        decorative=False,
+        kind="contemporary_photo",
+        label="Japan teaser",
+        width=1200,
+        height=900,
+    )
+
+    components = build_explore_collection_components(
+        collections,
+        selected_date=AS_OF,
+        teaser_media_by_country={"JP": teaser},
+    )
+
+    japan_items = [
+        item
+        for component in components
+        for item in component["items"]
+        if item["country_codes"] == ("JP",)
+    ]
+    assert japan_items
+    assert all(item["teaser_image"] is teaser for item in japan_items)
+    assert all(item["action_url"] for item in japan_items)
 
 
 @pytest.mark.django_db
