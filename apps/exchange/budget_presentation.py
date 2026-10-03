@@ -62,11 +62,7 @@ def build_budget_component(
     category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
     budget_form = form or BudgetInterpretationForm(category_options=category_options)
     budget_token = token or build_budget_context_snapshot_token(context)
-    budget_basis = (
-        interpretation.basis
-        if interpretation is not None
-        else budget_form.budget_basis
-    )
+    budget_basis = interpretation.basis if interpretation is not None else budget_form.budget_basis
     uses_payment_estimate = budget_basis is BudgetBasis.PAYMENT_ESTIMATE
     if uses_payment_estimate and context.payment_estimate is None:
         raise ValueError("Payment-estimate budget presentation requires a payment estimate.")
@@ -99,9 +95,7 @@ def build_budget_component(
                         else "National evidence"
                     )
                 ),
-                "scope_is_fallback": bool(
-                    context.destination_city_slug and not anchor.city_slug
-                ),
+                "scope_is_fallback": bool(context.destination_city_slug and not anchor.city_slug),
                 "observed_at": date_format(anchor.observed_at, "j M Y"),
                 "source_class": anchor.source_class.replace("_", " ").capitalize(),
                 "source_name": anchor.source_name,
@@ -249,9 +243,7 @@ def build_budget_component(
                 context.payment_estimate.destination_value_lost,
                 minor_units=destination_minor_units,
             ),
-            "fx_markup_percent": _decimal_text(
-                context.payment_estimate.fx_markup_percent
-            ),
+            "fx_markup_percent": _decimal_text(context.payment_estimate.fx_markup_percent),
             "source_fixed_fee": _decimal_text(context.payment_estimate.source_fixed_fee),
             "destination_fixed_fee": _money_text(
                 context.payment_estimate.destination_fixed_fee,
@@ -265,9 +257,7 @@ def build_budget_component(
         "payment_handoff_token": payment_handoff_token,
         "basis": budget_basis.value,
         "basis_label": (
-            "Payment-adjusted estimate"
-            if uses_payment_estimate
-            else "Reference conversion"
+            "Payment-adjusted estimate" if uses_payment_estimate else "Reference conversion"
         ),
         "form": budget_form,
         "fields": tuple(fields),
