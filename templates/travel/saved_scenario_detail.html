@@ -66,6 +66,40 @@
         Remaining budget is anchored to the immutable initial saved FX observation. Rate re-checks
         are informational and never move this spending baseline.
       </p>
+      <details class="qa-offline-pack-preview">
+        <summary>What the offline money pack contains</summary>
+        <div class="qa-offline-pack-preview__grid">
+          <div>
+            <span>Stored FX reference</span>
+            <strong>
+              {% if latest_observation %}
+                {{ latest_observation.output_amount|floatformat:"-12" }}
+                {{ scenario.destination_currency.code }}
+              {% else %}
+                Saved scenario reference
+              {% endif %}
+            </strong>
+          </div>
+          <div>
+            <span>Trip budget</span>
+            <strong>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</strong>
+          </div>
+          <div>
+            <span>Local money guide</span>
+            <strong>Reviewed prices &amp; payment context when available</strong>
+          </div>
+          <div>
+            <span>Freshness model</span>
+            <strong>Stored snapshot · never silently refreshes offline</strong>
+          </div>
+        </div>
+        <p class="qa-trip-money-pass__trust">
+          The self-contained HTML is assembled only when you download it. It includes no receipt
+          image, merchant identity, account/card data or purchase description.
+        </p>
+        <a class="qa-secondary-button"
+           href="{% url 'download_offline_destination_pack' scenario.pk %}">Save offline copy</a>
+      </details>
     </section>
   {% endif %}
   <div class="qa-saved-state">
