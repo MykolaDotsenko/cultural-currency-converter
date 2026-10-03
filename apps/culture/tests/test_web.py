@@ -114,6 +114,7 @@ def _story_query(**overrides):
     query.update(overrides)
     return query
 
+
 @pytest.mark.django_db
 def test_converter_exposes_progressive_story_entry_without_calling_story_service(
     client,
@@ -137,6 +138,7 @@ def test_converter_exposes_progressive_story_entry_without_calling_story_service
     assert b"/story/?" in response.content
     composer.assert_not_called()
 
+
 @pytest.mark.django_db
 def test_htmx_story_returns_fragment_with_deterministic_currency_eras(client, reference_data):
     response = client.get(
@@ -155,6 +157,7 @@ def test_htmx_story_returns_fragment_with_deterministic_currency_eras(client, re
     assert b"historical purchasing power" in response.content
     assert b"Missing facts are not filled in" not in response.content
 
+
 @pytest.mark.django_db
 def test_no_javascript_story_returns_full_page(client, reference_data):
     response = client.get(reverse("money_culture_story"), _story_query())
@@ -165,6 +168,7 @@ def test_no_javascript_story_returns_full_page(client, reference_data):
     assert b"Which currency relationship applies here" in response.content
     assert b"Back to converter" in response.content
     assert b"Explore destinations" in response.content
+
 
 @pytest.mark.django_db
 def test_current_destination_context_htmx_is_explicitly_current(client, reference_data):
@@ -184,6 +188,7 @@ def test_current_destination_context_htmx_is_explicitly_current(client, referenc
     assert b'aria-label="Explore conversion context"' not in response.content
     assert "HX-Request" in response.get("Vary", "")
 
+
 @pytest.mark.django_db
 def test_current_destination_context_without_javascript_is_full_page(client, reference_data):
     _seed_current_destination_context(reference_data)
@@ -197,6 +202,7 @@ def test_current_destination_context_without_javascript_is_full_page(client, ref
     assert b"<html" in response.content
     assert b"Current context, separate from historical FX" in response.content
     assert b"Back to converter" in response.content
+
 
 @pytest.mark.django_db
 def test_invalid_current_destination_context_query_is_400_without_composition(
@@ -214,6 +220,7 @@ def test_invalid_current_destination_context_query_is_400_without_composition(
     assert b"request is not valid" in response.content
     builder.assert_not_called()
 
+
 @pytest.mark.django_db
 def test_current_destination_context_failure_is_local_and_htmx_visible(client, reference_data):
     with patch(
@@ -230,6 +237,7 @@ def test_current_destination_context_failure_is_local_and_htmx_visible(client, r
     assert b"temporarily unavailable" in response.content
     assert b"The historical conversion remains valid" in response.content
 
+
 @pytest.mark.django_db
 def test_current_destination_context_programming_error_is_not_silenced(client, reference_data):
     with (
@@ -244,6 +252,7 @@ def test_current_destination_context_programming_error_is_not_silenced(client, r
             {"country": "JP", "currency": "JPY", "amount": "17450"},
             HTTP_HX_REQUEST="true",
         )
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -267,6 +276,7 @@ def test_story_cover_media_failure_keeps_story_available(client, reference_data,
     assert any(
         record.msg == "Money and culture story cover media unavailable" for record in caplog.records
     )
+
 
 @pytest.mark.django_db
 def test_reviewed_story_fact_appears_with_source_link(client, reference_data):
@@ -299,6 +309,7 @@ def test_reviewed_story_fact_appears_with_source_link(client, reference_data):
     assert b"A reviewed sourced transition." in response.content
     assert b"https://example.org/euro" in response.content
     assert b"European Commission" in response.content
+
 
 
 @pytest.mark.django_db
@@ -367,6 +378,7 @@ def test_reviewed_story_chapter_renders_period_media_and_source_review_details(
     assert b"story-1999" in response.content
     assert b"Explicitly supported by reviewed source material" in response.content
 
+
 @pytest.mark.django_db
 def test_unpublished_story_fact_never_appears(client, reference_data):
     fi, _jp, _eur, _jpy = reference_data
@@ -390,6 +402,7 @@ def test_unpublished_story_fact_never_appears(client, reference_data):
 
     assert b"Draft-only fact" not in response.content
     assert b"This must stay hidden" not in response.content
+
 
 @pytest.mark.django_db
 def test_historical_story_excludes_fact_outside_selected_date(client, reference_data):
@@ -420,6 +433,7 @@ def test_historical_story_excludes_fact_outside_selected_date(client, reference_
 
     assert b"2002 changeover" not in response.content
 
+
 @pytest.mark.django_db
 def test_invalid_story_query_is_400_and_does_not_call_composer(client, reference_data):
     with patch("apps.culture.views.compose_story") as composer:
@@ -432,6 +446,7 @@ def test_invalid_story_query_is_400_and_does_not_call_composer(client, reference
     assert response.status_code == 400
     assert b"not valid" in response.content
     composer.assert_not_called()
+
 
 @pytest.mark.django_db
 def test_current_story_ignores_tampered_old_date_and_normalizes_to_today(client, reference_data):
@@ -459,6 +474,7 @@ def test_current_story_ignores_tampered_old_date_and_normalizes_to_today(client,
     assert captured["request"].selected_date == timezone.localdate()
     assert captured["request"].historical is False
 
+
 @pytest.mark.django_db
 def test_future_historical_story_date_is_rejected(client, reference_data):
     future = (timezone.localdate().replace(year=timezone.localdate().year + 1)).isoformat()
@@ -469,6 +485,7 @@ def test_future_historical_story_date_is_rejected(client, reference_data):
     )
 
     assert response.status_code == 400
+
 
 @pytest.mark.django_db
 def test_composer_failure_degrades_to_story_only_error_not_conversion_failure(
@@ -485,6 +502,7 @@ def test_composer_failure_degrades_to_story_only_error_not_conversion_failure(
     assert response.status_code == 200
     assert b"temporarily unavailable" in response.content
     assert b"The conversion remains valid" in response.content
+
 
 @pytest.mark.django_db
 def test_story_composer_programming_error_is_not_silenced(client, reference_data):
