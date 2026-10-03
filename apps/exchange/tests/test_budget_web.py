@@ -210,7 +210,8 @@ def test_payment_adjusted_budget_handoff_preserves_explicit_basis(
     result = interpreted.context["budget_interpretation"]
     assert result["basis"] == "payment_estimate"
     assert result["result"]["available_budget"] == "16717"
-    assert b"Reference FX value: 17450 JPY" in interpreted.content
+    interpreted_text = " ".join(interpreted.content.decode("utf-8").split())
+    assert "Reference FX value: 17450 JPY" in interpreted_text
 
 
 @pytest.mark.django_db
