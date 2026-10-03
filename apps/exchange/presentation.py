@@ -262,6 +262,9 @@ def build_result_component(
         "payment_estimate": (
             {
                 "token": trusted_snapshot_token,
+                "budget_context_token": (
+                    budget_interpretation["token"] if budget_interpretation is not None else ""
+                ),
                 "form": payment_estimate_form,
                 "source_currency": result.quote.base_currency,
                 "destination_currency": result.quote.quote_currency,
