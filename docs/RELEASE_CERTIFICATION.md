@@ -6,8 +6,9 @@ The functional roadmap is complete: the current product includes all 36 scoped r
 
 ## Candidate baseline
 
-- Feature-complete master before this certification pass: `495ce394d6fa31148d173039859c699fd2892cae`.
-- Final release SHA: record the post-merge `master` SHA here when the certification PR is merged.
+- Feature-complete master before the final certification pass: `495ce394d6fa31148d173039859c699fd2892cae`.
+- Final certification implementation merge (#217) produced `650d07729b8ed91c9380394d2ed4ad6e478b0dca` before this documentation-truth closeout.
+- The **actual release/deployment SHA must be recorded in immutable release evidence outside this self-referential source file**. Do not try to hard-code this file's own containing commit as "the final SHA"; any such edit creates a new SHA.
 - Repository issue snapshot during certification preparation: **0 open issues, 0 open P0, 0 open P1**.
 - Final P0/P1 query must be repeated immediately before release.
 

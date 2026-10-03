@@ -10,9 +10,11 @@ It is an execution and release-readiness plan, not a replacement for the product
 
 ## Current baseline
 
-The plan was originally created from an earlier repository baseline. It is now synchronized through `master`:
+The plan was originally created from an earlier repository baseline. The feature-complete baseline immediately before the final release-certification pass was:
 
 `495ce394d6fa31148d173039859c699fd2892cae`
+
+Current release identity is tracked by Git/release evidence rather than hard-coded here, because editing this document necessarily creates a new commit SHA.
 
 The current product already includes:
 
