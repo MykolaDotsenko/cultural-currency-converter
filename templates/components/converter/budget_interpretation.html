@@ -16,16 +16,34 @@
           travelers and how many reference items to include per person each day.
         </p>
       </div>
-      <p class="qa-budget-interpretation__reference">
-        Reference: {{ budget_interpretation.reference_amount }} {{ budget_interpretation.currency_code }}
-      </p>
+      <div class="qa-budget-interpretation__reference">
+        <p>{{ budget_interpretation.basis_label }}</p>
+        <strong>{{ budget_interpretation.planning_amount }} {{ budget_interpretation.currency_code }}</strong>
+        {% if budget_interpretation.basis == "payment_estimate" %}
+          <span>
+            Reference FX value: {{ budget_interpretation.reference_amount }}
+            {{ budget_interpretation.currency_code }}
+          </span>
+        {% endif %}
+      </div>
     </div>
+    {% if budget_interpretation.payment_estimate %}
+      <div class="qa-context-freshness-note" role="status">
+        Planning uses your signed payment assumptions:
+        {{ budget_interpretation.payment_estimate.fx_markup_percent }}% FX markup ·
+        {{ budget_interpretation.payment_estimate.source_fixed_fee }}
+        {{ budget_interpretation.payment_estimate.source_currency }} source fee ·
+        {{ budget_interpretation.payment_estimate.destination_fixed_fee }}
+        {{ budget_interpretation.currency_code }} destination fee.
+        The reference FX result remains unchanged.
+      </div>
+    {% endif %}
     {% if budget_interpretation.result %}
       {% with result=budget_interpretation.result %}
         <div class="qa-budget-interpretation__result" aria-live="polite">
           <div class="qa-budget-interpretation__result-heading">
             <div>
-              <p class="qa-foundation-kicker">Reference-basket comparison</p>
+              <p class="qa-foundation-kicker">{{ budget_interpretation.basis_label }} · reference-basket comparison</p>
               {% if result.complete %}
                 <p class="qa-budget-interpretation__band">{{ result.band_label }}</p>
               {% else %}
@@ -174,6 +192,11 @@
       <input type="hidden"
              name="budget_context_token"
              value="{{ budget_interpretation.token }}">
+      {% if budget_interpretation.payment_handoff_token %}
+        <input type="hidden"
+               name="payment_budget_token"
+               value="{{ budget_interpretation.payment_handoff_token }}">
+      {% endif %}
       {% if budget_interpretation.form.non_field_errors %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
           <p>{{ budget_interpretation.form.non_field_errors.0 }}</p>
