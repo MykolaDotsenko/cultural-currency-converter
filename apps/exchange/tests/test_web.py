@@ -184,7 +184,6 @@ def payload(**overrides):
     values.update(overrides)
     return values
 
-
 @pytest.mark.django_db
 def test_initial_page_does_not_request_rate(client, reference_data):
     with patch("apps.exchange.views.build_latest_quote_gateway") as factory:
