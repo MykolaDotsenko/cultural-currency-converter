@@ -7,7 +7,8 @@ The functional roadmap is complete: the current product includes all 36 scoped r
 ## Candidate baseline
 
 - Feature-complete master before the final certification pass: `495ce394d6fa31148d173039859c699fd2892cae`.
-- Final certification implementation merge (#217) produced `650d07729b8ed91c9380394d2ed4ad6e478b0dca` before this documentation-truth closeout.
+- Final certification implementation merge (#217) produced `650d07729b8ed91c9380394d2ed4ad6e478b0dca` before the later frontend-completeness work.
+- Historical media/provenance completion PR #224 passed its full required matrix on head `39fa79deb5081a9754a1869ecdd6ebfbec99d44e` and merged to `master` as `e2131f1a66bee66498395ee7fba2c2c1058ce291`.
 - The **actual release/deployment SHA must be recorded in immutable release evidence outside this self-referential source file**. Do not try to hard-code this file's own containing commit as "the final SHA"; any such edit creates a new SHA.
 - Repository issue snapshot checked on **2026-10-03**: **0 open issues, 0 open P0, 0 open P1**.
 - Repository hygiene snapshot checked on **2026-10-03**: **0 TODO and 0 FIXME code-search hits**.
@@ -27,6 +28,8 @@ The final certification implementation branch head `71b54988da10fe163a9f90413d95
 - Quiet Atlas shell preview: run `37096108375` — success.
 
 Post-merge `master` quality for PR #217 also completed successfully on Python/PostgreSQL, Frontend, Chromium full, Firefox smoke and WebKit smoke.
+
+The later PR #224 head completed Required merge quality, Python quality, Frontend quality, Chromium/Firefox/WebKit Browser quality, Converter primitive preview and Quiet Atlas shell preview successfully before merge. The merge commit itself does not have a separate duplicate workflow run, so the PR-head evidence remains the exact code-quality evidence for that change set.
 
 ## Repository-side scorecard
 
@@ -48,7 +51,7 @@ Post-merge `master` quality for PR #217 also completed successfully on Python/Po
 
 ## Deployment-side evidence still required
 
-A read-only Render audit on **2026-10-03** found that the configured Cultural Currency Converter web service tracks `master`, but its current live deploy (`dep-davuj0rtqb8s73ds11c0`) still points to repository commit `75cf9a7e337f1de15a4e80549cdee9b5621effc7`. The repository-side certification implementation is newer (`650d07729b8ed91c9380394d2ed4ad6e478b0dca`, followed by documentation-only certification truth updates). Therefore the hosted service is **not the current release candidate** and cannot supply final RC smoke evidence yet.
+A read-only Render audit on **2026-10-03** previously proved that the hosted service could lag materially behind `master`. That exact old-deploy observation is intentionally not treated as timeless release evidence. Deployment truth must be re-read from Render for the current release attempt and recorded outside this self-referential source file together with the deployed commit/deploy ID.
 
 The following cannot be honestly certified from repository CI alone:
 
