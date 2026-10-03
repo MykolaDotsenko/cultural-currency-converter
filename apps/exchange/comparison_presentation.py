@@ -133,6 +133,7 @@ def _side_component(
                     "category": line.category,
                     "label": line.label,
                     "scope_label": line.scope_label,
+                    "scope_kind": line.scope.value,
                     "units": _decimal_text(line.units_per_person_per_day),
                     "daily_low": _money_text(
                         line.per_person_daily_low,
@@ -145,7 +146,8 @@ def _side_component(
                     "total_low": _money_text(line.total_low, minor_units=minor_units),
                     "total_high": _money_text(line.total_high, minor_units=minor_units),
                     "observed_at": date_format(line.observed_at, "j M Y"),
-                    "confidence": line.confidence,
+                    "confidence": line.confidence.capitalize(),
+                    "source_class": line.source_class.replace("_", " ").capitalize(),
                     "source_name": line.source_name,
                     "source_url": line.source_url,
                 }
