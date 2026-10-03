@@ -300,7 +300,6 @@ def test_reviewed_story_fact_appears_with_source_link(client, reference_data):
     assert b"https://example.org/euro" in response.content
     assert b"European Commission" in response.content
 
-
 @pytest.mark.django_db
 def test_reviewed_story_chapter_renders_period_media_and_source_review_details(
     client,
