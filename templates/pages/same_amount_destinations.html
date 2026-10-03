@@ -224,19 +224,44 @@
                         <p>{{ item.payment_summary }}</p>
                         <dl class="qa-payment-guide__list">
                           {% if item.payment_customs %}
-                            <div><dt>Cards</dt><dd>{{ item.payment_customs }}</dd></div>
+                            <div>
+                              <dt>Cards</dt>
+                              <dd>
+                                {{ item.payment_customs }}
+                              </dd>
+                            </div>
                           {% endif %}
                           {% if item.cash_usage %}
-                            <div><dt>Cash</dt><dd>{{ item.cash_usage }}</dd></div>
+                            <div>
+                              <dt>Cash</dt>
+                              <dd>
+                                {{ item.cash_usage }}
+                              </dd>
+                            </div>
                           {% endif %}
                           {% if item.atm_notes %}
-                            <div><dt>ATMs</dt><dd>{{ item.atm_notes }}</dd></div>
+                            <div>
+                              <dt>ATMs</dt>
+                              <dd>
+                                {{ item.atm_notes }}
+                              </dd>
+                            </div>
                           {% endif %}
                           {% if item.tipping %}
-                            <div><dt>Tipping</dt><dd>{{ item.tipping }}</dd></div>
+                            <div>
+                              <dt>Tipping</dt>
+                              <dd>
+                                {{ item.tipping }}
+                              </dd>
+                            </div>
                           {% endif %}
                           {% if item.dcc_warning %}
-                            <div><dt>DCC</dt><dd>{{ item.dcc_warning }}</dd></div>
+                            <div>
+                              <dt>DCC</dt>
+                              <dd>
+                                {{ item.dcc_warning }}
+                              </dd>
+                            </div>
                           {% endif %}
                         </dl>
                         {% if item.payment_source_url %}
