@@ -644,7 +644,10 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     validEstimateResponse.status() === 200,
     `current-converter: payment estimate returned ${validEstimateResponse.status()} instead of 200`,
   );
-  await page.getByText("Estimated destination value", { exact: true }).waitFor();
+  await page
+    .locator(".qa-payment-estimate__result > div > .qa-foundation-kicker")
+    .filter({ hasText: /^Estimated destination value$/ })
+    .waitFor();
   await page
     .getByText("This is a scenario estimate, not a bank/card/ATM quote.", {
       exact: false,
