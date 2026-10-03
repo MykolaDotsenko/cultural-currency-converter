@@ -63,8 +63,14 @@
            href="{% url 'download_offline_destination_pack' scenario.pk %}">Offline money pack</a>
       </div>
       <p class="qa-trip-money-pass__trust">
-        Remaining budget is anchored to the immutable initial saved FX observation. Rate re-checks
-        are informational and never move this spending baseline.
+        {% if scenario.budget_basis == "payment_estimate" %}
+          Remaining budget is anchored to the payment-adjusted amount you explicitly saved.
+          The raw FX observation stays visible separately, and later rate re-checks never move
+          this spending baseline.
+        {% else %}
+          Remaining budget is anchored to the immutable initial saved FX observation. Rate re-checks
+          are informational and never move this spending baseline.
+        {% endif %}
       </p>
       <details class="qa-offline-pack-preview">
         <summary>What the offline money pack contains</summary>
@@ -195,8 +201,13 @@
             <h2 id="scenario-trip-budget-title">Trip budget remaining</h2>
             <p>
               This is a lightweight reference budget in {{ scenario.destination_currency.code }}.
-              It subtracts only amounts you explicitly confirm and keeps the original saved FX
-              observation as the baseline.
+              It subtracts only amounts you explicitly confirm.
+              {% if scenario.budget_basis == "payment_estimate" %}
+                The spending baseline is the deterministic payment-adjusted amount saved from your
+                explicit fee assumptions; the original FX observation remains separate evidence.
+              {% else %}
+                The original saved FX observation remains the spending baseline.
+              {% endif %}
             </p>
           </div>
         </div>
@@ -210,14 +221,14 @@
                 </h3>
                 <p>
                   Confirmed spend {{ trip_budget.confirmed_spend }}
-                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ scenario.destination_currency.code }} · {{ trip_budget.basis_label|lower }}
                   {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
                 </p>
               {% else %}
                 <h3>{{ trip_budget.remaining }} {{ scenario.destination_currency.code }} remaining</h3>
                 <p>
                   Confirmed spend {{ trip_budget.confirmed_spend }}
-                  {{ scenario.destination_currency.code }} · saved reference budget
+                  {{ scenario.destination_currency.code }} · {{ trip_budget.basis_label|lower }}
                   {{ trip_budget.reference_budget }} {{ scenario.destination_currency.code }}.
                 </p>
               {% endif %}
@@ -288,6 +299,37 @@
           </div>
         {% else %}
           <p class="qa-saved-empty">No confirmed spend has been added yet.</p>
+        {% endif %}
+        {% if scenario.budget_basis == "payment_estimate" %}
+          <details class="qa-source-details">
+            <summary>Saved payment assumptions</summary>
+            <dl class="qa-context-facts">
+              <div>
+                <dt>FX markup</dt>
+                <dd>{{ scenario.fx_markup_percent|floatformat:"-2" }}%</dd>
+              </div>
+              <div>
+                <dt>Source fixed fee</dt>
+                <dd>
+                  {{ scenario.source_fixed_fee|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                </dd>
+              </div>
+              <div>
+                <dt>Destination fixed fee</dt>
+                <dd>
+                  {{ scenario.destination_fixed_fee|floatformat:"-12" }}
+                  {{ scenario.destination_currency.code }}
+                </dd>
+              </div>
+              <div>
+                <dt>Saved planning amount</dt>
+                <dd>
+                  {{ scenario.planning_destination_amount|floatformat:"-12" }}
+                  {{ scenario.destination_currency.code }}
+                </dd>
+              </div>
+            </dl>
+          </details>
         {% endif %}
         <p class="qa-saved-state__privacy">
           Re-checking the FX rate never changes this remaining-budget baseline. This is a planning
