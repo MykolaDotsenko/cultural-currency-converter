@@ -735,9 +735,7 @@ def select_published_country_media(
     candidates = tuple(queryset.select_related("country", "currency"))
     selected: dict[str, SelectedMedia] = {}
     for country in unique_countries:
-        eligible = tuple(
-            asset for asset in candidates if asset.country_id in {None, country.pk}
-        )
+        eligible = tuple(asset for asset in candidates if asset.country_id in {None, country.pk})
         if not eligible:
             continue
         winner = max(
