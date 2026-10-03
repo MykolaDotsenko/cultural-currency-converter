@@ -50,7 +50,9 @@
                   <h4>{{ chapter.title }}</h4>
                 </div>
                 <p>{{ chapter.body }}</p>
-                <p class="qa-story-chapter__meta">Temporal scope: {{ chapter.temporal_scope }}</p>
+                <p class="qa-story-chapter__meta">
+                  Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
+                </p>
                 {% if chapter.source_refs %}
                   <details class="qa-source-details qa-story-source-details">
                     <summary>Era source &amp; scope</summary>
@@ -85,7 +87,10 @@
                   <h4>{{ chapter.title }}</h4>
                 </div>
                 <p>{{ chapter.body }}</p>
-                <p class="qa-story-chapter__meta">Temporal scope: {{ chapter.temporal_scope }}</p>
+                <p class="qa-story-chapter__meta">
+                  Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
+                  {% if chapter.causal_support %}· source-reviewed causal wording{% endif %}
+                </p>
                 {% if chapter.source_refs %}
                   <details class="qa-source-details qa-story-source-details">
                     <summary>Source &amp; scope</summary>
