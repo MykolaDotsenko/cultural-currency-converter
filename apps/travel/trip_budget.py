@@ -28,7 +28,6 @@ class TripBudgetSummary:
         return self.over_reference > 0
 
 
-
 def resolve_trip_budget_reference(
     *,
     budget_basis: str,
@@ -49,9 +48,7 @@ def resolve_trip_budget_reference(
     )
     if budget_basis == "reference_conversion":
         if planning_destination_amount is not None:
-            raise ValueError(
-                "Reference-conversion budget cannot carry a separate planning amount."
-            )
+            raise ValueError("Reference-conversion budget cannot carry a separate planning amount.")
         return initial_destination_amount
     if budget_basis != "payment_estimate":
         raise ValueError("Saved budget basis is unsupported.")
