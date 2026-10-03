@@ -50,6 +50,7 @@ from apps.travel.scenarios import (
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
+    resolve_trip_budget_reference,
 )
 
 logger = logging.getLogger("cultural_currency.travel")
@@ -219,8 +220,13 @@ def _scenario_trip_budget_component(
         context.prec = 64
         confirmed_spend = sum((entry.amount for entry in spend_entries), Decimal("0"))
     try:
+        reference_budget = resolve_trip_budget_reference(
+            budget_basis=scenario.budget_basis,
+            initial_destination_amount=initial_observation.output_amount,
+            planning_destination_amount=scenario.planning_destination_amount,
+        )
         summary = calculate_trip_budget_summary(
-            reference_budget=initial_observation.output_amount,
+            reference_budget=reference_budget,
             confirmed_spend=confirmed_spend,
             duration_days=scenario.duration_days,
             travel_start_date=scenario.travel_start_date,
