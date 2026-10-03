@@ -6,7 +6,27 @@ import pytest
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
+    resolve_trip_budget_reference,
 )
+
+
+def test_payment_adjusted_reference_uses_saved_planning_amount_without_moving_raw_fx():
+    reference = resolve_trip_budget_reference(
+        budget_basis="payment_estimate",
+        initial_destination_amount=Decimal("104700"),
+        planning_destination_amount=Decimal("101292"),
+    )
+
+    assert reference == Decimal("101292")
+
+
+def test_reference_conversion_rejects_parallel_planning_amount():
+    with pytest.raises(ValueError, match="cannot carry"):
+        resolve_trip_budget_reference(
+            budget_basis="reference_conversion",
+            initial_destination_amount=Decimal("104700"),
+            planning_destination_amount=Decimal("101292"),
+        )
 
 
 def test_unscheduled_budget_uses_explicit_planning_duration():
