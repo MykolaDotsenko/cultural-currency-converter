@@ -44,7 +44,11 @@ def _budget_url(item: SameAmountDestinationSnapshot) -> str:
     return f"{reverse('destination_mode')}?{urlencode({'destination': item.token})}"
 
 
-def _price_component(price) -> dict[str, object]:
+def _price_component(
+    price,
+    *,
+    destination_city_slug: str,
+) -> dict[str, object]:
     high = (
         _money_text(price.amount_high, minor_units=price.currency_minor_units)
         if price.amount_high is not None and price.amount_high != price.amount_low
@@ -58,6 +62,12 @@ def _price_component(price) -> dict[str, object]:
         "currency_code": price.currency_code,
         "scope": price.scope_label,
         "is_city_scope": bool(price.city_slug),
+        "scope_badge": (
+            "City evidence"
+            if price.city_slug
+            else ("National fallback" if destination_city_slug else "National evidence")
+        ),
+        "scope_is_fallback": bool(destination_city_slug and not price.city_slug),
         "observed": date_format(price.observed_at, "j M Y"),
         "source_class": price.source_class.replace("_", " ").capitalize(),
         "confidence": price.confidence.capitalize(),
@@ -76,7 +86,13 @@ def _destination_component(
     quote = conversion.quote
     destination_context = item.context.destination_context
     payment = item.context.payment_guidance
-    prices = tuple(_price_component(price) for price in item.context.local_value[:3])
+    prices = tuple(
+        _price_component(
+            price,
+            destination_city_slug=item.city_slug,
+        )
+        for price in item.context.local_value[:3]
+    )
 
     city_profile_url = ""
     if item.city_slug:
