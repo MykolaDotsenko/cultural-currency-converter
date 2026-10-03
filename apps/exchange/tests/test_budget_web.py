@@ -150,7 +150,6 @@ def _signed_budget_context() -> str:
     )
     return build_budget_context_snapshot_token(context)
 
-
 @pytest.mark.django_db
 def test_current_conversion_offers_budget_interpretation_from_sourced_anchors(
     client,
