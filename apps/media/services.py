@@ -56,6 +56,7 @@ class SelectedMedia:
 
 
 _HISTORICAL_ROLES = {
+    MediaRole.STORY_CHAPTER,
     MediaRole.COMPARISON_THEN,
     MediaRole.HISTORICAL_TIMELINE,
 }
@@ -69,7 +70,9 @@ _CURRENCY_SCOPED_ROLES = {
     MediaRole.COMPARISON_THEN,
 }
 _DATE_SCOPED_ROLES = {
+    MediaRole.STORY_CHAPTER,
     MediaRole.COMPARISON_THEN,
+    MediaRole.HISTORICAL_TIMELINE,
 }
 _PHOTOGRAPHIC_ROLES = {
     MediaRole.COUNTRY_HERO,
