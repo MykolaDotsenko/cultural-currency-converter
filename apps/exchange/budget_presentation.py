@@ -79,7 +79,9 @@ def build_budget_component(
                 "field": budget_form[field_name],
                 "label": anchor.label,
                 "scope_label": anchor.scope_label,
+                "is_city_scope": bool(anchor.city_slug),
                 "observed_at": date_format(anchor.observed_at, "j M Y"),
+                "source_class": anchor.source_class.replace("_", " ").capitalize(),
                 "source_name": anchor.source_name,
                 "source_url": anchor.source_url,
                 "confidence": anchor.confidence,
@@ -144,6 +146,7 @@ def build_budget_component(
                     "category": line.category,
                     "label": line.label,
                     "scope_label": line.scope_label,
+                    "scope_kind": line.scope.value,
                     "units": _decimal_text(line.units_per_person_per_day),
                     "daily_low": _money_text(
                         line.per_person_daily_low,
@@ -164,7 +167,8 @@ def build_budget_component(
                     "observed_at": date_format(line.observed_at, "j M Y"),
                     "source_name": line.source_name,
                     "source_url": line.source_url,
-                    "confidence": line.confidence,
+                    "source_class": line.source_class.replace("_", " ").capitalize(),
+                    "confidence": line.confidence.capitalize(),
                 }
                 for line in interpretation.lines
             ),
