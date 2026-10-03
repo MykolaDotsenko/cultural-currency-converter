@@ -6,12 +6,25 @@ The functional roadmap is complete: the current product includes all 36 scoped r
 
 ## Candidate baseline
 
-- Feature-complete master before this certification pass: `495ce394d6fa31148d173039859c699fd2892cae`.
-- Final release SHA: record the post-merge `master` SHA here when the certification PR is merged.
-- Repository issue snapshot during certification preparation: **0 open issues, 0 open P0, 0 open P1**.
-- Final P0/P1 query must be repeated immediately before release.
+- Feature-complete master before the final repository-certification pass: `495ce394d6fa31148d173039859c699fd2892cae`.
+- Repository-side certification implementation merged as PR #217 at `650d07729b8ed91c9380394d2ed4ad6e478b0dca`.
+- Latest fully green pre-merge certification-branch evidence: `71b54988da10fe163a9f90413d95ead1ecc90e28`.
+- Repository issue snapshot checked on **2026-10-03**: **0 open issues, 0 open P0, 0 open P1**.
+- Repository hygiene snapshot checked on **2026-10-03**: **0 TODO and 0 FIXME code-search hits**.
+- Final P0/P1 query must be repeated immediately before the deployed release cut.
 
-Green evidence from a commit other than the final candidate SHA is background evidence only.
+Green evidence from a commit other than the final candidate SHA is background evidence only. The deployed release record should carry the exact deployed Git SHA and deployment identifier; keeping a self-referential post-merge SHA inside this source file would necessarily create a different commit.
+
+### Repository CI evidence for `71b54988...`
+
+- Required merge quality: run `37096108372` — success, including Python 3.13 required, PostgreSQL 18.6 required, Frontend required and Chromium required.
+- Python quality: run `37096108424` — success on Python 3.13, Python 3.14 and PostgreSQL 18.6 / Python 3.13.
+- Browser quality: run `37096108390` — success on Chromium full, Firefox smoke and WebKit smoke.
+- Frontend quality: run `37096108364` — success.
+- Converter primitive preview: run `37096108434` — success.
+- Quiet Atlas shell preview: run `37096108375` — success.
+
+PR #217 was merged only after that exact-head matrix was green. Post-merge `master` must still be verified independently before a deployed RC is called ready.
 
 ## Repository-side scorecard
 
