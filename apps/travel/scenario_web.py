@@ -287,9 +287,7 @@ def _scenario_detail_context(
         .first()
     )
     latest_observation = scenario.observations.order_by("-recorded_at", "-id").first()
-    observation_history = tuple(
-        scenario.observations.order_by("-recorded_at", "-id")
-    )
+    observation_history = tuple(scenario.observations.order_by("-recorded_at", "-id"))
     budget_item_rows = tuple(
         {
             "item": item,
