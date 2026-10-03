@@ -101,7 +101,7 @@ class UnavailableLatestGateway:
         raise FxProviderUnavailable("provider unavailable")
 
 
-def _payment_budget_token() -> str:
+def _payment_budget_token(*, budget_context_token: str) -> str:
     conversion = _conversion()
     estimate = estimate_payment_value(
         source_budget=conversion.input_amount,
@@ -113,7 +113,7 @@ def _payment_budget_token() -> str:
         destination_minor_units=0,
     )
     return build_payment_budget_handoff_token(
-        budget_context_token=_budget_token(),
+        budget_context_token=budget_context_token,
         estimate=estimate,
     )
 
@@ -197,11 +197,14 @@ def test_payment_adjusted_budget_can_be_saved_and_reopens_with_adjusted_baseline
     user = User.objects.create_user(username="payment-save-owner", password="StrongPass-482!")
     client.force_login(user)
 
+    budget_context_token = _budget_token()
     response = client.post(
         reverse("save_budget_scenario"),
         {
-            "budget_context_token": _budget_token(),
-            "payment_budget_token": _payment_budget_token(),
+            "budget_context_token": budget_context_token,
+            "payment_budget_token": _payment_budget_token(
+                budget_context_token=budget_context_token
+            ),
             "title": "Tokyo payment budget",
             "duration_days": "5",
             "travelers": "1",
