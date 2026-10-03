@@ -548,3 +548,61 @@ def test_comparison_result_survives_optional_ai_packet_contract_failure(
     assert response.context["comparison"]["ai_explanation"] is None
     assert b"signed comparison facts only" not in response.content
     assert gateway.calls == [("EUR", "JPY"), ("EUR", "NOK")]
+
+
+@pytest.mark.django_db
+def test_comparison_frontend_exposes_full_backend_context_contract(
+    client,
+    comparison_reference_data,
+):
+    gateway = ComparisonGateway()
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    component = response.context["comparison"]
+    assert component["selected_categories"] == (
+        {"label": "Coffee", "units": "1"},
+        {"label": "Casual Meal", "units": "2"},
+        {"label": "Transit", "units": "2"},
+    )
+    assert component["shared_categories"] == ("Coffee", "Casual Meal", "Transit")
+
+    left = component["left"]
+    right = component["right"]
+    assert left["context_state"] == "available"
+    assert right["context_state"] == "available"
+    assert left["context_as_of"]
+    assert right["context_as_of"]
+
+    left_converter = urlparse(left["converter_url"])
+    left_query = parse_qs(left_converter.query)
+    assert left_converter.path == reverse("converter")
+    assert left_query["amount"] == ["500.00"]
+    assert left_query["source_currency"] == ["EUR"]
+    assert left_query["destination_country"] == ["JP"]
+    assert left_query["destination_currency"] == ["JPY"]
+    assert left_query["destination_city_slug"] == ["tokyo"]
+
+    assert parse_qs(urlparse(left["budget_url"]).query)["destination"] == ["JP:tokyo"]
+    assert left["city_profile_url"] == reverse("city_money_profile", args=("JP", "tokyo"))
+
+    right_converter = urlparse(right["converter_url"])
+    right_query = parse_qs(right_converter.query)
+    assert right_query["destination_country"] == ["NO"]
+    assert right_query["destination_currency"] == ["NOK"]
+    assert "destination_city_slug" not in right_query
+    assert parse_qs(urlparse(right["budget_url"]).query)["destination"] == ["NO"]
+    assert right["city_profile_url"] == ""
+
+    body = response.content
+    assert b"Same explicit basket on both sides" in body
+    assert body.count(b"Reviewed local context assembled as of") == 2
+    assert b"City evidence" in body
+    assert b"National fallback" in body
+    assert b"Curated factual" in body
+    assert b"High confidence" in body
+    assert body.count(b"Open conversion") == 2
+    assert body.count(b"Build budget") == 2
+    assert b"City money profile" in body
