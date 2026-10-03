@@ -31,7 +31,7 @@ The current product already includes:
 - browser-local plus owner-scoped My Places with exact country/city identity preservation, explicit local→account migration and current-currency re-resolution;
 - provider-free City Money Profile;
 - optional grounded AI explanation with deterministic fallback across conversion, reviewed Explore destinations, Budget Interpretation and Destination Comparison;
-- managed provenance-aware media, restrained source → destination presentation and historical/currency-era story exploration;
+- managed provenance-aware media with curated Explore teasers, managed social previews, deep public-safe image provenance, date-scoped historical-timeline evidence, symmetric Then/Now imagery and chapter-scoped Money & culture media;
 - demand-loaded frontend enhancement routing with consolidated Saved and rate-chart lazy chunks;
 - a CSS custom-property integrity gate plus normalized narrow-layout spacing tokens;
 - Chromium page-level 430/390/360/320 mobile coverage, 640px/320px reflow evidence, Firefox/WebKit smoke, forced-colors/reduced-motion checks and Python/PostgreSQL CI.
@@ -444,7 +444,7 @@ Compose:
 - selected historical observations;
 - provenance.
 
-**Current production slice:** Historical Series now exposes factual chronological range landmarks plus selected/minimum/maximum/last observations and stronger Then & Now semantics. The adjacent Money & culture era/story surface supplies reviewed temporal context without inventing currency events.
+**Current production slice:** Historical Series exposes factual chronological range landmarks plus selected/minimum/maximum/last observations, date-scoped reviewed historical-timeline media and symmetric Then & Now imagery when suitable managed assets exist. The adjacent Money & culture era/story surface supplies reviewed temporal context and chapter-scoped sourced media without inventing currency events.
 
 ## PR #204 — Historical media integration
 
@@ -452,7 +452,7 @@ Only reviewed and adequately licensed/attributed media may support timeline/Then
 
 Historical media must be temporally scoped.
 
-**Current production slice:** managed media already enforces provenance/review and graceful omission when suitable media is absent. Broader authentic archival coverage remains future breadth work; historical FX is never converted into an unsourced historical purchasing-power claim.
+**Current production slice:** managed media enforces provenance/review and graceful omission when suitable media is absent. Historical Series now consumes separate `COMPARISON_THEN`, `COMPARISON_NOW` and `HISTORICAL_TIMELINE` roles; Money & culture consumes `STORY_COVER` plus date-scoped `STORY_CHAPTER` media; Explore can consume curated `COUNTRY_TEASER` media; and social-preview roles feed OG/Twitter metadata on supported public discovery pages. Public presentation exposes creator/rights/retrieval/original-source provenance plus human-readable authenticity/temporal-match labels while keeping internal fallback/selection mechanics private. Broader authentic archival dataset breadth remains future work; historical FX is never converted into an unsourced historical purchasing-power claim.
 
 ## PR #205 — Cultural-history portal
 
