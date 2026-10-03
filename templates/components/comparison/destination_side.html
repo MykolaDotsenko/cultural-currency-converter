@@ -89,13 +89,19 @@
           <div class="qa-destination-comparison-side__line">
             <div>
               <strong>{{ line.label }}</strong>
-              <span>{{ line.units }} / person / day · {{ line.scope_label }}</span>
+              <span>
+                <span class="qa-city-profile__scope-badge{% if line.scope_kind == 'national' %} qa-city-profile__scope-badge--fallback{% endif %}">
+                  {% if line.scope_kind == 'city' %}City evidence{% else %}National fallback{% endif %}
+                </span>
+                {{ line.units }} / person / day · {{ line.scope_label }}
+              </span>
             </div>
             <div class="qa-destination-comparison-side__line-value">
               {{ line.total_low }}–{{ line.total_high }} {{ side.currency_code }}
             </div>
             <p class="qa-context-source">
-              Observed {{ line.observed_at }} · {{ line.confidence }} confidence ·
+              Observed {{ line.observed_at }} · {{ line.source_class }} ·
+              {{ line.confidence }} confidence ·
               <a href="{{ line.source_url }}" rel="noopener noreferrer">{{ line.source_name }}</a>
             </p>
           </div>
