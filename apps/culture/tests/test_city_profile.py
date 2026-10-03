@@ -37,7 +37,6 @@ def seeded_city_context(db):
     call_command("seed_reference_data", stdout=StringIO())
     call_command("seed_destination_context", stdout=StringIO())
 
-
 @pytest.mark.django_db
 def test_city_money_profile_reuses_canonical_context_and_current_currency(seeded_city_context):
     profile = build_city_money_profile(
@@ -63,7 +62,6 @@ def test_city_money_profile_reuses_canonical_context_and_current_currency(seeded
     assert all(price.currency_code == "JPY" for price in profile.prices)
     assert profile.payment is not None
     assert profile.payment.source_url.startswith("https://")
-
 
 @pytest.mark.django_db
 def test_city_money_profile_keeps_national_fallback_explicit(seeded_city_context):
@@ -110,7 +108,6 @@ def test_city_money_profile_keeps_national_fallback_explicit(seeded_city_context
     assert fallback_component["scope"] == "Japan · national estimate"
     assert component["has_national_fallback"] is True
 
-
 @pytest.mark.django_db
 def test_city_money_profile_requires_direct_city_evidence(seeded_city_context):
     japan = Country.objects.get(iso2="JP")
@@ -123,7 +120,6 @@ def test_city_money_profile_requires_direct_city_evidence(seeded_city_context):
     )
 
     assert profile is None
-
 
 @pytest.mark.django_db
 def test_city_profile_action_handoffs_preserve_canonical_scope(seeded_city_context):
@@ -151,7 +147,6 @@ def test_city_profile_action_handoffs_preserve_canonical_scope(seeded_city_conte
     assert parse_qs(compare.query)["left_destination"] == ["JP:tokyo"]
     assert component["saved_url"] == reverse("saved_state")
 
-
 @pytest.mark.django_db
 def test_city_money_profile_view_renders_reviewed_scope_without_fx(client, seeded_city_context):
     response = client.get(reverse("city_money_profile", args=("JP", "tokyo")))
@@ -164,7 +159,6 @@ def test_city_money_profile_view_renders_reviewed_scope_without_fx(client, seede
     assert b"does not request a live FX rate" in response.content
     assert b"cost-of-living score" in response.content
     assert b"Convert for Tokyo" in response.content
-
 
 
 @pytest.mark.django_db
@@ -191,7 +185,6 @@ def test_city_money_profile_uses_managed_social_preview_metadata(client, seeded_
     assert b"http://testserver/media/tokyo-social.webp" in response.content
     assert b'name="twitter:card" content="summary_large_image"' in response.content
 
-
 @pytest.mark.django_db
 def test_city_money_profile_view_404s_for_unknown_or_unreviewed_city(client, seeded_city_context):
     unknown = client.get(reverse("city_money_profile", args=("JP", "does-not-exist")))
@@ -201,7 +194,6 @@ def test_city_money_profile_view_404s_for_unknown_or_unreviewed_city(client, see
     City.objects.create(country=japan, slug="kyoto", name="Kyoto")
     unreviewed = client.get(reverse("city_money_profile", args=("JP", "kyoto")))
     assert unreviewed.status_code == 404
-
 
 @pytest.mark.django_db
 def test_explore_city_card_links_to_city_money_profile(client, seeded_city_context):
@@ -213,7 +205,6 @@ def test_explore_city_card_links_to_city_money_profile(client, seeded_city_conte
     assert b"JPY" in response.content
     assert b"city money profile" in response.content
     assert b"Convert" in response.content
-
 
 @pytest.mark.django_db
 def test_city_profile_budget_and_compare_handoffs_prefill_city(client, seeded_city_context):
