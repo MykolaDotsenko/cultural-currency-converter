@@ -467,7 +467,12 @@ def test_owner_can_recheck_scenario_without_overwriting_initial_observation(
     assert b"Reference-rate difference +3.2%" in detail.content
     assert b"104700 JPY" in detail.content
     assert b"108000 JPY" in detail.content
-    assert b"does not recommend when to exchange money" not in detail.content
+    assert b"Reference-rate history" in detail.content
+    assert b"2 stored observations" in detail.content
+    assert b"Initial saved reference" in detail.content
+    assert b"Re-check" in detail.content
+    assert b"Travel money mode" in detail.content
+    assert b"does not recommend when to exchange money" in detail.content
 
 
 @pytest.mark.django_db
