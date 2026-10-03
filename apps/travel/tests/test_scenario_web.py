@@ -538,6 +538,7 @@ def test_owner_can_recheck_scenario_without_overwriting_initial_observation(
     assert b"108000 JPY" in detail.content
     assert b"Reference-rate history" in detail.content
     assert b"2 stored observations" in detail.content
+    assert b"fetched" in detail.content
     assert b"Initial saved reference" in detail.content
     assert b"Re-check" in detail.content
     assert b"Travel money mode" in detail.content
