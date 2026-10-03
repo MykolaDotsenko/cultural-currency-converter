@@ -339,7 +339,6 @@ def _validate_city(city: City | None, country: Country | None) -> None:
         raise SavedScenarioError("Destination city must be active when a scenario is created.")
 
 
-
 def _validate_budget_basis(
     spec: SavedScenarioSpec,
     *,
@@ -362,7 +361,9 @@ def _validate_budget_basis(
         return
 
     if spec.kind is not SavedScenarioKind.BUDGET:
-        raise SavedScenarioError("Payment-adjusted planning is supported only for budget scenarios.")
+        raise SavedScenarioError(
+            "Payment-adjusted planning is supported only for budget scenarios."
+        )
     if any(value is None for value in payment_fields):
         raise SavedScenarioError("Payment-adjusted scenarios require complete payment assumptions.")
 
