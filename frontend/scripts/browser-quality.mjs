@@ -1701,6 +1701,12 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
   await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
+  const rateHistory = page.locator(".qa-reference-history");
+  await rateHistory.locator("summary").click();
+  assert(
+    (await rateHistory.getByText(/fetched/i).count()) > 0,
+    "trip-budget/e2e: provider fetch timestamp is missing from saved FX history",
+  );
   const baselineSummary = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
     .innerText();
@@ -2385,6 +2391,13 @@ async function assertMoneyCultureStoryQuality(page) {
       "money-culture-story: provenance disclosure lost its HTTPS source",
     );
   }
+  assert(
+    (await story.getByText("Source type", { exact: true }).count()) > 0 &&
+      (await story.getByText("Reviewed", { exact: true }).count()) > 0 &&
+      (await story.getByText("Source ID", { exact: true }).count()) > 0 &&
+      (await story.getByText("Causal wording", { exact: true }).count()) > 0,
+    "money-culture-story: deep reviewed source provenance is incomplete",
+  );
 
   await assertPremiumResponsiveTargets(
     page,
