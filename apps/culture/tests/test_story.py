@@ -116,7 +116,6 @@ def test_composer_adds_reviewed_story_moment(context_data):
     ]
     assert story.historical_moment_chapters == (chapter,)
 
-
 @pytest.mark.django_db
 def test_story_chapter_exposes_reviewed_source_lifecycle_and_causal_support(context_data):
     fi, _jp, eur, _jpy = context_data
