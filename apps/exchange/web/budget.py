@@ -260,9 +260,7 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                     name_form = BudgetPresetNameForm(request.POST)
                                     if not request.user.is_authenticated:
                                         response_status = 403
-                                        preset_error = (
-                                            "Sign in before saving a budget preset."
-                                        )
+                                        preset_error = "Sign in before saving a budget preset."
                                     elif not name_form.is_valid():
                                         response_status = 422
                                         preset_error = name_form.errors["preset_name"][0]
