@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 from django.conf import settings
@@ -452,7 +453,7 @@ class BudgetAssumptionPresetItem(models.Model):
                 name="unique_budget_preset_category",
             ),
             models.CheckConstraint(
-                condition=Q(units_per_person_per_day__gte=0.01)
+                condition=Q(units_per_person_per_day__gte=Decimal("0.01"))
                 & Q(units_per_person_per_day__lte=100),
                 name="budget_preset_units_range",
             ),
