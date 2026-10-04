@@ -566,12 +566,8 @@ def _scenario_detail_context(
                 "available": available,
                 "preference": preference,
                 "enabled": bool(preference and preference.enabled),
-                "timezone": (
-                    preference.timezone if preference is not None else settings.TIME_ZONE
-                ),
-                "cadence": (
-                    preference.cadence if preference is not None else default_cadence
-                ),
+                "timezone": (preference.timezone if preference is not None else settings.TIME_ZONE),
+                "cadence": (preference.cadence if preference is not None else default_cadence),
                 "threshold": (
                     preference.rate_change_threshold_percent
                     if preference is not None
