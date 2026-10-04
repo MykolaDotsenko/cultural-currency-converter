@@ -1855,6 +1855,43 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
   await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+  const scenarioDetailPath = new URL(page.url()).pathname;
+
+  if (BROWSER_ENGINE === "chromium" && BROWSER_SCOPE === "full") {
+    const offlineDetails = page.locator(".qa-offline-pack-preview");
+    await offlineDetails.locator("summary").click();
+    const offlineControls = offlineDetails.locator("[data-offline-trip-controls]");
+    await page.waitForFunction(() => {
+      const controls = document.querySelector("[data-offline-trip-controls]");
+      return controls instanceof HTMLElement && !controls.hidden;
+    });
+    await offlineControls
+      .getByRole("button", { name: "Make available offline", exact: true })
+      .click();
+    await offlineControls.getByText("Available offline", { exact: false }).waitFor();
+
+    const firstOfflineState = await offlineControls.evaluate(async (surface) => {
+      const offlineUrl = surface.getAttribute("data-offline-url") ?? "";
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const response = await cache.match(new URL(offlineUrl, location.origin).toString());
+      return {
+        exists: Boolean(response),
+        revision: response?.headers.get("X-PWA-Offline-Revision") ?? "",
+        currentRevision: surface.getAttribute("data-current-revision") ?? "",
+        vary: response?.headers.get("Vary") ?? "",
+      };
+    });
+    assert(firstOfflineState.exists, "pwa-trip/e2e: explicit snapshot was not cached");
+    assert(
+      firstOfflineState.revision === firstOfflineState.currentRevision,
+      "pwa-trip/e2e: initial cached revision does not match saved-trip state",
+    );
+    assert(
+      firstOfflineState.vary === "",
+      `pwa-trip/e2e: cached snapshot retained Vary and may not match offline navigation: ${firstOfflineState.vary}`,
+    );
+  }
+
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const rateHistory = page.locator(".qa-reference-history");
   await rateHistory.locator("summary").click();
@@ -1987,6 +2024,87 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: updated saved budget omitted remaining amount: ${updatedSummary}`,
   );
   const expectedRemainingText = `${remainingMatch[1]} JPY remaining`;
+
+  if (BROWSER_ENGINE === "chromium" && BROWSER_SCOPE === "full") {
+    const offlineDetails = page.locator(".qa-offline-pack-preview");
+    await offlineDetails.locator("summary").click();
+    const offlineControls = offlineDetails.locator("[data-offline-trip-controls]");
+    await page.waitForFunction(() => {
+      const controls = document.querySelector("[data-offline-trip-controls]");
+      return controls instanceof HTMLElement && !controls.hidden;
+    });
+    await offlineControls
+      .getByText("Offline copy is outdated because this saved trip changed.", { exact: false })
+      .waitFor();
+    await offlineControls
+      .getByRole("button", { name: "Replace outdated copy", exact: true })
+      .click();
+    await offlineControls.getByText("Available offline", { exact: false }).waitFor();
+
+    const updatedOfflineState = await offlineControls.evaluate(async (surface) => {
+      const offlineUrl = surface.getAttribute("data-offline-url") ?? "";
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const response = await cache.match(new URL(offlineUrl, location.origin).toString());
+      return {
+        exists: Boolean(response),
+        revision: response?.headers.get("X-PWA-Offline-Revision") ?? "",
+        currentRevision: surface.getAttribute("data-current-revision") ?? "",
+        html: response ? await response.clone().text() : "",
+        offlineUrl,
+      };
+    });
+    assert(updatedOfflineState.exists, "pwa-trip/e2e: replacement snapshot is missing");
+    assert(
+      updatedOfflineState.revision === updatedOfflineState.currentRevision,
+      "pwa-trip/e2e: replacement snapshot revision is stale",
+    );
+    assert(
+      /confirmed spend\s+4800 JPY/i.test(updatedOfflineState.html),
+      "pwa-trip/e2e: replacement snapshot did not capture Camera-confirmed spend",
+    );
+
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+    });
+    await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+
+    await page.context().setOffline(true);
+    try {
+      const offlineResponse = await page.goto(
+        new URL(updatedOfflineState.offlineUrl, BASE_URL).toString(),
+        { waitUntil: "domcontentloaded" },
+      );
+      assert(
+        offlineResponse?.ok(),
+        `pwa-trip/e2e: explicit offline trip navigation failed with ${offlineResponse?.status() ?? "no response"}`,
+      );
+      await page.getByText("Offline means stored, not live.", { exact: true }).waitFor();
+      await page.getByText(/confirmed spend\s+4800 JPY/i).waitFor();
+      await assertNoHorizontalOverflow(page, "pwa-trip/e2e/offline");
+      await assertAxe(page, "pwa-trip/e2e/offline");
+    } finally {
+      await page.context().setOffline(false);
+    }
+
+    await page.goto(`${BASE_URL}${scenarioDetailPath}`, { waitUntil: "networkidle" });
+    const restoredOfflineDetails = page.locator(".qa-offline-pack-preview");
+    await restoredOfflineDetails.locator("summary").click();
+    const restoredControls = restoredOfflineDetails.locator("[data-offline-trip-controls]");
+    await restoredControls.getByText("Available offline", { exact: false }).waitFor();
+    await restoredControls
+      .getByRole("button", { name: "Remove offline copy", exact: true })
+      .click();
+    await restoredControls
+      .getByText("Offline copy removed from this browser profile.", { exact: true })
+      .waitFor();
+    const privateCopyRemoved = await restoredControls.evaluate(async (surface) => {
+      const offlineUrl = surface.getAttribute("data-offline-url") ?? "";
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      return !(await cache.match(new URL(offlineUrl, location.origin).toString()));
+    });
+    assert(privateCopyRemoved, "pwa-trip/e2e: explicit Remove left a private cached snapshot");
+  }
 
   // Browser-level Offline Pack evidence: download the actual attachment,
   // inspect its self-contained HTML, then render that HTML without network.
