@@ -214,13 +214,9 @@ class NotificationPreference(models.Model):
 
     def clean(self) -> None:
         super().clean()
-        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
         try:
             ZoneInfo(self.timezone_name)
         except (ZoneInfoNotFoundError, ValueError) as exc:
-            from django.core.exceptions import ValidationError
-
             raise ValidationError(
                 {"timezone_name": "Enter a valid IANA timezone, for example Europe/Helsinki."}
             ) from exc
