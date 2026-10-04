@@ -3320,7 +3320,10 @@ async function assertPwaFoundation(browser) {
   try {
     const page = await context.newPage();
     const response = await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
-    assert(response?.ok(), `pwa/foundation: root failed with ${response?.status() ?? "no response"}`);
+    assert(
+      response?.ok(),
+      `pwa/foundation: root failed with ${response?.status() ?? "no response"}`,
+    );
 
     const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
     assert(manifestHref, "pwa/foundation: manifest link is missing");
@@ -3343,7 +3346,9 @@ async function assertPwaFoundation(browser) {
 
     const registrationState = await page.evaluate(async () => {
       if (!("serviceWorker" in navigator)) return { supported: false };
-      const registration = await navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
+      const registration = await navigator.serviceWorker.register("/service-worker.js", {
+        scope: "/",
+      });
       await navigator.serviceWorker.ready;
       const keys = await caches.keys();
       const requests = [];
@@ -3374,7 +3379,10 @@ async function assertPwaFoundation(browser) {
     );
     assert(
       registrationState.cachedPaths.every(
-        (path) => !path.startsWith("/saved/") && !path.startsWith("/accounts/") && !path.startsWith("/admin/"),
+        (path) =>
+          !path.startsWith("/saved/") &&
+          !path.startsWith("/accounts/") &&
+          !path.startsWith("/admin/"),
       ),
       `pwa/foundation: private HTML leaked into Cache Storage: ${JSON.stringify(registrationState.cachedPaths)}`,
     );
@@ -3388,7 +3396,9 @@ async function assertPwaFoundation(browser) {
       `pwa/foundation: cached offline shell failed with ${offlineResponse?.status() ?? "no response"}`,
     );
     await page.getByRole("heading", { name: "You’re offline.", level: 1 }).waitFor();
-    await page.getByText("Private account pages and saved-scenario HTML are never cached automatically.").waitFor();
+    await page
+      .getByText("Private account pages and saved-scenario HTML are never cached automatically.")
+      .waitFor();
     await assertAxe(page, "pwa/foundation/offline-shell");
 
     return registrationState;
