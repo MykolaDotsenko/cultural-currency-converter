@@ -210,3 +210,38 @@ def test_budget_preset_application_rejects_destination_without_category_overlap(
             available_categories={"coffee"},
             basis=BudgetBasis.REFERENCE_CONVERSION,
         )
+
+
+@pytest.mark.django_db
+def test_budget_preset_rejects_unsupported_category_and_excess_precision():
+    user = User.objects.create_user(username="preset-invalid", password="StrongPass-482!")
+
+    with pytest.raises(BudgetAssumptionPresetError, match="unsupported category"):
+        upsert_budget_preset(
+            user,
+            name="Unsupported",
+            assumptions=_assumptions(
+                categories=(
+                    BudgetCategoryAssumption(
+                        category="hotel",
+                        units_per_person_per_day=Decimal("1"),
+                    ),
+                )
+            ),
+        )
+
+    with pytest.raises(BudgetAssumptionPresetError, match="decimal places"):
+        upsert_budget_preset(
+            user,
+            name="Too precise",
+            assumptions=_assumptions(
+                categories=(
+                    BudgetCategoryAssumption(
+                        category="coffee",
+                        units_per_person_per_day=Decimal("1.001"),
+                    ),
+                )
+            ),
+        )
+
+    assert BudgetAssumptionPreset.objects.filter(user=user).count() == 0
