@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 
 from apps.exchange.domain import ConversionResult
-from apps.exchange.payment_estimate import MAX_SHOPPING_FX_MARKUP_PERCENT
 
 
-MAX_SHOPPING_COMPONENT = Decimal("1000000000")\nMAX_SHOPPING_FX_MARKUP_PERCENT = Decimal("25")
+MAX_SHOPPING_COMPONENT = Decimal("1000000000")
+MAX_SHOPPING_FX_MARKUP_PERCENT = Decimal("25")
 
 
 class ShoppingCalculationError(ValueError):
