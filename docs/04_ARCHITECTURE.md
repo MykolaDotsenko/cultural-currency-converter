@@ -202,11 +202,13 @@ Object storage makes media bytes durable across application deploys, but durabil
 
 ## PWA / browser offline boundary
 
-The root-scoped service worker is an availability shell, not a second application datastore. Navigation requests are always network-only; if the network fails they fall back to one generic self-contained offline page. The worker never writes account, SavedScenario, notification, admin or form HTML into Cache Storage.
+The root-scoped service worker is an availability shell, not a second application datastore. Ordinary navigation requests are network-only; if the network fails they fall back to one generic self-contained offline page. The worker never writes account, SavedScenario, notification, admin or form HTML into Cache Storage merely because those pages were viewed.
 
-Only public same-origin build assets and managed PWA icon assets may use runtime cache-first behavior. The generic offline shell is explicitly precached. This preserves the existing trust boundary: a page seen online is not evidence that its financial values are available offline or still current. Saved-trip financial/context state remains portable only through the explicit Offline Destination Pack until a separate user-initiated offline active-trip snapshot contract is implemented.
+There is one deliberate private-navigation exception: the synthetic `/offline/trips/<scenario>/` namespace. A response can appear there only after an authenticated user explicitly requests a PWA snapshot. The server rebuilds the canonical OfflineDestinationPack without a live FX call; the browser normalizes that response and writes it under the synthetic URL inside `cultural-currency-private-trip-v1`. The service worker serves that explicit stored response cache-first for the synthetic route only. A cache miss goes back to the owner-scoped online redirect, or to the generic shell if the network is unavailable.
 
-Service-worker registration is optional progressive enhancement. Registration failure must not affect conversion, saved state, accessibility or no-JavaScript behavior.
+The saved-state revision hashes only pack-relevant account-owned state—scenario assumptions, immutable/re-check observations and confirmed spend. Reviewed destination context remains separately time-scoped by the snapshot's generated/context-as-of dates, avoiding a false claim that one opaque token proves external contextual freshness. Normal sign-out/account deletion clears private-trip caches; anonymous page entry also performs defensive cleanup. This does not clear the separate browser-local favourites/recent/My Places store.
+
+Only public same-origin build assets and managed PWA icon assets may use automatic runtime cache-first behavior. Service-worker registration and private offline-trip controls are optional progressive enhancement; failure must not affect conversion, saved state, accessibility, the downloadable Offline Destination Pack or no-JavaScript behavior.
 
 ## Caching
 

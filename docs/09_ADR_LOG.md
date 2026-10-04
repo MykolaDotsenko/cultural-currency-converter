@@ -244,9 +244,21 @@ The web application may install a root-scoped service worker, but it does not ca
 
 **Why:** account pages, saved scenarios, notifications and form responses can reveal travel/financial context. Automatically caching a page merely because the user viewed it would create a silent local persistence channel and could also make stored FX/context appear current offline. Installability is useful, but it must not erase the existing privacy and freshness boundaries.
 
-The explicit Offline Destination Pack remains the portable saved-trip snapshot. A future active-trip PWA view must be a separate user-initiated/versioned snapshot contract rather than a broader navigation-cache rule.
+The explicit Offline Destination Pack remains the canonical saved-trip snapshot meaning. The active-trip PWA view is now implemented as the required separate user-initiated/versioned contract rather than a broader navigation-cache rule.
 
-**Revisit when:** a reviewed encrypted/user-controlled offline-state design can preserve ownership, deletion, freshness and stale/live semantics across sign-out and device-sharing scenarios.
+**Revisit when:** a reviewed encrypted/user-controlled offline-state design can improve device-sharing protection while preserving ownership, deletion, freshness and stale/live semantics.
+
+## ADR-023 — Private offline trips reuse the canonical pack and require explicit lifecycle controls
+
+**Status:** active
+
+PWA offline trip storage reuses the rendered OfflineDestinationPack. The browser stores it only after **Make available offline**, under a synthetic offline-trip URL in a dedicated private CacheStorage namespace. Ordinary Saved/account pages remain network-only. A deterministic opaque revision detects changes to saved scenario assumptions, stored FX observations or confirmed spend; reviewed context continues to use explicit generated/as-of dates rather than being folded into a misleading binary freshness token.
+
+The browser removes one snapshot through **Remove offline copy** and performs best-effort removal before deleting its scenario. Normal sign-out and account deletion clear the private-trip cache namespace. Anonymous browser-local favourites/recent/My Places are intentionally not cleared by that operation.
+
+**Why:** reusing one pack prevents a second offline financial calculation path. Explicit create/replace/remove semantics make sensitive device-local persistence visible, while keeping sign-out cleanup narrower than a broad browser-storage wipe.
+
+**Revisit when:** device-bound encryption or another platform primitive can materially strengthen shared-device privacy without weakening offline availability or forcing silent background persistence.
 
 ## Adding/changing a decision
 

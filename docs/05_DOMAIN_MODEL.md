@@ -408,6 +408,8 @@ The pack is intentionally regenerated rather than persisted server-side. It cann
 
 The first HTML representation contains no executable script, remote stylesheet or managed-media dependency. Provenance links remain ordinary links and naturally require connectivity if the user chooses to open them.
 
+The PWA active-trip slice stores this same rendered representation only after an explicit account-owned action. A short opaque revision is derived from pack-relevant saved scenario fields, all stored FX observations and confirmed spend entries. It is a local replacement detector, not financial data and not a claim about destination-context freshness. The private cached response retains the pack version, generation timestamp and context-as-of date; those values remain visible when offline. No separate PWA budget/rate calculation model exists.
+
 ## Account preferences
 
 Privacy-affecting persistence preferences belong to the account and should have explicit defaults.

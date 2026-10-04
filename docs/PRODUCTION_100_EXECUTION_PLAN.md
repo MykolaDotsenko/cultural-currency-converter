@@ -657,32 +657,15 @@ Cover:
 
 ## PR #227 — Offline active-trip view
 
-Support read-only access to:
-
-- saved trip;
-- stored FX observation;
-- immutable budget baseline;
-- remaining budget;
-- captured reviewed destination context.
+**Current production slice:** shipped as an explicit CacheStorage copy of the canonical OfflineDestinationPack. A signed-in saved-budget owner chooses **Make available offline**; the browser stores the self-contained stored-only pack under a synthetic `/offline/trips/<scenario>/` URL in a dedicated private cache. Ordinary account/SavedScenario navigation is still never cached automatically.
 
 ## PR #228 — Offline freshness semantics
 
-Relevant values must clearly resolve to one of:
-
-- live;
-- stored;
-- stale;
-- offline snapshot.
+**Current production slice:** shipped. The offline HTML continues to label FX as stored rather than live and carries provider/effective/fetched/stale evidence plus pack generated/context-as-of dates. An opaque saved-state revision detects changes to scenario assumptions, FX observations or confirmed spend without pretending that it proves external destination-context freshness.
 
 ## PR #229 — Offline pack lifecycle
 
-Add:
-
-- version;
-- generated timestamp;
-- refresh;
-- outdated state;
-- replacement semantics.
+**Current production slice:** shipped for the PWA copy. Version and generated/context timestamps come from OfflineDestinationPack; revision mismatch produces an explicit Outdated state; Replace regenerates the canonical snapshot; Remove deletes the local entry. Normal sign-out/account deletion clears private-trip caches while preserving separate anonymous browser-local saved state. Background refresh remains intentionally absent.
 
 ---
 

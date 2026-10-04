@@ -388,6 +388,10 @@ The installable web shell is now a separate progressive-enhancement layer from t
 
 The first offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden service-worker cache.
 
+A second explicit PWA continuity slice now reuses that exact pack meaning rather than caching the saved-scenario page. When CacheStorage is available, **Make available offline** stores one generated pack under a synthetic `/offline/trips/<scenario>/` URL in a dedicated private cache. The control is hidden without client capability, so the normal download remains the durable fallback. If the saved scenario's financial state later changes—scenario fields, stored FX observations or confirmed spend—the browser compares the cached opaque revision with the current server-rendered revision and labels the device copy **outdated** until the user replaces it. Reviewed destination context is not falsely folded into that exact revision; its own pack generated/context-as-of dates remain visible freshness evidence.
+
+**Remove offline copy** deletes only that scenario's private cache entry. Deleting the scenario performs best-effort local cleanup before the server deletion, and normal sign-out/account deletion clears the dedicated private-trip cache namespace. The product does not use broad Clear-Site-Data storage clearing because browser-local favourites/recent/My Places are intentionally separate user-controlled state.
+
 The exported HTML file is self-contained: it carries its own restrained styling, no executable scripts and no remote asset dependency. It includes:
 
 - the newest already-stored FX observation, with amount, rate, provider attribution, effective date, fetch time and stored stale flag;

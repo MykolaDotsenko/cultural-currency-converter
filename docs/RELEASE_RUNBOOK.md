@@ -127,6 +127,8 @@ For Offline Pack, verify the downloaded HTML states that offline data is stored 
 
 For the PWA shell, verify the manifest is installable, the root-scoped service worker precaches only the generic offline shell/public static assets, and an offline navigation to a private Saved/account path resolves to the generic shell rather than a cached private page. Inspect Cache Storage and confirm there is no account/scenario/notification/admin HTML.
 
+For an explicit PWA offline trip, use **Make available offline**, inspect `cultural-currency-private-trip-v1`, verify the response is the script-free OfflineDestinationPack with revision/version/generated/context headers and no `Vary`, then change confirmed spend or stored FX state and confirm the UI reports **Outdated** until Replace. With the browser offline, open the synthetic trip URL and verify stored-not-live semantics. Remove the copy and confirm the private cache entry disappears. Normal sign-out/account deletion must clear private-trip caches without clearing anonymous local Saved-state data.
+
 For saved scenarios/comparisons, verify reopening never silently refreshes financial values; re-check is a distinct explicit action.
 
 ## Optional-capability degradation drill
