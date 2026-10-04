@@ -59,36 +59,6 @@ def budget_presets_for_categories(
     )
 
 
-def preset_post_values_for_categories(
-    preset: BudgetPreset,
-    *,
-    available_categories: set[str] | frozenset[str],
-) -> tuple[dict[str, str], tuple[str, ...]]:
-    normalized = {
-        str(category).strip().lower()
-        for category in available_categories
-        if str(category).strip()
-    }
-    values = {
-        "duration_days": str(preset.duration_days),
-        "travelers": str(preset.travelers),
-    }
-    skipped: list[str] = []
-    applied = 0
-    for item in preset.items.all():
-        if item.category in normalized:
-            values[f"units_{item.category}"] = _decimal_text(item.units_per_person_per_day)
-            applied += 1
-        else:
-            skipped.append(item.category)
-
-    if applied == 0:
-        raise BudgetPresetError(
-            "None of this saved budget preset's basket items have current sourced "
-            "price anchors for this destination."
-        )
-    return values, tuple(skipped)
-
 
 def budget_preset_for_user(user, *, preset_id: int) -> BudgetPreset:
     if not user.is_authenticated:
