@@ -10,6 +10,7 @@ from apps.travel.budget_presets import (
     BudgetAssumptionPresetError,
     assumptions_from_budget_preset,
     budget_preset_for_user,
+    budget_presets_for_categories,
     budget_presets_for_user,
     delete_budget_preset,
     upsert_budget_preset,
@@ -274,8 +275,6 @@ def test_budget_preset_listing_filters_to_current_categories():
             ),
         ),
     )
-
-    from apps.travel.budget_presets import budget_presets_for_categories
 
     assert budget_presets_for_categories(
         user,
