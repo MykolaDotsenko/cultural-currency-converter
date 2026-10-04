@@ -1617,9 +1617,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     savedFeeProfileResponse.status() === 200,
     `payment-fee-profile: save returned ${savedFeeProfileResponse.status()}`,
   );
-  await page
-    .getByText('Saved fee profile "Browser travel card".', { exact: false })
-    .waitFor();
+  await page.getByText('Saved fee profile "Browser travel card".', { exact: false }).waitFor();
 
   await page.locator("#id_fx_markup_percent").fill("0");
   await page.locator("#id_source_fixed_fee").fill("0");
@@ -1654,9 +1652,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     feeProfileSection.getByRole("button", { name: "Delete", exact: true }).click(),
   ]);
   await page.getByText("Payment fee profile deleted.", { exact: false }).waitFor();
-  await page
-    .getByText("No payment fee profiles saved yet.", { exact: false })
-    .waitFor();
+  await page.getByText("No payment fee profiles saved yet.", { exact: false }).waitFor();
   await page.evaluate(
     ({ key, recent }) => {
       const state = JSON.parse(localStorage.getItem(key) ?? "{}");
