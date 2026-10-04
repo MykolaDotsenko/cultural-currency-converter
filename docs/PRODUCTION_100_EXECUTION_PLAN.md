@@ -599,6 +599,8 @@ No parallel shopping persistence subsystem.
 
 ## PR #219 — Notification preference domain
 
+**Status: foundation implemented; no delivery side effect yet.**
+
 Explicit opt-in only.
 
 Represent:

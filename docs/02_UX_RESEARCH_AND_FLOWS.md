@@ -342,7 +342,7 @@ Provider failure must leave the saved scenario and its original observations unc
 
 The shipped save flow can optionally store a travel start/end date. Saved scenario detail derives a deterministic **upcoming / active / started-without-end / ended** readiness state from those explicit dates. A saved end date requires a start date at form, domain and database boundaries. Timing metadata must never imply a hidden itinerary, auto-refresh or notification subscription.
 
-Optional pre-trip reminders may later invite the user to re-check a saved scenario close to its travel date. Reminder delivery must be explicit opt-in, easy to disable and separate from rate-alert/trading-style messaging.
+Optional pre-trip reminders may later invite the user to re-check a saved scenario close to its travel date. The persistence foundation is now scenario-scoped and explicit: notification type, enabled/disabled state, IANA timezone, cadence and in-app delivery channel are stored independently from scenario observations. Enabling the preference does not itself schedule or send anything; actual reminder generation/delivery remains a separate slice. A pre-trip opt-in cannot be enabled until the saved scenario has an explicit travel start date. Disable and delete semantics are separate, owner-scoped actions. Reminder delivery must remain separate from rate-alert/trading-style messaging.
 
 ### During travel
 

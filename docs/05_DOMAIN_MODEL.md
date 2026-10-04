@@ -299,6 +299,24 @@ Duties, taxes and issuer/merchant fees remain unknown unless they are authoritat
 
 Historical FX and same-currency purchases are outside this foreign-shopping estimate contract. Saved Shopping scenarios reuse `SavedScenario` ownership and immutable FX observations rather than creating a parallel persistence model. Their exact item price, shipping, known fees and FX-markup assumption live in a normalized one-to-one `SavedScenarioShoppingAssumptions` payload; derived home-currency values are recomputed from that payload plus the immutable initial observation.
 
+## ScenarioNotificationPreference
+
+A ScenarioNotificationPreference is explicit notification intent/configuration attached to one account-owned SavedScenario.
+
+It stores only:
+
+- scenario identity (ownership is inherited from the scenario);
+- notification type: pre-trip, context/offline freshness, or scenario rate alert;
+- enabled/disabled state;
+- validated IANA timezone;
+- explicit cadence;
+- supported delivery channel (`in_app` in the first foundation slice);
+- created/updated timestamps.
+
+There is at most one row per scenario + notification type. Writes serialize through the owned SavedScenario, and foreign users cannot create, inspect, disable or delete another user's preference.
+
+The model is **not** a delivery queue or send log. Creating or enabling a preference does not refresh FX/context, schedule work, generate a notification or claim that delivery occurred. Pre-trip opt-in requires an explicit saved travel start date. Actual reminder generation, due-state calculation, deduplication, retries and last-sent evidence belong to later notification slices.
+
 ## SavedScenario
 
 A SavedScenario is a signed-in user's reusable planning state for a **trip**, **budget** or **shopping** workflow.

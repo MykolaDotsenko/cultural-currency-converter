@@ -204,7 +204,7 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
    - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
    - Include destination/offline-pack freshness when it materially affects readiness for travel.
    - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
-   - **Current slice:** saved budget scenarios can now store optional validated travel dates and derive deterministic upcoming/active/started/ended readiness on the detail page. Reference-rate re-check is already explicit and owner-scoped. Reminder delivery, notification preferences and automatic local-context refresh remain future work.
+   - **Current slice:** saved budget scenarios can store optional validated travel dates and derive deterministic upcoming/active/started/ended readiness on the detail page. Reference-rate re-check is explicit and owner-scoped. The notification-preference foundation is now shipped: one owner-scoped preference per scenario/type stores explicit enabled state, IANA timezone, cadence and the first supported `in_app` channel; enabling it has no delivery side effect, and pre-trip opt-in requires a saved start date. Due-reminder generation, actual delivery, deduplication/retries and automatic background local-context refresh remain future work.
 
 ### Enabling data/content foundation
 
