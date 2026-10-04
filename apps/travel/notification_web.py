@@ -8,11 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.travel.models import SavedScenario
-from apps.travel.notification_delivery import (
-    mark_all_notifications_read as mark_all_deliveries_read,
-    mark_notification_read as mark_delivery_read,
-    notifications_for_user,
-)
+from apps.travel import notification_delivery
 from apps.travel.notification_preferences import (
     ScenarioNotificationPreferenceError,
     delete_scenario_notification_preference,
@@ -24,7 +20,7 @@ from apps.travel.notification_preferences import (
 @never_cache
 @require_GET
 def notification_inbox(request: HttpRequest) -> HttpResponse:
-    deliveries = tuple(notifications_for_user(request.user))
+    deliveries = tuple(notification_delivery.notifications_for_user(request.user))
     return render(
         request,
         "travel/notifications.html",
@@ -84,12 +80,12 @@ def delete_saved_scenario_notification(
 @login_required
 @require_POST
 def mark_notification_read(request: HttpRequest, delivery_id: int) -> HttpResponse:
-    mark_delivery_read(request.user, delivery_id=delivery_id)
+    notification_delivery.mark_notification_read(request.user, delivery_id=delivery_id)
     return redirect("notification_inbox")
 
 
 @login_required
 @require_POST
 def mark_all_notifications_read(request: HttpRequest) -> HttpResponse:
-    mark_all_deliveries_read(request.user)
+    notification_delivery.mark_all_notifications_read(request.user)
     return redirect("notification_inbox")
