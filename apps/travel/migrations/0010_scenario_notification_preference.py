@@ -82,9 +82,7 @@ class Migration(migrations.Migration):
                         name="scenario_notification_type_valid",
                     ),
                     models.CheckConstraint(
-                        condition=models.Q(
-                            ("cadence__in", ("once", "daily", "weekly"))
-                        ),
+                        condition=models.Q(("cadence__in", ("once", "daily", "weekly"))),
                         name="scenario_notification_cadence_valid",
                     ),
                     models.CheckConstraint(
