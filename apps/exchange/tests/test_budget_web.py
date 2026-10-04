@@ -18,6 +18,8 @@ from apps.culture.models import (
 from apps.culture.services import DestinationContext
 from apps.exchange.ai.packet_tokens import GroundedPacketTokenError
 from apps.exchange.ai.service import RuntimeExplanationService
+from apps.exchange.budget import BudgetCategoryAssumption
+from apps.exchange.budget_presets import upsert_budget_preset
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
@@ -553,3 +555,232 @@ def test_budget_result_survives_optional_ai_packet_contract_failure(
     assert b"Reference-basket comparison" in response.content
     assert response.context["budget_interpretation"]["ai_explanation"] is None
     assert b"signed budget facts only" not in response.content
+
+
+@pytest.mark.django_db
+def test_current_conversion_lists_only_owner_budget_presets(
+    client,
+    reference_data,
+):
+    owner = User.objects.create_user(username="budget-preset-list-owner", password="StrongPass-482!")
+    other = User.objects.create_user(username="budget-preset-list-other", password="StrongPass-482!")
+    upsert_budget_preset(
+        owner,
+        name="Weekend city",
+        duration_days=3,
+        travelers=2,
+        categories=(
+            BudgetCategoryAssumption("coffee", Decimal("1.00")),
+            BudgetCategoryAssumption("casual_meal", Decimal("2.00")),
+        ),
+    )
+    upsert_budget_preset(
+        other,
+        name="Other plan",
+        duration_days=4,
+        travelers=1,
+        categories=(BudgetCategoryAssumption("coffee", Decimal("2.00")),),
+    )
+    client.force_login(owner)
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()):
+        response = client.post(reverse("converter"), _payload(), HTTP_HX_REQUEST="true")
+
+    assert response.status_code == 200
+    assert b"Budget presets" in response.content
+    assert b"Weekend city" in response.content
+    assert b"Other plan" not in response.content
+
+
+@pytest.mark.django_db
+def test_budget_preset_application_replaces_submitted_assumptions(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(username="budget-preset-apply", password="StrongPass-482!")
+    preset = upsert_budget_preset(
+        user,
+        name="Weekend city",
+        duration_days=5,
+        travelers=2,
+        categories=(
+            BudgetCategoryAssumption("coffee", Decimal("2.00")),
+            BudgetCategoryAssumption("casual_meal", Decimal("1.00")),
+        ),
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "99",
+            "travelers": "9",
+            "units_coffee": "9",
+            "units_casual_meal": "9",
+            "budget_preset_id": str(preset.pk),
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    component = response.context["budget_interpretation"]
+    assert component["selected_preset_name"] == "Weekend city"
+    assert component["result"]["duration_days"] == 5
+    assert component["result"]["travelers"] == 2
+    assert component["form"]["duration_days"].value() == 5
+    assert component["form"]["travelers"].value() == 2
+    assert component["form"]["units_coffee"].value() == "2"
+    assert component["form"]["units_casual_meal"].value() == "1"
+    assert b"Using saved budget preset" in response.content
+
+
+@pytest.mark.django_db
+def test_budget_preset_with_unsourced_category_remains_explicit_and_incomplete(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(username="budget-preset-unsourced", password="StrongPass-482!")
+    preset = upsert_budget_preset(
+        user,
+        name="Transit included",
+        duration_days=3,
+        travelers=1,
+        categories=(
+            BudgetCategoryAssumption("coffee", Decimal("1.00")),
+            BudgetCategoryAssumption("transit", Decimal("2.00")),
+        ),
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "budget_preset_id": str(preset.pk),
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    component = response.context["budget_interpretation"]
+    assert component["result"]["complete"] is False
+    assert component["result"]["missing_categories"] == ("Transit",)
+    assert component["hidden_category_fields"] == (
+        {"field_name": "units_transit", "value": "2"},
+    )
+    assert b"Insufficient current data" in response.content
+    assert b'name="units_transit"' in response.content
+    assert b'value="2"' in response.content
+
+
+@pytest.mark.django_db
+def test_successful_budget_interpretation_can_save_and_update_preset(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(username="budget-preset-save", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "4",
+            "travelers": "2",
+            "units_coffee": "1.5",
+            "units_casual_meal": "2",
+            "budget_action": "save_preset",
+            "preset_name": "Weekend city",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    preset = user.budget_presets.get()
+    assert preset.name == "Weekend city"
+    assert preset.duration_days == 4
+    assert preset.travelers == 2
+    assert tuple(
+        preset.items.values_list("category", "units_per_person_per_day")
+    ) == (
+        ("casual_meal", Decimal("2.00")),
+        ("coffee", Decimal("1.50")),
+    )
+    assert b"Saved budget preset &quot;Weekend city&quot;." in response.content
+
+    updated = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "7",
+            "travelers": "1",
+            "units_coffee": "2",
+            "budget_action": "save_preset",
+            "preset_name": "Weekend city",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert updated.status_code == 200
+    preset.refresh_from_db()
+    assert preset.duration_days == 7
+    assert preset.travelers == 1
+    assert tuple(preset.items.values_list("category", flat=True)) == ("coffee",)
+
+
+@pytest.mark.django_db
+def test_foreign_budget_preset_is_rejected_without_interpretation(
+    client,
+    reference_data,
+):
+    owner = User.objects.create_user(username="budget-preset-foreign-owner", password="StrongPass-482!")
+    viewer = User.objects.create_user(username="budget-preset-foreign-viewer", password="StrongPass-482!")
+    preset = upsert_budget_preset(
+        owner,
+        name="Private plan",
+        duration_days=3,
+        travelers=1,
+        categories=(BudgetCategoryAssumption("coffee", Decimal("1.00")),),
+    )
+    client.force_login(viewer)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+            "budget_preset_id": str(preset.pk),
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 422
+    assert b"no longer available" in response.content
+    assert b"Reference-basket comparison" not in response.content
+
+
+@pytest.mark.django_db
+def test_anonymous_user_cannot_save_budget_preset_but_keeps_result(
+    client,
+    reference_data,
+):
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "duration_days": "3",
+            "travelers": "1",
+            "units_coffee": "1",
+            "budget_action": "save_preset",
+            "preset_name": "Anonymous preset",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 403
+    assert b"Sign in before saving a budget preset." in response.content
+    assert b"Reference-basket comparison" in response.content
+    assert User.objects.count() == 0
