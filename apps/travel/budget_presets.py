@@ -5,7 +5,12 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from apps.culture.models import TypicalPriceCategory
-from apps.exchange.budget import BudgetAssumptions
+from apps.exchange.budget import (
+    BudgetAssumptions,
+    BudgetBasis,
+    BudgetCategoryAssumption,
+    BudgetInterpretationError,
+)
 from apps.travel.models import BudgetAssumptionPreset, BudgetAssumptionPresetItem
 
 MAX_BUDGET_ASSUMPTION_PRESETS = 12
@@ -38,6 +43,52 @@ def budget_preset_for_user(user, *, preset_id: int) -> BudgetAssumptionPreset:
         )
     except BudgetAssumptionPreset.DoesNotExist as exc:
         raise BudgetAssumptionPresetError("This budget preset is no longer available.") from exc
+
+
+def assumptions_from_budget_preset(
+    user,
+    *,
+    preset_id: int,
+    available_categories: set[str] | frozenset[str],
+    basis: BudgetBasis,
+) -> tuple[BudgetAssumptions, tuple[str, ...]]:
+    if not isinstance(basis, BudgetBasis):
+        raise BudgetAssumptionPresetError(
+            "Budget preset basis must come from the current trusted budget context."
+        )
+
+    allowed_categories = set(TypicalPriceCategory.values)
+    available = {str(category).strip().lower() for category in available_categories}
+    if not available or not available.issubset(allowed_categories):
+        raise BudgetAssumptionPresetError("Available budget categories are invalid.")
+
+    preset = budget_preset_for_user(user, preset_id=preset_id)
+    stored_items = tuple(preset.items.all())
+    applicable_items = tuple(item for item in stored_items if item.category in available)
+    skipped_categories = tuple(item.category for item in stored_items if item.category not in available)
+
+    if not applicable_items:
+        raise BudgetAssumptionPresetError(
+            "None of this preset's basket items have current sourced price anchors "
+            "at this destination."
+        )
+
+    try:
+        assumptions = BudgetAssumptions(
+            duration_days=preset.duration_days,
+            travelers=preset.travelers,
+            categories=tuple(
+                BudgetCategoryAssumption(
+                    category=item.category,
+                    units_per_person_per_day=item.units_per_person_per_day,
+                )
+                for item in applicable_items
+            ),
+            basis=basis,
+        )
+    except BudgetInterpretationError as exc:
+        raise BudgetAssumptionPresetError(str(exc)) from exc
+    return assumptions, skipped_categories
 
 
 def upsert_budget_preset(
