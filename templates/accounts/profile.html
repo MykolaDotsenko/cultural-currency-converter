@@ -77,6 +77,44 @@
       {% endif %}
     </section>
     <section class="qa-account-section"
+             aria-labelledby="budget-presets-title">
+      <p class="qa-foundation-kicker">Reusable planning inputs</p>
+      <h2 id="budget-presets-title">Budget presets</h2>
+      <p>
+        Presets store only your explicit trip length, traveler count and daily reference-basket
+        units. They do not store a destination, FX quote, local-price result or payment basis.
+      </p>
+      {% if budget_assumption_presets %}
+        <div class="qa-saved-list">
+          {% for preset in budget_assumption_presets %}
+            <article class="qa-saved-row">
+              <div class="qa-saved-row__copy">
+                <h3>{{ preset.name }}</h3>
+                <p>
+                  {{ preset.duration_days }} day{{ preset.duration_days|pluralize }}
+                  · {{ preset.travelers }} traveler{{ preset.travelers|pluralize }}
+                </p>
+                <p class="qa-field__message">
+                  {% for item in preset.items.all %}
+                    {{ item.get_category_display }} × {{ item.units_per_person_per_day|floatformat:"-2" }}{% if not forloop.last %} · {% endif %}
+                  {% endfor %}
+                </p>
+              </div>
+              <form method="post"
+                    action="{% url 'delete_budget_assumption_preset' preset.id %}">
+                {% csrf_token %}
+                <button class="qa-secondary-button" type="submit">Delete</button>
+              </form>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="qa-field__message">
+          No budget presets saved yet. Create one from a successful Budget Interpretation.
+        </p>
+      {% endif %}
+    </section>
+    <section class="qa-account-section"
              aria-labelledby="recent-history-privacy-title">
       <p class="qa-foundation-kicker">Privacy preference</p>
       <h2 id="recent-history-privacy-title">Cross-device recent history</h2>
