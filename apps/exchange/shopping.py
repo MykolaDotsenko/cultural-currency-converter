@@ -5,7 +5,6 @@ from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 
 from apps.exchange.domain import ConversionResult
 
-
 MAX_SHOPPING_COMPONENT = Decimal("1000000000")
 MAX_SHOPPING_FX_MARKUP_PERCENT = Decimal("25")
 
