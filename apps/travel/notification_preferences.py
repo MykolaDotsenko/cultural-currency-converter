@@ -95,10 +95,14 @@ def upsert_scenario_notification_preference(
         threshold_value: Decimal | None = None
         if notification_type_value == ScenarioNotificationType.RATE_ALERT:
             if rate_change_threshold_percent in (None, ""):
-                existing = ScenarioNotificationPreference.objects.filter(
-                    scenario=scenario,
-                    notification_type=notification_type_value,
-                ).only("rate_change_threshold_percent").first()
+                existing = (
+                    ScenarioNotificationPreference.objects.filter(
+                        scenario=scenario,
+                        notification_type=notification_type_value,
+                    )
+                    .only("rate_change_threshold_percent")
+                    .first()
+                )
                 threshold_value = (
                     existing.rate_change_threshold_percent if existing is not None else None
                 )
