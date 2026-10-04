@@ -33,7 +33,9 @@ class ShoppingAssumptions:
         _validate_component(self.known_fees, label="Known fees", allow_zero=True)
         _validate_component(self.fx_markup_percent, label="FX markup", allow_zero=True)
         if self.fx_markup_percent > MAX_SHOPPING_FX_MARKUP_PERCENT:
-            raise ShoppingCalculationError(f"FX markup cannot exceed {MAX_SHOPPING_FX_MARKUP_PERCENT}%.")
+            raise ShoppingCalculationError(
+                f"FX markup cannot exceed {MAX_SHOPPING_FX_MARKUP_PERCENT}%."
+            )
 
     @property
     def purchase_total(self) -> Decimal:
