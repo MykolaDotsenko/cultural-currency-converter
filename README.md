@@ -37,6 +37,7 @@ Those boundaries are more important to this project than adding another conversi
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions;
+- account-owned reusable input-only budget presets for duration, travellers and explicit reference-basket units, without destination/FX/payment-result persistence;
 - side-by-side destination comparison for one source budget across two explicit country/canonical-city scopes, preserving each side's rate source/date, local-price provenance and payment context without ranking destinations;
 - account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness, confirmed-spend tracking, deterministic remaining-budget meaning and an explicit current local-money-guide refresh that never mutates saved FX evidence;
 - returning-user home continuity for the most relevant active/upcoming saved trip, using stored FX observations, confirmed spend and reviewed local-context freshness without silent rate refresh;
