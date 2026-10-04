@@ -2752,24 +2752,18 @@ h3 {
   }
 }
 
-
 /* Shared country-atmosphere treatment. The palette is selected by the explicit
    data-country-theme contract; financial and evidence semantics stay unchanged. */
 .qa-country-atmosphere {
   --qa-context-accent: var(--color-brand);
   --qa-context-soft: var(--color-surface-soft);
 
-  border-color: color-mix(
-    in srgb,
-    var(--qa-context-accent) 16%,
-    var(--color-border-subtle)
+  border-color: color-mix(in srgb, var(--qa-context-accent) 16%, var(--color-border-subtle));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--qa-context-soft) 52%, var(--color-surface)) 0%,
+    var(--color-surface) 68%
   );
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--qa-context-soft) 52%, var(--color-surface)) 0%,
-      var(--color-surface) 68%
-    );
   box-shadow: inset 0.1875rem 0 0 color-mix(in srgb, var(--qa-context-accent) 52%, transparent);
 }
 
