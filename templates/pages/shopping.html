@@ -246,6 +246,36 @@
         This is an informational estimate from a reference FX observation and your explicit
         assumptions. It is not an executable card, bank, merchant or customs quote.
       </p>
+      <div class="qa-payment-estimate__actions">
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'save_shopping_scenario' %}">
+            {% csrf_token %}
+            <input type="hidden"
+                   name="shopping_context_token"
+                   value="{{ shopping.save_token }}">
+            <div class="qa-field">
+              <label class="qa-field__label" for="shopping-save-title">Save as</label>
+              <input class="qa-text-input"
+                     id="shopping-save-title"
+                     name="title"
+                     maxlength="120"
+                     autocomplete="off"
+                     placeholder="Optional purchase name">
+              <p class="qa-field__message">
+                We store these explicit assumptions and the immutable FX observation, not merchant
+                or card-account data.
+              </p>
+            </div>
+            <button class="qa-primary-button" type="submit">Save Shopping estimate</button>
+          </form>
+        {% else %}
+          <p class="qa-context-disclaimer">
+            Sign in to save these exact assumptions and their trusted reference observation.
+          </p>
+          <a class="qa-secondary-button"
+             href="{% url 'login' %}?next={% url 'shopping_calculation' %}">Sign in to save</a>
+        {% endif %}
+      </div>
     </section>
   {% endif %}
 {% endblock %}

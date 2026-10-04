@@ -7,6 +7,11 @@ from apps.exchange.domain import ConversionResult
 
 MAX_SHOPPING_COMPONENT = Decimal("1000000000")
 MAX_SHOPPING_FX_MARKUP_PERCENT = Decimal("25")
+SHOPPING_UNKNOWN_COSTS = (
+    "duties not explicitly entered",
+    "taxes not explicitly entered",
+    "issuer or merchant fees not explicitly entered",
+)
 
 
 class ShoppingCalculationError(ValueError):
@@ -32,9 +37,7 @@ class ShoppingAssumptions:
         _validate_component(self.known_fees, label="Known fees", allow_zero=True)
         _validate_component(self.fx_markup_percent, label="FX markup", allow_zero=True)
         if self.fx_markup_percent > MAX_SHOPPING_FX_MARKUP_PERCENT:
-            raise ShoppingCalculationError(
-                f"FX markup cannot exceed {MAX_SHOPPING_FX_MARKUP_PERCENT}%."
-            )
+            raise ShoppingCalculationError(f"FX markup cannot exceed {MAX_SHOPPING_FX_MARKUP_PERCENT}%.")
 
     @property
     def purchase_total(self) -> Decimal:
@@ -58,11 +61,7 @@ class ShoppingEstimate:
     reference_home_cost: Decimal
     estimated_home_cost: Decimal
     fx_markup_cost: Decimal
-    unknown_costs: tuple[str, ...] = (
-        "duties not explicitly entered",
-        "taxes not explicitly entered",
-        "issuer or merchant fees not explicitly entered",
-    )
+    unknown_costs: tuple[str, ...] = SHOPPING_UNKNOWN_COSTS
 
     @property
     def purchase_currency(self) -> str:
@@ -108,15 +107,48 @@ def calculate_shopping_estimate(
     if not conversion.output_amount.is_finite() or conversion.output_amount < 0:
         raise ShoppingCalculationError("Reference home-currency cost is invalid.")
 
+    reference, estimated, markup_cost = shopping_home_costs(
+        reference_home_cost=conversion.output_amount,
+        fx_markup_percent=assumptions.fx_markup_percent,
+        home_minor_units=home_minor_units,
+    )
+
+    return ShoppingEstimate(
+        assumptions=assumptions,
+        conversion=conversion,
+        reference_home_cost=reference,
+        estimated_home_cost=estimated,
+        fx_markup_cost=markup_cost,
+    )
+
+
+def shopping_home_costs(
+    *,
+    reference_home_cost: Decimal,
+    fx_markup_percent: Decimal,
+    home_minor_units: int,
+) -> tuple[Decimal, Decimal, Decimal]:
+    """Return rounded reference, markup-adjusted estimate and markup delta."""
+
+    if (
+        isinstance(home_minor_units, bool)
+        or not isinstance(home_minor_units, int)
+        or not 0 <= home_minor_units <= 6
+    ):
+        raise ShoppingCalculationError("Home currency minor units must be between 0 and 6.")
+    _validate_component(reference_home_cost, label="Reference home cost", allow_zero=True)
+    _validate_component(fx_markup_percent, label="FX markup", allow_zero=True)
+    if fx_markup_percent > MAX_SHOPPING_FX_MARKUP_PERCENT:
+        raise ShoppingCalculationError(
+            f"FX markup cannot exceed {MAX_SHOPPING_FX_MARKUP_PERCENT}%."
+        )
+
     quantum = Decimal(1).scaleb(-home_minor_units)
     try:
         with localcontext() as context:
             context.prec = 64
-            reference = conversion.output_amount.quantize(
-                quantum,
-                rounding=ROUND_HALF_EVEN,
-            )
-            multiplier = Decimal("1") + (assumptions.fx_markup_percent / Decimal("100"))
+            reference = reference_home_cost.quantize(quantum, rounding=ROUND_HALF_EVEN)
+            multiplier = Decimal("1") + (fx_markup_percent / Decimal("100"))
             estimated = (reference * multiplier).quantize(
                 quantum,
                 rounding=ROUND_HALF_EVEN,
@@ -134,14 +166,7 @@ def calculate_shopping_estimate(
         raise ShoppingCalculationError(
             "Non-negative shopping assumptions produced an invalid estimate."
         )
-
-    return ShoppingEstimate(
-        assumptions=assumptions,
-        conversion=conversion,
-        reference_home_cost=reference,
-        estimated_home_cost=estimated,
-        fx_markup_cost=markup_cost,
-    )
+    return reference, estimated, markup_cost
 
 
 def _validate_component(value: Decimal, *, label: str, allow_zero: bool) -> None:

@@ -12,11 +12,18 @@
 {% block content %}
   <section class="qa-foundation-intro qa-saved-intro"
            aria-labelledby="saved-scenario-title">
-    <p class="qa-foundation-kicker">Saved budget scenario</p>
+    <p class="qa-foundation-kicker">
+      {% if scenario.kind == "shopping" %}Saved Shopping estimate{% else %}Saved budget scenario{% endif %}
+    </p>
     <h1 id="saved-scenario-title">{{ scenario.title|default:scenario.get_kind_display }}</h1>
     <p class="qa-foundation-lede">
-      This page preserves the planning assumptions and trusted FX observation that were saved
-      with your account. It does not silently refresh rates or local prices.
+      {% if scenario.kind == "shopping" %}
+        This page preserves the explicit purchase assumptions and trusted FX observation that were
+        saved with your account. Re-checks never rewrite that original purchase estimate.
+      {% else %}
+        This page preserves the planning assumptions and trusted FX observation that were saved
+        with your account. It does not silently refresh rates or local prices.
+      {% endif %}
     </p>
   </section>
   {% if trip_budget %}
@@ -116,7 +123,11 @@
           <h2 id="scenario-summary-title">Scenario summary</h2>
         </div>
         <div class="qa-saved-row__actions">
-          <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
+          {% if scenario.kind == "shopping" %}
+            <a class="qa-secondary-button" href="{{ reopen_url }}">Reopen Shopping estimate</a>
+          {% else %}
+            <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
+          {% endif %}
           {% if trip_budget %}
             <a class="qa-secondary-button"
                href="{% url 'download_offline_destination_pack' scenario.pk %}">Download offline pack</a>
@@ -132,8 +143,13 @@
         <article class="qa-saved-row">
           <div class="qa-saved-row__copy">
             <h3>
-              {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
-              → {{ scenario.destination_currency.code }}
+              {% if scenario.kind == "shopping" %}
+                {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                purchase → {{ scenario.destination_currency.code }} home cost
+              {% else %}
+                {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
+                → {{ scenario.destination_currency.code }}
+              {% endif %}
             </h3>
             <p>
               {% if scenario.destination_city %}
@@ -339,32 +355,98 @@
         </p>
       </section>
     {% endif %}
-    <section class="qa-saved-section" aria-labelledby="scenario-budget-title">
-      <div class="qa-saved-section__heading">
-        <div>
-          <p class="qa-foundation-kicker">Explicit assumptions</p>
-          <h2 id="scenario-budget-title">Daily reference basket</h2>
-          <p>
-            These are the exact units you chose when saving the scenario. They are planning
-            assumptions, not claims about universal traveler spending.
-          </p>
+    {% if shopping %}
+      <section class="qa-saved-section" aria-labelledby="scenario-shopping-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Explicit purchase assumptions</p>
+            <h2 id="scenario-shopping-title">Saved Shopping estimate</h2>
+            <p>
+              Item, shipping, known fees and markup are exactly the assumptions saved with the
+              original reference observation. Unknown costs remain unknown.
+            </p>
+          </div>
         </div>
-      </div>
-      {% if budget_item_rows %}
-        <div class="qa-saved-list">
-          {% for row in budget_item_rows %}
-            <article class="qa-saved-row">
-              <div class="qa-saved-row__copy">
-                <h3>{{ row.label }}</h3>
-                <p>{{ row.item.units_per_person_per_day|floatformat:"-2" }} per person / day</p>
-              </div>
-            </article>
-          {% endfor %}
+        <dl class="qa-context-facts">
+          <div>
+            <dt>Item price</dt>
+            <dd>
+              {{ shopping.item_price }} {{ scenario.source_currency.code }}
+            </dd>
+          </div>
+          <div>
+            <dt>Shipping</dt>
+            <dd>
+              {{ shopping.shipping }} {{ scenario.source_currency.code }}
+            </dd>
+          </div>
+          <div>
+            <dt>Known fees</dt>
+            <dd>
+              {{ shopping.known_fees }} {{ scenario.source_currency.code }}
+            </dd>
+          </div>
+          <div>
+            <dt>Explicit purchase total</dt>
+            <dd>
+              {{ shopping.purchase_total }} {{ scenario.source_currency.code }}
+            </dd>
+          </div>
+          <div>
+            <dt>Original reference home cost</dt>
+            <dd>
+              {{ shopping.reference_home_cost }} {{ scenario.destination_currency.code }}
+            </dd>
+          </div>
+          <div>
+            <dt>FX markup assumption</dt>
+            <dd>
+              {{ shopping.fx_markup_percent }}% · {{ shopping.fx_markup_cost }}
+              {{ scenario.destination_currency.code }}
+            </dd>
+          </div>
+          <div>
+            <dt>Saved estimated home cost</dt>
+            <dd>
+              {{ shopping.estimated_home_cost }} {{ scenario.destination_currency.code }}
+            </dd>
+          </div>
+        </dl>
+        <div class="qa-context-freshness-note" role="note">
+          <strong>Still not included unless explicitly known:</strong>
+          <ul>
+            {% for item in shopping.unknown_costs %}<li>{{ item }}</li>{% endfor %}
+          </ul>
         </div>
-      {% else %}
-        <p class="qa-saved-empty">No budget-category assumptions were stored with this scenario.</p>
-      {% endif %}
-    </section>
+      </section>
+    {% else %}
+      <section class="qa-saved-section" aria-labelledby="scenario-budget-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Explicit assumptions</p>
+            <h2 id="scenario-budget-title">Daily reference basket</h2>
+            <p>
+              These are the exact units you chose when saving the scenario. They are planning
+              assumptions, not claims about universal traveler spending.
+            </p>
+          </div>
+        </div>
+        {% if budget_item_rows %}
+          <div class="qa-saved-list">
+            {% for row in budget_item_rows %}
+              <article class="qa-saved-row">
+                <div class="qa-saved-row__copy">
+                  <h3>{{ row.label }}</h3>
+                  <p>{{ row.item.units_per_person_per_day|floatformat:"-2" }} per person / day</p>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">No budget-category assumptions were stored with this scenario.</p>
+        {% endif %}
+      </section>
+    {% endif %}
     <section class="qa-saved-section" aria-labelledby="scenario-observation-title">
       <div class="qa-saved-section__heading">
         <div>

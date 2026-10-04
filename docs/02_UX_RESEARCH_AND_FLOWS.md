@@ -221,7 +221,7 @@ Shopping is an explicit foreign-purchase planning surface, not a second converte
 - provider failure keeps the bound form intact and never substitutes a guessed result;
 - the workflow remains usable without JavaScript.
 
-Shopping persistence should reuse SavedScenario rather than introducing a parallel save model.
+Shopping persistence reuses SavedScenario rather than introducing a parallel save model. A signed Shopping result handoff binds the exact explicit inputs to the exact trusted current FX observation. Saving creates an account-owned Shopping scenario with a normalized one-to-one assumptions payload plus the shared immutable initial observation. Detail/reopen shows the original saved estimate, while explicit rate re-checks append observation history without changing that baseline. Reopen repopulates the Shopping form without provider access; a new rate is requested only after the user explicitly submits again.
 
 
 ## Destination comparison flow

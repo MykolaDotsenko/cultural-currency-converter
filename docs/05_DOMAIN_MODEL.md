@@ -255,11 +255,11 @@ An optional user-entered FX markup is applied transparently to the trusted refer
 
 Duties, taxes and issuer/merchant fees remain unknown unless they are authoritative or explicitly entered as a known fee. The shopping domain does not infer or estimate them silently.
 
-Historical FX and same-currency purchases are outside this foreign-shopping estimate contract. Saved Shopping scenarios should reuse `SavedScenario` ownership and immutable FX observations rather than creating a parallel persistence model.
+Historical FX and same-currency purchases are outside this foreign-shopping estimate contract. Saved Shopping scenarios reuse `SavedScenario` ownership and immutable FX observations rather than creating a parallel persistence model. Their exact item price, shipping, known fees and FX-markup assumption live in a normalized one-to-one `SavedScenarioShoppingAssumptions` payload; derived home-currency values are recomputed from that payload plus the immutable initial observation.
 
 ## SavedScenario
 
-A SavedScenario is a signed-in user's reusable planning state for a **trip**, **budget** or future **shopping** workflow.
+A SavedScenario is a signed-in user's reusable planning state for a **trip**, **budget** or **shopping** workflow.
 
 It is deliberately separate from `FavouritePair` and `RecentConversion`:
 

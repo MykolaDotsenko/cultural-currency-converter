@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
 from django.db import DatabaseError, transaction
 from django.http import Http404, HttpRequest, HttpResponse
@@ -32,6 +33,11 @@ from apps.exchange.payment_budget_snapshot import (
 from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
+from apps.exchange.shopping import SHOPPING_UNKNOWN_COSTS, shopping_home_costs
+from apps.exchange.shopping_snapshot import (
+    ShoppingContextTokenError,
+    load_shopping_context_snapshot_token,
+)
 from apps.exchange.web.gateways import build_latest_quote_gateway
 from apps.travel.forms import SavedScenarioPlanningForm, SavedScenarioSpendForm
 from apps.travel.models import (
@@ -83,6 +89,27 @@ def _scenario_converter_url(scenario: SavedScenario) -> str:
     if scenario.destination_city is not None:
         params["destination_city_slug"] = scenario.destination_city.slug
     return f"{reverse('converter')}?{urlencode(params)}"
+
+
+def _scenario_reopen_url(scenario: SavedScenario) -> str:
+    if scenario.kind != SavedScenarioKind.SHOPPING:
+        return _scenario_converter_url(scenario)
+
+    try:
+        shopping = scenario.shopping_assumptions
+    except ObjectDoesNotExist:
+        return reverse("shopping_calculation")
+
+    params = {
+        "purchase_country": scenario.source_country.iso2 if scenario.source_country else "",
+        "purchase_currency": scenario.source_currency.code,
+        "home_currency": scenario.destination_currency.code,
+        "item_price": _decimal_input_text(shopping.item_price),
+        "shipping": _decimal_input_text(shopping.shipping),
+        "known_fees": _decimal_input_text(shopping.known_fees),
+        "fx_markup_percent": _decimal_input_text(shopping.fx_markup_percent),
+    }
+    return f"{reverse('shopping_calculation')}?{urlencode(params)}"
 
 
 def _signed_decimal_text(value: Decimal) -> str:
@@ -212,6 +239,72 @@ def _format_currency_amount(value: Decimal, *, minor_units: int) -> str:
     return format(rounded, f".{minor_units}f") if minor_units else format(rounded, "f")
 
 
+def _scenario_shopping_component(
+    scenario: SavedScenario,
+    *,
+    initial_observation,
+) -> dict[str, object] | None:
+    if scenario.kind != SavedScenarioKind.SHOPPING or initial_observation is None:
+        return None
+
+    try:
+        shopping = scenario.shopping_assumptions
+    except ObjectDoesNotExist:
+        logger.warning(
+            "saved_shopping_scenario_payload_missing",
+            extra={"scenario_id": scenario.pk},
+        )
+        return None
+
+    try:
+        reference, estimated, markup_cost = shopping_home_costs(
+            reference_home_cost=initial_observation.output_amount,
+            fx_markup_percent=shopping.fx_markup_percent,
+            home_minor_units=scenario.destination_currency.minor_units,
+        )
+    except ValueError:
+        logger.warning(
+            "saved_shopping_scenario_payload_invalid",
+            extra={"scenario_id": scenario.pk},
+        )
+        return None
+
+    source_minor_units = scenario.source_currency.minor_units
+    destination_minor_units = scenario.destination_currency.minor_units
+    return {
+        "item_price": _format_currency_amount(
+            shopping.item_price,
+            minor_units=source_minor_units,
+        ),
+        "shipping": _format_currency_amount(
+            shopping.shipping,
+            minor_units=source_minor_units,
+        ),
+        "known_fees": _format_currency_amount(
+            shopping.known_fees,
+            minor_units=source_minor_units,
+        ),
+        "purchase_total": _format_currency_amount(
+            scenario.source_amount,
+            minor_units=source_minor_units,
+        ),
+        "fx_markup_percent": _decimal_input_text(shopping.fx_markup_percent),
+        "reference_home_cost": _format_currency_amount(
+            reference,
+            minor_units=destination_minor_units,
+        ),
+        "estimated_home_cost": _format_currency_amount(
+            estimated,
+            minor_units=destination_minor_units,
+        ),
+        "fx_markup_cost": _format_currency_amount(
+            markup_cost,
+            minor_units=destination_minor_units,
+        ),
+        "unknown_costs": SHOPPING_UNKNOWN_COSTS,
+    }
+
+
 def _scenario_trip_budget_component(
     scenario: SavedScenario,
     *,
@@ -330,6 +423,10 @@ def _scenario_detail_context(
         spend_entries=spend_entries,
         as_of=as_of,
     )
+    shopping = _scenario_shopping_component(
+        scenario,
+        initial_observation=initial_observation,
+    )
     if spend_form is None:
         spend_form = SavedScenarioSpendForm(
             destination_currency_code=scenario.destination_currency.code,
@@ -346,9 +443,11 @@ def _scenario_detail_context(
         "rate_comparison": rate_comparison,
         "trip_schedule": trip_schedule,
         "trip_budget": trip_budget,
+        "shopping": shopping,
         "spend_entries": spend_entries,
         "spend_form": spend_form,
         "converter_url": _scenario_converter_url(scenario),
+        "reopen_url": _scenario_reopen_url(scenario),
         "camera_extraction_available": (
             scenario.kind == SavedScenarioKind.BUDGET
             and bool(settings.AI_CAMERA_EXTRACTION_ENABLED)
@@ -364,7 +463,11 @@ def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedS
             "source_country",
             "destination_country",
             "destination_city",
-        ).prefetch_related("budget_items", "spend_entries", "observations"),
+        ).select_related("shopping_assumptions").prefetch_related(
+            "budget_items",
+            "spend_entries",
+            "observations",
+        ),
         pk=scenario_id,
         user=request.user,
     )
@@ -600,6 +703,105 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         return redirect("converter")
 
     messages.success(request, "Budget saved to your account.")
+    return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+
+@login_required
+@require_POST
+def save_shopping_scenario(request: HttpRequest) -> HttpResponse:
+    token = str(request.POST.get("shopping_context_token") or "")
+    try:
+        snapshot = load_shopping_context_snapshot_token(token)
+    except ShoppingContextTokenError as exc:
+        logger.warning(
+            "saved_shopping_scenario_rejected",
+            extra={"error_code": str(exc)},
+        )
+        messages.error(
+            request,
+            "This Shopping estimate is no longer valid. Recalculate it before saving.",
+        )
+        return redirect("shopping_calculation")
+
+    try:
+        currencies = Currency.objects.in_bulk(
+            [
+                snapshot.conversion.quote.base_currency,
+                snapshot.conversion.quote.quote_currency,
+            ],
+            field_name="code",
+        )
+        source_currency = currencies[snapshot.conversion.quote.base_currency]
+        destination_currency = currencies[snapshot.conversion.quote.quote_currency]
+        source_country = None
+        if snapshot.purchase_country_code:
+            source_country = Country.objects.get(
+                iso2=snapshot.purchase_country_code,
+                is_active=True,
+            )
+    except (KeyError, Country.DoesNotExist) as exc:
+        logger.warning(
+            "saved_shopping_scenario_rejected",
+            extra={
+                "error_code": "shopping_metadata_missing",
+                "detail_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "The Shopping currency or country metadata is no longer available. Recalculate it.",
+        )
+        return redirect("shopping_calculation")
+    except DatabaseError as exc:
+        logger.warning(
+            "saved_shopping_scenario_rejected",
+            extra={
+                "error_code": "metadata_database_unavailable",
+                "detail_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "Saved scenarios are temporarily unavailable. Your Shopping estimate was not changed.",
+        )
+        return redirect("shopping_calculation")
+
+    raw_title = str(request.POST.get("title") or "").strip()
+    if len(raw_title) > 120:
+        messages.error(request, "Shopping scenario title must be 120 characters or fewer.")
+        return redirect("shopping_calculation")
+    title = raw_title or (
+        f"{source_country.name} purchase"
+        if source_country is not None
+        else f"{source_currency.code} purchase"
+    )
+
+    try:
+        scenario = create_saved_scenario(
+            request.user,
+            spec=SavedScenarioSpec(
+                kind=SavedScenarioKind.SHOPPING,
+                title=title,
+                source_currency=source_currency,
+                destination_currency=destination_currency,
+                source_country=source_country,
+                source_amount=snapshot.conversion.input_amount,
+                shopping_assumptions=snapshot.assumptions,
+            ),
+            conversion=snapshot.conversion,
+        )
+    except SavedScenarioError as exc:
+        messages.error(request, f"Could not save Shopping estimate: {exc}")
+        return redirect("shopping_calculation")
+    except DatabaseError:
+        logger.exception("saved_shopping_scenario_persistence_unavailable")
+        messages.error(
+            request,
+            "The Shopping estimate could not be saved. Your calculated result was not changed.",
+        )
+        return redirect("shopping_calculation")
+
+    messages.success(request, "Shopping estimate saved to your account.")
     return redirect("saved_scenario_detail", scenario_id=scenario.pk)
 
 
