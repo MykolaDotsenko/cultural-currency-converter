@@ -481,6 +481,8 @@ The current slice uses the reference conversion basis in the UI. The domain alre
 
 Budget interpretation is not a full trip-cost forecast. Accommodation, flights and unselected categories must never be silently added.
 
+Reusable Budget presets are explicit input shortcuts, not opaque travel-style profiles. A preset stores only trip duration, traveller count and selected daily reference-basket units. Saving requires a successful deterministic interpretation. Applying a preset never changes the signed conversion or payment-adjusted basis, never injects a destination or local-price claim, and only restores categories that have current sourced anchors at the active destination. Unsupported preset categories remain visibly skipped; if there is no overlap at all, the apply action fails closed instead of manufacturing a basket. Presets are account-owned, capped and removable from Account.
+
 ### Saved budget handoff
 
 After a successful budget interpretation, a signed-in user may explicitly save that planning state.
