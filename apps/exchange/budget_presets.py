@@ -112,13 +112,18 @@ def upsert_budget_preset(
             )
             for item in assumptions.categories
         ]
+
+        # Replace the child graph inside the same transaction. Removing the
+        # previous rows first lets model/constraint validation evaluate the
+        # replacement against the state that will actually be committed.
+        # Any validation failure rolls the deletion back with the transaction.
+        preset.items.all().delete()
         for item in replacement_items:
             try:
-                item.full_clean(validate_unique=False)
+                item.full_clean()
             except ValidationError as exc:
                 raise BudgetPresetError(_validation_message(exc)) from exc
 
-        preset.items.all().delete()
         BudgetPresetItem.objects.bulk_create(replacement_items)
 
         return budget_preset_for_user(user, preset_id=preset.pk)
