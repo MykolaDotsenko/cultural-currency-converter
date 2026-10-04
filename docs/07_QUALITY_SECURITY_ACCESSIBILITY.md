@@ -105,6 +105,7 @@ A dimension omitted from a row is not silently waived. It is either not meaningf
 | Returning-user Trip Home | H E P S O A K X R C PG | `apps/travel/tests/test_home.py` | authenticated Chromium end-to-end returns to clean home and verifies saved-trip continuity | No live rate refresh is a trust invariant. Dedicated Firefox/WebKit auth coverage is not current. |
 | Camera extraction + confirmation + spend handoff | H E I F O A D K X R C PG | `apps/exchange/tests/test_camera.py`, `test_camera_service.py`, `test_camera_gemini_provider.py`, `apps/travel/tests/test_camera_web.py` | authenticated full-Chromium trip E2E uploads a real PNG through the test-only deterministic extractor, confirms the signed candidate, performs the separate spend POST and runs axe on candidate/confirmed states | Raw media still passes the production sanitizer and is never persisted. The deterministic Camera fixture is rejected outside `APP_ENV=test`, so browser evidence does not create a production bypass. |
 | Offline Destination Pack | H E P S O A D K X R C PG | `apps/travel/tests/test_offline_pack_web.py` | authenticated full-Chromium trip E2E downloads the real attachment, verifies filename/freshness/self-contained markup, opens the downloaded HTML without network dependencies and runs overflow/axe checks | Offline means stored, not live: the pack carries saved FX/context freshness semantics and no script or external stylesheet dependency. |
+| PWA install + generic offline shell | H E P S O A K X R C | `apps/common/tests/test_pwa.py` | full Chromium registers the real root service worker, inspects Cache Storage, switches the browser offline, navigates to a private Saved URL and verifies only the generic accessible offline shell appears | Navigation HTML is network-only and must never enter Cache Storage. Only the generic shell plus public build/PWA static assets are cacheable. Installability must not weaken the financial freshness boundary. |
 
 ### Cross-cutting gates
 
@@ -288,7 +289,7 @@ Current frontend guardrail budgets intentionally leave generous capacity for con
 - initial converter render: <= 6 SQL queries;
 - story composition with a reviewed fact remains <= 4 SQL queries.
 
-The hard initial-request budget measures application page resources and excludes browser-initiated `/favicon.ico` discovery, which differs across browser engines. Browser QA still records the raw browser request count separately for diagnosis.
+The hard initial-request budget measures application page resources and excludes browser-initiated `/favicon.ico` discovery, which differs across browser engines. PWA registration is intentionally delayed until after load so service-worker bootstrap does not compete with the critical render path; the manifest/service-worker/cache contract is tested separately in full Chromium. Browser QA still records the raw browser request count separately for diagnosis.
 
 `npm run quality` enforces production-build asset budgets without starting a browser. Full browser QA reuses the same budget definitions, verifies lazy-route loading and records per-surface request/body/navigation evidence.
 

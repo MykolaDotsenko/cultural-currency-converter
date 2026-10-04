@@ -645,17 +645,15 @@ Cover:
 
 ## PR #224 — PWA manifest
 
-Add installable web-app identity and managed icon assets.
+**Current production slice:** shipped. The base shell exposes a same-origin install manifest with stable app identity, root scope/start URL, reviewed Quiet Atlas theme colors and managed 192/512 PNG icons including a maskable-safe 512 asset.
 
 ## PR #225 — Service-worker foundation
 
-Define explicit cache rules.
-
-Sensitive account pages must not be cached accidentally.
+**Current production slice:** shipped with a fail-closed privacy boundary. Navigation HTML is always network-only. Cache Storage is limited to the generic offline shell plus public same-origin build/PWA static assets; account, SavedScenario, notification, admin and form HTML are never cached merely because they were viewed. Registration is delayed outside the critical initial-render path and failures do not affect the core product.
 
 ## PR #226 — Offline app shell
 
-Provide navigation and clear offline state without pretending data is live.
+**Current production slice:** shipped. When a navigation fails offline, the worker returns a self-contained accessible generic shell that explicitly says it cannot refresh rates/context and that private pages are not cached. The shell points users toward the explicit Offline Destination Pack for portable trip data rather than presenting old financial state as live.
 
 ## PR #227 — Offline active-trip view
 

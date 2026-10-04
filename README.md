@@ -42,6 +42,7 @@ Those boundaries are more important to this project than adding another conversi
 - returning-user home continuity for the most relevant active/upcoming saved trip, using stored FX observations, confirmed spend and reviewed local-context freshness without silent rate refresh;
 - optional, explicitly enabled camera amount extraction for saved budget scenarios with ephemeral metadata-stripped image processing, mandatory user confirmation and a separate idempotent Add-to-trip-budget handoff;
 - self-contained offline destination-pack export using stored FX/freshness semantics and reviewed destination context;
+- installable privacy-safe PWA shell with managed icons, a root-scoped service worker, public-static-only caching and a generic offline fallback; private/account/scenario navigation HTML is never cached automatically;
 - provider-free regional Explore discovery over reviewed country/canonical-city money context, with five provenance-bearing collections, region → country → city navigation, curated country teaser media and canonical Converter/City Profile handoffs;
 - Same Amount Across Destinations for two to four explicit destinations, preserving independent rate/provider/date/scope/provenance semantics without ranking, PPP or affordability claims;
 - canonical one-sided Compare handoffs from Explore, My Places, saved scenarios, favourites and recent conversions; Destination B is never inferred;

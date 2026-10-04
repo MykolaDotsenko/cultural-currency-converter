@@ -200,6 +200,14 @@ Managed media storage is environment-aware. Local/test/demo/preview may use Djan
 
 Object storage makes media bytes durable across application deploys, but durability is not the same as backup. Bucket versioning/retention and restore evidence remain deployment responsibilities.
 
+## PWA / browser offline boundary
+
+The root-scoped service worker is an availability shell, not a second application datastore. Navigation requests are always network-only; if the network fails they fall back to one generic self-contained offline page. The worker never writes account, SavedScenario, notification, admin or form HTML into Cache Storage.
+
+Only public same-origin build assets and managed PWA icon assets may use runtime cache-first behavior. The generic offline shell is explicitly precached. This preserves the existing trust boundary: a page seen online is not evidence that its financial values are available offline or still current. Saved-trip financial/context state remains portable only through the explicit Offline Destination Pack until a separate user-initiated offline active-trip snapshot contract is implemented.
+
+Service-worker registration is optional progressive enhancement. Registration failure must not affect conversion, saved state, accessibility or no-JavaScript behavior.
+
 ## Caching
 
 Caching is an optimization, coordination and resilience mechanism, not a second semantic truth source.

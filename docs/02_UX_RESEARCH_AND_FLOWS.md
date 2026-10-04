@@ -384,6 +384,8 @@ The Camera flow for saved budget scenarios is explicit end to end:
 
 ### Offline destination pack
 
+The installable web shell is now a separate progressive-enhancement layer from trip snapshots. When the network is unavailable, ordinary navigation falls back to a generic offline page that contains no account or scenario data. The service worker never caches navigation HTML, so signing in, opening Saved, editing a scenario or viewing notifications cannot silently leave private pages in Cache Storage. Only public build/PWA assets and the generic offline shell are eligible for service-worker caching.
+
 The first offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden service-worker cache.
 
 The exported HTML file is self-contained: it carries its own restrained styling, no executable scripts and no remote asset dependency. It includes:
