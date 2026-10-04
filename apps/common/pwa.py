@@ -10,7 +10,6 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
-
 _PWA_THEME_COLOR = "#f5f2eb"
 _PWA_BACKGROUND_COLOR = "#f5f2eb"
 
