@@ -632,8 +632,8 @@ def test_budget_preset_application_replaces_submitted_assumptions(
     assert component["selected_preset_name"] == "Weekend city"
     assert component["result"]["duration_days"] == 5
     assert component["result"]["travelers"] == 2
-    assert component["form"]["duration_days"].value() == 5
-    assert component["form"]["travelers"].value() == 2
+    assert component["form"]["duration_days"].value() == "5"
+    assert component["form"]["travelers"].value() == "2"
     assert component["form"]["units_coffee"].value() == "2"
     assert component["form"]["units_casual_meal"].value() == "1"
     assert b"Using saved budget preset" in response.content
