@@ -21,8 +21,8 @@ from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.budget_presets import (
     BudgetPresetError,
     budget_preset_for_user,
-    budget_presets_for_user,
-    preset_post_values,
+    budget_presets_for_categories,
+    preset_post_values_for_categories,
     upsert_budget_preset,
 )
 from apps.exchange.budget_snapshot import (
@@ -173,12 +173,16 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                     }
                 else:
                     category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
+                    available_categories = frozenset(anchor.category for anchor in anchors)
                     submitted_data = request.POST
                     requested_preset_id = str(request.POST.get("budget_preset_id") or "").strip()
 
                     if request.user.is_authenticated:
                         try:
-                            budget_presets = budget_presets_for_user(request.user)
+                            budget_presets = budget_presets_for_categories(
+                                request.user,
+                                available_categories=available_categories,
+                            )
                         except DatabaseError as exc:
                             logger.warning(
                                 "Budget preset lookup failed",
@@ -217,9 +221,30 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                 submitted_data[
                                     BudgetInterpretationForm.units_field_name(category)
                                 ] = ""
-                            for key, value in preset_post_values(preset).items():
-                                submitted_data[key] = value
-                            selected_preset_name = preset.name
+                            try:
+                                preset_values, skipped_categories = (
+                                    preset_post_values_for_categories(
+                                        preset,
+                                        available_categories=available_categories,
+                                    )
+                                )
+                            except BudgetPresetError as exc:
+                                response_status = 422
+                                preset_error = str(exc)
+                            else:
+                                for key, value in preset_values.items():
+                                    submitted_data[key] = value
+                                selected_preset_name = preset.name
+                                if skipped_categories:
+                                    labels = dict(BudgetInterpretationForm.category_choices())
+                                    skipped_labels = ", ".join(
+                                        labels.get(category, category)
+                                        for category in skipped_categories
+                                    )
+                                    preset_notice = (
+                                        f'Applied budget preset "{preset.name}". '
+                                        f"Skipped unavailable items: {skipped_labels}."
+                                    )
 
                     handoff_only = payment_handoff is not None and not any(
                         key in request.POST
@@ -275,7 +300,10 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                                 travelers=assumptions.travelers,
                                                 categories=assumptions.categories,
                                             )
-                                            budget_presets = budget_presets_for_user(request.user)
+                                            budget_presets = budget_presets_for_categories(
+                                                request.user,
+                                                available_categories=available_categories,
+                                            )
                                         except BudgetPresetError as exc:
                                             response_status = 422
                                             preset_error = str(exc)
