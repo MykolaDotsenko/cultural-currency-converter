@@ -178,9 +178,7 @@ def test_budget_preset_invalid_replacement_rolls_back_existing_child_graph():
         travelers=2,
         categories=_categories(coffee="1.50", casual_meal="2.00"),
     )
-    before = tuple(
-        preset.items.values_list("category", "units_per_person_per_day")
-    )
+    before = tuple(preset.items.values_list("category", "units_per_person_per_day"))
 
     with pytest.raises(BudgetPresetError):
         upsert_budget_preset(
@@ -199,6 +197,4 @@ def test_budget_preset_invalid_replacement_rolls_back_existing_child_graph():
     preset.refresh_from_db()
     assert preset.duration_days == 4
     assert preset.travelers == 2
-    assert tuple(
-        preset.items.values_list("category", "units_per_person_per_day")
-    ) == before
+    assert tuple(preset.items.values_list("category", "units_per_person_per_day")) == before
