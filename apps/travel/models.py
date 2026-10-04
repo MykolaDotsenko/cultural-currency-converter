@@ -468,9 +468,7 @@ class BudgetAssumptionPresetItem(models.Model):
                 name="budget_preset_units_range",
             ),
             models.CheckConstraint(
-                condition=Q(
-                    category__in=TypicalPriceCategory.values
-                ),
+                condition=Q(category__in=TypicalPriceCategory.values),
                 name="budget_preset_category_allowed",
             ),
         ]
