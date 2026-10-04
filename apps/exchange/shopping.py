@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 
 from apps.exchange.domain import ConversionResult
-from apps.exchange.payment_estimate import MAX_FX_MARKUP_PERCENT
+from apps.exchange.payment_estimate import MAX_SHOPPING_FX_MARKUP_PERCENT
 
 
-MAX_SHOPPING_COMPONENT = Decimal("1000000000")
+MAX_SHOPPING_COMPONENT = Decimal("1000000000")\nMAX_SHOPPING_FX_MARKUP_PERCENT = Decimal("25")
 
 
 class ShoppingCalculationError(ValueError):
@@ -32,8 +32,8 @@ class ShoppingAssumptions:
         _validate_component(self.shipping, label="Shipping", allow_zero=True)
         _validate_component(self.known_fees, label="Known fees", allow_zero=True)
         _validate_component(self.fx_markup_percent, label="FX markup", allow_zero=True)
-        if self.fx_markup_percent > MAX_FX_MARKUP_PERCENT:
-            raise ShoppingCalculationError(f"FX markup cannot exceed {MAX_FX_MARKUP_PERCENT}%.")
+        if self.fx_markup_percent > MAX_SHOPPING_FX_MARKUP_PERCENT:
+            raise ShoppingCalculationError(f"FX markup cannot exceed {MAX_SHOPPING_FX_MARKUP_PERCENT}%.")
 
     @property
     def purchase_total(self) -> Decimal:
