@@ -266,9 +266,7 @@ def _rate_alert_candidate(
             f"the same rounded {scenario.destination_currency.code} amount as the saved baseline"
         )
     else:
-        comparison_text = (
-            f"{amount_text} {scenario.destination_currency.code} {direction} than the saved baseline"
-        )
+        comparison_text = f"{amount_text} {scenario.destination_currency.code} {direction} than the saved baseline"
 
     return NotificationCandidate(
         preference_id=preference.pk,
