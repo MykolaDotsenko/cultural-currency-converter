@@ -103,6 +103,16 @@ def upsert_payment_fee_profile(
     if source_currency.pk == destination_currency.pk:
         raise PaymentFeeProfileError("Fee profiles require two different currencies.")
     _validate_assumptions(assumptions)
+    _validate_fee_precision(
+        assumptions.source_fixed_fee,
+        minor_units=source_currency.minor_units,
+        label=f"Source fixed fee in {source_currency.code}",
+    )
+    _validate_fee_precision(
+        assumptions.destination_fixed_fee,
+        minor_units=destination_currency.minor_units,
+        label=f"Destination fixed fee in {destination_currency.code}",
+    )
 
     user_model = get_user_model()
     with transaction.atomic():
@@ -156,6 +166,15 @@ def _validate_assumptions(assumptions: PaymentEstimateAssumptions) -> None:
             raise PaymentFeeProfileError(f"{label} must be a finite non-negative Decimal.")
         if value > upper_bound:
             raise PaymentFeeProfileError(f"{label} exceeds the supported profile limit.")
+
+
+def _validate_fee_precision(value: Decimal, *, minor_units: int, label: str) -> None:
+    quantum = Decimal(1).scaleb(-minor_units)
+    if value != value.quantize(quantum):
+        unit_label = "decimal place" if minor_units == 1 else "decimal places"
+        raise PaymentFeeProfileError(
+            f"{label} supports at most {minor_units} {unit_label}."
+        )
 
 
 def _validation_message(exc: ValidationError) -> str:
