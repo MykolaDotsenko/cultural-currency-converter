@@ -739,7 +739,7 @@ class BudgetInterpretationForm(forms.Form):
         if not isinstance(basis, BudgetBasis):
             raise ValueError("Budget form basis must be a BudgetBasis value.")
         self.budget_basis = basis
-        allowed_categories = {value for value, _label in TypicalPriceCategory.choices}
+        allowed_categories = {value for value, _label in self.category_choices()}
         visible_labels: dict[str, str] = {}
         for category, label in category_options:
             if category not in allowed_categories or not re.fullmatch(r"[a-z0-9_]+", category):
@@ -754,7 +754,7 @@ class BudgetInterpretationForm(forms.Form):
         # explicit assumption if its source row disappears between page load
         # and POST; the domain can then return insufficient-data rather than
         # silently shrinking the user's basket.
-        for category, generic_label in TypicalPriceCategory.choices:
+        for category, generic_label in self.category_choices():
             field_name = self.units_field_name(category)
             label = visible_labels.get(category, generic_label)
             self.fields[field_name] = forms.DecimalField(
@@ -782,6 +782,10 @@ class BudgetInterpretationForm(forms.Form):
             )
 
     @staticmethod
+    def category_choices() -> tuple[tuple[str, str], ...]:
+        return tuple((str(value), str(label)) for value, label in TypicalPriceCategory.choices)
+
+    @staticmethod
     def units_field_name(category: str) -> str:
         return f"units_{category}"
 
@@ -806,7 +810,7 @@ class BudgetInterpretationForm(forms.Form):
             return cleaned
 
         categories: list[BudgetCategoryAssumption] = []
-        for category, _label in TypicalPriceCategory.choices:
+        for category, _label in self.category_choices():
             value = cleaned.get(self.units_field_name(category))
             if value is None:
                 continue

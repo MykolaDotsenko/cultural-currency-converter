@@ -38,6 +38,12 @@
         The reference FX result remains unchanged.
       </div>
     {% endif %}
+    {% if budget_interpretation.selected_preset_name %}
+      <p class="qa-context-freshness-note" role="status">
+        Using saved budget preset <strong>{{ budget_interpretation.selected_preset_name }}</strong>.
+        Destination evidence and the signed planning amount remain unchanged.
+      </p>
+    {% endif %}
     {% if budget_interpretation.result %}
       {% with result=budget_interpretation.result %}
         <div class="qa-budget-interpretation__result" aria-live="polite">
@@ -197,9 +203,43 @@
                name="payment_budget_token"
                value="{{ budget_interpretation.payment_handoff_token }}">
       {% endif %}
+      {% for hidden_item in budget_interpretation.hidden_category_fields %}
+        <input type="hidden"
+               name="{{ hidden_item.field_name }}"
+               value="{{ hidden_item.value }}">
+      {% endfor %}
       {% if budget_interpretation.form.non_field_errors %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
           <p>{{ budget_interpretation.form.non_field_errors.0 }}</p>
+        </div>
+      {% endif %}
+      {% if budget_interpretation.preset_notice %}
+        <div class="qa-inline-alert" role="status">
+          <p>{{ budget_interpretation.preset_notice }}</p>
+        </div>
+      {% endif %}
+      {% if budget_interpretation.preset_error %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ budget_interpretation.preset_error }}</p>
+        </div>
+      {% endif %}
+      {% if budget_interpretation.budget_presets %}
+        <div class="qa-budget-interpretation__presets"
+             aria-labelledby="budget-preset-list-title">
+          <p class="qa-foundation-kicker">Saved assumptions</p>
+          <h4 id="budget-preset-list-title">Budget presets</h4>
+          <div class="qa-account-actions">
+            {% for preset in budget_interpretation.budget_presets %}
+              <button class="qa-secondary-button"
+                      type="submit"
+                      name="budget_preset_id"
+                      value="{{ preset.id }}">{{ preset.name }}</button>
+            {% endfor %}
+          </div>
+          <p class="qa-field__message">
+            Applying a preset replaces only trip length, traveler count and daily basket units.
+            Destination, current price evidence and the signed planning amount stay unchanged.
+          </p>
         </div>
       {% endif %}
       <div class="qa-budget-interpretation__trip-fields">
@@ -256,6 +296,27 @@
           {% endfor %}
         </div>
       </fieldset>
+      {% if budget_interpretation.result and user.is_authenticated %}
+        <div class="qa-budget-interpretation__preset-save">
+          <label class="qa-field" for="budget-preset-name">
+            <span class="qa-field__label">Save these assumptions as a preset</span>
+            <input class="qa-text-input"
+                   id="budget-preset-name"
+                   name="preset_name"
+                   maxlength="80"
+                   autocomplete="off"
+                   placeholder="e.g. Weekend city"
+                   value="{{ budget_interpretation.preset_name_value }}">
+            <span class="qa-field__message">
+              Stores only duration, travelers and basket units — never destination, FX or prices.
+            </span>
+          </label>
+          <button class="qa-secondary-button"
+                  type="submit"
+                  name="budget_action"
+                  value="save_preset">Save budget preset</button>
+        </div>
+      {% endif %}
       <div class="qa-budget-interpretation__actions">
         <span id="budget-interpretation-loading"
               class="qa-loading-indicator htmx-indicator"

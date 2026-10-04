@@ -6,7 +6,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.models import AccountPreferences, PaymentFeeProfile
+from apps.accounts.models import (
+    AccountPreferences,
+    BudgetPreset,
+    BudgetPresetItem,
+    PaymentFeeProfile,
+)
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.travel.models import (
     FavouritePair,
@@ -152,6 +157,47 @@ class AccountWebTests(TestCase):
         self.assertRedirects(response, reverse("profile"))
         self.assertFalse(PaymentFeeProfile.objects.filter(pk=own.pk).exists())
 
+    def test_profile_lists_only_owner_budget_presets_and_delete_is_owner_scoped(self):
+        user = User.objects.create_user(username="budget-preset-owner", password=PASSWORD)
+        other = User.objects.create_user(username="budget-preset-other", password=PASSWORD)
+        own = BudgetPreset.objects.create(
+            user=user,
+            name="Weekend city",
+            duration_days=3,
+            travelers=2,
+        )
+        BudgetPresetItem.objects.create(
+            preset=own,
+            category="coffee",
+            units_per_person_per_day="1.50",
+        )
+        foreign = BudgetPreset.objects.create(
+            user=other,
+            name="Other plan",
+            duration_days=5,
+            travelers=1,
+        )
+        BudgetPresetItem.objects.create(
+            preset=foreign,
+            category="casual_meal",
+            units_per_person_per_day="2.00",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("profile"))
+
+        self.assertContains(response, "Weekend city")
+        self.assertContains(response, "Coffee 1.5")
+        self.assertNotContains(response, "Other plan")
+
+        response = self.client.post(reverse("delete_budget_preset", args=(foreign.pk,)))
+        self.assertRedirects(response, reverse("profile"))
+        self.assertTrue(BudgetPreset.objects.filter(pk=foreign.pk).exists())
+
+        response = self.client.post(reverse("delete_budget_preset", args=(own.pk,)))
+        self.assertRedirects(response, reverse("profile"))
+        self.assertFalse(BudgetPreset.objects.filter(pk=own.pk).exists())
+
     def test_recent_history_preference_defaults_off_and_toggles_explicitly(self):
         user = User.objects.create_user(username="privacy-member", password=PASSWORD)
         self.client.force_login(user)
@@ -247,6 +293,26 @@ class AccountWebTests(TestCase):
             destination_country=jp,
         )
         AccountPreferences.objects.create(user=user, sync_recent_history=True)
+        PaymentFeeProfile.objects.create(
+            user=user,
+            name="Travel card",
+            source_currency=eur,
+            destination_currency=jpy,
+            fx_markup_percent="1.50",
+            source_fixed_fee="0.50",
+            destination_fixed_fee="100",
+        )
+        preset = BudgetPreset.objects.create(
+            user=user,
+            name="Weekend city",
+            duration_days=3,
+            travelers=2,
+        )
+        BudgetPresetItem.objects.create(
+            preset=preset,
+            category="coffee",
+            units_per_person_per_day="1.00",
+        )
         RecentConversion.objects.create(
             user=user,
             fingerprint="a" * 64,
@@ -292,4 +358,7 @@ class AccountWebTests(TestCase):
         self.assertEqual(SavedComparison.objects.count(), 0)
         self.assertEqual(SavedComparisonBudgetItem.objects.count(), 0)
         self.assertEqual(AccountPreferences.objects.count(), 0)
+        self.assertEqual(PaymentFeeProfile.objects.count(), 0)
+        self.assertEqual(BudgetPreset.objects.count(), 0)
+        self.assertEqual(BudgetPresetItem.objects.count(), 0)
         self.assertNotIn("_auth_user_id", self.client.session)

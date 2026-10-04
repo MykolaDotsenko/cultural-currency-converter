@@ -77,6 +77,7 @@ def build_budget_component(
         destination_name = f"{destination_context.city_name}, {destination_context.country_name}"
 
     fields = []
+    visible_categories = {anchor.category for anchor in anchors}
     for anchor in anchors:
         field_name = budget_form.units_field_name(anchor.category)
         fields.append(
@@ -114,6 +115,21 @@ def build_budget_component(
                     else ""
                 ),
                 "currency_code": anchor.currency_code,
+            }
+        )
+
+    hidden_category_fields = []
+    for category, _label in budget_form.category_choices():
+        if category in visible_categories:
+            continue
+        field_name = budget_form.units_field_name(category)
+        value = budget_form[field_name].value()
+        if value in (None, ""):
+            continue
+        hidden_category_fields.append(
+            {
+                "field_name": field_name,
+                "value": str(value),
             }
         )
 
@@ -258,6 +274,7 @@ def build_budget_component(
         ),
         "form": budget_form,
         "fields": tuple(fields),
+        "hidden_category_fields": tuple(hidden_category_fields),
         "destination_name": destination_name,
         "currency_code": context.quote_currency,
         "reference_amount": _money_text(

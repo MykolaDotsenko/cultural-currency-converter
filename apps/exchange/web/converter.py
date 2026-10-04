@@ -17,6 +17,7 @@ from apps.countries.models import City, CountryCurrency, Currency
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
+from apps.exchange.budget_presets import budget_presets_for_user
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
 from apps.exchange.domain import (
     HistoricalCoverageReason,
@@ -437,6 +438,21 @@ def converter_view(
                     extra={"error_code": exc.__class__.__name__},
                 )
                 payment_component["fee_profiles"] = ()
+
+        budget_component = (
+            result_component.get("budget_interpretation")
+            if isinstance(result_component, dict)
+            else None
+        )
+        if isinstance(budget_component, dict):
+            try:
+                budget_component["budget_presets"] = budget_presets_for_user(request.user)
+            except DatabaseError as exc:
+                logger.warning(
+                    "Budget preset lookup failed",
+                    extra={"error_code": exc.__class__.__name__},
+                )
+                budget_component["budget_presets"] = ()
 
     returning_trip_home = None
     if (

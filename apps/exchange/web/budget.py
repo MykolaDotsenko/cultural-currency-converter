@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_POST
 
+from apps.accounts.forms import BudgetPresetNameForm
 from apps.countries.models import Currency
 from apps.exchange.budget import (
     BudgetAssumptions,
@@ -17,6 +18,13 @@ from apps.exchange.budget import (
     interpret_budget,
 )
 from apps.exchange.budget_presentation import build_budget_component
+from apps.exchange.budget_presets import (
+    BudgetPresetError,
+    budget_preset_for_user,
+    budget_presets_for_user,
+    preset_post_values,
+    upsert_budget_preset,
+)
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
     load_budget_context_snapshot_token,
@@ -48,6 +56,10 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
     component = None
     budget_error = None
     response_status = 200
+    budget_presets = ()
+    preset_notice = None
+    preset_error = None
+    selected_preset_name = ""
 
     if payment_handoff_token:
         try:
@@ -161,6 +173,54 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                     }
                 else:
                     category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
+                    submitted_data = request.POST
+                    requested_preset_id = str(request.POST.get("budget_preset_id") or "").strip()
+
+                    if request.user.is_authenticated:
+                        try:
+                            budget_presets = budget_presets_for_user(request.user)
+                        except DatabaseError as exc:
+                            logger.warning(
+                                "Budget preset lookup failed",
+                                extra={"error_code": exc.__class__.__name__},
+                            )
+                            if requested_preset_id:
+                                response_status = 503
+                                preset_error = (
+                                    "Saved budget presets are temporarily unavailable. "
+                                    "Enter assumptions manually."
+                                )
+
+                    if requested_preset_id and preset_error is None:
+                        try:
+                            preset_id = int(requested_preset_id)
+                            preset = budget_preset_for_user(
+                                request.user,
+                                preset_id=preset_id,
+                            )
+                        except (TypeError, ValueError, BudgetPresetError):
+                            response_status = 422
+                            preset_error = "That saved budget preset is no longer available."
+                        except DatabaseError as exc:
+                            logger.warning(
+                                "Budget preset apply failed",
+                                extra={"error_code": exc.__class__.__name__},
+                            )
+                            response_status = 503
+                            preset_error = (
+                                "Saved budget presets are temporarily unavailable. "
+                                "Enter assumptions manually."
+                            )
+                        else:
+                            submitted_data = request.POST.copy()
+                            for category, _label in BudgetInterpretationForm.category_choices():
+                                submitted_data[
+                                    BudgetInterpretationForm.units_field_name(category)
+                                ] = ""
+                            for key, value in preset_post_values(preset).items():
+                                submitted_data[key] = value
+                            selected_preset_name = preset.name
+
                     handoff_only = payment_handoff is not None and not any(
                         key in request.POST
                         for key in (
@@ -171,16 +231,17 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                             "units_transit",
                             "units_groceries",
                             "units_other",
+                            "budget_preset_id",
                         )
                     )
                     form = BudgetInterpretationForm(
-                        None if handoff_only else request.POST,
+                        None if handoff_only else submitted_data,
                         category_options=category_options,
                         basis=basis,
                     )
                     interpretation = None
                     assumptions = None
-                    if not handoff_only:
+                    if not handoff_only and preset_error is None:
                         if form.is_valid():
                             assumptions = form.cleaned_data.get("budget_assumptions")
                             if not isinstance(assumptions, BudgetAssumptions):
@@ -196,6 +257,43 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                             except BudgetInterpretationError as exc:
                                 form.add_error(None, str(exc))
                                 response_status = 422
+                            else:
+                                if request.POST.get("budget_action") == "save_preset":
+                                    name_form = BudgetPresetNameForm(request.POST)
+                                    if not request.user.is_authenticated:
+                                        response_status = 403
+                                        preset_error = "Sign in before saving a budget preset."
+                                    elif not name_form.is_valid():
+                                        response_status = 422
+                                        preset_error = name_form.errors["preset_name"][0]
+                                    else:
+                                        try:
+                                            saved_preset = upsert_budget_preset(
+                                                request.user,
+                                                name=name_form.cleaned_data["preset_name"],
+                                                duration_days=assumptions.duration_days,
+                                                travelers=assumptions.travelers,
+                                                categories=assumptions.categories,
+                                            )
+                                            budget_presets = budget_presets_for_user(request.user)
+                                        except BudgetPresetError as exc:
+                                            response_status = 422
+                                            preset_error = str(exc)
+                                        except DatabaseError as exc:
+                                            logger.warning(
+                                                "Budget preset save failed",
+                                                extra={"error_code": exc.__class__.__name__},
+                                            )
+                                            response_status = 503
+                                            preset_error = (
+                                                "This budget interpretation is still valid, but "
+                                                "the preset could not be saved."
+                                            )
+                                        else:
+                                            preset_notice = (
+                                                f'Saved budget preset "{saved_preset.name}".'
+                                            )
+                                            selected_preset_name = saved_preset.name
                         else:
                             response_status = 422
 
@@ -208,6 +306,12 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         assumptions=assumptions if interpretation is not None else None,
                         payment_handoff_token=payment_handoff_token,
                     )
+                    if component is not None:
+                        component["budget_presets"] = budget_presets
+                        component["preset_notice"] = preset_notice
+                        component["preset_error"] = preset_error
+                        component["preset_name_value"] = str(request.POST.get("preset_name") or "")
+                        component["selected_preset_name"] = selected_preset_name
 
     context = {
         "budget_interpretation": component,
