@@ -270,6 +270,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Reuse stable user-selected defaults when creating the next trip so returning users do not repeat unchanged setup.
    - Use saved/recent behaviour cautiously; do not silently build a sensitive travel/financial profile or copy destination-specific spending history into a new trip.
    - Personalization should improve defaults and explanations without changing deterministic financial truth.
+   - **First explicit preference slice:** signed-in users can set or clear one active home currency in Account. Fresh Converter, Destination Mode and Destination Comparison reuse it only as a starting source-currency default; explicit URL/reopen/submitted state takes precedence, anonymous users retain existing defaults, and preference lookup failure degrades safely. No location/history/trip inference is used. Preferred language, answer detail and reusable planning defaults remain future evidence-backed slices.
 
 32. **Actionable history shortcuts — 74/100**
    - Let a past conversion reopen into useful follow-up actions such as repeat, compare, save as scenario/trip or open relevant context.

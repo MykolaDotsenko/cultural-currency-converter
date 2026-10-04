@@ -6,6 +6,7 @@ from apps.accounts.views import (
     delete_account,
     profile,
     signup,
+    update_home_currency_preference,
     update_recent_history_preference,
 )
 
@@ -22,6 +23,11 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("signup/", signup, name="signup"),
     path("profile/", profile, name="profile"),
+    path(
+        "home-currency/",
+        update_home_currency_preference,
+        name="update_home_currency_preference",
+    ),
     path(
         "recent-history/",
         update_recent_history_preference,

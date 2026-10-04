@@ -401,6 +401,8 @@ The pack intentionally excludes receipt images, merchant identities, account/car
 
 The product may preserve reusable preferences such as home currency, language, travel style and explicit fee assumptions when the user has chosen to save them. Starting the next trip should reuse these defaults without silently copying destination-specific spending history or building a sensitive travel profile.
 
+The first shipped preference is home currency. Account → Home currency is the only place that creates or clears this default. Fresh Converter, Destination Mode and Destination Comparison may use it as their starting source currency; explicit deep links/reopen state and all submitted values win over the preference. An unavailable preference lookup degrades to the product's ordinary default instead of blocking planning.
+
 ### Scenario-based notifications
 
 Notifications should be tied to a saved scenario or upcoming trip, not generic market noise.
