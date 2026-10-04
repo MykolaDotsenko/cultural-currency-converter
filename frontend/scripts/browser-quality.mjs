@@ -1789,9 +1789,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     savePresetResponse.status() === 200,
     `budget-preset/e2e: save returned ${savePresetResponse.status()}`,
   );
-  await page
-    .getByText('Saved budget preset "QA weekend preset".', { exact: false })
-    .waitFor();
+  await page.getByText('Saved budget preset "QA weekend preset".', { exact: false }).waitFor();
 
   const presetReadyForm = page.locator(".qa-budget-interpretation__form");
   await presetReadyForm.locator("#id_duration_days").fill("9");
