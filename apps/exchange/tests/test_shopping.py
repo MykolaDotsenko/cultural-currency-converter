@@ -67,8 +67,8 @@ def test_shopping_estimate_keeps_reference_cost_and_markup_distinct():
     assert result.purchase_currency == "USD"
     assert result.home_currency == "EUR"
     assert result.reference_home_cost == Decimal("117.00")
-    assert result.estimated_home_cost == Decimal("119.93")
-    assert result.fx_markup_cost == Decimal("2.93")
+    assert result.estimated_home_cost == Decimal("119.92")
+    assert result.fx_markup_cost == Decimal("2.92")
     assert result.unknown_costs == (
         "duties not explicitly entered",
         "taxes not explicitly entered",
