@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.db import DatabaseError
 from django.urls import reverse
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
-from apps.culture.services import DestinationContext
+from apps.culture.services import DestinationContext, PaymentContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
@@ -421,6 +422,196 @@ def test_saved_scenario_detail_renders_explicit_budget_and_converter_return(
     assert b"source_currency=EUR" in response.content
     assert b"destination_currency=JPY" in response.content
     assert b"destination_city_slug=tokyo" in response.content
+
+
+
+
+@pytest.mark.django_db
+def test_saved_scenario_detail_does_not_refresh_local_context_by_default(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="context-idle-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo context idle",
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+
+    with patch("apps.travel.scenario_web.build_destination_context") as builder:
+        response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+
+    assert response.status_code == 200
+    builder.assert_not_called()
+    assert b"Refresh local money guide" in response.content
+    assert b'data-saved-local-context-state="idle"' in response.content
+    assert b"No current local-price lookup runs when this saved page opens." in response.content
+
+
+@pytest.mark.django_db
+def test_saved_scenario_explicit_local_context_refresh_uses_latest_stored_observation(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="context-refresh-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo context refresh",
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with patch(
+        "apps.travel.scenario_web.build_latest_quote_gateway",
+        return_value=FakeLatestGateway(),
+    ):
+        recheck = client.post(reverse("recheck_saved_scenario", args=(scenario.pk,)))
+    assert recheck.status_code == 302
+    assert scenario.observations.count() == 2
+
+    payment = PaymentContext(
+        summary="Cards are widely accepted.",
+        payment_customs="Cards are common.",
+        cash_usage="Carry some cash for small purchases.",
+        tipping="Tipping is not generally expected.",
+        atm_notes="Use bank ATMs where practical.",
+        dcc_warning="Decline dynamic currency conversion when offered.",
+        source_name="Reviewed payments",
+        source_url="https://example.test/japan-payments",
+        verified_at=datetime(2026, 10, 2, 9, tzinfo=UTC),
+    )
+    destination = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 10, 4),
+        payment=payment,
+        prices=(),
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+
+    with patch(
+        "apps.travel.scenario_web.build_destination_context",
+        return_value=destination,
+    ) as builder:
+        response = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+
+    assert response.status_code == 200
+    builder.assert_called_once_with(
+        country_code="JP",
+        converted_amount=Decimal("108000.000000000000"),
+        quote_currency="JPY",
+        as_of=ANY,
+        price_limit=3,
+        city_slug="tokyo",
+    )
+    assert b'data-saved-local-context-state="available"' in response.content
+    assert b"108000 JPY" in response.content
+    assert b"effective 1 Oct 2026" in response.content
+    assert b"104700" in response.content
+    assert b"Cards are widely accepted." in response.content
+    assert b"Reviewed payments" in response.content
+    assert b"does not refresh the FX rate" in response.content
+
+
+@pytest.mark.django_db
+def test_saved_scenario_local_context_refresh_degrades_without_mutating_scenario(
+    client,
+    scenario_reference_data,
+    caplog,
+):
+    user = User.objects.create_user(username="context-degraded-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo context degraded",
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    observation_ids = list(scenario.observations.values_list("pk", flat=True))
+
+    with (
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            side_effect=DatabaseError("context unavailable"),
+        ),
+        caplog.at_level("WARNING", logger="cultural_currency.travel"),
+    ):
+        response = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+
+    assert response.status_code == 200
+    assert b'data-saved-local-context-state="degraded"' in response.content
+    assert b"Local money guide is temporarily unavailable." in response.content
+    assert list(scenario.observations.values_list("pk", flat=True)) == observation_ids
+    assert any(
+        record.msg == "saved_scenario_local_context_unavailable"
+        for record in caplog.records
+    )
+
+
+@pytest.mark.django_db
+def test_saved_scenario_local_context_refresh_has_explicit_empty_state(
+    client,
+    scenario_reference_data,
+):
+    user = User.objects.create_user(username="context-empty-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo context empty",
+            "duration_days": "5",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    destination = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 10, 4),
+        payment=None,
+        prices=(),
+        city_slug="tokyo",
+        city_name="Tokyo",
+    )
+
+    with patch(
+        "apps.travel.scenario_web.build_destination_context",
+        return_value=destination,
+    ):
+        response = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+
+    assert response.status_code == 200
+    assert b'data-saved-local-context-state="empty"' in response.content
+    assert b"No current reviewed price or payment context is available" in response.content
 
 
 @pytest.mark.django_db

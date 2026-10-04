@@ -1826,6 +1826,47 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     baselineSummary.includes("Confirmed spend 0 JPY"),
     `trip-budget/e2e: new saved budget did not start at zero confirmed spend: ${baselineSummary}`,
   );
+  const baselineHistory = await rateHistory.innerText();
+  const localContextSection = page.locator(
+    '[aria-labelledby="scenario-local-context-title"]',
+  );
+  assert(
+    (await localContextSection.getAttribute("data-saved-local-context-state")) === "idle",
+    "trip-budget/e2e: saved detail refreshed current local context without explicit user action",
+  );
+  await Promise.all([
+    page.waitForURL(
+      (url) =>
+        /^\/saved\/scenarios\/\d+\/$/.test(url.pathname) &&
+        url.searchParams.get("local_context") === "1",
+    ),
+    localContextSection
+      .getByRole("link", { name: "Refresh local money guide", exact: true })
+      .click(),
+  ]);
+  const refreshedLocalContext = page.locator(
+    '[aria-labelledby="scenario-local-context-title"]',
+  );
+  assert(
+    (await refreshedLocalContext.getAttribute("data-saved-local-context-state")) === "available",
+    "trip-budget/e2e: explicit local-context refresh did not produce reviewed context",
+  );
+  await refreshedLocalContext.locator(".qa-destination-context").waitFor();
+  await refreshedLocalContext
+    .getByText("only as an amount anchor", { exact: false })
+    .waitFor();
+  const summaryAfterContextRefresh = await page
+    .locator('[aria-labelledby="scenario-trip-budget-title"]')
+    .innerText();
+  assert(
+    summaryAfterContextRefresh === baselineSummary,
+    "trip-budget/e2e: current local-context refresh changed the saved remaining-budget state",
+  );
+  assert(
+    (await page.locator(".qa-reference-history").innerText()) === baselineHistory,
+    "trip-budget/e2e: current local-context refresh changed stored FX observation history",
+  );
+  await assertAxe(page, "trip-budget/local-context");
 
   // Exercise the real Camera confirmation boundary with the test-only
   // deterministic extractor. The image still goes through decode/re-encode,
