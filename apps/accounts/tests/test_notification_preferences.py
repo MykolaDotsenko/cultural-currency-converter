@@ -126,7 +126,7 @@ def test_disabling_without_existing_preference_does_not_create_row():
                 "lead_days": 0,
                 "delivery_channel": NotificationPreference.DeliveryChannel.IN_APP,
             },
-            "greater than or equal to 1",
+            "between 1 and 30",
         ),
         (
             {
