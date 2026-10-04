@@ -324,7 +324,7 @@ def test_authenticated_payment_estimate_can_save_exact_pair_fee_profile(
     assert profile.fx_markup_percent == Decimal("2.00")
     assert profile.source_fixed_fee == Decimal("1.00")
     assert profile.destination_fixed_fee == Decimal("220")
-    assert b'Saved fee profile &quot;Travel card&quot;.' in response.content
+    assert b"Saved fee profile &quot;Travel card&quot;." in response.content
 
 
 @pytest.mark.django_db
