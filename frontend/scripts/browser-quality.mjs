@@ -26,6 +26,7 @@ const SURFACES = [
   { name: "converter", path: "/_design/converter/" },
   { name: "current-converter", path: "/" },
   { name: "destination-mode", path: "/destination/" },
+  { name: "shopping", path: "/shopping/" },
   { name: "destination-comparison", path: "/compare/" },
   { name: "explore", path: "/explore/" },
   { name: "same-amount", path: "/explore/same-amount/" },

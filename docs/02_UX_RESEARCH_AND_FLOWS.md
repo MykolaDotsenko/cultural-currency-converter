@@ -203,6 +203,27 @@ Current UX rules:
 
 My Places now supports both browser-local and owner-scoped account persistence for reviewed Explore country/city scopes. Anonymous saves remain device-local. Signed-in saves go directly to the account, while older browser-local places move only through an explicit import control on Saved & recent; sign-in alone never migrates them. Account re-entry resolves current currency from canonical country/currency relationships rather than replaying a stored currency snapshot. Optional coarse location assistance remains future work and must stay opt-in.
 
+
+## Shopping calculation flow
+
+Shopping is an explicit foreign-purchase planning surface, not a second converter engine.
+
+**Item price + shipping + known fees → purchase-currency total → current reference FX → home-currency reference cost → optional markup assumption**
+
+- the entry GET performs no FX request;
+- purchase country is optional, but when supplied its current currency relationship is validated before provider access;
+- purchase currency and home currency must differ;
+- item price, shipping and known fees are all purchase-currency inputs;
+- only the explicit total is sent through the canonical current FX path;
+- optional FX markup is labelled as a user assumption and shown separately from the reference cost;
+- provider/effective-date/stale semantics stay visible;
+- duties, taxes and issuer/merchant fees remain unknown unless the user explicitly supplies a known fee;
+- provider failure keeps the bound form intact and never substitutes a guessed result;
+- the workflow remains usable without JavaScript.
+
+Shopping persistence should reuse SavedScenario rather than introducing a parallel save model.
+
+
 ## Destination comparison flow
 
 The shipped comparison surface answers a bounded question: **what does the same source budget roughly mean across two explicit destinations under the same visible assumptions?**

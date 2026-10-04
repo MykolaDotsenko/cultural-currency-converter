@@ -32,6 +32,7 @@ Those boundaries are more important to this project than adding another conversi
 - bilateral country/currency context with smart current/historical picker filtering;
 - historical charts with 1Y / 5Y / 10Y / custom ranges, anchor observations, date-scoped historical evidence and symmetric Then & Now media when reviewed assets exist;
 - explicit-assumption Real Payment Estimate for known FX markup and fixed fees, with a signed handoff into payment-adjusted Budget Interpretation;
+- foreign-purchase Shopping estimate with explicit item price, shipping, known purchase-currency fees and optional user-entered FX markup, preserving current reference-rate provider/effective-date semantics while leaving unknown duties/taxes/issuer costs explicitly unknown;
 - sourced everyday-value and payment context;
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
