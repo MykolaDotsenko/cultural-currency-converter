@@ -137,6 +137,25 @@ The calculation uses Decimal arithmetic and destination-currency minor-unit roun
 It is not a bank/card/ATM quote, does not infer provider fees and is not currently defined for historical payment costs.
 
 
+## BudgetPreset
+
+A BudgetPreset is an authenticated user's reusable **Budget Interpretation assumption bundle**.
+
+It stores only:
+
+- owner;
+- bounded display name;
+- duration in days;
+- traveler count;
+- normalized category rows with units per person per day;
+- created/updated timestamps.
+
+It does **not** store destination, city, currency, FX observations, converted amounts, payment-fee assumptions, TypicalPrice rows, interpretation bands or AI output. Those remain current-context/result concerns.
+
+Preset writes reuse the BudgetAssumptions domain contract for duration/traveler/category validation, serialize writes per owner, cap each account at 12 presets and replace normalized category rows atomically when the same preset name is updated.
+
+Applying a preset is owner-scoped. The preset values populate only the BudgetInterpretation form assumptions. Missing current price coverage remains explicit: a preset category without a current anchor is preserved through a hidden form value and produces an insufficient-data result rather than disappearing.
+
 ## PaymentFeeProfile
 
 A PaymentFeeProfile is an authenticated user's reusable set of **explicit Payment Estimate assumptions** for one exact source/destination currency pair.
