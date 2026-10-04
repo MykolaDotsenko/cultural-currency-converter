@@ -567,8 +567,7 @@ def test_saved_scenario_local_context_refresh_degrades_without_mutating_scenario
     assert b"Local money guide is temporarily unavailable." in response.content
     assert list(scenario.observations.values_list("pk", flat=True)) == observation_ids
     assert any(
-        record.msg == "saved_scenario_local_context_unavailable"
-        for record in caplog.records
+        record.msg == "saved_scenario_local_context_unavailable" for record in caplog.records
     )
 
 
