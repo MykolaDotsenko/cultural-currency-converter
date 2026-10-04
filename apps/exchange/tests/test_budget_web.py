@@ -562,8 +562,12 @@ def test_current_conversion_lists_only_owner_budget_presets(
     client,
     reference_data,
 ):
-    owner = User.objects.create_user(username="budget-preset-list-owner", password="StrongPass-482!")
-    other = User.objects.create_user(username="budget-preset-list-other", password="StrongPass-482!")
+    owner = User.objects.create_user(
+        username="budget-preset-list-owner", password="StrongPass-482!"
+    )
+    other = User.objects.create_user(
+        username="budget-preset-list-other", password="StrongPass-482!"
+    )
     upsert_budget_preset(
         owner,
         name="Weekend city",
@@ -734,8 +738,12 @@ def test_foreign_budget_preset_is_rejected_without_interpretation(
     client,
     reference_data,
 ):
-    owner = User.objects.create_user(username="budget-preset-foreign-owner", password="StrongPass-482!")
-    viewer = User.objects.create_user(username="budget-preset-foreign-viewer", password="StrongPass-482!")
+    owner = User.objects.create_user(
+        username="budget-preset-foreign-owner", password="StrongPass-482!"
+    )
+    viewer = User.objects.create_user(
+        username="budget-preset-foreign-viewer", password="StrongPass-482!"
+    )
     preset = upsert_budget_preset(
         owner,
         name="Private plan",
