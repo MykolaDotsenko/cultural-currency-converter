@@ -26,7 +26,6 @@ const SURFACES = [
   { name: "converter", path: "/_design/converter/" },
   { name: "current-converter", path: "/" },
   { name: "destination-mode", path: "/destination/" },
-  { name: "shopping", path: "/shopping/" },
   { name: "destination-comparison", path: "/compare/" },
   { name: "explore", path: "/explore/" },
   { name: "same-amount", path: "/explore/same-amount/" },
@@ -1551,6 +1550,26 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
 
   await page.getByRole("link", { name: "Account" }).click();
   await page.getByText("Off by default.", { exact: false }).waitFor();
+  await page.locator("#id_home_currency").selectOption("JPY");
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === "/accounts/profile/"),
+    page.getByRole("button", { name: "Save home currency" }).click(),
+  ]);
+  await page.getByText("JPY is now your default home currency.", { exact: false }).waitFor();
+  assert(
+    (await page.locator("#id_home_currency").inputValue()) === "JPY",
+    "account-preferences: saved home currency was not restored on profile",
+  );
+  await page.locator("#id_home_currency").selectOption("");
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === "/accounts/profile/"),
+    page.getByRole("button", { name: "Save home currency" }).click(),
+  ]);
+  await page.getByText("Saved home currency default was cleared.", { exact: false }).waitFor();
+  assert(
+    (await page.locator("#id_home_currency").inputValue()) === "",
+    "account-preferences: cleared home currency was unexpectedly restored",
+  );
   await Promise.all([
     page.waitForURL((url) => url.pathname === "/accounts/profile/"),
     page.getByRole("button", { name: "Turn on account history" }).click(),

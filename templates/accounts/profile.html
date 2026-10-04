@@ -13,6 +13,35 @@
       <a class="qa-primary-button" href="{% url 'saved_state' %}">Saved &amp; recent</a>
       <a class="qa-secondary-button" href="{% url 'converter' %}">Converter</a>
     </div>
+    <section class="qa-account-section" aria-labelledby="home-currency-title">
+      <p class="qa-foundation-kicker">Explicit default</p>
+      <h2 id="home-currency-title">Home currency</h2>
+      <p>
+        Optional. This changes only the starting currency in new planning forms. It is never
+        inferred from location, history or saved trips, and it never changes stored calculations.
+      </p>
+      <form method="post" action="{% url 'update_home_currency_preference' %}">
+        {% csrf_token %}
+        <div class="qa-field{% if home_currency_form.home_currency.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ home_currency_form.home_currency.id_for_label }}">Home currency</label>
+          {{ home_currency_form.home_currency }}
+          {% if home_currency_form.home_currency.errors %}
+            <p class="qa-field__message qa-field__message--error"
+               id="home_currency-error">{{ home_currency_form.home_currency.errors.0 }}</p>
+          {% else %}
+            <p class="qa-field__message">
+              {% if home_currency_code %}
+                Saved default: {{ home_currency_code }}.
+              {% else %}
+                No account default is saved.
+              {% endif %}
+            </p>
+          {% endif %}
+        </div>
+        <button class="qa-secondary-button" type="submit">Save home currency</button>
+      </form>
+    </section>
     <section class="qa-account-section"
              aria-labelledby="recent-history-privacy-title">
       <p class="qa-foundation-kicker">Privacy preference</p>

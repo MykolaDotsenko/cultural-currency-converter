@@ -255,6 +255,8 @@ The strongest retention mechanisms are continuity of state and point-of-use util
 
 Before travel, the product should make it easy to return to a saved scenario and understand what changed. During travel, the product should become more useful through fast conversion, camera-assisted price understanding, offline context and a lightweight remaining-budget view. After travel, it should preserve only the preferences and reusable assumptions that make the next trip faster to set up.
 
+The first explicit account preference is **home currency**. It is unset by default and can only be selected or cleared by the signed-in user. It may prefill the source/home currency on fresh planning surfaces, but explicit query parameters, saved/reopened state and submitted form values always take precedence. The product never derives this preference from IP/location, conversion history, saved destinations or trip spending, and changing it never mutates stored calculations.
+
 Avoid manufacturing retention through streaks, badges, random rate notifications, generic content feeds or forced login.
 
 The signature interaction keeps source and destination identities visible together. Country context can change atmosphere and enrichment while the financial calculation remains stable and independently trustworthy.

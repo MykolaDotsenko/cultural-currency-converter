@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import logging
 from urllib.parse import urlencode
 
+from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
+from apps.accounts.preferences import home_currency_code
 from apps.exchange.forms import DestinationModeForm
+
+logger = logging.getLogger("cultural_currency.exchange")
 
 
 @require_http_methods(["GET", "POST"])
@@ -16,8 +21,22 @@ def destination_mode_view(request: HttpRequest) -> HttpResponse:
 
     initial = None
     if request.method == "GET":
+        initial_values: dict[str, str] = {}
         destination_token = str(request.GET.get("destination") or "").strip()
-        initial = {"destination": destination_token} if destination_token else None
+        if destination_token:
+            initial_values["destination"] = destination_token
+        if request.user.is_authenticated:
+            try:
+                preferred_source_currency = home_currency_code(request.user)
+            except DatabaseError as exc:
+                logger.warning(
+                    "Home currency preference lookup failed",
+                    extra={"error_code": exc.__class__.__name__},
+                )
+            else:
+                if preferred_source_currency:
+                    initial_values["source_currency"] = preferred_source_currency
+        initial = initial_values or None
     form = DestinationModeForm(
         request.POST if request.method == "POST" else None,
         initial=initial,

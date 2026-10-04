@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from typing import Never
 from urllib.parse import urlencode
 
+from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
+from apps.accounts.preferences import home_currency_code
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.cache import LatestQuoteGateway
 from apps.exchange.comparison import (
@@ -21,6 +24,8 @@ from apps.exchange.comparison_snapshot import build_saved_comparison_token
 from apps.exchange.forms import DestinationComparisonForm
 
 LatestGatewayFactory = Callable[[], LatestQuoteGateway]
+
+logger = logging.getLogger("cultural_currency.exchange")
 
 
 def _comparison_category_fields(form: DestinationComparisonForm):
@@ -96,6 +101,18 @@ def destination_comparison_view(
     """Compare one source budget across two explicit current destination scopes."""
 
     initial = _comparison_initial_from_query(request) if request.method == "GET" else None
+    if request.method == "GET" and request.user.is_authenticated:
+        try:
+            preferred_source_currency = home_currency_code(request.user)
+        except DatabaseError as exc:
+            logger.warning(
+                "Home currency preference lookup failed",
+                extra={"error_code": exc.__class__.__name__},
+            )
+        else:
+            if preferred_source_currency:
+                initial = dict(initial or {})
+                initial.setdefault("source_currency", preferred_source_currency)
     form = DestinationComparisonForm(
         request.POST if request.method == "POST" else None,
         initial=initial,

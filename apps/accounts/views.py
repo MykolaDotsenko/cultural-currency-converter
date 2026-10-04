@@ -9,8 +9,13 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
-from apps.accounts.forms import DeleteAccountForm, SignUpForm
-from apps.accounts.preferences import recent_history_enabled, set_recent_history_enabled
+from apps.accounts.forms import DeleteAccountForm, HomeCurrencyPreferenceForm, SignUpForm
+from apps.accounts.preferences import (
+    home_currency_code,
+    recent_history_enabled,
+    set_home_currency,
+    set_recent_history_enabled,
+)
 
 
 def _safe_next(request: HttpRequest) -> str:
@@ -55,11 +60,48 @@ def signup(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_http_methods(["GET"])
 def profile(request: HttpRequest) -> HttpResponse:
+    current_home_currency = home_currency_code(request.user)
     return render(
         request,
         "accounts/profile.html",
-        {"recent_history_enabled": recent_history_enabled(request.user)},
+        {
+            "recent_history_enabled": recent_history_enabled(request.user),
+            "home_currency_form": HomeCurrencyPreferenceForm(
+                current_code=current_home_currency,
+            ),
+            "home_currency_code": current_home_currency,
+        },
     )
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_home_currency_preference(request: HttpRequest) -> HttpResponse:
+    current_code = home_currency_code(request.user)
+    form = HomeCurrencyPreferenceForm(
+        request.POST,
+        current_code=current_code,
+    )
+    if not form.is_valid():
+        messages.error(request, "Home currency preference was not changed.")
+        return render(
+            request,
+            "accounts/profile.html",
+            {
+                "recent_history_enabled": recent_history_enabled(request.user),
+                "home_currency_form": form,
+                "home_currency_code": current_code,
+            },
+            status=422,
+        )
+
+    code = form.cleaned_data["home_currency"]
+    set_home_currency(request.user, currency_code=code)
+    if code:
+        messages.success(request, f"{code} is now your default home currency.")
+    else:
+        messages.success(request, "Saved home currency default was cleared.")
+    return redirect("profile")
 
 
 @login_required

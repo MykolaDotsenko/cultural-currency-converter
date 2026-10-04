@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_http_methods
 
+from apps.accounts.preferences import home_currency_code
 from apps.countries.models import City, CountryCurrency, Currency
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
@@ -85,14 +86,20 @@ def _loaded_pair_initial(query) -> dict[str, str]:
     return initial
 
 
-def _default_initial() -> dict[str, str]:
+def _default_initial(*, preferred_source_currency: str = "") -> dict[str, str]:
     currency_codes = list(
         Currency.objects.filter(is_active=True).order_by("code").values_list("code", flat=True)
     )
     if not currency_codes:
         return {"amount": "100.00"}
 
-    source_currency = "EUR" if "EUR" in currency_codes else currency_codes[0]
+    source_currency = (
+        preferred_source_currency
+        if preferred_source_currency in currency_codes
+        else "EUR"
+        if "EUR" in currency_codes
+        else currency_codes[0]
+    )
     destination_currency = (
         "JPY"
         if "JPY" in currency_codes
@@ -269,7 +276,20 @@ def converter_view(
         elif load_pair_requested:
             form = CurrentConversionForm(initial=_loaded_pair_initial(request.GET))
         else:
-            form = CurrentConversionForm(initial=_default_initial())
+            preferred_source_currency = ""
+            if request.user.is_authenticated:
+                try:
+                    preferred_source_currency = home_currency_code(request.user)
+                except DatabaseError as exc:
+                    logger.warning(
+                        "Home currency preference lookup failed",
+                        extra={"error_code": exc.__class__.__name__},
+                    )
+            form = CurrentConversionForm(
+                initial=_default_initial(
+                    preferred_source_currency=preferred_source_currency,
+                )
+            )
 
     result = None
     error = None

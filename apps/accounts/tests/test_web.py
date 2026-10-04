@@ -66,6 +66,54 @@ class AccountWebTests(TestCase):
 
         self.assertRedirects(response, reverse("saved_state"))
 
+    def test_home_currency_preference_is_explicit_and_clearable(self):
+        user = User.objects.create_user(username="home-currency-member", password=PASSWORD)
+        eur = Currency.objects.create(code="EUR", name="Euro")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("profile"))
+        self.assertContains(response, "No account default is saved.")
+        self.assertFalse(AccountPreferences.objects.filter(user=user).exists())
+
+        response = self.client.post(
+            reverse("update_home_currency_preference"),
+            {"home_currency": "EUR"},
+        )
+        self.assertRedirects(response, reverse("profile"))
+        preferences = AccountPreferences.objects.get(user=user)
+        self.assertEqual(preferences.home_currency, eur)
+
+        response = self.client.post(
+            reverse("update_home_currency_preference"),
+            {"home_currency": ""},
+        )
+        self.assertRedirects(response, reverse("profile"))
+        preferences.refresh_from_db()
+        self.assertIsNone(preferences.home_currency)
+
+    def test_home_currency_preference_rejects_inactive_currency(self):
+        user = User.objects.create_user(username="inactive-home-currency", password=PASSWORD)
+        Currency.objects.create(code="USD", name="US dollar", is_active=False)
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("update_home_currency_preference"),
+            {"home_currency": "USD"},
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertContains(response, "Select a valid choice", status_code=422)
+        self.assertFalse(AccountPreferences.objects.filter(user=user).exists())
+
+    def test_home_currency_preference_is_post_only(self):
+        user = User.objects.create_user(username="home-currency-post-only", password=PASSWORD)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("update_home_currency_preference"))
+
+        self.assertEqual(response.status_code, 405)
+        self.assertFalse(AccountPreferences.objects.filter(user=user).exists())
+
     def test_recent_history_preference_defaults_off_and_toggles_explicitly(self):
         user = User.objects.create_user(username="privacy-member", password=PASSWORD)
         self.client.force_login(user)
