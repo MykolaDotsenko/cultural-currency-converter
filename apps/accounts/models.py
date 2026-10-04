@@ -159,3 +159,74 @@ class BudgetPresetItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.preset_id}: {self.category} x {self.units_per_person_per_day}"
+
+
+class NotificationPreference(models.Model):
+    """Explicit account-owned notification configuration. Default state is no row."""
+
+    class NotificationType(models.TextChoices):
+        PRE_TRIP = "pre_trip", "Pre-trip reminder"
+
+    class Cadence(models.TextChoices):
+        ONCE = "once", "Once when due"
+        DAILY = "daily", "Daily while due"
+
+    class DeliveryChannel(models.TextChoices):
+        IN_APP = "in_app", "In-app"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notification_preferences",
+    )
+    notification_type = models.CharField(
+        max_length=24,
+        choices=NotificationType.choices,
+    )
+    enabled = models.BooleanField(default=False)
+    timezone_name = models.CharField(max_length=64, default="UTC")
+    cadence = models.CharField(
+        max_length=16,
+        choices=Cadence.choices,
+        default=Cadence.ONCE,
+    )
+    lead_days = models.PositiveSmallIntegerField(default=3)
+    delivery_channel = models.CharField(
+        max_length=16,
+        choices=DeliveryChannel.choices,
+        default=DeliveryChannel.IN_APP,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("notification_type", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "notification_type"),
+                name="unique_user_notification_type",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(lead_days__gte=1, lead_days__lte=30),
+                name="notification_preference_lead_days_range",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+        try:
+            ZoneInfo(self.timezone_name)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            from django.core.exceptions import ValidationError
+
+            raise ValidationError(
+                {"timezone_name": "Enter a valid IANA timezone, for example Europe/Helsinki."}
+            ) from exc
+
+    def __str__(self) -> str:
+        return (
+            f"{self.user_id}:{self.notification_type} "
+            f"enabled={self.enabled} {self.timezone_name}/{self.cadence}"
+        )
