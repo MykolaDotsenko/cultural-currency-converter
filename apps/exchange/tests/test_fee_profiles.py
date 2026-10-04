@@ -70,6 +70,20 @@ def test_fee_profile_upsert_is_owner_scoped_and_updates_same_name(fee_profile_da
         source_currency_code="EUR",
         destination_currency_code="JPY",
     ) == (updated,)
+
+    same_name_other_pair = upsert_payment_fee_profile(
+        user,
+        name="Travel card",
+        source_currency=eur,
+        destination_currency=_usd,
+        assumptions=_assumptions(markup="1.00", source_fee="0.25", destination_fee="2.00"),
+    )
+    assert same_name_other_pair.pk != updated.pk
+    assert fee_profiles_for_pair(
+        user,
+        source_currency_code="EUR",
+        destination_currency_code="USD",
+    ) == (same_name_other_pair,)
     assert (
         fee_profiles_for_pair(
             other,
