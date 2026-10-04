@@ -418,9 +418,7 @@ def _scenario_local_context(
             as_of=as_of,
             price_limit=3,
             city_slug=(
-                scenario.destination_city.slug
-                if scenario.destination_city is not None
-                else ""
+                scenario.destination_city.slug if scenario.destination_city is not None else ""
             ),
         )
     except (DatabaseError, DecimalException, ValueError) as exc:
@@ -542,8 +540,7 @@ def _scenario_detail_context(
             "?local_context=1#scenario-local-context-title"
         ),
         "local_context_hide_url": (
-            f"{reverse('saved_scenario_detail', args=(scenario.pk,))}"
-            "#scenario-local-context-title"
+            f"{reverse('saved_scenario_detail', args=(scenario.pk,))}#scenario-local-context-title"
         ),
         "spend_entries": spend_entries,
         "spend_form": spend_form,
