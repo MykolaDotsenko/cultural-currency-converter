@@ -89,8 +89,7 @@ async function renderSurfaceState(surface: OfflineTripSurface): Promise<void> {
   const currentVersion = surface.dataset.packVersion ?? "";
   const current = cached.revision === currentRevision && cached.version === currentVersion;
   if (current) {
-    status.textContent =
-      `Available offline · generated ${readableTimestamp(cached.generatedAt)} · context as of ${cached.contextAsOf || "unknown date"} · stored, not live.`;
+    status.textContent = `Available offline · generated ${readableTimestamp(cached.generatedAt)} · context as of ${cached.contextAsOf || "unknown date"} · stored, not live.`;
     save.textContent = "Replace offline copy";
   } else {
     status.textContent =
@@ -178,9 +177,11 @@ function wireSurface(surface: OfflineTripSurface): void {
   if (surface.dataset.offlineTripWired === "true") return;
   surface.dataset.offlineTripWired = "true";
 
-  surface.querySelector<HTMLButtonElement>("[data-offline-trip-save]")?.addEventListener("click", () => {
-    void saveSnapshot(surface);
-  });
+  surface
+    .querySelector<HTMLButtonElement>("[data-offline-trip-save]")
+    ?.addEventListener("click", () => {
+      void saveSnapshot(surface);
+    });
   surface
     .querySelector<HTMLButtonElement>("[data-offline-trip-remove]")
     ?.addEventListener("click", () => {
@@ -191,5 +192,7 @@ function wireSurface(surface: OfflineTripSurface): void {
 }
 
 export function enhancePwaOfflineTrip(): void {
-  document.querySelectorAll<OfflineTripSurface>("[data-offline-trip-controls]").forEach(wireSurface);
+  document
+    .querySelectorAll<OfflineTripSurface>("[data-offline-trip-controls]")
+    .forEach(wireSurface);
 }
