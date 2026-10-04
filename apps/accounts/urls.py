@@ -6,9 +6,11 @@ from apps.accounts.views import (
     delete_account,
     delete_budget_preset_view,
     delete_fee_profile,
+    delete_pre_trip_notification_preference,
     profile,
     signup,
     update_home_currency_preference,
+    update_pre_trip_notification_preference,
     update_recent_history_preference,
 )
 
@@ -34,6 +36,16 @@ urlpatterns = [
         "recent-history/",
         update_recent_history_preference,
         name="update_recent_history_preference",
+    ),
+    path(
+        "notifications/pre-trip/",
+        update_pre_trip_notification_preference,
+        name="update_pre_trip_notification_preference",
+    ),
+    path(
+        "notifications/pre-trip/delete/",
+        delete_pre_trip_notification_preference,
+        name="delete_pre_trip_notification_preference",
     ),
     path(
         "fee-profiles/<int:profile_id>/delete/",
