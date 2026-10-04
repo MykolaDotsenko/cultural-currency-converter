@@ -1827,9 +1827,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: new saved budget did not start at zero confirmed spend: ${baselineSummary}`,
   );
   const baselineHistory = await rateHistory.innerText();
-  const localContextSection = page.locator(
-    '[aria-labelledby="scenario-local-context-title"]',
-  );
+  const localContextSection = page.locator('[aria-labelledby="scenario-local-context-title"]');
   assert(
     (await localContextSection.getAttribute("data-saved-local-context-state")) === "idle",
     "trip-budget/e2e: saved detail refreshed current local context without explicit user action",
@@ -1844,17 +1842,13 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
       .getByRole("link", { name: "Refresh local money guide", exact: true })
       .click(),
   ]);
-  const refreshedLocalContext = page.locator(
-    '[aria-labelledby="scenario-local-context-title"]',
-  );
+  const refreshedLocalContext = page.locator('[aria-labelledby="scenario-local-context-title"]');
   assert(
     (await refreshedLocalContext.getAttribute("data-saved-local-context-state")) === "available",
     "trip-budget/e2e: explicit local-context refresh did not produce reviewed context",
   );
   await refreshedLocalContext.locator(".qa-destination-context").waitFor();
-  await refreshedLocalContext
-    .getByText("only as an amount anchor", { exact: false })
-    .waitFor();
+  await refreshedLocalContext.getByText("only as an amount anchor", { exact: false }).waitFor();
   const summaryAfterContextRefresh = await page
     .locator('[aria-labelledby="scenario-trip-budget-title"]')
     .innerText();
