@@ -9,15 +9,26 @@ from django.utils.cache import patch_vary_headers
 from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 
+from apps.accounts.forms import PaymentFeeProfileNameForm
 from apps.countries.models import Currency
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
     TrustedBudgetContextSnapshot,
     load_budget_context_snapshot_token,
 )
+from apps.exchange.fee_profiles import (
+    PaymentFeeProfileError,
+    fee_profile_for_pair,
+    fee_profiles_for_pair,
+    upsert_payment_fee_profile,
+)
 from apps.exchange.forms import PaymentEstimateForm
 from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_token
-from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
+from apps.exchange.payment_estimate import (
+    PaymentEstimateAssumptions,
+    PaymentEstimateError,
+    estimate_payment_value,
+)
 from apps.exchange.trusted_snapshot import (
     TrustedConversionSnapshot,
     TrustedSnapshotTokenError,
@@ -141,30 +152,140 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                     "detail": "Run the conversion again after reference data is restored.",
                 }
             elif estimate_error is None:
+                fee_profiles = ()
+                profile_notice = None
+                profile_error = None
+                selected_profile_name = ""
+                posted_data = request.POST
+                requested_profile_id = str(request.POST.get("fee_profile_id") or "").strip()
+
+                if request.user.is_authenticated:
+                    try:
+                        fee_profiles = fee_profiles_for_pair(
+                            request.user,
+                            source_currency_code=source_currency.code,
+                            destination_currency_code=destination_currency.code,
+                        )
+                    except DatabaseError as exc:
+                        logger.warning(
+                            "Payment fee profile lookup failed",
+                            extra={"error_code": exc.__class__.__name__},
+                        )
+                        if requested_profile_id:
+                            response_status = 503
+                            profile_error = (
+                                "Saved fee profiles are temporarily unavailable. "
+                                "Enter assumptions manually."
+                            )
+
+                if requested_profile_id and profile_error is None:
+                    try:
+                        profile_id = int(requested_profile_id)
+                        profile = fee_profile_for_pair(
+                            request.user,
+                            profile_id=profile_id,
+                            source_currency_code=source_currency.code,
+                            destination_currency_code=destination_currency.code,
+                        )
+                    except (TypeError, ValueError, PaymentFeeProfileError):
+                        response_status = 422
+                        profile_error = (
+                            "That saved fee profile is unavailable for this currency pair."
+                        )
+                    except DatabaseError as exc:
+                        logger.warning(
+                            "Payment fee profile apply failed",
+                            extra={"error_code": exc.__class__.__name__},
+                        )
+                        response_status = 503
+                        profile_error = (
+                            "Saved fee profiles are temporarily unavailable. "
+                            "Enter assumptions manually."
+                        )
+                    else:
+                        posted_data = request.POST.copy()
+                        posted_data["fx_markup_percent"] = format(
+                            profile.fx_markup_percent,
+                            "f",
+                        )
+                        posted_data["source_fixed_fee"] = format(
+                            profile.source_fixed_fee,
+                            "f",
+                        )
+                        posted_data["destination_fixed_fee"] = format(
+                            profile.destination_fixed_fee,
+                            "f",
+                        )
+                        selected_profile_name = profile.name
+
                 form = PaymentEstimateForm(
-                    request.POST,
+                    posted_data,
                     source_currency_code=source_currency.code,
                     destination_currency_code=destination_currency.code,
                     source_minor_units=source_currency.minor_units,
                     destination_minor_units=destination_currency.minor_units,
                 )
-                if form.is_valid():
+                if profile_error is None and form.is_valid():
+                    assumptions = PaymentEstimateAssumptions(
+                        fx_markup_percent=form.cleaned_data["fx_markup_percent"],
+                        source_fixed_fee=form.cleaned_data["source_fixed_fee_decimal"],
+                        destination_fixed_fee=form.cleaned_data[
+                            "destination_fixed_fee_decimal"
+                        ],
+                    )
                     try:
                         estimate = estimate_payment_value(
                             source_budget=snapshot.input_amount,
                             reference_destination_amount=snapshot.output_amount,
                             rate=snapshot.rate,
-                            fx_markup_percent=form.cleaned_data["fx_markup_percent"],
-                            source_fixed_fee=form.cleaned_data["source_fixed_fee_decimal"],
-                            destination_fixed_fee=form.cleaned_data[
-                                "destination_fixed_fee_decimal"
-                            ],
+                            fx_markup_percent=assumptions.fx_markup_percent,
+                            source_fixed_fee=assumptions.source_fixed_fee,
+                            destination_fixed_fee=assumptions.destination_fixed_fee,
                             destination_minor_units=destination_currency.minor_units,
                         )
                     except PaymentEstimateError as exc:
                         form.add_error(None, str(exc))
                         response_status = 422
                     else:
+                        if request.POST.get("payment_action") == "save_profile":
+                            name_form = PaymentFeeProfileNameForm(request.POST)
+                            if not request.user.is_authenticated:
+                                response_status = 403
+                                profile_error = "Sign in before saving a payment fee profile."
+                            elif not name_form.is_valid():
+                                response_status = 422
+                                profile_error = name_form.errors["name"][0]
+                            else:
+                                try:
+                                    saved_profile = upsert_payment_fee_profile(
+                                        request.user,
+                                        name=name_form.cleaned_data["name"],
+                                        source_currency=source_currency,
+                                        destination_currency=destination_currency,
+                                        assumptions=assumptions,
+                                    )
+                                    fee_profiles = fee_profiles_for_pair(
+                                        request.user,
+                                        source_currency_code=source_currency.code,
+                                        destination_currency_code=destination_currency.code,
+                                    )
+                                except PaymentFeeProfileError as exc:
+                                    response_status = 422
+                                    profile_error = str(exc)
+                                except DatabaseError as exc:
+                                    logger.warning(
+                                        "Payment fee profile save failed",
+                                        extra={"error_code": exc.__class__.__name__},
+                                    )
+                                    response_status = 503
+                                    profile_error = (
+                                        "This estimate is still valid, but the fee profile "
+                                        "could not be saved."
+                                    )
+                                else:
+                                    profile_notice = f'Saved fee profile "{saved_profile.name}".'
+                                    selected_profile_name = saved_profile.name
+
                         component = {
                             "token": token,
                             "budget_context_token": trusted_budget_context_token,
@@ -177,6 +298,11 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                                 else ""
                             ),
                             "form": form,
+                            "fee_profiles": fee_profiles,
+                            "profile_notice": profile_notice,
+                            "profile_error": profile_error,
+                            "profile_name_value": str(request.POST.get("profile_name") or ""),
+                            "selected_profile_name": selected_profile_name,
                             "source_currency": source_currency.code,
                             "destination_currency": destination_currency.code,
                             "reference_amount": _money_text(
@@ -215,7 +341,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                             ),
                             "stale": snapshot.stale,
                         }
-                else:
+                elif profile_error is None:
                     response_status = 422
 
                 if component is None:
@@ -224,6 +350,11 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                         "budget_context_token": trusted_budget_context_token,
                         "budget_handoff_token": "",
                         "form": form,
+                        "fee_profiles": fee_profiles,
+                        "profile_notice": profile_notice,
+                        "profile_error": profile_error,
+                        "profile_name_value": str(request.POST.get("profile_name") or ""),
+                        "selected_profile_name": selected_profile_name,
                         "source_currency": source_currency.code,
                         "destination_currency": destination_currency.code,
                         "reference_amount": _money_text(

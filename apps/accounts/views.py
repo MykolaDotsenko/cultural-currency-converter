@@ -16,6 +16,10 @@ from apps.accounts.preferences import (
     set_home_currency,
     set_recent_history_enabled,
 )
+from apps.exchange.fee_profiles import (
+    delete_payment_fee_profile,
+    payment_fee_profiles_for_user,
+)
 
 
 def _safe_next(request: HttpRequest) -> str:
@@ -70,6 +74,7 @@ def profile(request: HttpRequest) -> HttpResponse:
                 current_code=current_home_currency,
             ),
             "home_currency_code": current_home_currency,
+            "payment_fee_profiles": payment_fee_profiles_for_user(request.user),
         },
     )
 
@@ -124,6 +129,16 @@ def update_recent_history_preference(request: HttpRequest) -> HttpResponse:
             request,
             "Cross-device recent history is off. Existing account history was kept.",
         )
+    return redirect("profile")
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_fee_profile(request: HttpRequest, profile_id: int) -> HttpResponse:
+    if delete_payment_fee_profile(request.user, profile_id=profile_id):
+        messages.success(request, "Payment fee profile deleted.")
+    else:
+        messages.info(request, "That payment fee profile is no longer available.")
     return redirect("profile")
 
 
