@@ -792,3 +792,46 @@ def test_anonymous_user_cannot_save_budget_preset_but_keeps_result(
     assert b"Sign in before saving a budget preset." in response.content
     assert b"Reference-basket comparison" in response.content
     assert User.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_budget_preset_application_preserves_payment_adjusted_basis(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(
+        username="budget-preset-payment-basis",
+        password="StrongPass-482!",
+    )
+    preset = upsert_budget_preset(
+        user,
+        name="Payment-aware basket",
+        duration_days=6,
+        travelers=2,
+        categories=(
+            BudgetCategoryAssumption("coffee", Decimal("1.50")),
+            BudgetCategoryAssumption("casual_meal", Decimal("1.00")),
+        ),
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "payment_budget_token": _payment_budget_handoff(),
+            "budget_preset_id": str(preset.pk),
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    component = response.context["budget_interpretation"]
+    assert component["basis"] == "payment_estimate"
+    assert component["basis_label"] == "Payment-adjusted estimate"
+    assert component["planning_amount"] == "16717"
+    assert component["reference_amount"] == "17450"
+    assert component["selected_preset_name"] == "Payment-aware basket"
+    assert component["result"]["duration_days"] == 6
+    assert component["result"]["travelers"] == 2
+    assert component["result"]["available_budget"] == "16717"
+    assert b"Payment-adjusted estimate" in response.content
