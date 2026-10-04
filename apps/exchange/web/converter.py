@@ -23,6 +23,7 @@ from apps.exchange.domain import (
     HistoricalObservationUnavailable,
     HistoricalOutOfCoverage,
 )
+from apps.exchange.budget_presets import budget_presets_for_user
 from apps.exchange.fee_profiles import fee_profiles_for_pair
 from apps.exchange.forms import RATE_MODE_HISTORICAL, CurrentConversionForm
 from apps.exchange.presentation import build_converter_context
@@ -437,6 +438,21 @@ def converter_view(
                     extra={"error_code": exc.__class__.__name__},
                 )
                 payment_component["fee_profiles"] = ()
+
+        budget_component = (
+            result_component.get("budget_interpretation")
+            if isinstance(result_component, dict)
+            else None
+        )
+        if isinstance(budget_component, dict):
+            try:
+                budget_component["budget_presets"] = budget_presets_for_user(request.user)
+            except DatabaseError as exc:
+                logger.warning(
+                    "Budget preset lookup failed",
+                    extra={"error_code": exc.__class__.__name__},
+                )
+                budget_component["budget_presets"] = ()
 
     returning_trip_home = None
     if (
