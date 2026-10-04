@@ -102,10 +102,13 @@ def test_notification_preference_is_explicit_owner_scoped_and_upserts_same_type(
     assert updated.enabled is False
     assert updated.timezone == "UTC"
     assert updated.cadence == ScenarioNotificationCadence.WEEKLY
-    assert ScenarioNotificationPreference.objects.filter(
-        scenario=scenario,
-        notification_type=ScenarioNotificationType.PRE_TRIP,
-    ).count() == 1
+    assert (
+        ScenarioNotificationPreference.objects.filter(
+            scenario=scenario,
+            notification_type=ScenarioNotificationType.PRE_TRIP,
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db
