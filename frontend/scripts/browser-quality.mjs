@@ -3312,6 +3312,91 @@ async function assertConstrainedNetworkCoreFlow(browser) {
   }
 }
 
+async function assertPwaFoundation(browser) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 1,
+  });
+  try {
+    const page = await context.newPage();
+    const response = await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+    assert(response?.ok(), `pwa/foundation: root failed with ${response?.status() ?? "no response"}`);
+
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
+    assert(manifestHref, "pwa/foundation: manifest link is missing");
+
+    const manifestResponse = await context.request.get(new URL(manifestHref, BASE_URL).toString());
+    assert(manifestResponse.ok(), "pwa/foundation: manifest request failed");
+    const manifest = await manifestResponse.json();
+    assert(manifest.scope === "/", "pwa/foundation: manifest scope must stay root-scoped");
+    assert(
+      manifest.icons?.some((icon) => icon.sizes === "512x512" && icon.purpose.includes("maskable")),
+      "pwa/foundation: 512px maskable icon is missing",
+    );
+
+    const workerResponse = await context.request.get(`${BASE_URL}/service-worker.js`);
+    assert(workerResponse.ok(), "pwa/foundation: service worker request failed");
+    assert(
+      workerResponse.headers()["service-worker-allowed"] === "/",
+      "pwa/foundation: root Service-Worker-Allowed header is missing",
+    );
+
+    const registrationState = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return { supported: false };
+      const registration = await navigator.serviceWorker.register("/service-worker.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+      const keys = await caches.keys();
+      const requests = [];
+      for (const key of keys) {
+        if (!key.startsWith("cultural-currency-shell-")) continue;
+        const cache = await caches.open(key);
+        for (const request of await cache.keys()) requests.push(new URL(request.url).pathname);
+      }
+      return {
+        supported: true,
+        scope: registration.scope,
+        cacheKeys: keys.filter((key) => key.startsWith("cultural-currency-shell-")),
+        cachedPaths: requests.sort(),
+      };
+    });
+    assert(registrationState.supported, "pwa/foundation: service workers are unavailable");
+    assert(
+      registrationState.scope === `${new URL(BASE_URL).origin}/`,
+      `pwa/foundation: unexpected registration scope ${registrationState.scope}`,
+    );
+    assert(
+      registrationState.cacheKeys.length === 1,
+      `pwa/foundation: expected one shell cache, got ${JSON.stringify(registrationState.cacheKeys)}`,
+    );
+    assert(
+      registrationState.cachedPaths.includes("/offline/"),
+      "pwa/foundation: generic offline shell was not precached",
+    );
+    assert(
+      registrationState.cachedPaths.every(
+        (path) => !path.startsWith("/saved/") && !path.startsWith("/accounts/") && !path.startsWith("/admin/"),
+      ),
+      `pwa/foundation: private HTML leaked into Cache Storage: ${JSON.stringify(registrationState.cachedPaths)}`,
+    );
+
+    await context.setOffline(true);
+    const offlineResponse = await page.goto(`${BASE_URL}/saved/`, {
+      waitUntil: "domcontentloaded",
+    });
+    assert(
+      offlineResponse === null || !offlineResponse.ok(),
+      "pwa/foundation: offline private navigation unexpectedly returned a network response",
+    );
+    await page.getByRole("heading", { name: "You’re offline.", level: 1 }).waitFor();
+    await page.getByText("Private account pages and saved-scenario HTML are never cached automatically.").waitFor();
+    await assertAxe(page, "pwa/foundation/offline-shell");
+
+    return registrationState;
+  } finally {
+    await context.close();
+  }
+}
+
 async function openSurface(page, surface) {
   const response = await page.goto(`${BASE_URL}${surface.path}`, { waitUntil: "networkidle" });
   await waitForStableLayout(page);
@@ -3487,6 +3572,7 @@ try {
     evidence.serverRenderedExploreAccessibility =
       await assertServerRenderedExploreAccessibility(browser);
     evidence.constrainedNetwork = await assertConstrainedNetworkCoreFlow(browser);
+    evidence.pwa = await assertPwaFoundation(browser);
     evidence.compressedAssets = await measureBuildAssets();
     assertBuildPerformanceBudgets(evidence.compressedAssets);
 
