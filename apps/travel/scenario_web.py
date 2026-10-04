@@ -463,7 +463,9 @@ def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedS
             "source_country",
             "destination_country",
             "destination_city",
-        ).select_related("shopping_assumptions").prefetch_related(
+        )
+        .select_related("shopping_assumptions")
+        .prefetch_related(
             "budget_items",
             "spend_entries",
             "observations",
