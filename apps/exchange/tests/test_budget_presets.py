@@ -176,7 +176,7 @@ def test_budget_preset_invalid_replacement_rolls_back_existing_child_graph():
         name="Stable basket",
         duration_days=4,
         travelers=2,
-        categories=_categories(coffee="1.50", casual_meal="2.00"),
+        categories=_categories(coffee="1.50", meal="2.00"),
     )
     before = tuple(preset.items.values_list("category", "units_per_person_per_day"))
 
