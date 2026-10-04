@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from apps.accounts.models import NotificationPreference
 from apps.countries.models import Currency
 
 User = get_user_model()
@@ -96,6 +99,82 @@ class BudgetPresetNameForm(forms.Form):
 
     def clean_preset_name(self):
         return " ".join(self.cleaned_data["preset_name"].split())
+
+
+class PreTripNotificationPreferenceForm(forms.Form):
+    enabled = forms.BooleanField(
+        required=False,
+        label="Enable pre-trip reminders",
+        widget=forms.CheckboxInput(attrs={"class": "qa-checkbox"}),
+    )
+    timezone_name = forms.CharField(
+        max_length=64,
+        label="Timezone",
+        initial="UTC",
+        widget=forms.TextInput(
+            attrs={
+                "class": "qa-text-input",
+                "autocomplete": "off",
+                "spellcheck": "false",
+                "placeholder": "Europe/Helsinki",
+            }
+        ),
+    )
+    cadence = forms.ChoiceField(
+        label="Cadence",
+        choices=NotificationPreference.Cadence.choices,
+        initial=NotificationPreference.Cadence.ONCE,
+        widget=forms.Select(attrs={"class": "qa-native-select"}),
+    )
+    lead_days = forms.IntegerField(
+        min_value=1,
+        max_value=30,
+        label="Remind me this many days before travel",
+        initial=3,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "min": "1",
+                "max": "30",
+                "step": "1",
+                "inputmode": "numeric",
+            }
+        ),
+    )
+    delivery_channel = forms.ChoiceField(
+        label="Delivery",
+        choices=NotificationPreference.DeliveryChannel.choices,
+        initial=NotificationPreference.DeliveryChannel.IN_APP,
+        widget=forms.Select(attrs={"class": "qa-native-select"}),
+    )
+
+    def __init__(
+        self,
+        *args,
+        preference: NotificationPreference | None = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and preference is not None:
+            self.initial.update(
+                {
+                    "enabled": preference.enabled,
+                    "timezone_name": preference.timezone_name,
+                    "cadence": preference.cadence,
+                    "lead_days": preference.lead_days,
+                    "delivery_channel": preference.delivery_channel,
+                }
+            )
+
+    def clean_timezone_name(self):
+        timezone_name = " ".join(self.cleaned_data["timezone_name"].split())
+        try:
+            ZoneInfo(timezone_name)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise forms.ValidationError(
+                "Enter a valid IANA timezone, for example Europe/Helsinki."
+            ) from exc
+        return timezone_name
 
 
 class DeleteAccountForm(forms.Form):
