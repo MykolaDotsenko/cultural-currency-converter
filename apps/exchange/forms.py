@@ -601,11 +601,7 @@ class ShoppingCalculationForm(forms.Form):
                     if code in self._currency_by_code and code != home_code
                 ),
                 next(
-                    (
-                        currency.code
-                        for currency in currencies
-                        if currency.code != home_code
-                    ),
+                    (currency.code for currency in currencies if currency.code != home_code),
                     home_code,
                 ),
             )
