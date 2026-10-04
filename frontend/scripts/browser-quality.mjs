@@ -1867,9 +1867,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   const saveNotificationResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
-      /\/saved\/scenarios\/\d+\/notifications\/configure\/$/.test(
-        new URL(response.url()).pathname,
-      ),
+      /\/saved\/scenarios\/\d+\/notifications\/configure\/$/.test(new URL(response.url()).pathname),
   );
   await rateAlertRow.getByRole("button", { name: "Save notification", exact: true }).click();
   const saveNotificationResponse = await saveNotificationResponsePromise;
