@@ -214,7 +214,9 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         else:
                             submitted_data = request.POST.copy()
                             for category, _label in BudgetInterpretationForm.category_choices():
-                                submitted_data[BudgetInterpretationForm.units_field_name(category)] = ""
+                                submitted_data[
+                                    BudgetInterpretationForm.units_field_name(category)
+                                ] = ""
                             for key, value in preset_post_values(preset).items():
                                 submitted_data[key] = value
                             selected_preset_name = preset.name
@@ -308,9 +310,7 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         component["budget_presets"] = budget_presets
                         component["preset_notice"] = preset_notice
                         component["preset_error"] = preset_error
-                        component["preset_name_value"] = str(
-                            request.POST.get("preset_name") or ""
-                        )
+                        component["preset_name_value"] = str(request.POST.get("preset_name") or "")
                         component["selected_preset_name"] = selected_preset_name
 
     context = {
