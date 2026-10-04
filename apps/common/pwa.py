@@ -5,8 +5,8 @@ import json
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
-from django.templatetags.static import static
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
