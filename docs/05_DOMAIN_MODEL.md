@@ -235,6 +235,28 @@ It does **not** store an FX quote, local-price result, ranking, PPP output or re
 
 **Reopen** serializes the saved inputs back into the GET form and performs no provider call. **Re-check** is a separate explicit POST through the canonical Destination Comparison path, so current FX/context truth is recalculated only when the user asks.
 
+## ShoppingEstimate
+
+A ShoppingEstimate is a deterministic **foreign-purchase cost** layered on one trusted current conversion.
+
+The canonical direction is:
+
+```text
+purchase currency → home currency
+```
+
+The conversion input is exactly the explicit purchase-currency total:
+
+```text
+item price + shipping + known fees
+```
+
+An optional user-entered FX markup is applied transparently to the trusted reference home-currency cost. It is an assumption, not a bank/issuer fact. Non-negative assumptions may never improve the reference cost.
+
+Duties, taxes and issuer/merchant fees remain unknown unless they are authoritative or explicitly entered as a known fee. The shopping domain does not infer or estimate them silently.
+
+Historical FX and same-currency purchases are outside this foreign-shopping estimate contract. Saved Shopping scenarios should reuse `SavedScenario` ownership and immutable FX observations rather than creating a parallel persistence model.
+
 ## SavedScenario
 
 A SavedScenario is a signed-in user's reusable planning state for a **trip**, **budget** or future **shopping** workflow.
