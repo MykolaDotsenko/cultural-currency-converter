@@ -110,7 +110,7 @@ def test_context_freshness_reminder_requires_old_or_stale_saved_reference(
     )
 
     assert len(deliveries) == 1
-    assert "Refresh Tokyo trip before travel" == deliveries[0].title
+    assert deliveries[0].title == "Refresh Tokyo trip before travel"
     assert "Stored values remain references, not live rates." in deliveries[0].body
 
 
