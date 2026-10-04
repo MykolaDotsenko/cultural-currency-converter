@@ -114,8 +114,6 @@ class AccountWebTests(TestCase):
         self.assertEqual(response.status_code, 405)
         self.assertFalse(AccountPreferences.objects.filter(user=user).exists())
 
-
-
     def test_profile_lists_only_owner_fee_profiles_and_delete_is_owner_scoped(self):
         user = User.objects.create_user(username="fee-profile-owner", password=PASSWORD)
         other = User.objects.create_user(username="fee-profile-other", password=PASSWORD)
