@@ -87,7 +87,7 @@ def test_pre_trip_notification_is_due_once_and_scheduler_retry_is_idempotent(
     assert second == ()
     assert ScenarioNotificationDelivery.objects.filter(preference=preference).count() == 1
     preference.refresh_from_db()
-    assert preference.last_delivered_at is not None
+    assert preference.last_delivered_at == now
     assert "starts in 6 days" in first[0].title
 
 
