@@ -1653,6 +1653,85 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   ]);
   await page.getByText("Payment fee profile deleted.", { exact: false }).waitFor();
   await page.getByText("No payment fee profiles saved yet.", { exact: false }).waitFor();
+
+  // Reusable Budget presets are input-only account data. Exercise
+  // save -> mutate manual inputs -> apply -> Account delete while keeping
+  // the signed reference conversion authoritative.
+  await page.goto(feeProfileUrl.toString(), { waitUntil: "networkidle" });
+  let presetBudgetForm = page.locator(".qa-budget-interpretation__form");
+  await presetBudgetForm.waitFor();
+  await presetBudgetForm.locator("#id_duration_days").fill("4");
+  await presetBudgetForm.locator("#id_travelers").fill("2");
+  await presetBudgetForm.locator("#id_units_coffee").fill("1.5");
+  const interpretedPresetBudget = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await presetBudgetForm.getByRole("button", { name: "Interpret budget" }).click();
+  const interpretedPresetBudgetResponse = await interpretedPresetBudget;
+  assert(
+    interpretedPresetBudgetResponse.status() === 200,
+    `budget-preset: initial interpretation returned ${interpretedPresetBudgetResponse.status()}`,
+  );
+  await page.getByText("reference-basket comparison", { exact: false }).waitFor();
+
+  await page.locator("#budget-preset-name").fill("Browser city basket");
+  const savedBudgetPreset = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await page.getByRole("button", { name: "Save budget preset", exact: true }).click();
+  const savedBudgetPresetResponse = await savedBudgetPreset;
+  assert(
+    savedBudgetPresetResponse.status() === 200,
+    `budget-preset: save returned ${savedBudgetPresetResponse.status()}`,
+  );
+  await page
+    .getByText('Saved budget preset "Browser city basket".', { exact: false })
+    .waitFor();
+
+  presetBudgetForm = page.locator(".qa-budget-interpretation__form");
+  await presetBudgetForm.locator("#id_duration_days").fill("9");
+  await presetBudgetForm.locator("#id_travelers").fill("4");
+  await presetBudgetForm.locator("#id_units_coffee").fill("0.25");
+  const appliedBudgetPreset = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await presetBudgetForm
+    .locator(".qa-budget-interpretation__presets")
+    .getByRole("button", { name: "Browser city basket", exact: true })
+    .click();
+  const appliedBudgetPresetResponse = await appliedBudgetPreset;
+  assert(
+    appliedBudgetPresetResponse.status() === 200,
+    `budget-preset: apply returned ${appliedBudgetPresetResponse.status()}`,
+  );
+  await page
+    .getByText('Applied budget preset "Browser city basket".', { exact: false })
+    .waitFor();
+  assert(
+    (await page.locator("#id_duration_days").inputValue()) === "4" &&
+      (await page.locator("#id_travelers").inputValue()) === "2" &&
+      (await page.locator("#id_units_coffee").inputValue()) === "1.5",
+    "budget-preset: saved duration/travelers/basket units were not restored",
+  );
+  await assertAxe(page, "budget-preset/applied");
+
+  await page.getByRole("link", { name: "Account" }).click();
+  const budgetPresetSection = page.locator('[aria-labelledby="budget-presets-title"]');
+  await budgetPresetSection.getByText("Browser city basket", { exact: true }).waitFor();
+  await budgetPresetSection.getByText("Coffee", { exact: false }).waitFor();
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === "/accounts/profile/"),
+    budgetPresetSection.getByRole("button", { name: "Delete", exact: true }).click(),
+  ]);
+  await page.getByText("Budget preset deleted.", { exact: false }).waitFor();
+  await page.getByText("No budget presets saved yet.", { exact: false }).waitFor();
+
   await page.evaluate(
     ({ key, recent }) => {
       const state = JSON.parse(localStorage.getItem(key) ?? "{}");
