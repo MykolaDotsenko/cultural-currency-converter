@@ -280,6 +280,25 @@ Duties, taxes and issuer/merchant fees remain unknown unless they are authoritat
 
 Historical FX and same-currency purchases are outside this foreign-shopping estimate contract. Saved Shopping scenarios reuse `SavedScenario` ownership and immutable FX observations rather than creating a parallel persistence model. Their exact item price, shipping, known fees and FX-markup assumption live in a normalized one-to-one `SavedScenarioShoppingAssumptions` payload; derived home-currency values are recomputed from that payload plus the immutable initial observation.
 
+
+## BudgetAssumptionPreset
+
+A BudgetAssumptionPreset is an authenticated user's reusable **input-only** Budget Interpretation shortcut.
+
+It stores:
+
+- owner;
+- bounded display name;
+- duration in days;
+- traveller count;
+- one or more canonical reference-basket category/unit assumptions;
+- created/updated timestamps.
+
+It deliberately does **not** store destination, city, FX quote/result, provider identity, payment-adjusted basis, local-price evidence, budget band or derived totals. The active trusted Budget context remains authoritative whenever a preset is applied.
+
+Preset categories use the canonical `TypicalPriceCategory` set. Application restores only categories that currently have sourced anchors at the active destination. Unsupported categories are explicitly reported as skipped; zero overlap fails closed. Saving an existing name updates that owner's preset atomically, including a complete replacement of its child category graph. The first production slice limits each account to 12 presets.
+
+
 ## SavedScenario
 
 A SavedScenario is a signed-in user's reusable planning state for a **trip**, **budget** or **shopping** workflow.
