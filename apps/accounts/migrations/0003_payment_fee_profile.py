@@ -73,9 +73,7 @@ class Migration(migrations.Migration):
                         name="unique_user_payment_fee_profile_name",
                     ),
                     models.CheckConstraint(
-                        condition=~models.Q(
-                            ("source_currency", models.F("destination_currency"))
-                        ),
+                        condition=~models.Q(("source_currency", models.F("destination_currency"))),
                         name="payment_fee_profile_currencies_differ",
                     ),
                     models.CheckConstraint(
