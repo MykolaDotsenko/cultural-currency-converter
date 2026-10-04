@@ -179,6 +179,8 @@ Trip Budget Remaining is a persistence/domain consumer, not a second financial e
 - scenario-level service validation enforces destination-currency minor units even when a future caller does not use the web form;
 - later FX re-check observations never rewrite the remaining-budget baseline;
 - `apps/travel/trip_budget.py` performs deterministic remaining/over-reference/per-day arithmetic without provider access.
+- saved-scenario detail does not query current destination context by default; an explicit `?local_context=1` request calls the canonical provider-free `build_destination_context()` contract using the latest already-stored observation output only as a purchase-equivalent amount anchor;
+- the local-context refresh writes no scenario data and has explicit available/empty/degraded presentation states, so reviewed prices/payment guidance cannot rewrite immutable FX observations or the Trip Budget Remaining baseline.
 
 Receipt images, merchants and free-text purchase descriptions are deliberately outside this persistence contract. A future camera adapter may feed a confirmed amount into the same service only after the extraction has been shown to and confirmed by the user.
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
+from decimal import ROUND_HALF_EVEN, Decimal, DecimalException, InvalidOperation, localcontext
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -18,6 +18,8 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, Country, Currency
+from apps.culture.presentation import build_destination_context_component
+from apps.culture.services import build_destination_context
 from apps.exchange.budget import BudgetAssumptions
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
@@ -387,10 +389,88 @@ def _scenario_trip_budget_component(
     }
 
 
+def _scenario_local_context(
+    scenario: SavedScenario,
+    *,
+    observation,
+    as_of: date,
+) -> dict[str, object]:
+    """Build current reviewed destination context only after explicit user request."""
+
+    if (
+        scenario.kind != SavedScenarioKind.BUDGET
+        or scenario.destination_country is None
+        or observation is None
+    ):
+        return {
+            "state": "empty",
+            "component": None,
+            "message": (
+                "Current local context needs a saved budget destination and trusted FX observation."
+            ),
+        }
+
+    try:
+        context = build_destination_context(
+            country_code=scenario.destination_country.iso2,
+            converted_amount=observation.output_amount,
+            quote_currency=scenario.destination_currency.code,
+            as_of=as_of,
+            price_limit=3,
+            city_slug=(
+                scenario.destination_city.slug if scenario.destination_city is not None else ""
+            ),
+        )
+    except (DatabaseError, DecimalException, ValueError) as exc:
+        logger.warning(
+            "saved_scenario_local_context_unavailable",
+            extra={
+                "scenario_id": scenario.pk,
+                "error_code": exc.__class__.__name__,
+            },
+        )
+        return {
+            "state": "degraded",
+            "component": None,
+            "message": (
+                "Current reviewed local money context is temporarily unavailable. "
+                "Your saved scenario and FX observations were not changed."
+            ),
+        }
+
+    if context is None or not context.has_content:
+        return {
+            "state": "empty",
+            "component": None,
+            "message": (
+                "No current reviewed price or payment context is available for this saved "
+                "destination yet."
+            ),
+        }
+
+    return {
+        "state": "available",
+        "component": build_destination_context_component(
+            context,
+            historical=False,
+            show_explore_nav=False,
+        ),
+        "message": "",
+        "amount": _format_currency_amount(
+            observation.output_amount,
+            minor_units=scenario.destination_currency.minor_units,
+        ),
+        "currency": scenario.destination_currency.code,
+        "observation_effective_date": observation.effective_date,
+        "as_of": as_of,
+    }
+
+
 def _scenario_detail_context(
     scenario: SavedScenario,
     *,
     spend_form: SavedScenarioSpendForm | None = None,
+    local_context_requested: bool = False,
 ) -> dict[str, object]:
     initial_observation = (
         scenario.observations.filter(kind=SavedScenarioObservationKind.INITIAL)
@@ -427,6 +507,15 @@ def _scenario_detail_context(
         scenario,
         initial_observation=initial_observation,
     )
+    local_context = (
+        _scenario_local_context(
+            scenario,
+            observation=latest_observation or initial_observation,
+            as_of=as_of,
+        )
+        if local_context_requested
+        else None
+    )
     if spend_form is None:
         spend_form = SavedScenarioSpendForm(
             destination_currency_code=scenario.destination_currency.code,
@@ -444,6 +533,15 @@ def _scenario_detail_context(
         "trip_schedule": trip_schedule,
         "trip_budget": trip_budget,
         "shopping": shopping,
+        "local_context_requested": local_context_requested,
+        "local_context": local_context,
+        "local_context_url": (
+            f"{reverse('saved_scenario_detail', args=(scenario.pk,))}"
+            "?local_context=1#scenario-local-context-title"
+        ),
+        "local_context_hide_url": (
+            f"{reverse('saved_scenario_detail', args=(scenario.pk,))}#scenario-local-context-title"
+        ),
         "spend_entries": spend_entries,
         "spend_form": spend_form,
         "converter_url": _scenario_converter_url(scenario),
@@ -815,7 +913,10 @@ def saved_scenario_detail(request: HttpRequest, scenario_id: int) -> HttpRespons
     return render(
         request,
         "travel/saved_scenario_detail.html",
-        _scenario_detail_context(scenario),
+        _scenario_detail_context(
+            scenario,
+            local_context_requested=request.GET.get("local_context") == "1",
+        ),
     )
 
 

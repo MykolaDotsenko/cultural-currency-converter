@@ -355,6 +355,55 @@
         </p>
       </section>
     {% endif %}
+    {% if scenario.kind == "budget" and scenario.destination_country %}
+      <section class="qa-saved-section"
+               aria-labelledby="scenario-local-context-title"
+               data-saved-local-context-state="{% if local_context %}{{ local_context.state }}{% else %}idle{% endif %}">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Current destination evidence</p>
+            <h2 id="scenario-local-context-title">Local money guide</h2>
+            <p>
+              Load current reviewed everyday-price and payment context only when you want it.
+              This does not refresh the FX rate and nothing from this guide is stored into the scenario.
+            </p>
+          </div>
+          <div class="qa-saved-row__actions">
+            <a class="qa-secondary-button" href="{{ local_context_url }}">
+              {% if local_context_requested %}Refresh again{% else %}Refresh local money guide{% endif %}
+            </a>
+            {% if local_context_requested %}
+              <a class="qa-secondary-button"
+                 href="{{ local_context_hide_url }}">Hide refreshed guide</a>
+            {% endif %}
+          </div>
+        </div>
+        {% if local_context_requested %}
+          {% if local_context.state == "available" %}
+            <p class="qa-context-freshness-note" role="note">
+              Purchase examples below use the latest stored FX output —
+              {{ local_context.amount }} {{ local_context.currency }},
+              effective {{ local_context.observation_effective_date|date:"j M Y" }} —
+              only as an amount anchor. Price and payment evidence is current reviewed context
+              assembled {{ local_context.as_of|date:"j M Y" }}.
+            </p>
+            {% include "components/culture/destination_context.html" with component=local_context.component %}
+          {% elif local_context.state == "degraded" %}
+            <div class="qa-inline-alert qa-degraded-panel" role="status">
+              <h3>Local money guide is temporarily unavailable.</h3>
+              <p>{{ local_context.message }}</p>
+            </div>
+          {% else %}
+            <p class="qa-saved-empty">{{ local_context.message }}</p>
+          {% endif %}
+        {% else %}
+          <p class="qa-saved-state__privacy">
+            No current local-price lookup runs when this saved page opens. Refresh is explicit so
+            stored trip evidence and current destination context keep separate meanings.
+          </p>
+        {% endif %}
+      </section>
+    {% endif %}
     {% if shopping %}
       <section class="qa-saved-section" aria-labelledby="scenario-shopping-title">
         <div class="qa-saved-section__heading">
