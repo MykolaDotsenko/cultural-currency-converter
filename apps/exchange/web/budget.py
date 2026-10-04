@@ -22,7 +22,7 @@ from apps.exchange.budget_presets import (
     BudgetPresetError,
     budget_preset_for_user,
     budget_presets_for_categories,
-    preset_post_values_for_categories,
+    preset_post_values,
     upsert_budget_preset,
 )
 from apps.exchange.budget_snapshot import (
@@ -221,30 +221,9 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                 submitted_data[
                                     BudgetInterpretationForm.units_field_name(category)
                                 ] = ""
-                            try:
-                                preset_values, skipped_categories = (
-                                    preset_post_values_for_categories(
-                                        preset,
-                                        available_categories=available_categories,
-                                    )
-                                )
-                            except BudgetPresetError as exc:
-                                response_status = 422
-                                preset_error = str(exc)
-                            else:
-                                for key, value in preset_values.items():
-                                    submitted_data[key] = value
-                                selected_preset_name = preset.name
-                                if skipped_categories:
-                                    labels = dict(BudgetInterpretationForm.category_choices())
-                                    skipped_labels = ", ".join(
-                                        labels.get(category, category)
-                                        for category in skipped_categories
-                                    )
-                                    preset_notice = (
-                                        f'Applied budget preset "{preset.name}". '
-                                        f"Skipped unavailable items: {skipped_labels}."
-                                    )
+                            for key, value in preset_post_values(preset).items():
+                                submitted_data[key] = value
+                            selected_preset_name = preset.name
 
                     handoff_only = payment_handoff is not None and not any(
                         key in request.POST
