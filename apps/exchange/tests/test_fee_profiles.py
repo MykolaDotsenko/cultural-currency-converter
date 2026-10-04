@@ -70,11 +70,14 @@ def test_fee_profile_upsert_is_owner_scoped_and_updates_same_name(fee_profile_da
         source_currency_code="EUR",
         destination_currency_code="JPY",
     ) == (updated,)
-    assert fee_profiles_for_pair(
-        other,
-        source_currency_code="EUR",
-        destination_currency_code="JPY",
-    ) == ()
+    assert (
+        fee_profiles_for_pair(
+            other,
+            source_currency_code="EUR",
+            destination_currency_code="JPY",
+        )
+        == ()
+    )
 
 
 @pytest.mark.django_db
