@@ -33,6 +33,7 @@ from apps.exchange.providers.base import (
     FxProviderUnsupportedPair,
 )
 from apps.exchange.web.common import is_history_restore, is_htmx
+from apps.travel.budget_presets import budget_presets_for_user
 from apps.travel.home import build_returning_trip_home
 
 logger = logging.getLogger("cultural_currency.exchange")
@@ -437,6 +438,21 @@ def converter_view(
                     extra={"error_code": exc.__class__.__name__},
                 )
                 payment_component["fee_profiles"] = ()
+
+        budget_component = (
+            result_component.get("budget_interpretation")
+            if isinstance(result_component, dict)
+            else None
+        )
+        if isinstance(budget_component, dict):
+            try:
+                budget_component["budget_presets"] = budget_presets_for_user(request.user)
+            except DatabaseError as exc:
+                logger.warning(
+                    "Budget preset lookup failed",
+                    extra={"error_code": exc.__class__.__name__},
+                )
+                budget_component["budget_presets"] = ()
 
     returning_trip_home = None
     if (
