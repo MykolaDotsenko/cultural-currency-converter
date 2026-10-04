@@ -1855,6 +1855,51 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
   await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Trip notifications", level: 2 }).waitFor();
+
+  const notificationScenarioUrl = page.url();
+  const rateAlertRow = page
+    .locator(".qa-saved-row")
+    .filter({ hasText: "Scenario rate alert" })
+    .first();
+  await rateAlertRow.getByRole("checkbox", { name: "Enabled", exact: true }).check();
+  await rateAlertRow.getByLabel("Rate-change threshold", { exact: true }).fill("2.5");
+  const saveNotificationResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      /\/saved\/scenarios\/\d+\/notifications\/configure\/$/.test(
+        new URL(response.url()).pathname,
+      ),
+  );
+  await rateAlertRow.getByRole("button", { name: "Save notification", exact: true }).click();
+  const saveNotificationResponse = await saveNotificationResponsePromise;
+  assert(
+    saveNotificationResponse.status() === 302,
+    `notifications/e2e: preference save returned ${saveNotificationResponse.status()}`,
+  );
+  await page.getByText("Notification preference saved.", { exact: true }).waitFor();
+  const savedRateAlertRow = page
+    .locator(".qa-saved-row")
+    .filter({ hasText: "Scenario rate alert" })
+    .first();
+  assert(
+    await savedRateAlertRow.getByRole("checkbox", { name: "Enabled", exact: true }).isChecked(),
+    "notifications/e2e: enabled state was not persisted",
+  );
+  assert(
+    (await savedRateAlertRow.getByLabel("Rate-change threshold", { exact: true }).inputValue()) ===
+      "2.50",
+    "notifications/e2e: explicit rate threshold was not persisted",
+  );
+  await assertAxe(page, "notifications/e2e/configuration");
+
+  await page.getByRole("link", { name: "Open notifications", exact: true }).click();
+  await page.getByRole("heading", { name: "Notifications", level: 1 }).waitFor();
+  await page.getByText("No notifications yet.", { exact: true }).waitFor();
+  await assertAxe(page, "notifications/e2e/inbox-empty");
+  await page.goto(notificationScenarioUrl);
+  await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const rateHistory = page.locator(".qa-reference-history");
   await rateHistory.locator("summary").click();
