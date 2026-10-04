@@ -17,6 +17,7 @@ from apps.exchange.money_context import MoneyContext
 from apps.exchange.result_summary import build_smart_result_summary
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
+
 def _decimal_text(value: Decimal) -> str:
     text = format(value, "f")
     if "." in text:
