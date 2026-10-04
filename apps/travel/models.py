@@ -633,9 +633,7 @@ class SavedScenarioShoppingAssumptions(models.Model):
     def clean(self) -> None:
         super().clean()
         if self.scenario_id and self.scenario.kind != SavedScenarioKind.SHOPPING:
-            raise ValidationError(
-                {"scenario": "Shopping assumptions require a Shopping scenario."}
-            )
+            raise ValidationError({"scenario": "Shopping assumptions require a Shopping scenario."})
 
     def __str__(self) -> str:
         return f"{self.scenario_id}: shopping assumptions"
