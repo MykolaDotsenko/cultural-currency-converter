@@ -39,6 +39,23 @@ def budget_presets_for_user(user) -> tuple[BudgetAssumptionPreset, ...]:
     )
 
 
+def budget_presets_for_categories(
+    user,
+    *,
+    available_categories: set[str] | frozenset[str],
+) -> tuple[BudgetAssumptionPreset, ...]:
+    available = {str(category).strip().lower() for category in available_categories}
+    allowed_categories = set(TypicalPriceCategory.values)
+    if not available or not available.issubset(allowed_categories):
+        raise BudgetAssumptionPresetError("Available budget categories are invalid.")
+
+    return tuple(
+        preset
+        for preset in budget_presets_for_user(user)
+        if any(item.category in available for item in preset.items.all())
+    )
+
+
 def budget_preset_for_user(user, *, preset_id: int) -> BudgetAssumptionPreset:
     if not user.is_authenticated:
         raise BudgetAssumptionPresetError("Authentication is required to use a budget preset.")
