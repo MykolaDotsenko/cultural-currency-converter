@@ -831,3 +831,29 @@ def test_budget_preset_application_preserves_payment_adjusted_basis(
     assert component["result"]["travelers"] == 2
     assert component["result"]["available_budget"] == "16717"
     assert b"Payment-adjusted estimate" in response.content
+
+
+@pytest.mark.django_db
+def test_budget_preset_rejects_malformed_identifier_without_internal_error(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(
+        username="budget-preset-malformed",
+        password="StrongPass-482!",
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "budget_preset_id": "not-an-integer",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 422
+    assert b"That saved budget preset is no longer available." in response.content
+    assert b"invalid literal for int" not in response.content
+    assert b"Reference-basket comparison" not in response.content
