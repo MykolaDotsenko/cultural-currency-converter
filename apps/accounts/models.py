@@ -85,3 +85,77 @@ class PaymentFeeProfile(models.Model):
         return (
             f"{self.user_id}:{self.name} {self.source_currency_id}->{self.destination_currency_id}"
         )
+
+
+class BudgetPreset(models.Model):
+    """Explicit reusable Budget Interpretation assumptions owned by one account."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="budget_presets",
+    )
+    name = models.CharField(max_length=80)
+    duration_days = models.PositiveSmallIntegerField()
+    travelers = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("name", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "name"),
+                name="unique_user_budget_preset_name",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(duration_days__gte=1, duration_days__lte=365),
+                name="budget_preset_duration_range",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(travelers__gte=1, travelers__lte=20),
+                name="budget_preset_travelers_range",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id}:{self.name} · {self.duration_days}d/{self.travelers}p"
+
+
+class BudgetPresetItem(models.Model):
+    preset = models.ForeignKey(
+        BudgetPreset,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    category = models.CharField(max_length=24)
+    units_per_person_per_day = models.DecimalField(max_digits=5, decimal_places=2)
+
+    class Meta:
+        ordering = ("category", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("preset", "category"),
+                name="unique_budget_preset_category",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    category__in=("coffee", "casual_meal", "transit", "groceries", "other"),
+                ),
+                name="budget_preset_category_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    units_per_person_per_day__gt=0,
+                    units_per_person_per_day__lte=100,
+                ),
+                name="budget_preset_units_range",
+            ),
+        ]
+
+    @property
+    def category_label(self) -> str:
+        return self.category.replace("_", " ").capitalize()
+
+    def __str__(self) -> str:
+        return f"{self.preset_id}: {self.category} x {self.units_per_person_per_day}"

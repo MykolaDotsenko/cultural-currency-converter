@@ -16,6 +16,10 @@ from apps.accounts.preferences import (
     set_home_currency,
     set_recent_history_enabled,
 )
+from apps.exchange.budget_presets import (
+    budget_presets_for_user,
+    delete_budget_preset,
+)
 from apps.exchange.fee_profiles import (
     delete_payment_fee_profile,
     payment_fee_profiles_for_user,
@@ -61,21 +65,30 @@ def signup(request: HttpRequest) -> HttpResponse:
     )
 
 
+def _profile_context(
+    user,
+    *,
+    home_currency_form: HomeCurrencyPreferenceForm | None = None,
+    home_currency: str | None = None,
+) -> dict[str, object]:
+    current_home_currency = home_currency if home_currency is not None else home_currency_code(user)
+    return {
+        "recent_history_enabled": recent_history_enabled(user),
+        "home_currency_form": home_currency_form
+        or HomeCurrencyPreferenceForm(current_code=current_home_currency),
+        "home_currency_code": current_home_currency,
+        "payment_fee_profiles": payment_fee_profiles_for_user(user),
+        "budget_presets": budget_presets_for_user(user),
+    }
+
+
 @login_required
 @require_http_methods(["GET"])
 def profile(request: HttpRequest) -> HttpResponse:
-    current_home_currency = home_currency_code(request.user)
     return render(
         request,
         "accounts/profile.html",
-        {
-            "recent_history_enabled": recent_history_enabled(request.user),
-            "home_currency_form": HomeCurrencyPreferenceForm(
-                current_code=current_home_currency,
-            ),
-            "home_currency_code": current_home_currency,
-            "payment_fee_profiles": payment_fee_profiles_for_user(request.user),
-        },
+        _profile_context(request.user),
     )
 
 
@@ -92,11 +105,11 @@ def update_home_currency_preference(request: HttpRequest) -> HttpResponse:
         return render(
             request,
             "accounts/profile.html",
-            {
-                "recent_history_enabled": recent_history_enabled(request.user),
-                "home_currency_form": form,
-                "home_currency_code": current_code,
-            },
+            _profile_context(
+                request.user,
+                home_currency_form=form,
+                home_currency=current_code,
+            ),
             status=422,
         )
 
@@ -129,6 +142,16 @@ def update_recent_history_preference(request: HttpRequest) -> HttpResponse:
             request,
             "Cross-device recent history is off. Existing account history was kept.",
         )
+    return redirect("profile")
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_budget_preset_view(request: HttpRequest, preset_id: int) -> HttpResponse:
+    if delete_budget_preset(request.user, preset_id=preset_id):
+        messages.success(request, "Budget preset deleted.")
+    else:
+        messages.info(request, "That budget preset is no longer available.")
     return redirect("profile")
 
 
