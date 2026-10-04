@@ -80,14 +80,20 @@ def test_notification_preference_is_explicit_owner_scoped_and_upserts_same_type(
     assert preference.timezone == "Europe/Helsinki"
     assert preference.cadence == ScenarioNotificationCadence.ONCE
     assert preference.delivery_channel == ScenarioNotificationDeliveryChannel.IN_APP
-    assert notification_preferences_for_scenario(
-        owner,
-        scenario_id=scenario.pk,
-    ) == (preference,)
-    assert notification_preferences_for_scenario(
-        other,
-        scenario_id=scenario.pk,
-    ) == ()
+    assert (
+        notification_preferences_for_scenario(
+            owner,
+            scenario_id=scenario.pk,
+        )
+        == (preference,)
+    )
+    assert (
+        notification_preferences_for_scenario(
+            other,
+            scenario_id=scenario.pk,
+        )
+        == ()
+    )
 
     updated = upsert_scenario_notification_preference(
         owner,
@@ -216,11 +222,14 @@ def test_notification_preference_cannot_cross_scenario_ownership(notification_sc
         timezone_name="Europe/Helsinki",
         cadence=ScenarioNotificationCadence.DAILY,
     )
-    assert delete_scenario_notification_preference(
-        other,
-        scenario_id=scenario.pk,
-        notification_type=ScenarioNotificationType.RATE_ALERT,
-    ) is False
+    assert (
+        delete_scenario_notification_preference(
+            other,
+            scenario_id=scenario.pk,
+            notification_type=ScenarioNotificationType.RATE_ALERT,
+        )
+        is False
+    )
     assert ScenarioNotificationPreference.objects.filter(pk=preference.pk).exists()
 
 
@@ -247,16 +256,22 @@ def test_notification_preference_disable_and_delete_are_explicit(notification_sc
     assert disabled.pk == preference.pk
     assert disabled.enabled is False
 
-    assert delete_scenario_notification_preference(
-        owner,
-        scenario_id=scenario.pk,
-        notification_type=ScenarioNotificationType.CONTEXT_FRESHNESS,
-    ) is True
-    assert delete_scenario_notification_preference(
-        owner,
-        scenario_id=scenario.pk,
-        notification_type=ScenarioNotificationType.CONTEXT_FRESHNESS,
-    ) is False
+    assert (
+        delete_scenario_notification_preference(
+            owner,
+            scenario_id=scenario.pk,
+            notification_type=ScenarioNotificationType.CONTEXT_FRESHNESS,
+        )
+        is True
+    )
+    assert (
+        delete_scenario_notification_preference(
+            owner,
+            scenario_id=scenario.pk,
+            notification_type=ScenarioNotificationType.CONTEXT_FRESHNESS,
+        )
+        is False
+    )
 
 
 @pytest.mark.django_db
