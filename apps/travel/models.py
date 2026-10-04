@@ -664,6 +664,10 @@ class ScenarioNotificationPreference(models.Model):
                 ),
                 name="scenario_notification_channel_valid",
             ),
+            models.CheckConstraint(
+                condition=~Q(timezone=""),
+                name="scenario_notification_timezone_nonempty",
+            ),
         ]
         indexes = [
             models.Index(
