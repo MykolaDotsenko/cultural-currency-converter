@@ -377,7 +377,16 @@ class SavedComparisonBudgetItem(models.Model):
         on_delete=models.CASCADE,
         related_name="budget_items",
     )
-    category = models.CharField(max_length=24)
+    category = models.CharField(
+        max_length=24,
+        choices=(
+            ("coffee", "Coffee"),
+            ("casual_meal", "Casual meal"),
+            ("transit", "Transit"),
+            ("groceries", "Groceries"),
+            ("other", "Other"),
+        ),
+    )
     units_per_person_per_day = models.DecimalField(max_digits=8, decimal_places=2)
 
     class Meta:
