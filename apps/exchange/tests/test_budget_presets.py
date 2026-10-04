@@ -163,3 +163,42 @@ def test_budget_preset_reuses_budget_domain_validation(
             travelers=travelers,
             categories=categories,
         )
+
+
+@pytest.mark.django_db
+def test_budget_preset_invalid_replacement_rolls_back_existing_child_graph():
+    owner = User.objects.create_user(
+        username="preset-rollback",
+        password="StrongPass-482!",
+    )
+    preset = upsert_budget_preset(
+        owner,
+        name="Stable basket",
+        duration_days=4,
+        travelers=2,
+        categories=_categories(coffee="1.50", casual_meal="2.00"),
+    )
+    before = tuple(
+        preset.items.values_list("category", "units_per_person_per_day")
+    )
+
+    with pytest.raises(BudgetPresetError):
+        upsert_budget_preset(
+            owner,
+            name="Stable basket",
+            duration_days=7,
+            travelers=1,
+            categories=(
+                BudgetCategoryAssumption(
+                    "not_a_canonical_category",
+                    Decimal("1.00"),
+                ),
+            ),
+        )
+
+    preset.refresh_from_db()
+    assert preset.duration_days == 4
+    assert preset.travelers == 2
+    assert tuple(
+        preset.items.values_list("category", "units_per_person_per_day")
+    ) == before
