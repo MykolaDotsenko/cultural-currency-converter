@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
+from apps.countries.theme_profiles import country_theme_key
 from apps.exchange.ai.intents import available_explanation_intents
 from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
@@ -15,31 +16,6 @@ from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.result_summary import build_smart_result_summary
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
-
-_FEATURED_THEME_BY_COUNTRY = {
-    "FI": "fi",
-    "JP": "jp",
-}
-_ATLAS_THEME_KEYS = (
-    "atlas-fjord",
-    "atlas-moss",
-    "atlas-clay",
-    "atlas-slate",
-    "atlas-sand",
-    "atlas-plum",
-)
-
-
-def _country_theme(country_code: str) -> str:
-    code = country_code.upper().strip()
-    if not code:
-        return ""
-    featured = _FEATURED_THEME_BY_COUNTRY.get(code)
-    if featured:
-        return featured
-    checksum = sum((index + 1) * ord(character) for index, character in enumerate(code))
-    return _ATLAS_THEME_KEYS[checksum % len(_ATLAS_THEME_KEYS)]
-
 
 def _decimal_text(value: Decimal) -> str:
     text = format(value, "f")
@@ -68,7 +44,7 @@ def _selection_context(form: CurrentConversionForm, side: str) -> dict[str, str]
         "country_name": country.name if country else "No country context",
         "currency_code": currency.code if currency else currency_code,
         "currency_name": currency.name if currency else "Choose currency",
-        "theme": _country_theme(country.iso2) if country else "",
+        "theme": country_theme_key(country.iso2) if country else "",
     }
 
 
