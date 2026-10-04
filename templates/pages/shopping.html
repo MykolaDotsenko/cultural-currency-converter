@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Shopping estimate · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Estimate a foreign-currency purchase from explicit item, shipping, known-fee and FX-markup assumptions using a sourced reference rate.">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan</a>
+  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare</a>
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro" aria-labelledby="shopping-title">
+    <p class="qa-foundation-kicker">Shopping mode</p>
+    <h1 id="shopping-title">Price abroad, cost at home.</h1>
+    <p class="qa-foundation-lede">
+      Enter the foreign-currency item price and only the costs you actually know. We convert the
+      explicit purchase total through the same trusted current FX path, then show any markup
+      assumption separately.
+    </p>
+  </section>
+  <section class="qa-destination-mode" aria-labelledby="shopping-form-title">
+    <div class="qa-destination-mode__instrument">
+      <div class="qa-destination-mode__heading">
+        <p class="qa-foundation-kicker">Foreign purchase estimate</p>
+        <h2 id="shopping-form-title">Build the explicit purchase total.</h2>
+      </div>
+      {% if form.errors %}
+        <div class="qa-inline-alert qa-inline-alert--error"
+             id="shopping-errors"
+             role="alert"
+             tabindex="-1">
+          <h3>Check these details</h3>
+          <ul class="qa-error-summary">
+            {% for field in form %}
+              {% for error in field.errors %}
+                <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+              {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      {% if shopping_error %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <h3>{{ shopping_error.title }}</h3>
+          <p>{{ shopping_error.detail }}</p>
+        </div>
+      {% endif %}
+      {% if reference_data_ready %}
+        <form method="post"
+              action="{% url 'shopping_calculation' %}"
+              class="qa-destination-mode__form">
+          {% csrf_token %}
+          <div class="qa-field{% if form.purchase_country.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ form.purchase_country.id_for_label }}">Purchase country</label>
+            {{ form.purchase_country }}
+            {% if form.purchase_country.errors %}
+              <p class="qa-field__message qa-field__message--error"
+                 id="purchase_country-error">{{ form.purchase_country.errors.0 }}</p>
+            {% else %}
+              <p class="qa-field__message">Optional. It validates the current country-currency relationship.</p>
+            {% endif %}
+          </div>
+          <div class="qa-destination-mode__money">
+            <div class="qa-field{% if form.purchase_currency.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ form.purchase_currency.id_for_label }}">Purchase currency</label>
+              {{ form.purchase_currency }}
+              {% if form.purchase_currency.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="purchase_currency-error">{{ form.purchase_currency.errors.0 }}</p>
+              {% endif %}
+            </div>
+            <div class="qa-field{% if form.home_currency.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ form.home_currency.id_for_label }}">Your home currency</label>
+              {{ form.home_currency }}
+              {% if form.home_currency.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="home_currency-error">{{ form.home_currency.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="qa-destination-mode__money">
+            <div class="qa-field{% if form.item_price.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ form.item_price.id_for_label }}">Item price</label>
+              {{ form.item_price }}
+              {% if form.item_price.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="item_price-error">{{ form.item_price.errors.0 }}</p>
+              {% endif %}
+            </div>
+            <div class="qa-field{% if form.shipping.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label" for="{{ form.shipping.id_for_label }}">Shipping</label>
+              {{ form.shipping }}
+              {% if form.shipping.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="shipping-error">{{ form.shipping.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="qa-destination-mode__money">
+            <div class="qa-field{% if form.known_fees.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ form.known_fees.id_for_label }}">Known fees</label>
+              {{ form.known_fees }}
+              {% if form.known_fees.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="known_fees-error">{{ form.known_fees.errors.0 }}</p>
+              {% else %}
+                <p class="qa-field__message">Only fees you know in the purchase currency.</p>
+              {% endif %}
+            </div>
+            <div class="qa-field{% if form.fx_markup_percent.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ form.fx_markup_percent.id_for_label }}">FX markup assumption</label>
+              {{ form.fx_markup_percent }}
+              {% if form.fx_markup_percent.errors %}
+                <p class="qa-field__message qa-field__message--error"
+                   id="fx_markup_percent-error">{{ form.fx_markup_percent.errors.0 }}</p>
+              {% else %}
+                <p class="qa-field__message">Optional percentage. This is your assumption, not an issuer quote.</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="qa-destination-mode__action">
+            <button class="qa-primary-button" type="submit">Estimate purchase cost</button>
+            <p>
+              The reference rate is requested only after you submit. Unknown duties, taxes and
+              unentered issuer or merchant fees are never guessed.
+            </p>
+          </div>
+        </form>
+      {% else %}
+        <div class="qa-inline-alert" role="status">
+          <h3>Current currency reference data is unavailable.</h3>
+          <p>Shopping mode needs at least two active currencies. The main converter remains available.</p>
+          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
+        </div>
+      {% endif %}
+    </div>
+    <aside class="qa-destination-mode__principles"
+           aria-label="Shopping estimate trust model">
+      <p class="qa-foundation-kicker">What this estimate means</p>
+      <dl>
+        <div>
+          <dt>Known total</dt>
+          <dd>
+            Item + shipping + only the purchase-currency fees you explicitly enter.
+          </dd>
+        </div>
+        <div>
+          <dt>Reference FX</dt>
+          <dd>
+            Current provider observation with effective date and stale state kept visible.
+          </dd>
+        </div>
+        <div>
+          <dt>Unknown costs</dt>
+          <dd>
+            Duties, taxes and unentered issuer/merchant fees remain unknown rather than inferred.
+          </dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+  {% if shopping %}
+    <section class="qa-payment-estimate qa-country-atmosphere"
+             {% if shopping.theme %}data-country-theme="{{ shopping.theme }}"{% endif %}
+             aria-labelledby="shopping-result-title">
+      <div class="qa-payment-estimate__heading">
+        <div>
+          <p class="qa-foundation-kicker">Shopping estimate</p>
+          <h2 id="shopping-result-title">
+            {% if shopping.purchase_country_name %}
+              {{ shopping.purchase_country_name }}
+            {% else %}
+              {{ shopping.purchase_currency }}
+            {% endif %}
+            purchase
+          </h2>
+          <p>Reference cost and your optional markup assumption stay separate.</p>
+        </div>
+        <p class="qa-payment-estimate__reference">
+          {{ shopping.purchase_total }} {{ shopping.purchase_currency }} explicit purchase total
+        </p>
+      </div>
+      <div class="qa-payment-estimate__result">
+        <p class="qa-payment-estimate__amount">
+          {{ shopping.estimated_home_cost }} <span>{{ shopping.home_currency }}</span>
+        </p>
+        <dl class="qa-payment-estimate__facts">
+          <div>
+            <dt>Item</dt>
+            <dd>
+              {{ shopping.item_price }} {{ shopping.purchase_currency }}
+            </dd>
+          </div>
+          <div>
+            <dt>Shipping</dt>
+            <dd>
+              {{ shopping.shipping }} {{ shopping.purchase_currency }}
+            </dd>
+          </div>
+          <div>
+            <dt>Known fees</dt>
+            <dd>
+              {{ shopping.known_fees }} {{ shopping.purchase_currency }}
+            </dd>
+          </div>
+          <div>
+            <dt>Reference home cost</dt>
+            <dd>
+              {{ shopping.reference_home_cost }} {{ shopping.home_currency }}
+            </dd>
+          </div>
+          <div>
+            <dt>FX markup assumption</dt>
+            <dd>
+              {{ shopping.fx_markup_percent }}% · {{ shopping.fx_markup_cost }} {{ shopping.home_currency }}
+            </dd>
+          </div>
+          <div>
+            <dt>Reference observation</dt>
+            <dd>
+              {{ shopping.effective_date }} · {{ shopping.providers }}
+              {% if shopping.stale %}· stale fallback{% endif %}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <div class="qa-context-freshness-note" role="note">
+        <strong>Not included unless explicitly known:</strong>
+        <ul>
+          {% for item in shopping.unknown_costs %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      </div>
+      <p class="qa-context-disclaimer">
+        This is an informational estimate from a reference FX observation and your explicit
+        assumptions. It is not an executable card, bank, merchant or customs quote.
+      </p>
+    </section>
+  {% endif %}
+{% endblock %}

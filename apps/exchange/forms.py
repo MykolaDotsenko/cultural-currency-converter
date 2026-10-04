@@ -16,6 +16,11 @@ from apps.exchange.budget import (
 )
 from apps.exchange.domain import RateSeriesRangeError, normalize_currency_code
 from apps.exchange.payment_estimate import MAX_FX_MARKUP_PERCENT
+from apps.exchange.shopping import (
+    MAX_SHOPPING_FX_MARKUP_PERCENT,
+    ShoppingAssumptions,
+    ShoppingCalculationError,
+)
 
 MAX_CONVERSION_AMOUNT = Decimal("1000000000")
 RATE_MODE_LATEST = "latest"
@@ -436,7 +441,7 @@ class PaymentEstimateForm(forms.Form):
                 "class": "qa-text-input",
                 "inputmode": "decimal",
                 "min": "0",
-                "max": format(MAX_FX_MARKUP_PERCENT, "f"),
+                "max": format(MAX_SHOPPING_FX_MARKUP_PERCENT, "f"),
                 "step": "0.01",
             }
         ),
@@ -525,6 +530,163 @@ class PaymentEstimateForm(forms.Form):
             self.add_error(field_name, exc)
             return
         cleaned[f"{field_name}_decimal"] = parsed
+
+
+class ShoppingCalculationForm(forms.Form):
+    """Explicit foreign-purchase inputs for the canonical shopping calculation."""
+
+    purchase_country = forms.ChoiceField(required=False, label="Purchase country")
+    purchase_currency = forms.ChoiceField(label="Purchase currency")
+    home_currency = forms.ChoiceField(label="Your home currency")
+    item_price = forms.CharField(max_length=64, label="Item price")
+    shipping = forms.CharField(required=False, max_length=64, initial="0", label="Shipping")
+    known_fees = forms.CharField(
+        required=False,
+        max_length=64,
+        initial="0",
+        label="Known fees",
+    )
+    fx_markup_percent = forms.DecimalField(
+        required=False,
+        min_value=Decimal("0"),
+        max_value=MAX_SHOPPING_FX_MARKUP_PERCENT,
+        max_digits=5,
+        decimal_places=2,
+        initial=Decimal("0"),
+        label="FX markup assumption",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "qa-text-input",
+                "inputmode": "decimal",
+                "min": "0",
+                "max": format(MAX_FX_MARKUP_PERCENT, "f"),
+                "step": "0.01",
+            }
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        currencies = list(Currency.objects.filter(is_active=True).order_by("code"))
+        countries = list(Country.objects.filter(is_active=True).order_by("name"))
+        self._currency_by_code = {currency.code: currency for currency in currencies}
+        self._country_by_code = {country.iso2: country for country in countries}
+
+        currency_choices = [
+            (currency.code, f"{currency.name} · {currency.code}") for currency in currencies
+        ]
+        self.fields["purchase_currency"].choices = currency_choices
+        self.fields["home_currency"].choices = currency_choices
+        self.fields["purchase_country"].choices = [("", "No country context")] + [
+            (country.iso2, f"{country.name} · {country.iso2}") for country in countries
+        ]
+
+        for field_name in ("purchase_country", "purchase_currency", "home_currency"):
+            self.fields[field_name].widget.attrs["class"] = "qa-native-select"
+        for field_name in ("item_price", "shipping", "known_fees"):
+            self.fields[field_name].widget.attrs.update(
+                {
+                    "class": "qa-text-input",
+                    "inputmode": "decimal",
+                    "autocomplete": "off",
+                }
+            )
+
+        if not self.is_bound and currencies:
+            home_code = "EUR" if "EUR" in self._currency_by_code else currencies[0].code
+            purchase_code = next(
+                (
+                    code
+                    for code in ("USD", "JPY", "GBP")
+                    if code in self._currency_by_code and code != home_code
+                ),
+                next(
+                    (
+                        currency.code
+                        for currency in currencies
+                        if currency.code != home_code
+                    ),
+                    home_code,
+                ),
+            )
+            self.initial.setdefault("home_currency", home_code)
+            self.initial.setdefault("purchase_currency", purchase_code)
+            self.initial.setdefault("item_price", "100")
+
+    @property
+    def reference_data_ready(self) -> bool:
+        return len(self._currency_by_code) >= 2
+
+    def add_error(self, field, error):
+        super().add_error(field, error)
+        if field and field in self.fields:
+            self.fields[field].widget.attrs.update(
+                {
+                    "aria-invalid": "true",
+                    "aria-describedby": f"{field}-error",
+                }
+            )
+
+    def clean(self):
+        cleaned = super().clean()
+        purchase_code = str(cleaned.get("purchase_currency") or "").upper()
+        home_code = str(cleaned.get("home_currency") or "").upper()
+        purchase_currency = self._currency_by_code.get(purchase_code)
+        home_currency = self._currency_by_code.get(home_code)
+
+        if purchase_code and home_code and purchase_code == home_code:
+            self.add_error(
+                "home_currency",
+                "Choose a different home currency for a foreign-currency purchase.",
+            )
+
+        country_code = str(cleaned.get("purchase_country") or "").upper()
+        if country_code and purchase_code:
+            current_pair = (
+                CountryCurrency.objects.current()
+                .filter(country__iso2=country_code, currency__code=purchase_code)
+                .exists()
+            )
+            if not current_pair:
+                self.add_error(
+                    "purchase_currency",
+                    "Choose a currency currently associated with this purchase country, "
+                    "or remove the country context.",
+                )
+
+        if purchase_currency is not None:
+            for field_name in ("item_price", "shipping", "known_fees"):
+                raw = str(cleaned.get(field_name) or "").strip()
+                if field_name != "item_price" and not raw:
+                    raw = "0"
+                if not raw:
+                    continue
+                try:
+                    cleaned[f"{field_name}_decimal"] = parse_amount_text(
+                        raw,
+                        minor_units=purchase_currency.minor_units,
+                    )
+                except forms.ValidationError as exc:
+                    self.add_error(field_name, exc)
+
+        if self.errors or purchase_currency is None or home_currency is None:
+            return cleaned
+
+        try:
+            assumptions = ShoppingAssumptions(
+                item_price=cleaned["item_price_decimal"],
+                shipping=cleaned.get("shipping_decimal", Decimal("0")),
+                known_fees=cleaned.get("known_fees_decimal", Decimal("0")),
+                fx_markup_percent=cleaned.get("fx_markup_percent") or Decimal("0"),
+            )
+        except (KeyError, ShoppingCalculationError) as exc:
+            raise forms.ValidationError(str(exc)) from exc
+
+        cleaned["shopping_assumptions"] = assumptions
+        cleaned["purchase_currency_object"] = purchase_currency
+        cleaned["home_currency_object"] = home_currency
+        cleaned["purchase_country_object"] = self._country_by_code.get(country_code)
+        return cleaned
 
 
 _BUDGET_DEFAULT_UNITS: dict[str, Decimal] = {
