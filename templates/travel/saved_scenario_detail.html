@@ -167,8 +167,7 @@
           {% endif %}
           <form method="post"
                 action="{% url 'delete_saved_scenario' scenario.pk %}"
-                {% if offline_snapshot %}data-offline-trip-delete-form
-                data-offline-url="{{ offline_snapshot.offline_url }}"{% endif %}>
+                {% if offline_snapshot %}data-offline-trip-delete-form data-offline-url="{{ offline_snapshot.offline_url }}"{% endif %}>
             {% csrf_token %}
             <button class="qa-secondary-button qa-destructive-button"
                     type="submit">Remove scenario</button>
