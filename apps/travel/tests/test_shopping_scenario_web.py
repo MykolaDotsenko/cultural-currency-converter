@@ -213,7 +213,4 @@ def test_saved_shopping_detail_degrades_when_assumption_payload_is_missing(
     assert b"Legacy incomplete purchase" in response.content
     assert b"Saved Shopping estimate" not in response.content
     assert reverse("shopping_calculation").encode() in response.content
-    assert any(
-        record.msg == "saved_shopping_scenario_payload_missing"
-        for record in caplog.records
-    )
+    assert any(record.msg == "saved_shopping_scenario_payload_missing" for record in caplog.records)
