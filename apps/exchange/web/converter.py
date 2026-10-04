@@ -33,7 +33,7 @@ from apps.exchange.providers.base import (
     FxProviderUnsupportedPair,
 )
 from apps.exchange.web.common import is_history_restore, is_htmx
-from apps.travel.budget_presets import budget_presets_for_user
+from apps.travel.budget_presets import budget_presets_for_categories
 from apps.travel.home import build_returning_trip_home
 
 logger = logging.getLogger("cultural_currency.exchange")
@@ -445,8 +445,20 @@ def converter_view(
             else None
         )
         if isinstance(budget_component, dict):
+            available_categories = {
+                str(field.get("category") or "")
+                for field in budget_component.get("fields", ())
+                if isinstance(field, dict) and field.get("category")
+            }
             try:
-                budget_component["budget_presets"] = budget_presets_for_user(request.user)
+                budget_component["budget_presets"] = (
+                    budget_presets_for_categories(
+                        request.user,
+                        available_categories=available_categories,
+                    )
+                    if available_categories
+                    else ()
+                )
             except DatabaseError as exc:
                 logger.warning(
                     "Budget preset lookup failed",
