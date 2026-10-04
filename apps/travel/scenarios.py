@@ -108,9 +108,7 @@ def create_saved_scenario(
         if spec.budget_categories:
             raise SavedScenarioError("Shopping scenarios cannot store budget-category assumptions.")
         if spec.shopping_assumptions.purchase_total != spec.source_amount:
-            raise SavedScenarioError(
-                "Shopping assumptions must equal the scenario source amount."
-            )
+            raise SavedScenarioError("Shopping assumptions must equal the scenario source amount.")
     elif spec.shopping_assumptions is not None:
         raise SavedScenarioError("Shopping assumptions are valid only for Shopping scenarios.")
     provider_keys = _provider_keys(conversion.quote.provider_keys)
