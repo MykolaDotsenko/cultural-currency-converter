@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 from django.conf import settings
@@ -676,8 +677,8 @@ class ScenarioNotificationPreference(models.Model):
             models.CheckConstraint(
                 condition=Q(rate_change_threshold_percent__isnull=True)
                 | Q(
-                    rate_change_threshold_percent__gte=0.1,
-                    rate_change_threshold_percent__lte=25,
+                    rate_change_threshold_percent__gte=Decimal("0.1"),
+                    rate_change_threshold_percent__lte=Decimal("25"),
                 ),
                 name="scenario_notification_rate_threshold_range",
             ),

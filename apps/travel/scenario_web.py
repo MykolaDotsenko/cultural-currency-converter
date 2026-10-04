@@ -616,6 +616,7 @@ def _scenario_detail_context(
 def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedScenario:
     return get_object_or_404(
         SavedScenario.objects.select_related(
+            "user",
             "source_currency",
             "destination_currency",
             "source_country",

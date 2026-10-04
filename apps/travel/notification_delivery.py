@@ -262,9 +262,13 @@ def _rate_alert_candidate(
         scenario.destination_currency.minor_units,
     )
     if difference == 0:
-        comparison_text = f"the same {scenario.destination_currency.code} amount"
+        comparison_text = (
+            f"the same rounded {scenario.destination_currency.code} amount as the saved baseline"
+        )
     else:
-        comparison_text = f"{amount_text} {scenario.destination_currency.code} {direction}"
+        comparison_text = (
+            f"{amount_text} {scenario.destination_currency.code} {direction} than the saved baseline"
+        )
 
     return NotificationCandidate(
         preference_id=preference.pk,
@@ -276,8 +280,8 @@ def _rate_alert_candidate(
         body=(
             f"At the latest reference rate, the saved source amount would convert to "
             f"{_format_amount(probe.output_amount, scenario.destination_currency.minor_units)} "
-            f"{scenario.destination_currency.code}, {comparison_text} than the immutable saved "
-            "baseline. This is informational, not a recommendation to exchange money."
+            f"{scenario.destination_currency.code}, {comparison_text}. "
+            "This is informational, not a recommendation to exchange money."
         ),
         due_at=now,
     )
