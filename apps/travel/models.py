@@ -596,6 +596,87 @@ class SavedScenario(models.Model):
         return f"{self.user_id}: {label} · {self.source_currency.code} → {self.destination_currency.code}"
 
 
+class ScenarioNotificationType(models.TextChoices):
+    PRE_TRIP = "pre_trip", "Pre-trip reminder"
+    CONTEXT_FRESHNESS = "context_freshness", "Context/offline freshness"
+    RATE_ALERT = "rate_alert", "Scenario rate alert"
+
+
+class ScenarioNotificationCadence(models.TextChoices):
+    ONCE = "once", "Once when due"
+    DAILY = "daily", "At most daily"
+    WEEKLY = "weekly", "At most weekly"
+
+
+class ScenarioNotificationDeliveryChannel(models.TextChoices):
+    IN_APP = "in_app", "In-app"
+
+
+class ScenarioNotificationPreference(models.Model):
+    """Explicit owner-scoped notification preference for one saved scenario.
+
+    This model stores notification intent/configuration only. It is not a
+    delivery log and creating a row does not send or schedule anything by
+    itself.
+    """
+
+    scenario = models.ForeignKey(
+        SavedScenario,
+        on_delete=models.CASCADE,
+        related_name="notification_preferences",
+    )
+    notification_type = models.CharField(
+        max_length=24,
+        choices=ScenarioNotificationType.choices,
+    )
+    enabled = models.BooleanField(default=False)
+    timezone = models.CharField(max_length=64)
+    cadence = models.CharField(
+        max_length=16,
+        choices=ScenarioNotificationCadence.choices,
+    )
+    delivery_channel = models.CharField(
+        max_length=16,
+        choices=ScenarioNotificationDeliveryChannel.choices,
+        default=ScenarioNotificationDeliveryChannel.IN_APP,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("notification_type", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("scenario", "notification_type"),
+                name="unique_scenario_notification_type",
+            ),
+            models.CheckConstraint(
+                condition=Q(notification_type__in=ScenarioNotificationType.values),
+                name="scenario_notification_type_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(cadence__in=ScenarioNotificationCadence.values),
+                name="scenario_notification_cadence_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    delivery_channel__in=ScenarioNotificationDeliveryChannel.values
+                ),
+                name="scenario_notification_channel_valid",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("scenario", "enabled", "notification_type"),
+                name="travel_scn_notify_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        state = "on" if self.enabled else "off"
+        return f"{self.scenario_id}: {self.notification_type} [{state}]"
+
+
 class SavedScenarioShoppingAssumptions(models.Model):
     """One normalized explicit-input payload for a saved Shopping scenario."""
 
