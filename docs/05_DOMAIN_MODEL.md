@@ -156,7 +156,7 @@ The pair must contain two different currencies. Markup is bounded by the same Pa
 
 Profile application is owner-scoped and exact-pair scoped. A profile may populate the explicit Payment Estimate assumptions only after the current signed conversion snapshot establishes the matching pair. It cannot modify the signed reference conversion.
 
-Profile writes serialize per owner and the first slice limits each account to 12 profiles. Saving an existing exact name is an explicit update rather than an unbounded duplicate.
+Profile writes serialize per owner and the first slice limits each account to 12 profiles. Saving an existing exact name for the same currency pair is an explicit update rather than an unbounded duplicate. The same human-readable name may exist for another pair without silently repurposing the first profile.
 
 
 ## CulturalProfile / destination context
