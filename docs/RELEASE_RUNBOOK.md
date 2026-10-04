@@ -125,6 +125,8 @@ For Camera, verify the upload is explicitly initiated, the extracted amount must
 
 For Offline Pack, verify the downloaded HTML states that offline data is stored rather than live and opens without network dependencies.
 
+For the PWA shell, verify the manifest is installable, the root-scoped service worker precaches only the generic offline shell/public static assets, and an offline navigation to a private Saved/account path resolves to the generic shell rather than a cached private page. Inspect Cache Storage and confirm there is no account/scenario/notification/admin HTML.
+
 For saved scenarios/comparisons, verify reopening never silently refreshes financial values; re-check is a distinct explicit action.
 
 ## Optional-capability degradation drill
