@@ -4,6 +4,7 @@ from django.urls import path
 from apps.accounts.forms import QuietAuthenticationForm
 from apps.accounts.views import (
     delete_account,
+    delete_budget_assumption_preset,
     delete_fee_profile,
     profile,
     signup,
@@ -38,6 +39,11 @@ urlpatterns = [
         "fee-profiles/<int:profile_id>/delete/",
         delete_fee_profile,
         name="delete_fee_profile",
+    ),
+    path(
+        "budget-presets/<int:preset_id>/delete/",
+        delete_budget_assumption_preset,
+        name="delete_budget_assumption_preset",
     ),
     path("delete/", delete_account, name="delete_account"),
 ]
