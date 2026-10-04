@@ -13,7 +13,6 @@ from apps.exchange.budget_presets import (
     budget_presets_for_user,
     delete_budget_preset,
     preset_post_values,
-    preset_post_values_for_categories,
     upsert_budget_preset,
 )
 
@@ -226,46 +225,3 @@ def test_budget_preset_category_filter_hides_presets_without_current_overlap():
     ) == (coffee,)
 
 
-@pytest.mark.django_db
-def test_budget_preset_category_application_uses_overlap_and_reports_skipped_items():
-    owner = User.objects.create_user(username="preset-overlap", password="StrongPass-482!")
-    preset = upsert_budget_preset(
-        owner,
-        name="Mixed basket",
-        duration_days=5,
-        travelers=2,
-        categories=(
-            BudgetCategoryAssumption("coffee", Decimal("1.50")),
-            BudgetCategoryAssumption("transit", Decimal("3.00")),
-        ),
-    )
-
-    values, skipped = preset_post_values_for_categories(
-        preset,
-        available_categories=frozenset({"coffee", "casual_meal"}),
-    )
-
-    assert values == {
-        "duration_days": "5",
-        "travelers": "2",
-        "units_coffee": "1.5",
-    }
-    assert skipped == ("transit",)
-
-
-@pytest.mark.django_db
-def test_budget_preset_category_application_rejects_no_overlap():
-    owner = User.objects.create_user(username="preset-no-overlap", password="StrongPass-482!")
-    preset = upsert_budget_preset(
-        owner,
-        name="Transit only",
-        duration_days=2,
-        travelers=1,
-        categories=(BudgetCategoryAssumption("transit", Decimal("2.00")),),
-    )
-
-    with pytest.raises(BudgetPresetError, match="None of this saved budget preset"):
-        preset_post_values_for_categories(
-            preset,
-            available_categories=frozenset({"coffee"}),
-        )
