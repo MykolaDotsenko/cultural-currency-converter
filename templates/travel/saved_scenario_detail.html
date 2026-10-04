@@ -178,7 +178,8 @@
       </div>
     </section>
     {% if notification_rows %}
-      <section class="qa-saved-section" aria-labelledby="scenario-notifications-title">
+      <section class="qa-saved-section"
+               aria-labelledby="scenario-notifications-title">
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Explicit opt-in</p>
@@ -189,7 +190,8 @@
             </p>
           </div>
           <div class="qa-saved-row__actions">
-            <a class="qa-secondary-button" href="{% url 'notification_inbox' %}">Open notifications</a>
+            <a class="qa-secondary-button"
+               href="{% url 'notification_inbox' %}">Open notifications</a>
           </div>
         </div>
         <div class="qa-saved-list">
