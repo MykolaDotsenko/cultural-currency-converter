@@ -91,6 +91,10 @@ class Migration(migrations.Migration):
                         condition=models.Q(("delivery_channel__in", ("in_app",))),
                         name="scenario_notification_channel_valid",
                     ),
+                    models.CheckConstraint(
+                        condition=~models.Q(("timezone", "")),
+                        name="scenario_notification_timezone_nonempty",
+                    ),
                 ],
                 "indexes": [
                     models.Index(
