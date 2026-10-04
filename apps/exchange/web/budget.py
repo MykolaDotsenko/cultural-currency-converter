@@ -38,7 +38,7 @@ from apps.exchange.payment_estimate import PaymentEstimateAssumptions, PaymentEs
 from apps.exchange.web.common import is_htmx
 from apps.travel.budget_presets import (
     BudgetAssumptionPresetError,
-    budget_preset_for_user,
+    assumptions_from_budget_preset,
     budget_presets_for_user,
     upsert_budget_preset,
 )
@@ -199,13 +199,15 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                             preset_error = "Sign in before applying a saved budget preset."
                         else:
                             try:
-                                preset = budget_preset_for_user(
+                                application = assumptions_from_budget_preset(
                                     request.user,
                                     preset_id=int(requested_preset_id),
+                                    available_categories=available_categories,
+                                    basis=basis,
                                 )
-                            except (TypeError, ValueError, BudgetAssumptionPresetError):
+                            except (TypeError, ValueError, BudgetAssumptionPresetError) as exc:
                                 response_status = 422
-                                preset_error = "That budget preset is no longer available."
+                                preset_error = str(exc)
                             except DatabaseError as exc:
                                 logger.warning(
                                     "budget_preset_apply_failed",
@@ -218,39 +220,31 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                 )
                             else:
                                 posted_data = request.POST.copy()
-                                posted_data["duration_days"] = str(preset.duration_days)
-                                posted_data["travelers"] = str(preset.travelers)
+                                posted_data["duration_days"] = str(
+                                    application.assumptions.duration_days
+                                )
+                                posted_data["travelers"] = str(
+                                    application.assumptions.travelers
+                                )
                                 for category in TypicalPriceCategory.values:
                                     posted_data.pop(
                                         BudgetInterpretationForm.units_field_name(category),
                                         None,
                                     )
+                                for item in application.assumptions.categories:
+                                    posted_data[
+                                        BudgetInterpretationForm.units_field_name(item.category)
+                                    ] = format(item.units_per_person_per_day, "f")
 
-                                applied_categories = []
-                                skipped_categories = []
-                                for item in preset.items.all():
-                                    if item.category in available_categories:
-                                        posted_data[
-                                            BudgetInterpretationForm.units_field_name(item.category)
-                                        ] = format(item.units_per_person_per_day, "f")
-                                        applied_categories.append(item.category)
-                                    else:
-                                        skipped_categories.append(item.category)
-
-                                if not applied_categories:
-                                    response_status = 422
-                                    preset_error = (
-                                        "None of this preset's basket items have current sourced "
-                                        "price anchors at this destination."
-                                    )
-                                else:
-                                    labels = dict(TypicalPriceCategory.choices)
-                                    skipped_preset_categories = tuple(
-                                        labels.get(category, category)
-                                        for category in skipped_categories
-                                    )
-                                    selected_preset_name = preset.name
-                                    preset_notice = f'Applied budget preset "{preset.name}".'
+                                labels = dict(TypicalPriceCategory.choices)
+                                skipped_preset_categories = tuple(
+                                    labels.get(category, category)
+                                    for category in application.skipped_categories
+                                )
+                                selected_preset_name = application.name
+                                preset_notice = (
+                                    f'Applied budget preset "{application.name}".'
+                                )
 
                     budget_input_keys = (
                         "duration_days",
