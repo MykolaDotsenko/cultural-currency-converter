@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -149,7 +150,10 @@ def upsert_budget_preset(
             name=normalized_name,
         ).first()
         if preset is None:
-            if BudgetAssumptionPreset.objects.filter(user=user).count() >= MAX_BUDGET_ASSUMPTION_PRESETS:
+            if (
+                BudgetAssumptionPreset.objects.filter(user=user).count()
+                >= MAX_BUDGET_ASSUMPTION_PRESETS
+            ):
                 raise BudgetAssumptionPresetError(
                     f"You can save at most {MAX_BUDGET_ASSUMPTION_PRESETS} budget presets."
                 )
