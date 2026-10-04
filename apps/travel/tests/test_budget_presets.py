@@ -245,3 +245,39 @@ def test_budget_preset_rejects_unsupported_category_and_excess_precision():
         )
 
     assert BudgetAssumptionPreset.objects.filter(user=user).count() == 0
+
+
+@pytest.mark.django_db
+def test_budget_preset_listing_filters_to_current_categories():
+    user = User.objects.create_user(username="preset-filter", password="StrongPass-482!")
+    coffee = upsert_budget_preset(
+        user,
+        name="Coffee plan",
+        assumptions=_assumptions(
+            categories=(
+                BudgetCategoryAssumption(
+                    category="coffee",
+                    units_per_person_per_day=Decimal("1"),
+                ),
+            ),
+        ),
+    )
+    upsert_budget_preset(
+        user,
+        name="Transit plan",
+        assumptions=_assumptions(
+            categories=(
+                BudgetCategoryAssumption(
+                    category="transit",
+                    units_per_person_per_day=Decimal("2"),
+                ),
+            ),
+        ),
+    )
+
+    from apps.travel.budget_presets import budget_presets_for_categories
+
+    assert budget_presets_for_categories(
+        user,
+        available_categories={"coffee", "casual_meal"},
+    ) == (coffee,)
