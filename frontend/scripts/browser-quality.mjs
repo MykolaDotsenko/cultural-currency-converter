@@ -1827,6 +1827,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: new saved budget did not start at zero confirmed spend: ${baselineSummary}`,
   );
   const baselineHistory = await rateHistory.innerText();
+  const baselineHistoryCount = await rateHistory.locator(".qa-reference-history__item").count();
   const localContextSection = page.locator('[aria-labelledby="scenario-local-context-title"]');
   assert(
     (await localContextSection.getAttribute("data-saved-local-context-state")) === "idle",
@@ -1857,9 +1858,14 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     "trip-budget/e2e: current local-context refresh changed the saved remaining-budget state",
   );
   const refreshedRateHistory = page.locator(".qa-reference-history");
-  if (!(await refreshedRateHistory.getAttribute("open"))) {
+  if (!(await refreshedRateHistory.evaluate((details) => details.open))) {
     await refreshedRateHistory.locator("summary").click();
   }
+  assert(
+    (await refreshedRateHistory.locator(".qa-reference-history__item").count()) ===
+      baselineHistoryCount,
+    "trip-budget/e2e: current local-context refresh changed stored FX observation count",
+  );
   assert(
     (await refreshedRateHistory.innerText()) === baselineHistory,
     "trip-budget/e2e: current local-context refresh changed stored FX observation history",
