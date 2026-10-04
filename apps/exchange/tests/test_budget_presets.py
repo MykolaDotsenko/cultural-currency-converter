@@ -53,9 +53,7 @@ def test_budget_preset_upsert_is_owner_scoped_and_replaces_same_name():
     assert updated.name == "Weekend city"
     assert updated.duration_days == 4
     assert updated.travelers == 1
-    assert tuple(
-        updated.items.values_list("category", "units_per_person_per_day")
-    ) == (
+    assert tuple(updated.items.values_list("category", "units_per_person_per_day")) == (
         ("casual_meal", Decimal("1.00")),
         ("coffee", Decimal("2.00")),
     )
