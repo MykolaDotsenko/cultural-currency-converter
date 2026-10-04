@@ -33,9 +33,7 @@ class ShoppingAssumptions:
         _validate_component(self.known_fees, label="Known fees", allow_zero=True)
         _validate_component(self.fx_markup_percent, label="FX markup", allow_zero=True)
         if self.fx_markup_percent > MAX_FX_MARKUP_PERCENT:
-            raise ShoppingCalculationError(
-                f"FX markup cannot exceed {MAX_FX_MARKUP_PERCENT}%."
-            )
+            raise ShoppingCalculationError(f"FX markup cannot exceed {MAX_FX_MARKUP_PERCENT}%.")
 
     @property
     def purchase_total(self) -> Decimal:
@@ -44,9 +42,7 @@ class ShoppingAssumptions:
                 context.prec = 64
                 total = self.item_price + self.shipping + self.known_fees
         except InvalidOperation as exc:
-            raise ShoppingCalculationError(
-                "Shopping total cannot be represented safely."
-            ) from exc
+            raise ShoppingCalculationError("Shopping total cannot be represented safely.") from exc
         if not total.is_finite() or total <= 0 or total > MAX_SHOPPING_COMPONENT:
             raise ShoppingCalculationError("Shopping total is outside supported bounds.")
         return total
@@ -93,9 +89,7 @@ def calculate_shopping_estimate(
     if not isinstance(assumptions, ShoppingAssumptions):
         raise ShoppingCalculationError("Shopping assumptions are invalid.")
     if conversion.quote.historical:
-        raise ShoppingCalculationError(
-            "Shopping estimates require a current reference conversion."
-        )
+        raise ShoppingCalculationError("Shopping estimates require a current reference conversion.")
     if conversion.quote.base_currency == conversion.quote.quote_currency:
         raise ShoppingCalculationError(
             "Shopping estimates require different purchase and home currencies."
@@ -121,9 +115,7 @@ def calculate_shopping_estimate(
                 quantum,
                 rounding=ROUND_HALF_EVEN,
             )
-            multiplier = Decimal("1") + (
-                assumptions.fx_markup_percent / Decimal("100")
-            )
+            multiplier = Decimal("1") + (assumptions.fx_markup_percent / Decimal("100"))
             estimated = (reference * multiplier).quantize(
                 quantum,
                 rounding=ROUND_HALF_EVEN,
@@ -158,6 +150,4 @@ def _validate_component(value: Decimal, *, label: str, allow_zero: bool) -> None
         qualifier = "non-negative" if allow_zero else "greater than zero"
         raise ShoppingCalculationError(f"{label} must be {qualifier}.")
     if value > MAX_SHOPPING_COMPONENT:
-        raise ShoppingCalculationError(
-            f"{label} must be no greater than {MAX_SHOPPING_COMPONENT}."
-        )
+        raise ShoppingCalculationError(f"{label} must be no greater than {MAX_SHOPPING_COMPONENT}.")
