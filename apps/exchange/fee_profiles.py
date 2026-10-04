@@ -172,9 +172,7 @@ def _validate_fee_precision(value: Decimal, *, minor_units: int, label: str) -> 
     quantum = Decimal(1).scaleb(-minor_units)
     if value != value.quantize(quantum):
         unit_label = "decimal place" if minor_units == 1 else "decimal places"
-        raise PaymentFeeProfileError(
-            f"{label} supports at most {minor_units} {unit_label}."
-        )
+        raise PaymentFeeProfileError(f"{label} supports at most {minor_units} {unit_label}.")
 
 
 def _validation_message(exc: ValidationError) -> str:
