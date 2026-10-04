@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -18,6 +19,13 @@ MAX_BUDGET_ASSUMPTION_PRESETS = 12
 
 class BudgetAssumptionPresetError(ValueError):
     """Raised when reusable budget assumptions violate the preset contract."""
+
+
+@dataclass(frozen=True, slots=True)
+class BudgetPresetApplication:
+    name: str
+    assumptions: BudgetAssumptions
+    skipped_categories: tuple[str, ...]
 
 
 def budget_presets_for_user(user) -> tuple[BudgetAssumptionPreset, ...]:
@@ -51,7 +59,7 @@ def assumptions_from_budget_preset(
     preset_id: int,
     available_categories: set[str] | frozenset[str],
     basis: BudgetBasis,
-) -> tuple[BudgetAssumptions, tuple[str, ...]]:
+) -> BudgetPresetApplication:
     if not isinstance(basis, BudgetBasis):
         raise BudgetAssumptionPresetError(
             "Budget preset basis must come from the current trusted budget context."
@@ -88,7 +96,11 @@ def assumptions_from_budget_preset(
         )
     except BudgetInterpretationError as exc:
         raise BudgetAssumptionPresetError(str(exc)) from exc
-    return assumptions, skipped_categories
+    return BudgetPresetApplication(
+        name=preset.name,
+        assumptions=assumptions,
+        skipped_categories=skipped_categories,
+    )
 
 
 def upsert_budget_preset(
