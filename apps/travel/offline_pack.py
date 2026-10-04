@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -28,6 +30,96 @@ from apps.travel.trip_budget import (
 logger = logging.getLogger("cultural_currency.travel")
 
 OFFLINE_DESTINATION_PACK_VERSION = 1
+
+
+def offline_destination_pack_revision(
+    scenario: SavedScenario,
+    *,
+    observations: tuple[SavedScenarioObservation, ...] | None = None,
+    spend_entries: tuple[SavedScenarioSpendEntry, ...] | None = None,
+) -> str:
+    """Return an opaque revision for saved financial state used by an offline pack.
+
+    Reviewed destination context intentionally is not folded into this revision:
+    its own generated/as-of dates remain visible freshness evidence. This token
+    answers only whether account-owned saved trip state changed.
+    """
+
+    selected_observations = (
+        observations if observations is not None else tuple(scenario.observations.all())
+    )
+    selected_spend = spend_entries if spend_entries is not None else tuple(scenario.spend_entries.all())
+
+    payload = {
+        "schema_version": OFFLINE_DESTINATION_PACK_VERSION,
+        "scenario": {
+            "id": scenario.pk,
+            "kind": scenario.kind,
+            "title": scenario.title,
+            "source_currency_id": scenario.source_currency_id,
+            "destination_currency_id": scenario.destination_currency_id,
+            "source_country_id": scenario.source_country_id,
+            "destination_country_id": scenario.destination_country_id,
+            "destination_city_id": scenario.destination_city_id,
+            "source_amount": str(scenario.source_amount),
+            "budget_basis": scenario.budget_basis,
+            "planning_destination_amount": (
+                str(scenario.planning_destination_amount)
+                if scenario.planning_destination_amount is not None
+                else None
+            ),
+            "fx_markup_percent": (
+                str(scenario.fx_markup_percent) if scenario.fx_markup_percent is not None else None
+            ),
+            "source_fixed_fee": (
+                str(scenario.source_fixed_fee) if scenario.source_fixed_fee is not None else None
+            ),
+            "destination_fixed_fee": (
+                str(scenario.destination_fixed_fee)
+                if scenario.destination_fixed_fee is not None
+                else None
+            ),
+            "duration_days": scenario.duration_days,
+            "travelers": scenario.travelers,
+            "travel_start_date": (
+                scenario.travel_start_date.isoformat() if scenario.travel_start_date else None
+            ),
+            "travel_end_date": (
+                scenario.travel_end_date.isoformat() if scenario.travel_end_date else None
+            ),
+        },
+        "observations": [
+            {
+                "id": item.pk,
+                "kind": item.kind,
+                "input_amount": str(item.input_amount),
+                "output_amount": str(item.output_amount),
+                "rate": str(item.rate),
+                "effective_date": item.effective_date.isoformat(),
+                "fetched_at": item.fetched_at.isoformat(),
+                "provider_keys": tuple(str(key) for key in item.provider_keys),
+                "stale": item.stale,
+                "recorded_at": item.recorded_at.isoformat(),
+            }
+            for item in sorted(selected_observations, key=lambda value: value.pk or 0)
+        ],
+        "spend_entries": [
+            {
+                "id": item.pk,
+                "amount": str(item.amount),
+                "source": item.source,
+                "recorded_at": item.recorded_at.isoformat(),
+            }
+            for item in sorted(selected_spend, key=lambda value: value.pk or 0)
+        ],
+    }
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:32]
 
 
 class OfflineDestinationPackError(ValueError):

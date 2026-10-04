@@ -2,6 +2,7 @@
 const CACHE_PREFIX = "cultural-currency-shell-";
 const CACHE_VERSION = "v1";
 const SHELL_CACHE = `${CACHE_PREFIX}${CACHE_VERSION}`;
+const PRIVATE_TRIP_CACHE = "cultural-currency-private-trip-v1";
 const OFFLINE_URL = "{{ offline_url|escapejs }}";
 const STATIC_URL = "{{ static_url|escapejs }}";
 const PRECACHE_URLS = [
@@ -31,6 +32,22 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+function isOfflineTripPath(url) {
+  return url.origin === self.location.origin && /^\/offline\/trips\/\d+\/$/.test(url.pathname);
+}
+
+async function offlineTripResponse(request) {
+  const cache = await caches.open(PRIVATE_TRIP_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  try {
+    return await fetch(request);
+  } catch {
+    return caches.match(OFFLINE_URL);
+  }
+}
+
 function isPublicStaticPath(url) {
   if (url.origin !== self.location.origin) return false;
   return (
@@ -58,11 +75,18 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  if (request.mode === "navigate" && isOfflineTripPath(url)) {
+    // This synthetic namespace is the only private navigation exception. A
+    // response exists here only after the signed-in user explicitly copied a
+    // versioned OfflineDestinationPack into the dedicated private cache.
+    event.respondWith(offlineTripResponse(request));
+    return;
+  }
+
   if (request.mode === "navigate") {
-    // Navigation HTML is always network-only. This deliberately prevents
-    // account, SavedScenario, notification, admin or form responses from
-    // entering Cache Storage. Offline navigation falls back to a generic,
-    // non-personalized shell.
+    // All ordinary navigation HTML stays network-only. Account, SavedScenario,
+    // notification, admin and form pages never enter Cache Storage merely
+    // because the user viewed them.
     event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
     return;
   }

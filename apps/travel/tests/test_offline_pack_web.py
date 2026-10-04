@@ -244,3 +244,75 @@ def test_saved_budget_detail_exposes_offline_pack_action(client, offline_pack_sc
         reverse("download_offline_destination_pack", args=(scenario.pk,)).encode()
         in response.content
     )
+
+
+
+@pytest.mark.django_db
+def test_pwa_offline_snapshot_is_owner_scoped_no_store_and_revisioned(
+    client,
+    offline_pack_scenario,
+):
+    owner, scenario = offline_pack_scenario
+    other = User.objects.create_user(username="offline-pwa-other", password="StrongPass-482!")
+
+    client.force_login(other)
+    forbidden = client.get(reverse("pwa_offline_destination_snapshot", args=(scenario.pk,)))
+    assert forbidden.status_code == 404
+
+    client.force_login(owner)
+    first = client.get(reverse("pwa_offline_destination_snapshot", args=(scenario.pk,)))
+    assert first.status_code == 200
+    assert first["Cache-Control"] == "private, no-store"
+    assert "Content-Disposition" not in first
+    assert first["X-PWA-Offline-Snapshot"] == "1"
+    assert first["X-PWA-Offline-Snapshot-Version"] == "1"
+    assert first["X-PWA-Offline-Scenario-Id"] == str(scenario.pk)
+    assert len(first["X-PWA-Offline-Revision"]) == 32
+    assert first["X-PWA-Offline-Generated-At"]
+    assert first["X-PWA-Offline-Context-As-Of"]
+    assert b"Offline means stored, not live." in first.content
+
+    first_revision = first["X-PWA-Offline-Revision"]
+    record_scenario_spend(
+        scenario,
+        amount=Decimal("100"),
+        source=SavedScenarioSpendSource.MANUAL,
+    )
+    second = client.get(reverse("pwa_offline_destination_snapshot", args=(scenario.pk,)))
+    assert second.status_code == 200
+    assert second["X-PWA-Offline-Revision"] != first_revision
+    assert b"99900 JPY remaining" in second.content
+
+
+@pytest.mark.django_db
+def test_pwa_offline_entry_redirects_only_the_owner(client, offline_pack_scenario):
+    owner, scenario = offline_pack_scenario
+    other = User.objects.create_user(username="offline-entry-other", password="StrongPass-482!")
+
+    client.force_login(other)
+    forbidden = client.get(reverse("offline_saved_scenario_entry", args=(scenario.pk,)))
+    assert forbidden.status_code == 404
+
+    client.force_login(owner)
+    allowed = client.get(reverse("offline_saved_scenario_entry", args=(scenario.pk,)))
+    assert allowed.status_code == 302
+    assert allowed.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+
+
+@pytest.mark.django_db
+def test_saved_budget_detail_exposes_explicit_pwa_offline_controls(
+    client,
+    offline_pack_scenario,
+):
+    owner, scenario = offline_pack_scenario
+    client.force_login(owner)
+
+    response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+
+    assert response.status_code == 200
+    html = response.content.decode("utf-8")
+    assert "data-offline-trip-controls" in html
+    assert reverse("pwa_offline_destination_snapshot", args=(scenario.pk,)) in html
+    assert reverse("offline_saved_scenario_entry", args=(scenario.pk,)) in html
+    assert "Make available offline" in html
+    assert "data-offline-trip-delete-form" in html

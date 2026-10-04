@@ -9,7 +9,9 @@
       opted-in recent history. Browser-local data on this device is separate and can still be
       cleared from Saved &amp; recent.
     </p>
-    <form class="qa-account-form" method="post">
+    <form class="qa-account-form"
+          method="post"
+          data-pwa-private-clear-on-submit>
       {% csrf_token %}
       <div class="qa-field{% if form.password.errors %} qa-field--error{% endif %}">
         <label class="qa-field__label" for="{{ form.password.id_for_label }}">

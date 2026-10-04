@@ -37,7 +37,9 @@
           {% block header_actions %}{% endblock %}
           {% if user.is_authenticated %}
             <a class="qa-header-link" href="{% url 'profile' %}">Account</a>
-            <form method="post" action="{% url 'logout' %}">
+            <form method="post"
+                  action="{% url 'logout' %}"
+                  data-pwa-private-clear-on-submit>
               {% csrf_token %}
               <button class="qa-header-link qa-header-button" type="submit">Sign out</button>
             </form>

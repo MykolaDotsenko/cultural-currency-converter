@@ -41,6 +41,9 @@ class PwaSurfaceTests(SimpleTestCase):
         assert "fetch(request).catch(() => caches.match(OFFLINE_URL))" in source
         assert "cache.put(request, response.clone())" in source
         assert "isPublicStaticPath(url)" in source
+        assert 'PRIVATE_TRIP_CACHE = "cultural-currency-private-trip-v1"' in source
+        assert "isOfflineTripPath(url)" in source
+        assert "offlineTripResponse(request)" in source
         assert "/saved/" not in source
         assert "/accounts/" not in source
         assert "/admin/" not in source

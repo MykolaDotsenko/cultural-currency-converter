@@ -42,6 +42,10 @@ from apps.exchange.shopping_snapshot import (
 )
 from apps.exchange.web.gateways import build_latest_quote_gateway
 from apps.travel.forms import SavedScenarioPlanningForm, SavedScenarioSpendForm
+from apps.travel.offline_pack import (
+    OFFLINE_DESTINATION_PACK_VERSION,
+    offline_destination_pack_revision,
+)
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetBasis,
@@ -522,6 +526,25 @@ def _scenario_detail_context(
             destination_minor_units=scenario.destination_currency.minor_units,
         )
 
+    offline_snapshot = None
+    if trip_budget is not None:
+        offline_snapshot = {
+            "snapshot_url": reverse(
+                "pwa_offline_destination_snapshot",
+                args=(scenario.pk,),
+            ),
+            "offline_url": reverse(
+                "offline_saved_scenario_entry",
+                args=(scenario.pk,),
+            ),
+            "revision": offline_destination_pack_revision(
+                scenario,
+                observations=observation_history,
+                spend_entries=spend_entries,
+            ),
+            "pack_version": OFFLINE_DESTINATION_PACK_VERSION,
+        }
+
     return {
         "scenario": scenario,
         "budget_item_rows": budget_item_rows,
@@ -550,6 +573,7 @@ def _scenario_detail_context(
             scenario.kind == SavedScenarioKind.BUDGET
             and bool(settings.AI_CAMERA_EXTRACTION_ENABLED)
         ),
+        "offline_snapshot": offline_snapshot,
     }
 
 

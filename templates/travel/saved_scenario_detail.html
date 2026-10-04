@@ -111,7 +111,40 @@
           image, merchant identity, account/card data or purchase description.
         </p>
         <a class="qa-secondary-button"
-           href="{% url 'download_offline_destination_pack' scenario.pk %}">Save offline copy</a>
+           href="{% url 'download_offline_destination_pack' scenario.pk %}">Download portable file</a>
+        {% if offline_snapshot %}
+          <div class="qa-saved-row"
+               data-offline-trip-controls
+               data-snapshot-url="{{ offline_snapshot.snapshot_url }}"
+               data-offline-url="{{ offline_snapshot.offline_url }}"
+               data-current-revision="{{ offline_snapshot.revision }}"
+               data-pack-version="{{ offline_snapshot.pack_version }}"
+               hidden>
+            <div class="qa-saved-row__copy">
+              <h3>Device offline copy</h3>
+              <p data-offline-trip-status
+                 class="qa-saved-row__meta"
+                 aria-live="polite">Checking this device…</p>
+              <p class="qa-saved-row__meta">
+                This is an explicit local copy of the same stored-only pack. It can reveal your trip
+                budget to anyone using this browser profile until you remove it or sign out normally.
+              </p>
+            </div>
+            <div class="qa-saved-row__actions">
+              <button class="qa-secondary-button"
+                      type="button"
+                      data-offline-trip-save>Make available offline</button>
+              <a class="qa-secondary-button"
+                 data-offline-trip-open
+                 href="{{ offline_snapshot.offline_url }}"
+                 hidden>Open offline copy</a>
+              <button class="qa-secondary-button qa-destructive-button"
+                      type="button"
+                      data-offline-trip-remove
+                      hidden>Remove offline copy</button>
+            </div>
+          </div>
+        {% endif %}
       </details>
     </section>
   {% endif %}
@@ -132,7 +165,10 @@
             <a class="qa-secondary-button"
                href="{% url 'download_offline_destination_pack' scenario.pk %}">Download offline pack</a>
           {% endif %}
-          <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
+          <form method="post"
+                action="{% url 'delete_saved_scenario' scenario.pk %}"
+                {% if offline_snapshot %}data-offline-trip-delete-form
+                data-offline-url="{{ offline_snapshot.offline_url }}"{% endif %}>
             {% csrf_token %}
             <button class="qa-secondary-button qa-destructive-button"
                     type="submit">Remove scenario</button>

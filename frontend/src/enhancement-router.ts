@@ -4,6 +4,7 @@ let converterEnhancementsModule: Promise<
   typeof import("./behaviors/converter-enhancements")
 > | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
+let pwaOfflineTripModule: Promise<typeof import("./behaviors/pwa-offline-trip")> | null = null;
 let rateChartModule: Promise<typeof import("./behaviors/rate-chart")> | null = null;
 
 function contains(root: EnhancementRoot, selector: string): boolean {
@@ -39,6 +40,15 @@ function loadLocalSavedState(root: EnhancementRoot): void {
     .catch((error: unknown) => reportEnhancementFailure("Saved state", error));
 }
 
+function loadPwaOfflineTrip(root: EnhancementRoot): void {
+  if (!contains(root, "[data-offline-trip-controls]")) return;
+
+  pwaOfflineTripModule ??= import("./behaviors/pwa-offline-trip");
+  void pwaOfflineTripModule
+    .then((module) => module.enhancePwaOfflineTrip())
+    .catch((error: unknown) => reportEnhancementFailure("Offline trip", error));
+}
+
 function loadRateCharts(root: EnhancementRoot): void {
   if (!contains(root, "[data-rate-chart]")) return;
 
@@ -51,6 +61,7 @@ function loadRateCharts(root: EnhancementRoot): void {
 export function loadEnhancements(root: EnhancementRoot = document): void {
   loadCurrentConverter(root);
   loadLocalSavedState(root);
+  loadPwaOfflineTrip(root);
   loadRateCharts(root);
 }
 
