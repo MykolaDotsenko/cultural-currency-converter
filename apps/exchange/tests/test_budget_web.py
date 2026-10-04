@@ -670,9 +670,7 @@ def test_budget_preset_with_unsourced_category_remains_explicit_and_incomplete(
     component = response.context["budget_interpretation"]
     assert component["result"]["complete"] is False
     assert component["result"]["missing_categories"] == ("Transit",)
-    assert component["hidden_category_fields"] == (
-        {"field_name": "units_transit", "value": "2"},
-    )
+    assert component["hidden_category_fields"] == ({"field_name": "units_transit", "value": "2"},)
     assert b"Insufficient current data" in response.content
     assert b'name="units_transit"' in response.content
     assert b'value="2"' in response.content
@@ -705,9 +703,7 @@ def test_successful_budget_interpretation_can_save_and_update_preset(
     assert preset.name == "Weekend city"
     assert preset.duration_days == 4
     assert preset.travelers == 2
-    assert tuple(
-        preset.items.values_list("category", "units_per_person_per_day")
-    ) == (
+    assert tuple(preset.items.values_list("category", "units_per_person_per_day")) == (
         ("casual_meal", Decimal("2.00")),
         ("coffee", Decimal("1.50")),
     )
