@@ -24,7 +24,6 @@ from apps.exchange.domain import (
     HistoricalObservationUnavailable,
     HistoricalOutOfCoverage,
 )
-from apps.exchange.budget_presets import budget_presets_for_user
 from apps.exchange.fee_profiles import fee_profiles_for_pair
 from apps.exchange.forms import RATE_MODE_HISTORICAL, CurrentConversionForm
 from apps.exchange.presentation import build_converter_context
