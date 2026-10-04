@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from apps.exchange.budget import BudgetAssumptions, BudgetBasis, BudgetCategoryAssumption
 from apps.travel.budget_presets import (
     BudgetAssumptionPresetError,
+    assumptions_from_budget_preset,
     budget_preset_for_user,
     budget_presets_for_user,
     delete_budget_preset,
@@ -140,4 +141,72 @@ def test_budget_preset_requires_authentication():
             Anonymous(),
             name="Anonymous",
             assumptions=_assumptions(),
+        )
+
+
+@pytest.mark.django_db
+def test_budget_preset_application_uses_current_basis_and_only_available_categories():
+    user = User.objects.create_user(username="preset-apply", password="StrongPass-482!")
+    preset = upsert_budget_preset(
+        user,
+        name="Mixed basket",
+        assumptions=_assumptions(
+            duration_days=4,
+            travelers=3,
+            categories=(
+                BudgetCategoryAssumption(
+                    category="coffee",
+                    units_per_person_per_day=Decimal("1.25"),
+                ),
+                BudgetCategoryAssumption(
+                    category="transit",
+                    units_per_person_per_day=Decimal("2.50"),
+                ),
+            ),
+            basis=BudgetBasis.REFERENCE_CONVERSION,
+        ),
+    )
+
+    application = assumptions_from_budget_preset(
+        user,
+        preset_id=preset.pk,
+        available_categories={"coffee", "casual_meal"},
+        basis=BudgetBasis.PAYMENT_ESTIMATE,
+    )
+
+    assert application.name == "Mixed basket"
+    assert application.assumptions.duration_days == 4
+    assert application.assumptions.travelers == 3
+    assert application.assumptions.basis is BudgetBasis.PAYMENT_ESTIMATE
+    assert application.assumptions.categories == (
+        BudgetCategoryAssumption(
+            category="coffee",
+            units_per_person_per_day=Decimal("1.25"),
+        ),
+    )
+    assert application.skipped_categories == ("transit",)
+
+
+@pytest.mark.django_db
+def test_budget_preset_application_rejects_destination_without_category_overlap():
+    user = User.objects.create_user(username="preset-no-overlap-service", password="StrongPass-482!")
+    preset = upsert_budget_preset(
+        user,
+        name="Transit only",
+        assumptions=_assumptions(
+            categories=(
+                BudgetCategoryAssumption(
+                    category="transit",
+                    units_per_person_per_day=Decimal("2"),
+                ),
+            ),
+        ),
+    )
+
+    with pytest.raises(BudgetAssumptionPresetError, match="None of this preset"):
+        assumptions_from_budget_preset(
+            user,
+            preset_id=preset.pk,
+            available_categories={"coffee"},
+            basis=BudgetBasis.REFERENCE_CONVERSION,
         )
