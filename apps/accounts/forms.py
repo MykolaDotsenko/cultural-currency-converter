@@ -65,7 +65,7 @@ class HomeCurrencyPreferenceForm(forms.Form):
 
 
 class PaymentFeeProfileNameForm(forms.Form):
-    name = forms.CharField(
+    profile_name = forms.CharField(
         max_length=80,
         label="Profile name",
         widget=forms.TextInput(
@@ -77,8 +77,8 @@ class PaymentFeeProfileNameForm(forms.Form):
         ),
     )
 
-    def clean_name(self):
-        return " ".join(self.cleaned_data["name"].split())
+    def clean_profile_name(self):
+        return " ".join(self.cleaned_data["profile_name"].split())
 
 
 class DeleteAccountForm(forms.Form):
