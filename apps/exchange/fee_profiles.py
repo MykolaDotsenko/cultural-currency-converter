@@ -120,6 +120,8 @@ def upsert_payment_fee_profile(
         existing = PaymentFeeProfile.objects.filter(
             user=user,
             name=normalized_name,
+            source_currency=source_currency,
+            destination_currency=destination_currency,
         ).first()
         if existing is None:
             if PaymentFeeProfile.objects.filter(user=user).count() >= MAX_PAYMENT_FEE_PROFILES:
