@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 
 from apps.countries.models import City, Country, Currency
+from apps.culture.models import TypicalPriceCategory
 
 
 class FavouritePair(models.Model):
@@ -451,7 +452,7 @@ class BudgetAssumptionPresetItem(models.Model):
         on_delete=models.CASCADE,
         related_name="items",
     )
-    category = models.CharField(max_length=24)
+    category = models.CharField(max_length=24, choices=TypicalPriceCategory.choices)
     units_per_person_per_day = models.DecimalField(max_digits=5, decimal_places=2)
 
     class Meta:
@@ -468,13 +469,7 @@ class BudgetAssumptionPresetItem(models.Model):
             ),
             models.CheckConstraint(
                 condition=Q(
-                    category__in=(
-                        "coffee",
-                        "casual_meal",
-                        "transit",
-                        "groceries",
-                        "other",
-                    )
+                    category__in=TypicalPriceCategory.values
                 ),
                 name="budget_preset_category_allowed",
             ),
