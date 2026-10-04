@@ -63,5 +63,4 @@ window.addEventListener(
   { once: true },
 );
 
-
 wirePrivateCacheCleanup();
