@@ -26,6 +26,4 @@ class Command(BaseCommand):
             now=timezone.now(),
             scenario_ids=options.get("scenario_ids"),
         )
-        self.stdout.write(
-            self.style.SUCCESS(f"Created {len(deliveries)} in-app notification(s).")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Created {len(deliveries)} in-app notification(s)."))
