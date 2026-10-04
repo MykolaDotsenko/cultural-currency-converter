@@ -424,8 +424,6 @@ def test_saved_scenario_detail_renders_explicit_budget_and_converter_return(
     assert b"destination_city_slug=tokyo" in response.content
 
 
-
-
 @pytest.mark.django_db
 def test_saved_scenario_detail_does_not_refresh_local_context_by_default(
     client,
