@@ -3384,8 +3384,8 @@ async function assertPwaFoundation(browser) {
       waitUntil: "domcontentloaded",
     });
     assert(
-      offlineResponse === null || !offlineResponse.ok(),
-      "pwa/foundation: offline private navigation unexpectedly returned a network response",
+      offlineResponse?.ok(),
+      `pwa/foundation: cached offline shell failed with ${offlineResponse?.status() ?? "no response"}`,
     );
     await page.getByRole("heading", { name: "You’re offline.", level: 1 }).waitFor();
     await page.getByText("Private account pages and saved-scenario HTML are never cached automatically.").waitFor();
