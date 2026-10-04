@@ -9,7 +9,18 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
-from apps.accounts.forms import DeleteAccountForm, HomeCurrencyPreferenceForm, SignUpForm
+from apps.accounts.forms import (
+    DeleteAccountForm,
+    HomeCurrencyPreferenceForm,
+    PreTripNotificationPreferenceForm,
+    SignUpForm,
+)
+from apps.accounts.notification_preferences import (
+    NotificationPreferenceError,
+    delete_pre_trip_preference,
+    pre_trip_preference_for_user,
+    save_pre_trip_preference,
+)
 from apps.accounts.preferences import (
     home_currency_code,
     recent_history_enabled,
@@ -70,8 +81,10 @@ def _profile_context(
     *,
     home_currency_form: HomeCurrencyPreferenceForm | None = None,
     home_currency: str | None = None,
+    pre_trip_notification_form: PreTripNotificationPreferenceForm | None = None,
 ) -> dict[str, object]:
     current_home_currency = home_currency if home_currency is not None else home_currency_code(user)
+    pre_trip_preference = pre_trip_preference_for_user(user)
     return {
         "recent_history_enabled": recent_history_enabled(user),
         "home_currency_form": home_currency_form
@@ -79,6 +92,9 @@ def _profile_context(
         "home_currency_code": current_home_currency,
         "payment_fee_profiles": payment_fee_profiles_for_user(user),
         "budget_presets": budget_presets_for_user(user),
+        "pre_trip_notification_preference": pre_trip_preference,
+        "pre_trip_notification_form": pre_trip_notification_form
+        or PreTripNotificationPreferenceForm(preference=pre_trip_preference),
     }
 
 
@@ -142,6 +158,68 @@ def update_recent_history_preference(request: HttpRequest) -> HttpResponse:
             request,
             "Cross-device recent history is off. Existing account history was kept.",
         )
+    return redirect("profile")
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_pre_trip_notification_preference(request: HttpRequest) -> HttpResponse:
+    current_preference = pre_trip_preference_for_user(request.user)
+    form = PreTripNotificationPreferenceForm(
+        request.POST,
+        preference=current_preference,
+    )
+    if not form.is_valid():
+        messages.error(request, "Pre-trip reminder preference was not changed.")
+        return render(
+            request,
+            "accounts/profile.html",
+            _profile_context(
+                request.user,
+                pre_trip_notification_form=form,
+            ),
+            status=422,
+        )
+
+    try:
+        preference = save_pre_trip_preference(
+            request.user,
+            enabled=form.cleaned_data["enabled"],
+            timezone_name=form.cleaned_data["timezone_name"],
+            cadence=form.cleaned_data["cadence"],
+            lead_days=form.cleaned_data["lead_days"],
+            delivery_channel=form.cleaned_data["delivery_channel"],
+        )
+    except NotificationPreferenceError as exc:
+        form.add_error(None, str(exc))
+        messages.error(request, "Pre-trip reminder preference was not changed.")
+        return render(
+            request,
+            "accounts/profile.html",
+            _profile_context(
+                request.user,
+                pre_trip_notification_form=form,
+            ),
+            status=422,
+        )
+
+    if preference is not None and preference.enabled:
+        messages.success(
+            request,
+            "Pre-trip reminders are on. Delivery is in-app only and never re-checks FX automatically.",
+        )
+    else:
+        messages.success(request, "Pre-trip reminders are off.")
+    return redirect("profile")
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_pre_trip_notification_preference(request: HttpRequest) -> HttpResponse:
+    if delete_pre_trip_preference(request.user):
+        messages.success(request, "Pre-trip reminder configuration deleted.")
+    else:
+        messages.info(request, "No pre-trip reminder configuration was stored.")
     return redirect("profile")
 
 
