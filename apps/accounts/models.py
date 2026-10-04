@@ -83,6 +83,5 @@ class PaymentFeeProfile(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"{self.user_id}:{self.name} "
-            f"{self.source_currency_id}->{self.destination_currency_id}"
+            f"{self.user_id}:{self.name} {self.source_currency_id}->{self.destination_currency_id}"
         )
