@@ -39,7 +39,7 @@ from apps.exchange.web.common import is_htmx
 from apps.travel.budget_presets import (
     BudgetAssumptionPresetError,
     assumptions_from_budget_preset,
-    budget_presets_for_user,
+    budget_presets_for_categories,
     upsert_budget_preset,
 )
 
@@ -180,7 +180,10 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
 
                     if request.user.is_authenticated:
                         try:
-                            budget_presets = budget_presets_for_user(request.user)
+                            budget_presets = budget_presets_for_categories(
+                                request.user,
+                                available_categories=available_categories,
+                            )
                         except DatabaseError as exc:
                             logger.warning(
                                 "budget_preset_lookup_failed",
@@ -199,53 +202,58 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                             preset_error = "Sign in before applying a saved budget preset."
                         else:
                             try:
-                                application = assumptions_from_budget_preset(
-                                    request.user,
-                                    preset_id=int(requested_preset_id),
-                                    available_categories=available_categories,
-                                    basis=basis,
-                                )
-                            except (TypeError, ValueError, BudgetAssumptionPresetError) as exc:
+                                preset_id = int(requested_preset_id)
+                            except (TypeError, ValueError):
                                 response_status = 422
-                                preset_error = str(exc)
-                            except DatabaseError as exc:
-                                logger.warning(
-                                    "budget_preset_apply_failed",
-                                    extra={"error_code": exc.__class__.__name__},
-                                )
-                                response_status = 503
-                                preset_error = (
-                                    "Saved budget presets are temporarily unavailable. "
-                                    "Enter assumptions manually."
-                                )
+                                preset_error = "That budget preset is no longer available."
                             else:
-                                posted_data = request.POST.copy()
-                                posted_data["duration_days"] = str(
-                                    application.assumptions.duration_days
-                                )
-                                posted_data["travelers"] = str(
-                                    application.assumptions.travelers
-                                )
-                                for category in TypicalPriceCategory.values:
-                                    posted_data.pop(
-                                        BudgetInterpretationForm.units_field_name(category),
-                                        None,
+                                try:
+                                    application = assumptions_from_budget_preset(
+                                        request.user,
+                                        preset_id=preset_id,
+                                        available_categories=available_categories,
+                                        basis=basis,
                                     )
-                                for item in application.assumptions.categories:
-                                    posted_data[
-                                        BudgetInterpretationForm.units_field_name(item.category)
-                                    ] = format(item.units_per_person_per_day, "f")
+                                except BudgetAssumptionPresetError as exc:
+                                    response_status = 422
+                                    preset_error = str(exc)
+                                except DatabaseError as exc:
+                                    logger.warning(
+                                        "budget_preset_apply_failed",
+                                        extra={"error_code": exc.__class__.__name__},
+                                    )
+                                    response_status = 503
+                                    preset_error = (
+                                        "Saved budget presets are temporarily unavailable. "
+                                        "Enter assumptions manually."
+                                    )
+                                else:
+                                    posted_data = request.POST.copy()
+                                    posted_data["duration_days"] = str(
+                                        application.assumptions.duration_days
+                                    )
+                                    posted_data["travelers"] = str(
+                                        application.assumptions.travelers
+                                    )
+                                    for category in TypicalPriceCategory.values:
+                                        posted_data.pop(
+                                            BudgetInterpretationForm.units_field_name(category),
+                                            None,
+                                        )
+                                    for item in application.assumptions.categories:
+                                        posted_data[
+                                            BudgetInterpretationForm.units_field_name(item.category)
+                                        ] = format(item.units_per_person_per_day, "f")
 
-                                labels = dict(TypicalPriceCategory.choices)
-                                skipped_preset_categories = tuple(
-                                    labels.get(category, category)
-                                    for category in application.skipped_categories
-                                )
-                                selected_preset_name = application.name
-                                preset_notice = (
-                                    f'Applied budget preset "{application.name}".'
-                                )
-
+                                    labels = dict(TypicalPriceCategory.choices)
+                                    skipped_preset_categories = tuple(
+                                        labels.get(category, category)
+                                        for category in application.skipped_categories
+                                    )
+                                    selected_preset_name = application.name
+                                    preset_notice = (
+                                        f'Applied budget preset "{application.name}".'
+                                    )
                     budget_input_keys = (
                         "duration_days",
                         "travelers",
@@ -305,7 +313,10 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                     name=name_form.cleaned_data["preset_name"],
                                     assumptions=assumptions,
                                 )
-                                budget_presets = budget_presets_for_user(request.user)
+                                budget_presets = budget_presets_for_categories(
+                                    request.user,
+                                    available_categories=available_categories,
+                                )
                             except BudgetAssumptionPresetError as exc:
                                 response_status = 422
                                 preset_error = str(exc)
