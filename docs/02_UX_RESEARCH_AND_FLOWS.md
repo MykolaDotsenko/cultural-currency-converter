@@ -481,6 +481,14 @@ The current slice uses the reference conversion basis in the UI. The domain alre
 
 Budget interpretation is not a full trip-cost forecast. Accommodation, flights and unselected categories must never be silently added.
 
+### Reusable budget presets
+
+After a successful interpretation, a signed-in user may save the current **assumption bundle** as a named budget preset. A preset contains only duration, traveler count and selected daily category units. It deliberately omits destination, currency, FX, current price anchors, payment-estimate basis and result labels.
+
+Applying a preset is an explicit submit action. It replaces the current assumption fields and immediately reruns the deterministic interpretation against the current signed planning context. Categories saved in the preset remain explicit even when the current destination lacks a sourced anchor; the result then shows **Insufficient current data** rather than silently dropping that category.
+
+Presets are owner-scoped, capped, listed in Account and deletable there. Saving the same name updates that user's existing preset instead of multiplying duplicates.
+
 ### Saved budget handoff
 
 After a successful budget interpretation, a signed-in user may explicitly save that planning state.
