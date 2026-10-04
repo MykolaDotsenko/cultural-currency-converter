@@ -105,7 +105,7 @@ class PreTripNotificationPreferenceForm(forms.Form):
     enabled = forms.BooleanField(
         required=False,
         label="Enable pre-trip reminders",
-        widget=forms.CheckboxInput(attrs={"class": "qa-checkbox"}),
+        widget=forms.CheckboxInput(),
     )
     timezone_name = forms.CharField(
         max_length=64,
