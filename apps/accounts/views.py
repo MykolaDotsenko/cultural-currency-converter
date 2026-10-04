@@ -20,6 +20,26 @@ from apps.exchange.fee_profiles import (
     delete_payment_fee_profile,
     payment_fee_profiles_for_user,
 )
+from apps.travel.budget_presets import (
+    budget_presets_for_user,
+    delete_budget_preset,
+)
+
+
+def _account_profile_context(
+    request: HttpRequest,
+    *,
+    home_currency_form: HomeCurrencyPreferenceForm | None = None,
+) -> dict[str, object]:
+    current_home_currency = home_currency_code(request.user)
+    return {
+        "recent_history_enabled": recent_history_enabled(request.user),
+        "home_currency_form": home_currency_form
+        or HomeCurrencyPreferenceForm(current_code=current_home_currency),
+        "home_currency_code": current_home_currency,
+        "payment_fee_profiles": payment_fee_profiles_for_user(request.user),
+        "budget_assumption_presets": budget_presets_for_user(request.user),
+    }
 
 
 def _safe_next(request: HttpRequest) -> str:
@@ -64,18 +84,10 @@ def signup(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_http_methods(["GET"])
 def profile(request: HttpRequest) -> HttpResponse:
-    current_home_currency = home_currency_code(request.user)
     return render(
         request,
         "accounts/profile.html",
-        {
-            "recent_history_enabled": recent_history_enabled(request.user),
-            "home_currency_form": HomeCurrencyPreferenceForm(
-                current_code=current_home_currency,
-            ),
-            "home_currency_code": current_home_currency,
-            "payment_fee_profiles": payment_fee_profiles_for_user(request.user),
-        },
+        _account_profile_context(request),
     )
 
 
@@ -92,11 +104,7 @@ def update_home_currency_preference(request: HttpRequest) -> HttpResponse:
         return render(
             request,
             "accounts/profile.html",
-            {
-                "recent_history_enabled": recent_history_enabled(request.user),
-                "home_currency_form": form,
-                "home_currency_code": current_code,
-            },
+            _account_profile_context(request, home_currency_form=form),
             status=422,
         )
 
@@ -139,6 +147,18 @@ def delete_fee_profile(request: HttpRequest, profile_id: int) -> HttpResponse:
         messages.success(request, "Payment fee profile deleted.")
     else:
         messages.info(request, "That payment fee profile is no longer available.")
+    return redirect("profile")
+
+
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_budget_assumption_preset(request: HttpRequest, preset_id: int) -> HttpResponse:
+    if delete_budget_preset(request.user, preset_id=preset_id):
+        messages.success(request, "Budget preset deleted.")
+    else:
+        messages.info(request, "That budget preset is no longer available.")
     return redirect("profile")
 
 
