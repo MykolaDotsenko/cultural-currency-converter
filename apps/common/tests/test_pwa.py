@@ -55,7 +55,10 @@ class PwaSurfaceTests(SimpleTestCase):
         html = response.content.decode("utf-8")
         normalized = " ".join(html.split())
         assert "You’re offline." in normalized
-        assert "Private account pages and saved-scenario HTML are never cached automatically." in normalized
+        assert (
+            "Private account pages and saved-scenario HTML are never cached automatically."
+            in normalized
+        )
         assert "Offline Destination Pack" in normalized
         assert "<script" not in html.lower()
         assert 'rel="stylesheet"' not in html.lower()
