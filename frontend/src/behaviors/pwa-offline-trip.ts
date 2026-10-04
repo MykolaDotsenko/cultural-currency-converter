@@ -117,8 +117,17 @@ async function saveSnapshot(surface: OfflineTripSurface): Promise<void> {
       throw new Error("Offline snapshot response was not valid.");
     }
 
+    const headers = new Headers(response.headers);
+    headers.delete("Vary");
+    headers.delete("Content-Disposition");
+    const storedResponse = new Response(await response.text(), {
+      status: 200,
+      statusText: "OK",
+      headers,
+    });
+
     const cache = await caches.open(PRIVATE_TRIP_CACHE);
-    await cache.put(absoluteUrl(offlineUrl), response.clone());
+    await cache.put(absoluteUrl(offlineUrl), storedResponse);
     await renderSurfaceState(surface);
   } catch {
     status.textContent =
