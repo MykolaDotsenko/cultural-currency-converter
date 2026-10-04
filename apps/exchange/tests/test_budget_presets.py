@@ -223,5 +223,3 @@ def test_budget_preset_category_filter_hides_presets_without_current_overlap():
         owner,
         available_categories=frozenset({"coffee", "casual_meal"}),
     ) == (coffee,)
-
-
