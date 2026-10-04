@@ -229,9 +229,7 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                     assumptions = PaymentEstimateAssumptions(
                         fx_markup_percent=form.cleaned_data["fx_markup_percent"],
                         source_fixed_fee=form.cleaned_data["source_fixed_fee_decimal"],
-                        destination_fixed_fee=form.cleaned_data[
-                            "destination_fixed_fee_decimal"
-                        ],
+                        destination_fixed_fee=form.cleaned_data["destination_fixed_fee_decimal"],
                     )
                     try:
                         estimate = estimate_payment_value(
