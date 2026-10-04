@@ -45,9 +45,7 @@ def budget_presets_for_categories(
     available_categories: set[str] | frozenset[str],
 ) -> tuple[BudgetPreset, ...]:
     normalized = {
-        str(category).strip().lower()
-        for category in available_categories
-        if str(category).strip()
+        str(category).strip().lower() for category in available_categories if str(category).strip()
     }
     if not normalized:
         return ()
@@ -57,7 +55,6 @@ def budget_presets_for_categories(
         for preset in budget_presets_for_user(user)
         if any(item.category in normalized for item in preset.items.all())
     )
-
 
 
 def budget_preset_for_user(user, *, preset_id: int) -> BudgetPreset:
