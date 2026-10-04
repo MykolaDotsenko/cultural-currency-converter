@@ -2,14 +2,14 @@
 {% block title %}Notifications · Cultural Currency{% endblock %}
 {% block head_meta %}
   <meta name="robots" content="noindex">
-  <meta name="description" content="Your explicit saved-scenario notifications.">
+  <meta name="description"\n        content="Your explicit saved-scenario notifications.">
 {% endblock %}
 {% block header_actions %}
   <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
   <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
 {% endblock %}
 {% block content %}
-  <section class="qa-foundation-intro qa-saved-intro" aria-labelledby="notification-inbox-title">
+  <section class="qa-foundation-intro qa-saved-intro"\n           aria-labelledby="notification-inbox-title">
     <p class="qa-foundation-kicker">Saved-scenario continuity</p>
     <h1 id="notification-inbox-title">Notifications</h1>
     <p class="qa-foundation-lede">
