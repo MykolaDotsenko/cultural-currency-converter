@@ -659,9 +659,7 @@ class ScenarioNotificationPreference(models.Model):
                 name="scenario_notification_cadence_valid",
             ),
             models.CheckConstraint(
-                condition=Q(
-                    delivery_channel__in=ScenarioNotificationDeliveryChannel.values
-                ),
+                condition=Q(delivery_channel__in=ScenarioNotificationDeliveryChannel.values),
                 name="scenario_notification_channel_valid",
             ),
             models.CheckConstraint(
