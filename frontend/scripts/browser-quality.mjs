@@ -1856,8 +1856,12 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     summaryAfterContextRefresh === baselineSummary,
     "trip-budget/e2e: current local-context refresh changed the saved remaining-budget state",
   );
+  const refreshedRateHistory = page.locator(".qa-reference-history");
+  if (!(await refreshedRateHistory.getAttribute("open"))) {
+    await refreshedRateHistory.locator("summary").click();
+  }
   assert(
-    (await page.locator(".qa-reference-history").innerText()) === baselineHistory,
+    (await refreshedRateHistory.innerText()) === baselineHistory,
     "trip-budget/e2e: current local-context refresh changed stored FX observation history",
   );
   await assertAxe(page, "trip-budget/local-context");
