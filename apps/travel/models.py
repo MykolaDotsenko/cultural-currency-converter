@@ -400,6 +400,80 @@ class SavedComparisonBudgetItem(models.Model):
         return f"{self.comparison_id}: {self.category} x {self.units_per_person_per_day}"
 
 
+class BudgetAssumptionPreset(models.Model):
+    """Owner-scoped reusable budget inputs with no destination or FX snapshot."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="budget_assumption_presets",
+    )
+    name = models.CharField(max_length=80)
+    duration_days = models.PositiveSmallIntegerField()
+    travelers = models.PositiveSmallIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("name", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "name"),
+                name="unique_user_budget_preset_name",
+            ),
+            models.CheckConstraint(
+                condition=Q(duration_days__gte=1, duration_days__lte=365),
+                name="budget_preset_duration_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(travelers__gte=1, travelers__lte=20),
+                name="budget_preset_travelers_range",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id}:{self.name}"
+
+
+class BudgetAssumptionPresetItem(models.Model):
+    preset = models.ForeignKey(
+        BudgetAssumptionPreset,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    category = models.CharField(max_length=24)
+    units_per_person_per_day = models.DecimalField(max_digits=5, decimal_places=2)
+
+    class Meta:
+        ordering = ("category", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("preset", "category"),
+                name="unique_budget_preset_category",
+            ),
+            models.CheckConstraint(
+                condition=Q(units_per_person_per_day__gte=0.01)
+                & Q(units_per_person_per_day__lte=100),
+                name="budget_preset_units_range",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    category__in=(
+                        "coffee",
+                        "casual_meal",
+                        "transit",
+                        "groceries",
+                        "other",
+                    )
+                ),
+                name="budget_preset_category_allowed",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.preset_id}: {self.category} x {self.units_per_person_per_day}"
+
+
 class SavedScenarioKind(models.TextChoices):
     TRIP = "trip", "Trip"
     BUDGET = "budget", "Budget"
