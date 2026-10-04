@@ -753,6 +753,20 @@ def test_current_conversion_lists_only_signed_in_users_budget_presets(
         ),
     )
     upsert_budget_preset(
+        owner,
+        name="Transit-only owner preset",
+        assumptions=BudgetAssumptions(
+            duration_days=4,
+            travelers=1,
+            categories=(
+                BudgetCategoryAssumption(
+                    category="transit",
+                    units_per_person_per_day=Decimal("2"),
+                ),
+            ),
+        ),
+    )
+    upsert_budget_preset(
         other,
         name="Hidden basket",
         assumptions=BudgetAssumptions(
@@ -774,4 +788,27 @@ def test_current_conversion_lists_only_signed_in_users_budget_presets(
     assert response.status_code == 200
     assert b"Budget presets" in response.content
     assert b"My city break" in response.content
+    assert b"Transit-only owner preset" not in response.content
     assert b"Hidden basket" not in response.content
+
+
+@pytest.mark.django_db
+def test_budget_preset_rejects_malformed_identifier_without_internal_error(
+    client,
+    reference_data,
+):
+    user = User.objects.create_user(username="budget-preset-malformed", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("budget_interpretation"),
+        {
+            "budget_context_token": _signed_budget_context(),
+            "budget_preset_id": "not-an-integer",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 422
+    assert b"That budget preset is no longer available." in response.content
+    assert b"invalid literal for int" not in response.content
