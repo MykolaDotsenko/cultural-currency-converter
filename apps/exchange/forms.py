@@ -441,7 +441,7 @@ class PaymentEstimateForm(forms.Form):
                 "class": "qa-text-input",
                 "inputmode": "decimal",
                 "min": "0",
-                "max": format(MAX_SHOPPING_FX_MARKUP_PERCENT, "f"),
+                "max": format(MAX_FX_MARKUP_PERCENT, "f"),
                 "step": "0.01",
             }
         ),
@@ -559,7 +559,7 @@ class ShoppingCalculationForm(forms.Form):
                 "class": "qa-text-input",
                 "inputmode": "decimal",
                 "min": "0",
-                "max": format(MAX_FX_MARKUP_PERCENT, "f"),
+                "max": format(MAX_SHOPPING_FX_MARKUP_PERCENT, "f"),
                 "step": "0.01",
             }
         ),

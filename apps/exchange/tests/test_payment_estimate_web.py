@@ -6,12 +6,17 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.db import DatabaseError
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
+from apps.exchange.fee_profiles import upsert_payment_fee_profile
+from apps.exchange.payment_estimate import PaymentEstimateAssumptions
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
+
+User = get_user_model()
 
 
 class FakeGateway:
@@ -287,3 +292,161 @@ def test_payment_estimate_endpoint_is_post_only(client, reference_data):
     response = client.get(reverse("payment_estimate"))
 
     assert response.status_code == 405
+
+
+@pytest.mark.django_db
+def test_authenticated_payment_estimate_can_save_exact_pair_fee_profile(
+    client,
+    reference_data,
+):
+    _fi, _jp, eur, jpy = reference_data
+    user = User.objects.create_user(username="fee-profile-save", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("payment_estimate"),
+        {
+            "payment_estimate_token": _signed_snapshot(),
+            "fx_markup_percent": "2.00",
+            "source_fixed_fee": "1.00",
+            "destination_fixed_fee": "220",
+            "payment_action": "save_profile",
+            "profile_name": "Travel card",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    profile = user.payment_fee_profiles.get()
+    assert profile.name == "Travel card"
+    assert profile.source_currency == eur
+    assert profile.destination_currency == jpy
+    assert profile.fx_markup_percent == Decimal("2.00")
+    assert profile.source_fixed_fee == Decimal("1.00")
+    assert profile.destination_fixed_fee == Decimal("220")
+    assert b"Saved fee profile &quot;Travel card&quot;." in response.content
+
+
+@pytest.mark.django_db
+def test_fee_profile_application_uses_saved_assumptions_not_submitted_fee_fields(
+    client,
+    reference_data,
+):
+    _fi, _jp, eur, jpy = reference_data
+    user = User.objects.create_user(username="fee-profile-apply", password="StrongPass-482!")
+    profile = upsert_payment_fee_profile(
+        user,
+        name="ATM",
+        source_currency=eur,
+        destination_currency=jpy,
+        assumptions=PaymentEstimateAssumptions(
+            fx_markup_percent=Decimal("2.00"),
+            source_fixed_fee=Decimal("1.00"),
+            destination_fixed_fee=Decimal("220"),
+        ),
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("payment_estimate"),
+        {
+            "payment_estimate_token": _signed_snapshot(),
+            "fx_markup_percent": "0",
+            "source_fixed_fee": "0",
+            "destination_fixed_fee": "0",
+            "fee_profile_id": str(profile.pk),
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    assert b"16717" in response.content
+    assert b"733 JPY" in response.content
+    assert b"Using saved profile" in response.content
+    assert b"<strong>ATM</strong>" in response.content
+
+
+@pytest.mark.django_db
+def test_fee_profile_from_other_pair_is_rejected_without_calculating(
+    client,
+    reference_data,
+):
+    _fi, _jp, eur, _jpy = reference_data
+    usd = Currency.objects.create(code="USD", name="US dollar", symbol="$", minor_units=2)
+    user = User.objects.create_user(username="fee-profile-pair", password="StrongPass-482!")
+    profile = upsert_payment_fee_profile(
+        user,
+        name="USD card",
+        source_currency=eur,
+        destination_currency=usd,
+        assumptions=PaymentEstimateAssumptions(
+            fx_markup_percent=Decimal("1.00"),
+            source_fixed_fee=Decimal("0"),
+            destination_fixed_fee=Decimal("0"),
+        ),
+    )
+    client.force_login(user)
+
+    response = client.post(
+        reverse("payment_estimate"),
+        {
+            "payment_estimate_token": _signed_snapshot(),
+            "fx_markup_percent": "0",
+            "source_fixed_fee": "0",
+            "destination_fixed_fee": "0",
+            "fee_profile_id": str(profile.pk),
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 422
+    assert b"unavailable for this currency pair" in response.content
+    assert b"Estimated destination value" not in response.content
+
+
+@pytest.mark.django_db
+def test_anonymous_user_cannot_save_fee_profile(client, reference_data):
+    response = client.post(
+        reverse("payment_estimate"),
+        {
+            "payment_estimate_token": _signed_snapshot(),
+            "fx_markup_percent": "2",
+            "source_fixed_fee": "1",
+            "destination_fixed_fee": "220",
+            "payment_action": "save_profile",
+            "profile_name": "Anonymous card",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 403
+    assert b"Sign in before saving" in response.content
+    assert b"Estimated destination value" in response.content
+
+
+@pytest.mark.django_db
+def test_current_conversion_lists_only_applicable_owner_fee_profiles(
+    client,
+    reference_data,
+):
+    _fi, _jp, eur, jpy = reference_data
+    user = User.objects.create_user(username="fee-profile-list", password="StrongPass-482!")
+    upsert_payment_fee_profile(
+        user,
+        name="Travel card",
+        source_currency=eur,
+        destination_currency=jpy,
+        assumptions=PaymentEstimateAssumptions(
+            fx_markup_percent=Decimal("1.50"),
+            source_fixed_fee=Decimal("0.50"),
+            destination_fixed_fee=Decimal("100"),
+        ),
+    )
+    client.force_login(user)
+
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()):
+        response = client.post(reverse("converter"), _payload(), HTTP_HX_REQUEST="true")
+
+    assert response.status_code == 200
+    assert b"Profiles for EUR" in response.content
+    assert b"Travel card" in response.content

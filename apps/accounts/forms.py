@@ -64,6 +64,23 @@ class HomeCurrencyPreferenceForm(forms.Form):
         return code
 
 
+class PaymentFeeProfileNameForm(forms.Form):
+    profile_name = forms.CharField(
+        max_length=80,
+        label="Profile name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "qa-text-input",
+                "autocomplete": "off",
+                "placeholder": "e.g. Travel card",
+            }
+        ),
+    )
+
+    def clean_profile_name(self):
+        return " ".join(self.cleaned_data["profile_name"].split())
+
+
 class DeleteAccountForm(forms.Form):
     password = forms.CharField(
         label="Current password",

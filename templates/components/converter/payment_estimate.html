@@ -27,6 +27,11 @@
             <span>{{ payment_estimate.destination_currency }}</span>
           </p>
         </div>
+        {% if payment_estimate.selected_profile_name %}
+          <p class="qa-context-freshness-note" role="status">
+            Using saved profile <strong>{{ payment_estimate.selected_profile_name }}</strong>.
+          </p>
+        {% endif %}
         <dl class="qa-payment-estimate__facts">
           <div>
             <dt>Reference value</dt>
@@ -137,6 +142,37 @@
           <p>{{ payment_estimate.form.non_field_errors.0 }}</p>
         </div>
       {% endif %}
+      {% if payment_estimate.profile_notice %}
+        <div class="qa-inline-alert" role="status">
+          <p>{{ payment_estimate.profile_notice }}</p>
+        </div>
+      {% endif %}
+      {% if payment_estimate.profile_error %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ payment_estimate.profile_error }}</p>
+        </div>
+      {% endif %}
+      {% if payment_estimate.fee_profiles %}
+        <div class="qa-payment-estimate__profiles"
+             aria-labelledby="payment-fee-profile-title">
+          <p class="qa-foundation-kicker">Saved assumptions</p>
+          <h4 id="payment-fee-profile-title">
+            Profiles for {{ payment_estimate.source_currency }} → {{ payment_estimate.destination_currency }}
+          </h4>
+          <div class="qa-account-actions">
+            {% for profile in payment_estimate.fee_profiles %}
+              <button class="qa-secondary-button"
+                      type="submit"
+                      name="fee_profile_id"
+                      value="{{ profile.id }}">{{ profile.name }}</button>
+            {% endfor %}
+          </div>
+          <p class="qa-field__message">
+            Applying a profile changes only the explicit assumptions below. The signed reference
+            conversion is unchanged.
+          </p>
+        </div>
+      {% endif %}
       <div class="qa-payment-estimate__fields">
         <label class="qa-field">
           <span class="qa-field__label">{{ payment_estimate.form.fx_markup_percent.label }}</span>
@@ -169,6 +205,27 @@
           {% endif %}
         </label>
       </div>
+      {% if payment_estimate.estimated_amount and user.is_authenticated %}
+        <div class="qa-payment-estimate__profile-save">
+          <label class="qa-field" for="payment-profile-name">
+            <span class="qa-field__label">Save these assumptions as a profile</span>
+            <input class="qa-text-input"
+                   id="payment-profile-name"
+                   name="profile_name"
+                   maxlength="80"
+                   autocomplete="off"
+                   placeholder="e.g. Travel card"
+                   value="{{ payment_estimate.profile_name_value }}">
+            <span class="qa-field__message">
+              Saving stores only this pair and the explicit markup/fixed-fee assumptions.
+            </span>
+          </label>
+          <button class="qa-secondary-button"
+                  type="submit"
+                  name="payment_action"
+                  value="save_profile">Save fee profile</button>
+        </div>
+      {% endif %}
       <div class="qa-payment-estimate__actions">
         <span id="payment-estimate-loading"
               class="qa-loading-indicator htmx-indicator"

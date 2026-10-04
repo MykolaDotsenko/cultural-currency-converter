@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.accounts.models import AccountPreferences
+from apps.accounts.models import AccountPreferences, PaymentFeeProfile
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.travel.models import (
     FavouritePair,
@@ -113,6 +113,44 @@ class AccountWebTests(TestCase):
 
         self.assertEqual(response.status_code, 405)
         self.assertFalse(AccountPreferences.objects.filter(user=user).exists())
+
+    def test_profile_lists_only_owner_fee_profiles_and_delete_is_owner_scoped(self):
+        user = User.objects.create_user(username="fee-profile-owner", password=PASSWORD)
+        other = User.objects.create_user(username="fee-profile-other", password=PASSWORD)
+        eur = Currency.objects.create(code="EUR", name="Euro")
+        jpy = Currency.objects.create(code="JPY", name="Japanese yen")
+        own = PaymentFeeProfile.objects.create(
+            user=user,
+            name="Travel card",
+            source_currency=eur,
+            destination_currency=jpy,
+            fx_markup_percent="1.50",
+            source_fixed_fee="0.50",
+            destination_fixed_fee="100",
+        )
+        foreign = PaymentFeeProfile.objects.create(
+            user=other,
+            name="Other card",
+            source_currency=eur,
+            destination_currency=jpy,
+            fx_markup_percent="2.00",
+            source_fixed_fee="1.00",
+            destination_fixed_fee="200",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("profile"))
+
+        self.assertContains(response, "Travel card")
+        self.assertNotContains(response, "Other card")
+
+        response = self.client.post(reverse("delete_fee_profile", args=(foreign.pk,)))
+        self.assertRedirects(response, reverse("profile"))
+        self.assertTrue(PaymentFeeProfile.objects.filter(pk=foreign.pk).exists())
+
+        response = self.client.post(reverse("delete_fee_profile", args=(own.pk,)))
+        self.assertRedirects(response, reverse("profile"))
+        self.assertFalse(PaymentFeeProfile.objects.filter(pk=own.pk).exists())
 
     def test_recent_history_preference_defaults_off_and_toggles_explicitly(self):
         user = User.objects.create_user(username="privacy-member", password=PASSWORD)

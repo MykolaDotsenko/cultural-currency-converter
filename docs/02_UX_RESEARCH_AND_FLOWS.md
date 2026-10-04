@@ -106,10 +106,12 @@ Important current boundaries:
 - no estimate for exact same-currency 1:1 conversion;
 - no inferred bank/card/ATM/DCC/merchant fee;
 - no historical payment-cost estimate;
-- no reusable saved fee profile yet;
+- signed-in users may save named reusable fee profiles for the exact source/destination currency pair; applying one replaces only the explicit assumption fields and never the signed reference conversion;
 - HTMX enhancement has a full-page no-JavaScript fallback.
 
 This is a scenario estimate, not an executable quote.
+
+A saved fee profile is deliberately pair-scoped because fixed fees carry currency meaning. It stores only a name, source/destination currencies, FX-markup assumption and source/destination fixed-fee assumptions. Profiles are account-owned, capped, manually saved from a validated Payment Estimate and manually applied. The product does not infer a bank/card/ATM provider or auto-apply a profile from history.
 
 ## Local meaning as a primary contextual surface
 

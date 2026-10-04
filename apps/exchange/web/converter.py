@@ -23,6 +23,7 @@ from apps.exchange.domain import (
     HistoricalObservationUnavailable,
     HistoricalOutOfCoverage,
 )
+from apps.exchange.fee_profiles import fee_profiles_for_pair
 from apps.exchange.forms import RATE_MODE_HISTORICAL, CurrentConversionForm
 from apps.exchange.presentation import build_converter_context
 from apps.exchange.providers.base import (
@@ -417,6 +418,25 @@ def converter_view(
     )
     context["account_favourite_saved"] = account_favourite_saved
     context["account_recent_history_recorded"] = account_recent_history_recorded
+
+    if result is not None and request.user.is_authenticated and not result.quote.historical:
+        result_component = context.get("result_component")
+        payment_component = (
+            result_component.get("payment_estimate") if isinstance(result_component, dict) else None
+        )
+        if isinstance(payment_component, dict):
+            try:
+                payment_component["fee_profiles"] = fee_profiles_for_pair(
+                    request.user,
+                    source_currency_code=result.quote.base_currency,
+                    destination_currency_code=result.quote.quote_currency,
+                )
+            except DatabaseError as exc:
+                logger.warning(
+                    "Payment fee profile lookup failed",
+                    extra={"error_code": exc.__class__.__name__},
+                )
+                payment_component["fee_profiles"] = ()
 
     returning_trip_home = None
     if (

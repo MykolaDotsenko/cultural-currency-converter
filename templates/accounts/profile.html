@@ -43,6 +43,40 @@
       </form>
     </section>
     <section class="qa-account-section"
+             aria-labelledby="payment-fee-profiles-title">
+      <p class="qa-foundation-kicker">Reusable assumptions</p>
+      <h2 id="payment-fee-profiles-title">Payment fee profiles</h2>
+      <p>
+        Profiles are explicit assumptions for one exact currency pair. They are never inferred
+        from your card, bank, location or conversion history.
+      </p>
+      {% if payment_fee_profiles %}
+        <div class="qa-saved-list">
+          {% for profile in payment_fee_profiles %}
+            <article class="qa-saved-row">
+              <div class="qa-saved-row__copy">
+                <h3>{{ profile.name }}</h3>
+                <p>
+                  {{ profile.source_currency.code }} → {{ profile.destination_currency.code }}
+                  · {{ profile.fx_markup_percent|floatformat:"-2" }}% markup
+                  · {{ profile.source_fixed_fee|floatformat:"-12" }} {{ profile.source_currency.code }}
+                  + {{ profile.destination_fixed_fee|floatformat:"-12" }} {{ profile.destination_currency.code }}
+                </p>
+              </div>
+              <form method="post" action="{% url 'delete_fee_profile' profile.id %}">
+                {% csrf_token %}
+                <button class="qa-secondary-button" type="submit">Delete</button>
+              </form>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="qa-field__message">
+          No payment fee profiles saved yet. Create one from a successful Real Payment Estimate.
+        </p>
+      {% endif %}
+    </section>
+    <section class="qa-account-section"
              aria-labelledby="recent-history-privacy-title">
       <p class="qa-foundation-kicker">Privacy preference</p>
       <h2 id="recent-history-privacy-title">Cross-device recent history</h2>
