@@ -15,6 +15,7 @@ from apps.exchange.forms import ShoppingCalculationForm
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.shopping import ShoppingCalculationError, calculate_shopping_estimate
+from apps.exchange.shopping_snapshot import build_shopping_context_snapshot_token
 
 logger = logging.getLogger("cultural_currency.exchange")
 
@@ -31,7 +32,25 @@ def shopping_calculation_view(
 ) -> HttpResponse:
     """Calculate one explicit foreign-purchase estimate through canonical FX."""
 
-    form = ShoppingCalculationForm(request.POST if request.method == "POST" else None)
+    initial = None
+    if request.method == "GET":
+        initial = {
+            key: str(request.GET.get(key) or "").strip()
+            for key in (
+                "purchase_country",
+                "purchase_currency",
+                "home_currency",
+                "item_price",
+                "shipping",
+                "known_fees",
+                "fx_markup_percent",
+            )
+            if request.GET.get(key) is not None
+        }
+    form = ShoppingCalculationForm(
+        request.POST if request.method == "POST" else None,
+        initial=initial,
+    )
     component = None
     error = None
     status = 200
@@ -77,6 +96,13 @@ def shopping_calculation_view(
             status = 422
         else:
             component = {
+                "save_token": build_shopping_context_snapshot_token(
+                    conversion=conversion,
+                    assumptions=assumptions,
+                    purchase_country_code=(
+                        purchase_country.iso2 if purchase_country is not None else ""
+                    ),
+                ),
                 "purchase_country_code": purchase_country.iso2 if purchase_country else "",
                 "purchase_country_name": purchase_country.name if purchase_country else "",
                 "theme": country_theme_key(purchase_country.iso2) if purchase_country else "",

@@ -37,6 +37,7 @@ from apps.travel.scenario_web import (
     delete_saved_scenario_spend,
     recheck_saved_scenario,
     save_budget_scenario,
+    save_shopping_scenario,
     saved_scenario_detail,
 )
 from apps.travel.views import (
@@ -90,6 +91,11 @@ urlpatterns = [
         "saved/scenarios/budget/create/",
         save_budget_scenario,
         name="save_budget_scenario",
+    ),
+    path(
+        "saved/scenarios/shopping/create/",
+        save_shopping_scenario,
+        name="save_shopping_scenario",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/",

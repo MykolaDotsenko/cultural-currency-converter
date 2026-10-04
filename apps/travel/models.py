@@ -596,6 +596,49 @@ class SavedScenario(models.Model):
         return f"{self.user_id}: {label} · {self.source_currency.code} → {self.destination_currency.code}"
 
 
+class SavedScenarioShoppingAssumptions(models.Model):
+    """One normalized explicit-input payload for a saved Shopping scenario."""
+
+    scenario = models.OneToOneField(
+        SavedScenario,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name="shopping_assumptions",
+    )
+    item_price = models.DecimalField(max_digits=40, decimal_places=12)
+    shipping = models.DecimalField(max_digits=40, decimal_places=12, default=0)
+    known_fees = models.DecimalField(max_digits=40, decimal_places=12, default=0)
+    fx_markup_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(item_price__gt=0),
+                name="scenario_shop_item_positive",
+            ),
+            models.CheckConstraint(
+                condition=Q(shipping__gte=0),
+                name="scenario_shop_shipping_nonneg",
+            ),
+            models.CheckConstraint(
+                condition=Q(known_fees__gte=0),
+                name="scenario_shop_fees_nonneg",
+            ),
+            models.CheckConstraint(
+                condition=Q(fx_markup_percent__gte=0, fx_markup_percent__lte=25),
+                name="scenario_shop_markup_range",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        if self.scenario_id and self.scenario.kind != SavedScenarioKind.SHOPPING:
+            raise ValidationError({"scenario": "Shopping assumptions require a Shopping scenario."})
+
+    def __str__(self) -> str:
+        return f"{self.scenario_id}: shopping assumptions"
+
+
 class SavedScenarioBudgetItem(models.Model):
     scenario = models.ForeignKey(
         SavedScenario,

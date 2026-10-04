@@ -20,12 +20,14 @@ from apps.exchange.domain import (
     normalize_provider_keys,
 )
 from apps.exchange.payment_estimate import PaymentEstimateError, estimate_payment_value
+from apps.exchange.shopping import ShoppingAssumptions
 from apps.travel.models import (
     SavedScenario,
     SavedScenarioBudgetBasis,
     SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
+    SavedScenarioShoppingAssumptions,
     SavedScenarioSpendEntry,
     SavedScenarioSpendSource,
 )
@@ -67,6 +69,7 @@ class SavedScenarioSpec:
     fx_markup_percent: Decimal | None = None
     source_fixed_fee: Decimal | None = None
     destination_fixed_fee: Decimal | None = None
+    shopping_assumptions: ShoppingAssumptions | None = None
 
 
 def create_saved_scenario(
@@ -99,6 +102,15 @@ def create_saved_scenario(
     _validate_city(spec.destination_city, spec.destination_country)
     _validate_budget_categories(spec.budget_categories)
     _validate_budget_basis(spec, conversion=conversion)
+    if spec.kind == SavedScenarioKind.SHOPPING:
+        if spec.shopping_assumptions is None:
+            raise SavedScenarioError("Shopping scenarios require explicit shopping assumptions.")
+        if spec.budget_categories:
+            raise SavedScenarioError("Shopping scenarios cannot store budget-category assumptions.")
+        if spec.shopping_assumptions.purchase_total != spec.source_amount:
+            raise SavedScenarioError("Shopping assumptions must equal the scenario source amount.")
+    elif spec.shopping_assumptions is not None:
+        raise SavedScenarioError("Shopping assumptions are valid only for Shopping scenarios.")
     provider_keys = _provider_keys(conversion.quote.provider_keys)
 
     user_model = get_user_model()
@@ -150,6 +162,20 @@ def create_saved_scenario(
                 raise SavedScenarioError(_validation_message(exc)) from exc
         if items:
             SavedScenarioBudgetItem.objects.bulk_create(items)
+
+        if spec.shopping_assumptions is not None:
+            shopping = SavedScenarioShoppingAssumptions(
+                scenario=scenario,
+                item_price=spec.shopping_assumptions.item_price,
+                shipping=spec.shopping_assumptions.shipping,
+                known_fees=spec.shopping_assumptions.known_fees,
+                fx_markup_percent=spec.shopping_assumptions.fx_markup_percent,
+            )
+            try:
+                shopping.full_clean()
+            except ValidationError as exc:
+                raise SavedScenarioError(_validation_message(exc)) from exc
+            shopping.save()
 
         _create_observation(
             scenario,
