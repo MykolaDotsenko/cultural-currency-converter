@@ -114,6 +114,95 @@
       {% endif %}
     </section>
     <section class="qa-account-section"
+             aria-labelledby="pre-trip-reminders-title">
+      <p class="qa-foundation-kicker">Explicit notifications</p>
+      <h2 id="pre-trip-reminders-title">Pre-trip reminders</h2>
+      <p>
+        Off by default. A reminder can be generated only from an explicit saved trip start date.
+        Delivery is currently in-app only. Reminders never refresh FX, local prices or offline
+        content automatically, and they never suggest when to exchange money.
+      </p>
+      {% if pre_trip_notification_form.non_field_errors %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ pre_trip_notification_form.non_field_errors.0 }}</p>
+        </div>
+      {% endif %}
+      <form method="post"
+            action="{% url 'update_pre_trip_notification_preference' %}">
+        {% csrf_token %}
+        <div class="qa-field{% if pre_trip_notification_form.enabled.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ pre_trip_notification_form.enabled.id_for_label }}">
+            {{ pre_trip_notification_form.enabled }}
+            Enable pre-trip reminders
+          </label>
+          <p class="qa-field__message">
+            {% if pre_trip_notification_preference and pre_trip_notification_preference.enabled %}
+              On. Future due-reminder generation may use this configuration.
+            {% else %}
+              Off. No pre-trip reminder subscription is active.
+            {% endif %}
+          </p>
+        </div>
+        <div class="qa-field{% if pre_trip_notification_form.timezone_name.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ pre_trip_notification_form.timezone_name.id_for_label }}">Timezone</label>
+          {{ pre_trip_notification_form.timezone_name }}
+          {% if pre_trip_notification_form.timezone_name.errors %}
+            <p class="qa-field__message qa-field__message--error">
+              {{ pre_trip_notification_form.timezone_name.errors.0 }}
+            </p>
+          {% else %}
+            <p class="qa-field__message">Use an IANA name such as Europe/Helsinki or America/Toronto.</p>
+          {% endif %}
+        </div>
+        <div class="qa-account-form-grid">
+          <div class="qa-field{% if pre_trip_notification_form.cadence.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ pre_trip_notification_form.cadence.id_for_label }}">Cadence</label>
+            {{ pre_trip_notification_form.cadence }}
+            {% if pre_trip_notification_form.cadence.errors %}
+              <p class="qa-field__message qa-field__message--error">
+                {{ pre_trip_notification_form.cadence.errors.0 }}
+              </p>
+            {% endif %}
+          </div>
+          <div class="qa-field{% if pre_trip_notification_form.lead_days.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ pre_trip_notification_form.lead_days.id_for_label }}">
+              Days before travel
+            </label>
+            {{ pre_trip_notification_form.lead_days }}
+            {% if pre_trip_notification_form.lead_days.errors %}
+              <p class="qa-field__message qa-field__message--error">
+                {{ pre_trip_notification_form.lead_days.errors.0 }}
+              </p>
+            {% endif %}
+          </div>
+          <div class="qa-field{% if pre_trip_notification_form.delivery_channel.errors %} qa-field--error{% endif %}">
+            <label class="qa-field__label"
+                   for="{{ pre_trip_notification_form.delivery_channel.id_for_label }}">Delivery</label>
+            {{ pre_trip_notification_form.delivery_channel }}
+            {% if pre_trip_notification_form.delivery_channel.errors %}
+              <p class="qa-field__message qa-field__message--error">
+                {{ pre_trip_notification_form.delivery_channel.errors.0 }}
+              </p>
+            {% else %}
+              <p class="qa-field__message">Only in-app delivery is supported in this production slice.</p>
+            {% endif %}
+          </div>
+        </div>
+        <button class="qa-secondary-button" type="submit">Save reminder preference</button>
+      </form>
+      {% if pre_trip_notification_preference %}
+        <form method="post"
+              action="{% url 'delete_pre_trip_notification_preference' %}">
+          {% csrf_token %}
+          <button class="qa-secondary-button" type="submit">Delete reminder configuration</button>
+        </form>
+      {% endif %}
+    </section>
+    <section class="qa-account-section"
              aria-labelledby="recent-history-privacy-title">
       <p class="qa-foundation-kicker">Privacy preference</p>
       <h2 id="recent-history-privacy-title">Cross-device recent history</h2>
