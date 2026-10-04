@@ -336,6 +336,8 @@ When a user reopens a saved scenario, the product can surface:
 
 The shipped account scenario detail supports an explicit reference-rate re-check. It reuses the exact saved source amount/currency pair, appends a new immutable observation only when the provider observation is distinct, and compares the latest stored reference with the original saved observation. The copy uses neutral **more / less / unchanged** language for the same source amount and never frames the movement as a recommendation to exchange money.
 
+Current local money context is a separate explicit refresh. Opening the saved detail page performs no local-price lookup. **Refresh local money guide** rebuilds reviewed destination price/payment context through the canonical DestinationContext contract, uses the latest already-stored FX output only as the amount anchor for purchase examples and persists nothing. Empty or unavailable context degrades locally without changing the saved scenario, its observation history or Trip Budget Remaining.
+
 Provider failure must leave the saved scenario and its original observations unchanged. Repeated checks of the same effective provider observation should not create duplicate history rows.
 
 The shipped save flow can optionally store a travel start/end date. Saved scenario detail derives a deterministic **upcoming / active / started-without-end / ended** readiness state from those explicit dates. A saved end date requires a start date at form, domain and database boundaries. Timing metadata must never imply a hidden itinerary, auto-refresh or notification subscription.
@@ -494,5 +496,5 @@ The save handoff must preserve these boundaries:
 - owner scoping applies to view and delete operations;
 - anonymous users get an opt-in sign-in affordance rather than silent account persistence.
 
-The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness, explicit Trip Budget Remaining and explicit Camera-confirmed spend are now present. Current local-value refresh and deeper trip-day workflows remain later iterations.
+The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness, explicit Trip Budget Remaining, explicit Camera-confirmed spend and explicit current local-money-guide refresh are now present. Automatic/background context refresh and deeper trip-day workflows remain later iterations.
 
