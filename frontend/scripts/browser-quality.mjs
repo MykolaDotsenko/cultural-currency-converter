@@ -1776,6 +1776,51 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: budget interpretation returned ${budgetResponse.status()}`,
   );
 
+  const interpretedBudgetForm = page.locator(".qa-budget-interpretation__form");
+  await interpretedBudgetForm.locator("#budget-preset-name").fill("QA weekend preset");
+  const savePresetResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await interpretedBudgetForm.getByRole("button", { name: "Save budget preset" }).click();
+  const savePresetResponse = await savePresetResponsePromise;
+  assert(
+    savePresetResponse.status() === 200,
+    `budget-preset/e2e: save returned ${savePresetResponse.status()}`,
+  );
+  await page
+    .getByText('Saved budget preset "QA weekend preset".', { exact: false })
+    .waitFor();
+
+  const presetReadyForm = page.locator(".qa-budget-interpretation__form");
+  await presetReadyForm.locator("#id_duration_days").fill("9");
+  await presetReadyForm.locator("#id_travelers").fill("3");
+  const applyPresetResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/budget/interpret/",
+  );
+  await presetReadyForm
+    .locator(".qa-budget-interpretation__presets")
+    .getByRole("button", { name: "QA weekend preset", exact: true })
+    .click();
+  const applyPresetResponse = await applyPresetResponsePromise;
+  assert(
+    applyPresetResponse.status() === 200,
+    `budget-preset/e2e: apply returned ${applyPresetResponse.status()}`,
+  );
+  await page.getByText("Using saved budget preset", { exact: false }).waitFor();
+  assert(
+    (await page.locator("#id_duration_days").inputValue()) === "5",
+    "budget-preset/e2e: saved duration was not restored",
+  );
+  assert(
+    (await page.locator("#id_travelers").inputValue()) === "1",
+    "budget-preset/e2e: saved traveler count was not restored",
+  );
+  await assertAxe(page, "budget-preset/e2e");
+
   const saveForm = page.locator(".qa-budget-interpretation__save-form");
   await saveForm.waitFor();
   await saveForm.locator('input[name="title"]').fill("QA Tokyo budget");
