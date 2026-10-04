@@ -226,6 +226,8 @@
   background: var(--qa-context-accent);
 }
 
+/* Curated country atmosphere palettes mirror apps/countries/theme_profiles.py.
+   They remain restrained presentation accents, never factual country claims. */
 [data-country-theme="fi"] {
   --qa-context-accent: #446f7d;
   --qa-context-soft: #e7f0f2;
@@ -236,6 +238,148 @@
   --qa-context-soft: #f3e9e5;
 }
 
+[data-country-theme="fr"] {
+  --qa-context-accent: #6e675e;
+  --qa-context-soft: #f1eee8;
+}
+
+[data-country-theme="us"] {
+  --qa-context-accent: #56677a;
+  --qa-context-soft: #ebeef2;
+}
+
+[data-country-theme="gb"] {
+  --qa-context-accent: #5d6072;
+  --qa-context-soft: #ececf1;
+}
+
+[data-country-theme="de"] {
+  --qa-context-accent: #5e665f;
+  --qa-context-soft: #ecefeb;
+}
+
+[data-country-theme="it"] {
+  --qa-context-accent: #7b6557;
+  --qa-context-soft: #f2ece7;
+}
+
+[data-country-theme="es"] {
+  --qa-context-accent: #8a684a;
+  --qa-context-soft: #f4eee6;
+}
+
+[data-country-theme="pt"] {
+  --qa-context-accent: #6b756a;
+  --qa-context-soft: #edf1eb;
+}
+
+[data-country-theme="nl"] {
+  --qa-context-accent: #55717b;
+  --qa-context-soft: #eaf0f2;
+}
+
+[data-country-theme="ch"] {
+  --qa-context-accent: #6a655d;
+  --qa-context-soft: #f0eee9;
+}
+
+[data-country-theme="se"] {
+  --qa-context-accent: #60788a;
+  --qa-context-soft: #eaf0f3;
+}
+
+[data-country-theme="no"] {
+  --qa-context-accent: #4e6c7a;
+  --qa-context-soft: #e8eff2;
+}
+
+[data-country-theme="dk"] {
+  --qa-context-accent: #79645a;
+  --qa-context-soft: #f2ece9;
+}
+
+[data-country-theme="pl"] {
+  --qa-context-accent: #6f665b;
+  --qa-context-soft: #f0ede8;
+}
+
+[data-country-theme="cz"] {
+  --qa-context-accent: #77675d;
+  --qa-context-soft: #f1ece8;
+}
+
+[data-country-theme="tr"] {
+  --qa-context-accent: #7b6656;
+  --qa-context-soft: #f2ece6;
+}
+
+[data-country-theme="ca"] {
+  --qa-context-accent: #5c6f6a;
+  --qa-context-soft: #eaf0ed;
+}
+
+[data-country-theme="au"] {
+  --qa-context-accent: #65765f;
+  --qa-context-soft: #edf1e9;
+}
+
+[data-country-theme="nz"] {
+  --qa-context-accent: #5c7276;
+  --qa-context-soft: #e9f0f1;
+}
+
+[data-country-theme="sg"] {
+  --qa-context-accent: #55736a;
+  --qa-context-soft: #e8f0ec;
+}
+
+[data-country-theme="kr"] {
+  --qa-context-accent: #606a7d;
+  --qa-context-soft: #ebedf2;
+}
+
+[data-country-theme="th"] {
+  --qa-context-accent: #866d50;
+  --qa-context-soft: #f3ede4;
+}
+
+[data-country-theme="ae"] {
+  --qa-context-accent: #7b705e;
+  --qa-context-soft: #f2efe9;
+}
+
+[data-country-theme="cn"] {
+  --qa-context-accent: #685f67;
+  --qa-context-soft: #efebee;
+}
+
+[data-country-theme="in"] {
+  --qa-context-accent: #816a55;
+  --qa-context-soft: #f3ede6;
+}
+
+[data-country-theme="id"] {
+  --qa-context-accent: #5e766b;
+  --qa-context-soft: #eaf1ed;
+}
+
+[data-country-theme="mx"] {
+  --qa-context-accent: #81634f;
+  --qa-context-soft: #f3ebe5;
+}
+
+[data-country-theme="br"] {
+  --qa-context-accent: #5e755f;
+  --qa-context-soft: #ebf1ea;
+}
+
+[data-country-theme="za"] {
+  --qa-context-accent: #786b55;
+  --qa-context-soft: #f2eee7;
+}
+
+/* Countries outside the curated 30-country release keep a stable generic
+   atmosphere instead of receiving an invented country-specific identity. */
 [data-country-theme="atlas-fjord"] {
   --qa-context-accent: #4f7180;
   --qa-context-soft: #e8f0f2;
