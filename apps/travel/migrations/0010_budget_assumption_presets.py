@@ -76,7 +76,19 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("category", models.CharField(max_length=24)),
+                (
+                    "category",
+                    models.CharField(
+                        choices=[
+                            ("coffee", "Coffee"),
+                            ("casual_meal", "Casual meal"),
+                            ("transit", "Transit"),
+                            ("groceries", "Groceries"),
+                            ("other", "Other"),
+                        ],
+                        max_length=24,
+                    ),
+                ),
                 (
                     "units_per_person_per_day",
                     models.DecimalField(decimal_places=2, max_digits=5),
