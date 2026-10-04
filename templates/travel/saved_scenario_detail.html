@@ -39,7 +39,122 @@
             Saved trip
           {% endif %}
         </h2>
-        {% if trip_schedule %}
+        {% if notification_rows %}
+      <section class="qa-saved-section" aria-labelledby="scenario-notifications-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Explicit opt-in</p>
+            <h2 id="scenario-notifications-title">Trip notifications</h2>
+            <p>
+              Notifications are informational and tied only to this saved scenario.
+              They never recommend when to exchange money.
+            </p>
+          </div>
+          <div class="qa-saved-row__actions">
+            <a class="qa-secondary-button" href="{% url 'notification_inbox' %}">Open notifications</a>
+          </div>
+        </div>
+        <div class="qa-saved-list">
+          {% for row in notification_rows %}
+            <article class="qa-saved-row">
+              <div class="qa-saved-row__copy">
+                <h3>{{ row.label }}</h3>
+                <p>{{ row.help_text }}</p>
+                {% if not row.available %}
+                  <p class="qa-saved-row__meta">
+                    {% if row.notification_type == "pre_trip" %}
+                      Add a saved trip start date before enabling this reminder.
+                    {% else %}
+                      This notification is not applicable to the current saved scenario.
+                    {% endif %}
+                  </p>
+                {% endif %}
+                {% if row.preference and row.preference.last_delivered_at %}
+                  <p class="qa-saved-row__meta">
+                    Last delivered {{ row.preference.last_delivered_at|date:"j M Y, H:i" }}.
+                  </p>
+                {% endif %}
+              </div>
+              {% if row.available %}
+                <form method="post"
+                      action="{% url 'configure_saved_scenario_notification' scenario.pk %}"
+                      class="qa-saved-spend-form">
+                  {% csrf_token %}
+                  <input type="hidden"
+                         name="notification_type"
+                         value="{{ row.notification_type }}">
+                  <div class="qa-field">
+                    <label class="qa-field__label"
+                           for="notification-enabled-{{ row.notification_type }}">
+                      <input id="notification-enabled-{{ row.notification_type }}"
+                             type="checkbox"
+                             name="enabled"
+                             value="1"
+                             {% if row.enabled %}checked{% endif %}>
+                      Enabled
+                    </label>
+                  </div>
+                  <div class="qa-field">
+                    <label class="qa-field__label"
+                           for="notification-timezone-{{ row.notification_type }}">Timezone</label>
+                    <input id="notification-timezone-{{ row.notification_type }}"
+                           class="qa-text-input"
+                           type="text"
+                           name="timezone"
+                           maxlength="64"
+                           autocomplete="off"
+                           value="{{ row.timezone }}">
+                    <p class="qa-field__message">Use an IANA timezone such as Europe/Helsinki.</p>
+                  </div>
+                  <div class="qa-field">
+                    <label class="qa-field__label"
+                           for="notification-cadence-{{ row.notification_type }}">Cadence</label>
+                    <select id="notification-cadence-{{ row.notification_type }}"
+                            class="qa-text-input"
+                            name="cadence">
+                      <option value="once" {% if row.cadence == "once" %}selected{% endif %}>Once when due</option>
+                      <option value="daily" {% if row.cadence == "daily" %}selected{% endif %}>At most daily</option>
+                      <option value="weekly" {% if row.cadence == "weekly" %}selected{% endif %}>At most weekly</option>
+                    </select>
+                  </div>
+                  {% if row.notification_type == "rate_alert" %}
+                    <div class="qa-field">
+                      <label class="qa-field__label"
+                             for="notification-threshold-{{ row.notification_type }}">
+                        Rate-change threshold
+                      </label>
+                      <input id="notification-threshold-{{ row.notification_type }}"
+                             class="qa-text-input"
+                             type="number"
+                             name="rate_change_threshold_percent"
+                             min="0.1"
+                             max="25"
+                             step="0.1"
+                             value="{{ row.threshold }}">
+                      <p class="qa-field__message">
+                        Percentage change versus the immutable initial saved reference.
+                      </p>
+                    </div>
+                  {% endif %}
+                  <div class="qa-saved-row__actions">
+                    <button class="qa-secondary-button" type="submit">Save notification</button>
+                  </div>
+                </form>
+                {% if row.preference %}
+                  <form method="post"
+                        action="{% url 'delete_saved_scenario_notification' scenario.pk row.notification_type %}">
+                    {% csrf_token %}
+                    <button class="qa-secondary-button qa-destructive-button"
+                            type="submit">Remove notification</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+    {% if trip_schedule %}
           <p>{{ trip_schedule.headline }}</p>
         {% endif %}
       </div>

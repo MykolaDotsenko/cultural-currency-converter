@@ -640,6 +640,13 @@ class ScenarioNotificationPreference(models.Model):
         choices=ScenarioNotificationDeliveryChannel.choices,
         default=ScenarioNotificationDeliveryChannel.IN_APP,
     )
+    rate_change_threshold_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    last_delivered_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -666,6 +673,14 @@ class ScenarioNotificationPreference(models.Model):
                 condition=~Q(timezone=""),
                 name="scenario_notification_timezone_nonempty",
             ),
+            models.CheckConstraint(
+                condition=Q(rate_change_threshold_percent__isnull=True)
+                | Q(
+                    rate_change_threshold_percent__gte=0.1,
+                    rate_change_threshold_percent__lte=25,
+                ),
+                name="scenario_notification_rate_threshold_range",
+            ),
         ]
         indexes = [
             models.Index(
@@ -677,6 +692,43 @@ class ScenarioNotificationPreference(models.Model):
     def __str__(self) -> str:
         state = "on" if self.enabled else "off"
         return f"{self.scenario_id}: {self.notification_type} [{state}]"
+
+
+class ScenarioNotificationDelivery(models.Model):
+    """One owner-visible in-app notification created from an explicit preference.
+
+    Delivery rows are append-only evidence except for the user-controlled read
+    timestamp. The unique dedupe key makes repeated scheduler execution safe.
+    """
+
+    preference = models.ForeignKey(
+        ScenarioNotificationPreference,
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    dedupe_key = models.CharField(max_length=128)
+    title = models.CharField(max_length=160)
+    body = models.CharField(max_length=600)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("preference", "dedupe_key"),
+                name="unique_notification_delivery_dedupe",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("preference", "-created_at"),
+                name="travel_notify_deliv_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.preference_id}: {self.title}"
 
 
 class SavedScenarioShoppingAssumptions(models.Model):
