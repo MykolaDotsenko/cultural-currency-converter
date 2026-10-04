@@ -49,6 +49,8 @@ def save_pre_trip_preference(
         raise NotificationPreferenceError("Notification enabled state must be explicit.")
     if not isinstance(lead_days, int) or isinstance(lead_days, bool):
         raise NotificationPreferenceError("Reminder lead time must be an integer number of days.")
+    if not 1 <= lead_days <= 30:
+        raise NotificationPreferenceError("Reminder lead time must be between 1 and 30 days.")
 
     normalized_timezone = timezone_name.strip()
     if not normalized_timezone:
