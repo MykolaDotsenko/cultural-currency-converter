@@ -422,9 +422,7 @@ def converter_view(
     if result is not None and request.user.is_authenticated and not result.quote.historical:
         result_component = context.get("result_component")
         payment_component = (
-            result_component.get("payment_estimate")
-            if isinstance(result_component, dict)
-            else None
+            result_component.get("payment_estimate") if isinstance(result_component, dict) else None
         )
         if isinstance(payment_component, dict):
             try:
