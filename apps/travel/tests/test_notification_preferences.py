@@ -80,13 +80,10 @@ def test_notification_preference_is_explicit_owner_scoped_and_upserts_same_type(
     assert preference.timezone == "Europe/Helsinki"
     assert preference.cadence == ScenarioNotificationCadence.ONCE
     assert preference.delivery_channel == ScenarioNotificationDeliveryChannel.IN_APP
-    assert (
-        notification_preferences_for_scenario(
-            owner,
-            scenario_id=scenario.pk,
-        )
-        == (preference,)
-    )
+    assert notification_preferences_for_scenario(
+        owner,
+        scenario_id=scenario.pk,
+    ) == (preference,)
     assert (
         notification_preferences_for_scenario(
             other,
