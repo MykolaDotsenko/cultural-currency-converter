@@ -54,7 +54,7 @@ class PwaSurfaceTests(SimpleTestCase):
 
         html = response.content.decode("utf-8")
         normalized = " ".join(html.split())
-        assert "You’re offline." in normalized
+        assert "You\u2019re offline." in normalized
         assert (
             "Private account pages and saved-scenario HTML are never cached automatically."
             in normalized
