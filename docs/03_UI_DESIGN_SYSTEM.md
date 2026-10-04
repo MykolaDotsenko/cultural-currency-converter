@@ -58,6 +58,8 @@ Theme profiles must not prescribe flags, famous people, brands, landmarks or dec
 
 The bilateral workspace may show two different country atmospheres at once, but both sides must still feel like one **Quiet Atlas Premium** product.
 
+The first curated country-theme release is now represented by explicit presentation profiles for the 30 countries in the country-media index. Each profile owns a stable theme key, restrained palette, documented atmosphere, motion tone and editorial cues. Countries outside that curated set keep a deterministic generic Atlas atmosphere rather than receiving invented country-specific styling. Theme profiles are presentation-only: they never establish payment behaviour, cultural facts, prices or financial meaning.
+
 ## Photography art direction
 
 Target a consistent editorial look:
