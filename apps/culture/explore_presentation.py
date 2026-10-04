@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 from django.urls import reverse
 
 from apps.common.presentation.media_view_models import ImageViewModel
+from apps.countries.theme_profiles import country_theme_key
 from apps.culture.explore import ExploreDestination
 from apps.culture.explore_collections import (
     ExploreCollection,
@@ -57,6 +58,7 @@ def build_explore_destination_cards(
             {
                 "destination": destination,
                 "token": token,
+                "theme": country_theme_key(destination.country_code),
                 "comparison_url": _comparison_url(destination_token=token),
                 "converter_url": _converter_url(
                     country_code=destination.country_code,
@@ -95,6 +97,7 @@ def build_explore_region_components(
                     "name": city.name,
                     "scope_label": city.scope_label,
                     "currency_code": city.currency_code,
+                    "theme": country_theme_key(country.country_code),
                     "profile_url": _city_profile_url(
                         country_code=country.country_code,
                         city_slug=city.slug,
@@ -120,6 +123,7 @@ def build_explore_region_components(
                     "country_name": country.country_name,
                     "subregion": country.subregion,
                     "currency_code": country.currency_code,
+                    "theme": country_theme_key(country.country_code),
                     "has_country_scope": country.has_country_scope,
                     "converter_url": (
                         _converter_url(
@@ -238,6 +242,11 @@ def build_explore_collection_components(
                     "action_url": action_url,
                     "action_label": action_label,
                     "comparison_url": comparison_url,
+                    "theme": (
+                        country_theme_key(item.country_codes[0])
+                        if len(item.country_codes) == 1
+                        else ""
+                    ),
                     "teaser_image": (
                         teaser_media.get(item.country_codes[0])
                         if len(item.country_codes) == 1

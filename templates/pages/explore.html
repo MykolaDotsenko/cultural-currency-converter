@@ -123,7 +123,8 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for country in region.countries %}
-                    <article class="qa-saved-row qa-explore-country">
+                    <article class="qa-saved-row qa-explore-country qa-country-atmosphere"
+                             data-country-theme="{{ country.theme }}">
                       <div class="qa-saved-row__copy">
                         <p class="qa-foundation-kicker">
                           {{ country.currency_code }}
@@ -235,7 +236,8 @@
           <div class="qa-saved-list">
             {% for card in explore_destinations %}
               {% with destination=card.destination %}
-                <article class="qa-saved-row"
+                <article class="qa-saved-row qa-country-atmosphere"
+                         data-country-theme="{{ card.theme }}"
                          data-local-saved-place
                          data-place-token="{{ card.token }}"
                          data-place-country-code="{{ destination.country_code }}"
@@ -335,7 +337,8 @@
                 </div>
                 <div class="qa-saved-list">
                   {% for item in collection.items %}
-                    <article class="qa-saved-row qa-explore-collection-item{% if item.teaser_image %} qa-explore-collection-item--with-media{% endif %}">
+                    <article class="qa-saved-row qa-explore-collection-item qa-country-atmosphere{% if item.teaser_image %} qa-explore-collection-item--with-media{% endif %}"
+                             {% if item.theme %}data-country-theme="{{ item.theme }}"{% endif %}>
                       {% if item.teaser_image %}
                         <div class="qa-explore-collection-item__media">
                           {% include "components/media/image_frame.html" with image=item.teaser_image display_ratio="4 / 3" sizes="(max-width: 42rem) calc(100vw - 3rem), 15rem" %}
