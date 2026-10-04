@@ -389,7 +389,7 @@ def generate_due_notifications(
                 continue
 
             ScenarioNotificationPreference.objects.filter(pk=preference.pk).update(
-                last_delivered_at=delivery.created_at,
+                last_delivered_at=selected_now,
             )
             created.append(delivery)
 
