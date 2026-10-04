@@ -1688,9 +1688,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     savedBudgetPresetResponse.status() === 200,
     `budget-preset: save returned ${savedBudgetPresetResponse.status()}`,
   );
-  await page
-    .getByText('Saved budget preset "Browser city basket".', { exact: false })
-    .waitFor();
+  await page.getByText('Saved budget preset "Browser city basket".', { exact: false }).waitFor();
 
   presetBudgetForm = page.locator(".qa-budget-interpretation__form");
   await presetBudgetForm.locator("#id_duration_days").fill("9");
@@ -1710,9 +1708,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     appliedBudgetPresetResponse.status() === 200,
     `budget-preset: apply returned ${appliedBudgetPresetResponse.status()}`,
   );
-  await page
-    .getByText('Applied budget preset "Browser city basket".', { exact: false })
-    .waitFor();
+  await page.getByText('Applied budget preset "Browser city basket".', { exact: false }).waitFor();
   assert(
     (await page.locator("#id_duration_days").inputValue()) === "4" &&
       (await page.locator("#id_travelers").inputValue()) === "2" &&
