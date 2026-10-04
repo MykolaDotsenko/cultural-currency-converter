@@ -183,3 +183,29 @@ def test_fee_profile_limit_is_enforced(fee_profile_data):
         assumptions=_assumptions(markup="1.00"),
     )
     assert updated.fx_markup_percent == Decimal("1.00")
+
+
+@pytest.mark.django_db
+def test_fee_profile_rejects_fixed_fees_beyond_currency_precision(fee_profile_data):
+    user, _other, eur, jpy, _usd = fee_profile_data
+
+    with pytest.raises(PaymentFeeProfileError, match="Source fixed fee in EUR supports at most 2"):
+        upsert_payment_fee_profile(
+            user,
+            name="Too precise EUR",
+            source_currency=eur,
+            destination_currency=jpy,
+            assumptions=_assumptions(source_fee="1.001"),
+        )
+
+    with pytest.raises(
+        PaymentFeeProfileError,
+        match="Destination fixed fee in JPY supports at most 0",
+    ):
+        upsert_payment_fee_profile(
+            user,
+            name="Fractional JPY",
+            source_currency=eur,
+            destination_currency=jpy,
+            assumptions=_assumptions(destination_fee="0.5"),
+        )
