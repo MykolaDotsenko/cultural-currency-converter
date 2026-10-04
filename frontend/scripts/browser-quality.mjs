@@ -1570,6 +1570,102 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     (await page.locator("#id_home_currency").inputValue()) === "",
     "account-preferences: cleared home currency was unexpectedly restored",
   );
+
+  // Reusable Payment Estimate assumptions are account-owned and exact-pair scoped.
+  // Exercise save -> apply -> account delete without allowing this test-only
+  // conversion to change the browser-local recent-history fixture used below.
+  const feeProfileRecentSnapshot = await page.evaluate((key) => {
+    const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+    return Array.isArray(state.recent) ? state.recent : [];
+  }, LOCAL_STATE_KEY);
+  const feeProfileUrl = new URL("/", BASE_URL);
+  feeProfileUrl.searchParams.set("convert", "1");
+  feeProfileUrl.searchParams.set("amount", "100.00");
+  feeProfileUrl.searchParams.set("source_country", "FI");
+  feeProfileUrl.searchParams.set("source_currency", "EUR");
+  feeProfileUrl.searchParams.set("destination_country", "JP");
+  feeProfileUrl.searchParams.set("destination_currency", "JPY");
+  feeProfileUrl.searchParams.set("rate_mode", "latest");
+  await page.goto(feeProfileUrl.toString(), { waitUntil: "networkidle" });
+
+  const accountPaymentForm = page.locator(".qa-payment-estimate__form");
+  await accountPaymentForm.waitFor();
+  await accountPaymentForm.locator("#id_fx_markup_percent").fill("2");
+  await accountPaymentForm.locator("#id_source_fixed_fee").fill("1");
+  await accountPaymentForm.locator("#id_destination_fixed_fee").fill("220");
+  const calculatedFeeProfile = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/payment/estimate/",
+  );
+  await accountPaymentForm.getByRole("button", { name: "Calculate estimate" }).click();
+  const calculatedFeeProfileResponse = await calculatedFeeProfile;
+  assert(
+    calculatedFeeProfileResponse.status() === 200,
+    `payment-fee-profile: initial estimate returned ${calculatedFeeProfileResponse.status()}`,
+  );
+
+  await page.locator("#payment-profile-name").fill("Browser travel card");
+  const savedFeeProfile = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/payment/estimate/",
+  );
+  await page.getByRole("button", { name: "Save fee profile" }).click();
+  const savedFeeProfileResponse = await savedFeeProfile;
+  assert(
+    savedFeeProfileResponse.status() === 200,
+    `payment-fee-profile: save returned ${savedFeeProfileResponse.status()}`,
+  );
+  await page
+    .getByText('Saved fee profile "Browser travel card".', { exact: false })
+    .waitFor();
+
+  await page.locator("#id_fx_markup_percent").fill("0");
+  await page.locator("#id_source_fixed_fee").fill("0");
+  await page.locator("#id_destination_fixed_fee").fill("0");
+  const applyFeeProfile = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === "/payment/estimate/",
+  );
+  await page
+    .locator(".qa-payment-estimate__profiles")
+    .getByRole("button", { name: "Browser travel card", exact: true })
+    .click();
+  const applyFeeProfileResponse = await applyFeeProfile;
+  assert(
+    applyFeeProfileResponse.status() === 200,
+    `payment-fee-profile: apply returned ${applyFeeProfileResponse.status()}`,
+  );
+  await page.getByText("Using saved profile", { exact: false }).waitFor();
+  assert(
+    (await page.locator("#id_fx_markup_percent").inputValue()) === "2.00",
+    "payment-fee-profile: saved markup was not restored",
+  );
+  await assertAxe(page, "payment-fee-profile/applied");
+
+  await page.getByRole("link", { name: "Account" }).click();
+  await page.getByRole("heading", { name: "Payment fee profiles" }).waitFor();
+  const feeProfileSection = page.locator('[aria-labelledby="payment-fee-profiles-title"]');
+  await feeProfileSection.getByText("Browser travel card", { exact: true }).waitFor();
+  await Promise.all([
+    page.waitForURL((url) => url.pathname === "/accounts/profile/"),
+    feeProfileSection.getByRole("button", { name: "Delete", exact: true }).click(),
+  ]);
+  await page.getByText("Payment fee profile deleted.", { exact: false }).waitFor();
+  await page
+    .getByText("No payment fee profiles saved yet.", { exact: false })
+    .waitFor();
+  await page.evaluate(
+    ({ key, recent }) => {
+      const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+      state.recent = recent;
+      localStorage.setItem(key, JSON.stringify(state));
+    },
+    { key: LOCAL_STATE_KEY, recent: feeProfileRecentSnapshot },
+  );
+
   await Promise.all([
     page.waitForURL((url) => url.pathname === "/accounts/profile/"),
     page.getByRole("button", { name: "Turn on account history" }).click(),
