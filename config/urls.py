@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.common.health import health_live, health_ready
+from apps.common.pwa import offline_shell, service_worker, web_app_manifest
 from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
 from apps.culture.views import (
@@ -170,6 +171,9 @@ urlpatterns = [
         name="clear_recent_conversions",
     ),
     path("accounts/", include("apps.accounts.urls")),
+    path("manifest.webmanifest", web_app_manifest, name="web_app_manifest"),
+    path("service-worker.js", service_worker, name="service_worker"),
+    path("offline/", offline_shell, name="offline_shell"),
     path("health/live/", health_live, name="health_live"),
     path("health/ready/", health_ready, name="health_ready"),
     path("security/csp-report/", csp_report, name="csp_report"),
