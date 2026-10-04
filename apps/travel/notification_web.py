@@ -7,8 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from apps.travel.models import SavedScenario
 from apps.travel import notification_delivery
+from apps.travel.models import SavedScenario
 from apps.travel.notification_preferences import (
     ScenarioNotificationPreferenceError,
     delete_scenario_notification_preference,
