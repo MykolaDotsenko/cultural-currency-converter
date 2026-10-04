@@ -26,7 +26,8 @@
       </div>
     </section>
   {% elif city_profile %}
-    <section class="qa-foundation-intro qa-city-profile__hero"
+    <section class="qa-foundation-intro qa-city-profile__hero qa-country-atmosphere"
+             data-country-theme="{{ city_profile.theme }}"
              aria-labelledby="city-profile-title">
       <p class="qa-foundation-kicker">City money profile · reviewed current context</p>
       <h1 id="city-profile-title">{{ city_profile.scope_label }}</h1>

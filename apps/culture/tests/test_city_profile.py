@@ -106,6 +106,7 @@ def test_city_money_profile_keeps_national_fallback_explicit(seeded_city_context
     assert fallback.scope_label == "Japan · national estimate"
 
     component = build_city_money_profile_component(profile)
+    assert component["theme"] == "jp"
     fallback_component = next(price for price in component["prices"] if not price["is_city_scope"])
     assert fallback_component["scope"] == "Japan · national estimate"
     assert component["has_national_fallback"] is True
@@ -211,6 +212,7 @@ def test_explore_city_card_links_to_city_money_profile(client, seeded_city_conte
     assert b"Tokyo" in response.content
     assert b"JPY" in response.content
     assert b"city money profile" in response.content
+    assert b'data-country-theme="jp"' in response.content
     assert b"Convert" in response.content
 
 

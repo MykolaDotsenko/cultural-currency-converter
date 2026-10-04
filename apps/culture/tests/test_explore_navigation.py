@@ -90,6 +90,9 @@ def test_regional_presentation_preserves_canonical_converter_and_profile_handoff
     japan = next(country for country in asia["countries"] if country["country_code"] == "JP")
     tokyo = japan["cities"][0]
 
+    assert japan["theme"] == "jp"
+    assert tokyo["theme"] == "jp"
+
     country_url = urlparse(str(japan["converter_url"]))
     country_query = parse_qs(country_url.query)
     assert country_query["destination_country"] == ["JP"]
@@ -146,6 +149,7 @@ def test_collection_presentation_uses_curated_country_teaser_without_changing_ac
         if item["country_codes"] == ("JP",)
     ]
     assert japan_items
+    assert all(item["theme"] == "jp" for item in japan_items)
     assert all(item["teaser_image"] is teaser for item in japan_items)
     assert all(item["action_url"] for item in japan_items)
 

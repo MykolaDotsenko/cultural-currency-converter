@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.formats import date_format
 
 from apps.countries.models import City, CountryCurrency
+from apps.countries.theme_profiles import country_theme_key
 from apps.culture.services import (
     PaymentContext,
     TypicalPriceContext,
@@ -176,6 +177,7 @@ def build_city_money_profile_component(profile: CityMoneyProfile) -> dict[str, o
         "scope_label": profile.scope_label,
         "country_code": profile.country_code,
         "country_name": profile.country_name,
+        "theme": country_theme_key(profile.country_code),
         "city_slug": profile.city_slug,
         "city_name": profile.city_name,
         "currency_code": profile.currency_code,

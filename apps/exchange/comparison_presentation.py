@@ -7,6 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.formats import date_format
 
+from apps.countries.theme_profiles import country_theme_key
 from apps.exchange.ai.contextual import (
     COMPARISON_AI_CAPABILITY,
     ComparisonExplanationIntent,
@@ -92,6 +93,7 @@ def _side_component(
         "destination_name": destination_name,
         "destination_country_code": side.destination_country_code,
         "destination_city_slug": side.destination_city_slug,
+        "theme": country_theme_key(side.destination_country_code),
         "currency_code": side.currency_code,
         "converted_amount": _money_text(side.converted_amount, minor_units=minor_units),
         "rate": _decimal_text(side.conversion.quote.rate),

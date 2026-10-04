@@ -590,6 +590,7 @@ def test_comparison_frontend_exposes_full_backend_context_contract(
 
     assert parse_qs(urlparse(left["budget_url"]).query)["destination"] == ["JP:tokyo"]
     assert left["city_profile_url"] == reverse("city_money_profile", args=("JP", "tokyo"))
+    assert left["theme"] == "jp"
 
     right_converter = urlparse(right["converter_url"])
     right_query = parse_qs(right_converter.query)
@@ -598,6 +599,7 @@ def test_comparison_frontend_exposes_full_backend_context_contract(
     assert "destination_city_slug" not in right_query
     assert parse_qs(urlparse(right["budget_url"]).query)["destination"] == ["NO"]
     assert right["city_profile_url"] == ""
+    assert right["theme"] == "no"
 
     body = response.content
     assert b"Same explicit basket on both sides" in body
@@ -610,6 +612,8 @@ def test_comparison_frontend_exposes_full_backend_context_contract(
     assert body.count(b"Build budget") == 2
     assert b"City money profile" in body
     assert body.count(b"Full payment guide") == 2
+    assert b'data-country-theme="jp"' in body
+    assert b'data-country-theme="no"' in body
     assert b"Cards are commonly accepted for routine purchases." in body
     assert b"Use clearly identified ATMs and review disclosed fees." in body
     assert b"Follow reviewed local tipping customs." in body

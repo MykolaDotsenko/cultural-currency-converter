@@ -160,6 +160,7 @@ def test_active_trip_wins_over_upcoming_and_uses_saved_money_state(home_referenc
     assert home.scenario == active
     assert home.schedule.state is TripScheduleState.ACTIVE
     assert home.destination_label == "Tokyo, Japan"
+    assert home.theme == "jp"
     assert home.trip_budget is not None
     assert home.trip_budget.reference_budget == Decimal("104700")
     assert home.trip_budget.confirmed_spend == Decimal("4700")
@@ -287,6 +288,7 @@ def test_clean_converter_home_surfaces_upcoming_saved_trip_without_live_fx(
 
     assert response.status_code == 200
     assert b"qa-returning-trip-home" in response.content
+    assert b'data-country-theme="jp"' in response.content
     assert b"Tokyo spring" in response.content
     assert b"Upcoming trip" in response.content
     assert reverse("saved_scenario_detail", args=(scenario.pk,)).encode() in response.content

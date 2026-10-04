@@ -12,6 +12,7 @@ from django.db.models import Q, Sum
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.countries.theme_profiles import country_theme_key
 from apps.culture.services import DestinationContext, build_destination_context
 from apps.travel.models import (
     SavedScenario,
@@ -64,6 +65,12 @@ class ReturningTripHome:
     converter_url: str
     camera_url: str
     offline_pack_url: str
+
+    @property
+    def theme(self) -> str:
+        if self.scenario.destination_country is None:
+            return ""
+        return country_theme_key(self.scenario.destination_country.iso2)
 
     @property
     def destination_label(self) -> str:
