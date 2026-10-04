@@ -30,6 +30,11 @@ from apps.travel.notification_preferences import (
 User = get_user_model()
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def notification_delivery_scenario(db):
     fi = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
