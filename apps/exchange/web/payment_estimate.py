@@ -252,12 +252,12 @@ def payment_estimate_view(request: HttpRequest) -> HttpResponse:
                                 profile_error = "Sign in before saving a payment fee profile."
                             elif not name_form.is_valid():
                                 response_status = 422
-                                profile_error = name_form.errors["name"][0]
+                                profile_error = name_form.errors["profile_name"][0]
                             else:
                                 try:
                                     saved_profile = upsert_payment_fee_profile(
                                         request.user,
-                                        name=name_form.cleaned_data["name"],
+                                        name=name_form.cleaned_data["profile_name"],
                                         source_currency=source_currency,
                                         destination_currency=destination_currency,
                                         assumptions=assumptions,
