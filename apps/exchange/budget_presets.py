@@ -39,6 +39,24 @@ def budget_presets_for_user(user) -> tuple[BudgetPreset, ...]:
     )
 
 
+def budget_presets_for_categories(
+    user,
+    *,
+    available_categories: set[str] | frozenset[str],
+) -> tuple[BudgetPreset, ...]:
+    normalized = {
+        str(category).strip().lower() for category in available_categories if str(category).strip()
+    }
+    if not normalized:
+        return ()
+
+    return tuple(
+        preset
+        for preset in budget_presets_for_user(user)
+        if any(item.category in normalized for item in preset.items.all())
+    )
+
+
 def budget_preset_for_user(user, *, preset_id: int) -> BudgetPreset:
     if not user.is_authenticated:
         raise BudgetPresetError("Authentication is required to use a saved budget preset.")

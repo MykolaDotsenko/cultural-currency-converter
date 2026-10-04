@@ -579,6 +579,13 @@ def test_current_conversion_lists_only_owner_budget_presets(
         ),
     )
     upsert_budget_preset(
+        owner,
+        name="Transit-only owner",
+        duration_days=4,
+        travelers=1,
+        categories=(BudgetCategoryAssumption("transit", Decimal("2.00")),),
+    )
+    upsert_budget_preset(
         other,
         name="Other plan",
         duration_days=4,
@@ -593,6 +600,7 @@ def test_current_conversion_lists_only_owner_budget_presets(
     assert response.status_code == 200
     assert b"Budget presets" in response.content
     assert b"Weekend city" in response.content
+    assert b"Transit-only owner" not in response.content
     assert b"Other plan" not in response.content
 
 

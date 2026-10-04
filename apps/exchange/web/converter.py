@@ -17,7 +17,7 @@ from apps.countries.models import City, CountryCurrency, Currency
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
-from apps.exchange.budget_presets import budget_presets_for_user
+from apps.exchange.budget_presets import budget_presets_for_categories
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
 from apps.exchange.domain import (
     HistoricalCoverageReason,
@@ -445,8 +445,20 @@ def converter_view(
             else None
         )
         if isinstance(budget_component, dict):
+            available_categories = {
+                str(item.get("category") or "")
+                for item in budget_component.get("fields", ())
+                if isinstance(item, dict) and item.get("category")
+            }
             try:
-                budget_component["budget_presets"] = budget_presets_for_user(request.user)
+                budget_component["budget_presets"] = (
+                    budget_presets_for_categories(
+                        request.user,
+                        available_categories=frozenset(available_categories),
+                    )
+                    if available_categories
+                    else ()
+                )
             except DatabaseError as exc:
                 logger.warning(
                     "Budget preset lookup failed",

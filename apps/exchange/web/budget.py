@@ -21,7 +21,7 @@ from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.budget_presets import (
     BudgetPresetError,
     budget_preset_for_user,
-    budget_presets_for_user,
+    budget_presets_for_categories,
     preset_post_values,
     upsert_budget_preset,
 )
@@ -173,12 +173,16 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                     }
                 else:
                     category_options = tuple((anchor.category, anchor.label) for anchor in anchors)
+                    available_categories = frozenset(anchor.category for anchor in anchors)
                     submitted_data = request.POST
                     requested_preset_id = str(request.POST.get("budget_preset_id") or "").strip()
 
                     if request.user.is_authenticated:
                         try:
-                            budget_presets = budget_presets_for_user(request.user)
+                            budget_presets = budget_presets_for_categories(
+                                request.user,
+                                available_categories=available_categories,
+                            )
                         except DatabaseError as exc:
                             logger.warning(
                                 "Budget preset lookup failed",
@@ -275,7 +279,10 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                                                 travelers=assumptions.travelers,
                                                 categories=assumptions.categories,
                                             )
-                                            budget_presets = budget_presets_for_user(request.user)
+                                            budget_presets = budget_presets_for_categories(
+                                                request.user,
+                                                available_categories=available_categories,
+                                            )
                                         except BudgetPresetError as exc:
                                             response_status = 422
                                             preset_error = str(exc)
