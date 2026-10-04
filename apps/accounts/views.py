@@ -150,8 +150,6 @@ def delete_fee_profile(request: HttpRequest, profile_id: int) -> HttpResponse:
     return redirect("profile")
 
 
-
-
 @login_required
 @require_http_methods(["POST"])
 def delete_budget_assumption_preset(request: HttpRequest, preset_id: int) -> HttpResponse:
