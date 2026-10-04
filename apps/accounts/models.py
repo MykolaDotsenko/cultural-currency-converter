@@ -54,8 +54,8 @@ class PaymentFeeProfile(models.Model):
         ordering = ("name", "id")
         constraints = [
             models.UniqueConstraint(
-                fields=("user", "name"),
-                name="unique_user_payment_fee_profile_name",
+                fields=("user", "name", "source_currency", "destination_currency"),
+                name="unique_user_payment_fee_profile_pair_name",
             ),
             models.CheckConstraint(
                 condition=~models.Q(source_currency=models.F("destination_currency")),
