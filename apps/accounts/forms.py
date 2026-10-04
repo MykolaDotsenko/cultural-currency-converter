@@ -81,6 +81,23 @@ class PaymentFeeProfileNameForm(forms.Form):
         return " ".join(self.cleaned_data["profile_name"].split())
 
 
+class BudgetPresetNameForm(forms.Form):
+    preset_name = forms.CharField(
+        max_length=80,
+        label="Preset name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "qa-text-input",
+                "autocomplete": "off",
+                "placeholder": "e.g. Weekend city trip",
+            }
+        ),
+    )
+
+    def clean_preset_name(self):
+        return " ".join(self.cleaned_data["preset_name"].split())
+
+
 class DeleteAccountForm(forms.Form):
     password = forms.CharField(
         label="Current password",
