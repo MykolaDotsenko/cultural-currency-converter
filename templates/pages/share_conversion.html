@@ -44,10 +44,7 @@
         <button class="qa-secondary-button"
                 type="button"
                 data-copy-share-link>Copy share link</button>
-        <button class="qa-secondary-button"
-                type="button"
-                data-native-share
-                hidden>Share</button>
+        <button class="qa-secondary-button" type="button" data-native-share hidden>Share</button>
       </div>
       <p class="qa-saved-state__storage-note"
          data-share-status
@@ -68,30 +65,42 @@
       <dl class="qa-context-facts">
         <div>
           <dt>Rate</dt>
-          <dd>{{ share_card.rate_line }}</dd>
+          <dd>
+            {{ share_card.rate_line }}
+          </dd>
         </div>
         <div>
           <dt>Data class</dt>
-          <dd>{{ share_card.data_class }}</dd>
+          <dd>
+            {{ share_card.data_class }}
+          </dd>
         </div>
         {% if share_card.requested_date_label %}
           <div>
             <dt>Requested date</dt>
-            <dd>{{ share_card.requested_date_label }}</dd>
+            <dd>
+              {{ share_card.requested_date_label }}
+            </dd>
           </div>
         {% endif %}
         <div>
           <dt>Effective date</dt>
-          <dd>{{ share_card.effective_date_label }}</dd>
+          <dd>
+            {{ share_card.effective_date_label }}
+          </dd>
         </div>
         <div>
           <dt>Source</dt>
-          <dd>{{ share_card.provider_label }}</dd>
+          <dd>
+            {{ share_card.provider_label }}
+          </dd>
         </div>
         {% if share_card.provider_label != "No external rate source" %}
           <div>
             <dt>Last synced</dt>
-            <dd>{{ share_card.fetched_at_label }}</dd>
+            <dd>
+              {{ share_card.fetched_at_label }}
+            </dd>
           </div>
         {% endif %}
       </dl>
