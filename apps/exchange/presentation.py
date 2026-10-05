@@ -15,6 +15,7 @@ from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.result_summary import build_smart_result_summary
+from apps.exchange.share_snapshot import build_conversion_share_token
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
 
@@ -150,6 +151,8 @@ def build_result_component(
     trusted_snapshot_token = (
         build_trusted_conversion_snapshot_token(result) if not same_currency else None
     )
+    share_token = build_conversion_share_token(result)
+    share_href = f"{reverse('share_conversion_card')}?{urlencode({'snapshot': share_token})}"
     payment_estimate_form = (
         PaymentEstimateForm(
             source_currency_code=result.quote.base_currency,
@@ -198,6 +201,10 @@ def build_result_component(
                 else ""
             ),
             "effective_date": result.quote.effective_date.isoformat(),
+        },
+        "share_conversion": {
+            "href": share_href,
+            "label": "Share conversion",
         },
         "money_culture_story": {
             "href": f"{reverse('money_culture_story')}?{urlencode(story_params)}",

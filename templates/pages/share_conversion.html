@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}{{ share_card.title }}{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="{{ share_card.description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ share_card.title }}">
+  <meta property="og:description" content="{{ share_card.description }}">
+  <meta name="twitter:card" content="summary">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-share-intro"
+           aria-labelledby="share-conversion-title">
+    <p class="qa-foundation-kicker">Shared reference snapshot</p>
+    <h1 id="share-conversion-title">{{ share_card.input_text }} → {{ share_card.output_text }}</h1>
+    <p class="qa-foundation-lede">
+      This page is a signed read-only snapshot of a conversion that was already calculated.
+      It never refreshes the exchange rate when opened.
+    </p>
+  </section>
+  <div class="qa-share-layout"
+       data-share-card
+       data-share-url="{{ share_url }}"
+       data-share-title="{{ share_card.title }}"
+       data-share-text="{{ share_card.description }}">
+    <section class="qa-share-preview" aria-labelledby="share-preview-title">
+      <div class="qa-share-section-heading">
+        <div>
+          <p class="qa-foundation-kicker">Exportable card</p>
+          <h2 id="share-preview-title">Conversion card</h2>
+        </div>
+        <span class="qa-status-badge">{{ share_card.status_label }}</span>
+      </div>
+      <img class="qa-share-preview__image"
+           src="{{ card_image_url }}"
+           alt="{{ share_card.input_text }} {{ share_card.relation_label }} {{ share_card.output_text }}. {{ share_card.data_class }}, effective {{ share_card.effective_date_label }}.">
+      <div class="qa-share-actions">
+        <a class="qa-secondary-button"
+           href="{{ card_image_url }}"
+           download="{{ card_download_name }}">Download SVG card</a>
+        <button class="qa-secondary-button"
+                type="button"
+                data-copy-share-link>Copy share link</button>
+        <button class="qa-secondary-button" type="button" data-native-share hidden>Share</button>
+      </div>
+      <p class="qa-saved-state__storage-note"
+         data-share-status
+         data-storage-tone="neutral"
+         aria-live="polite">The link contains the signed snapshot, not account identity.</p>
+      <label class="qa-field qa-share-url-field">
+        <span class="qa-field__label">Share URL</span>
+        <input class="qa-text-input"
+               type="text"
+               readonly
+               value="{{ share_url }}"
+               data-share-url-input>
+      </label>
+    </section>
+    <section class="qa-share-facts" aria-labelledby="share-facts-title">
+      <p class="qa-foundation-kicker">Trust context</p>
+      <h2 id="share-facts-title">What this number means</h2>
+      <dl class="qa-context-facts">
+        <div>
+          <dt>Rate</dt>
+          <dd>
+            {{ share_card.rate_line }}
+          </dd>
+        </div>
+        <div>
+          <dt>Data class</dt>
+          <dd>
+            {{ share_card.data_class }}
+          </dd>
+        </div>
+        {% if share_card.requested_date_label %}
+          <div>
+            <dt>Requested date</dt>
+            <dd>
+              {{ share_card.requested_date_label }}
+            </dd>
+          </div>
+        {% endif %}
+        <div>
+          <dt>Effective date</dt>
+          <dd>
+            {{ share_card.effective_date_label }}
+          </dd>
+        </div>
+        <div>
+          <dt>Source</dt>
+          <dd>
+            {{ share_card.provider_label }}
+          </dd>
+        </div>
+        {% if share_card.provider_label != "No external rate source" %}
+          <div>
+            <dt>Last synced</dt>
+            <dd>
+              {{ share_card.fetched_at_label }}
+            </dd>
+          </div>
+        {% endif %}
+      </dl>
+      <p class="qa-context-freshness-note">{{ share_card.trust_note }}</p>
+    </section>
+  </div>
+{% endblock %}

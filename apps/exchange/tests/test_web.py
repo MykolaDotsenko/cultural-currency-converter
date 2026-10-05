@@ -243,6 +243,8 @@ def test_htmx_conversion_returns_fragment_and_pushes_bookmarkable_url(client, re
     assert b"Treat this as a reference conversion" in response.content
     assert response["HX-Push-Url"].startswith("/?convert=1&")
     assert "HX-Request" in response.get("Vary", "")
+    assert b"Share conversion" in response.content
+    assert b"/share/conversion/?snapshot=" in response.content
     assert len(gateway.calls) == 1
 
 

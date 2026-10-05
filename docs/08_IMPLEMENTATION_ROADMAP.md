@@ -181,7 +181,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Create a compact share surface from trusted conversion and destination-context data.
    - Include effective-date/source context when a shared number could otherwise look current forever.
    - Keep social/OG presentation downstream of the canonical product data rather than introducing a second calculation path.
-   - **Current slice:** managed `SOCIAL_PREVIEW` media now feeds OG/Twitter image metadata on Explore, City Money Profile and Money & Culture when a reviewed published asset exists. Missing preview media degrades to normal text metadata; no FX/context calculation is duplicated. A dedicated exportable share-card renderer remains future work.
+   - **Current production slice:** managed `SOCIAL_PREVIEW` media still feeds OG/Twitter image metadata on Explore, City Money Profile and Money & Culture. Canonical conversion results now also expose a dedicated signed share-card flow: a public-by-link read-only page plus exportable 1200×630 SVG are rendered entirely from the already-computed immutable ConversionResult snapshot, preserving effective/requested date, fetched-at, provider, historical granularity and stale semantics without a second FX request. Copy/native-share behavior is progressive enhancement. The saved travel-money/scenario share card remains a separate future slice so private trip fields are never exposed by default.
 
 20. **Personalized trip/scenario covers — 62/100**
    - Allow an optional decorative cover for a saved scenario when it adds delight without affecting factual meaning.

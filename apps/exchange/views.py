@@ -27,6 +27,7 @@ from apps.exchange.web.history import historical_series_view
 from apps.exchange.web.payment_estimate import payment_estimate_view
 from apps.exchange.web.picker import picker_options_view
 from apps.exchange.web.same_amount import same_amount_destinations_view
+from apps.exchange.web.share import conversion_share_card_svg_view, conversion_share_card_view
 from apps.exchange.web.shopping import shopping_calculation_view
 from apps.travel.history import record_recent_conversion
 from apps.travel.queries import is_user_favourite
@@ -113,3 +114,11 @@ def conversion_explanation(request: HttpRequest) -> HttpResponse:
         request,
         explanation_service_factory=build_runtime_explanation_service,
     )
+
+
+def share_conversion_card(request: HttpRequest) -> HttpResponse:
+    return conversion_share_card_view(request)
+
+
+def share_conversion_card_svg(request: HttpRequest) -> HttpResponse:
+    return conversion_share_card_svg_view(request)
