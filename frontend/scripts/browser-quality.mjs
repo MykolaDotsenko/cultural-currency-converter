@@ -591,9 +591,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
       shareResponse?.ok(),
       `conversion-share/e2e: share page failed with ${shareResponse?.status() ?? "no response"}`,
     );
-    await sharePage
-      .getByRole("heading", { name: /100 EUR → 17450 JPY/, level: 1 })
-      .waitFor();
+    await sharePage.getByRole("heading", { name: /100 EUR → 17450 JPY/, level: 1 }).waitFor();
     await sharePage
       .getByText("This page is a signed read-only snapshot", { exact: false })
       .waitFor();
