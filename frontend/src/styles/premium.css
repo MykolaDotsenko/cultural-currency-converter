@@ -2791,7 +2791,6 @@ h3 {
   }
 }
 
-
 /* Premium state grammar: explicit meaning before decorative alert chrome. */
 .qa-product-state {
   --qa-state-accent: var(--color-border-control);
