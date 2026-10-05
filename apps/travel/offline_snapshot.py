@@ -45,7 +45,7 @@ def build_offline_snapshot_revision(scenario: SavedScenario) -> str:
                 str(item.units_per_person_per_day),
                 item.updated_at.isoformat() if item.updated_at else "",
             )
-            for item in scenario.budget_items.all()
+            for item in sorted(scenario.budget_items.all(), key=lambda item: item.pk or 0)
         ],
         "observations": [
             (
@@ -59,7 +59,7 @@ def build_offline_snapshot_revision(scenario: SavedScenario) -> str:
                 bool(observation.stale),
                 tuple(str(key) for key in observation.provider_keys),
             )
-            for observation in scenario.observations.all()
+            for observation in sorted(scenario.observations.all(), key=lambda item: item.pk or 0)
         ],
         "spend_entries": [
             (
@@ -68,7 +68,7 @@ def build_offline_snapshot_revision(scenario: SavedScenario) -> str:
                 entry.source,
                 entry.recorded_at.isoformat(),
             )
-            for entry in scenario.spend_entries.all()
+            for entry in sorted(scenario.spend_entries.all(), key=lambda item: item.pk or 0)
         ],
     }
     encoded = json.dumps(
