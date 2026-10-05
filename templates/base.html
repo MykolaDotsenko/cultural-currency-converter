@@ -1,4 +1,4 @@
-{% load vite %}
+{% load static vite %}
 <!DOCTYPE html>
 <html lang="{% block html_lang %}en{% endblock %}">
   <head>
@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <meta name="theme-color" content="#F5F2EB">
+    <meta name="application-name" content="Cultural Currency">
+    <link rel="manifest" href="{% url 'web_app_manifest' %}">
+    <link rel="icon"
+          type="image/png"
+          sizes="192x192"
+          href="{% static 'pwa/icon-192.png' %}">
+    <link rel="apple-touch-icon"
+          sizes="192x192"
+          href="{% static 'pwa/icon-192.png' %}">
     <title>{% block title %}Cultural Currency Converter{% endblock %}</title>
     {% block head_meta %}{% endblock %}
     <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
@@ -16,7 +25,8 @@
         data-account-favourite-sync-url="{% url 'sync_favourites' %}"
         data-account-place-sync-url="{% url 'sync_saved_places' %}"
         data-account-place-state-url="{% url 'saved_places_status' %}"
-        data-account-csrf-token="{{ csrf_token }}">
+        data-account-csrf-token="{{ csrf_token }}"
+        data-pwa-service-worker-url="{% url 'service_worker' %}">
     <a class="qa-skip-link" href="#main-content">Skip to content</a>
     <header class="qa-shell__header">
       <div class="qa-shell__frame qa-shell__header-inner">

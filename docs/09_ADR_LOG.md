@@ -236,6 +236,18 @@ The server does not persist generated pack files. A newly downloaded pack is the
 
 **Revisit when:** native mobile or PWA work needs managed pack storage/background refresh. Any replacement must preserve explicit freshness, versioning, provenance and the separation between stored FX reference and live rates.
 
+## ADR-022 — PWA cache is public-shell-only by default
+
+**Status:** active
+
+The web application may install a root-scoped service worker, but it does not cache arbitrary navigation HTML. Navigation remains network-only and falls back to a generic public offline shell when the network is unavailable. Cache Storage is limited to that shell plus public same-origin application/PWA static assets.
+
+**Why:** account pages, saved scenarios, notifications and form responses can reveal travel/financial context. Automatically caching a page merely because the user viewed it would create a silent local persistence channel and could also make stored FX/context appear current offline. Installability is useful, but it must not erase the existing privacy and freshness boundaries.
+
+The explicit Offline Destination Pack remains the portable saved-trip snapshot. A future active-trip PWA view must be a separate user-initiated/versioned snapshot contract rather than a broader navigation-cache rule.
+
+**Revisit when:** a reviewed encrypted/user-controlled offline-state design can preserve ownership, deletion, freshness and stale/live semantics across sign-out and device-sharing scenarios.
+
 ## Adding/changing a decision
 
 Create or update an ADR when a change affects a durable project-wide choice.

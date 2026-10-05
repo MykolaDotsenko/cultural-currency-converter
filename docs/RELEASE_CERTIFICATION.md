@@ -45,6 +45,7 @@ The later PR #224 head completed Required merge quality, Python quality, Fronten
 | AI boundaries | conversion/Explore/Budget/Comparison grounded packets, strict validation, deterministic fallback, no financial recalculation | Candidate evidence available |
 | Camera privacy boundary | real browser upload through sanitizer, signed candidate confirmation and separate spend handoff using a test-only extractor | Candidate evidence available |
 | Offline semantics | server tests plus browser download/open/self-contained HTML and stored-not-live assertions | Candidate evidence available |
+| PWA privacy boundary | server manifest/worker/icon tests plus full-Chromium registration, Cache Storage inspection and offline private-route fallback | Candidate evidence available |
 | Performance | deterministic bundle/request/query/layout budgets | Candidate evidence available |
 | Database recovery | executable PostgreSQL backup → fresh restore → verification CI drill | Candidate evidence available |
 | Documentation | canonical architecture/quality/integration docs plus release runbook | Candidate evidence available |

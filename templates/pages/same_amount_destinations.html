@@ -97,11 +97,8 @@
           </div>
         </form>
       {% else %}
-        <div class="qa-inline-alert qa-degraded-panel" role="status">
-          <h3>Destination reference data is unavailable.</h3>
-          <p>This view needs at least two current destination scopes.</p>
-          <a class="qa-secondary-button" href="{% url 'explore' %}">Back to Explore</a>
-        </div>
+        {% url 'explore' as explore_url %}
+        {% include "components/product_state.html" with state="unavailable" label="Reference data unavailable" title="Destination reference data is unavailable." detail="This view needs at least two current destination scopes." action_href=explore_url action_label="Back to Explore" %}
       {% endif %}
     </div>
   </section>
@@ -122,10 +119,7 @@
         </p>
       </div>
       {% if same_amount.partial %}
-        <div class="qa-inline-alert qa-degraded-panel" role="status">
-          <h3>Part of the view is unavailable.</h3>
-          <p>Successful destination observations remain valid and are shown below.</p>
-        </div>
+        {% include "components/product_state.html" with state="partial" label="Partial result" title="Part of the view is unavailable." detail="Successful destination observations remain valid and are shown below." %}
       {% endif %}
       <div class="qa-same-amount__grid">
         {% for item in same_amount.items %}

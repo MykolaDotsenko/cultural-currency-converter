@@ -1,29 +1,5 @@
 {% if destination.country_code %}
-  <section class="qa-destination-context qa-destination-context--empty"
-           aria-labelledby="destination-context-title">
-    <div class="qa-destination-context__heading">
-      <div>
-        <p class="qa-foundation-kicker">Local context</p>
-        <h3 id="destination-context-title">{{ destination.country_name }} context is being reviewed.</h3>
-        <p class="qa-context-empty">
-          Your conversion is complete. We publish everyday-value and payment guidance only after
-          source and freshness review, so no provisional guidance is shown here.
-        </p>
-      </div>
-    </div>
-  </section>
+  {% include "components/product_state.html" with state="empty" label="Local context under review" title=destination.country_name|add:" context is being reviewed." detail="Your conversion is complete. We publish everyday-value and payment guidance only after source and freshness review, so no provisional guidance is shown here." %}
 {% else %}
-  <section class="qa-destination-context qa-destination-context--empty"
-           aria-labelledby="destination-context-title">
-    <div class="qa-destination-context__heading">
-      <div>
-        <p class="qa-foundation-kicker">Local context</p>
-        <h3 id="destination-context-title">Choose a destination country to add local meaning.</h3>
-        <p class="qa-context-empty">
-          Your currency conversion is complete. Add a destination country to unlock reviewed local
-          prices and payment guidance when available.
-        </p>
-      </div>
-    </div>
-  </section>
+  {% include "components/product_state.html" with state="not-applicable" label="Local context needs a destination" title="Choose a destination country to add local meaning." detail="Your currency conversion is complete. Add a destination country to unlock reviewed local prices and payment guidance when available." %}
 {% endif %}
