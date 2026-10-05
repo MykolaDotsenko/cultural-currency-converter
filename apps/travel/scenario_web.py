@@ -48,7 +48,10 @@ from apps.travel.models import (
     SavedScenarioKind,
     SavedScenarioObservationKind,
     SavedScenarioSpendEntry,
+    ScenarioNotificationCadence,
+    ScenarioNotificationType,
 )
+from apps.travel.notification_preferences import notification_preferences_for_scenario
 from apps.travel.offline_snapshot import build_offline_snapshot_revision
 from apps.travel.scenario_comparison import (
     ScenarioRateDirection,
@@ -523,6 +526,58 @@ def _scenario_detail_context(
             destination_minor_units=scenario.destination_currency.minor_units,
         )
 
+    saved_notification_preferences = {
+        preference.notification_type: preference
+        for preference in notification_preferences_for_scenario(
+            scenario.user,
+            scenario_id=scenario.pk,
+        )
+    }
+    notification_specs = (
+        (
+            ScenarioNotificationType.PRE_TRIP,
+            "Pre-trip reminder",
+            "Prompt me to reopen and re-check this saved trip when departure is close.",
+            ScenarioNotificationCadence.ONCE,
+            scenario.travel_start_date is not None,
+        ),
+        (
+            ScenarioNotificationType.CONTEXT_FRESHNESS,
+            "Context & offline freshness",
+            "Remind me before travel when the stored trip reference is old enough to re-check.",
+            ScenarioNotificationCadence.WEEKLY,
+            scenario.kind == SavedScenarioKind.BUDGET and scenario.destination_country is not None,
+        ),
+        (
+            ScenarioNotificationType.RATE_ALERT,
+            "Scenario rate alert",
+            "Tell me when the current reference rate moves beyond my explicit threshold.",
+            ScenarioNotificationCadence.DAILY,
+            initial_observation is not None,
+        ),
+    )
+    notification_rows = []
+    for notification_type, label, help_text, default_cadence, available in notification_specs:
+        preference = saved_notification_preferences.get(notification_type)
+        notification_rows.append(
+            {
+                "notification_type": notification_type,
+                "label": label,
+                "help_text": help_text,
+                "available": available,
+                "preference": preference,
+                "enabled": bool(preference and preference.enabled),
+                "timezone": (preference.timezone if preference is not None else settings.TIME_ZONE),
+                "cadence": (preference.cadence if preference is not None else default_cadence),
+                "threshold": (
+                    preference.rate_change_threshold_percent
+                    if preference is not None
+                    and preference.rate_change_threshold_percent is not None
+                    else "2.0"
+                ),
+            }
+        )
+
     return {
         "scenario": scenario,
         "budget_item_rows": budget_item_rows,
@@ -555,12 +610,14 @@ def _scenario_detail_context(
             scenario.kind == SavedScenarioKind.BUDGET
             and bool(settings.AI_CAMERA_EXTRACTION_ENABLED)
         ),
+        "notification_rows": tuple(notification_rows),
     }
 
 
 def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedScenario:
     return get_object_or_404(
         SavedScenario.objects.select_related(
+            "user",
             "source_currency",
             "destination_currency",
             "source_country",
