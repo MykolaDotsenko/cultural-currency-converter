@@ -6,6 +6,7 @@ let converterEnhancementsModule: Promise<
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
 let offlineTripModule: Promise<typeof import("./behaviors/offline-trip")> | null = null;
 let rateChartModule: Promise<typeof import("./behaviors/rate-chart")> | null = null;
+let shareCardModule: Promise<typeof import("./behaviors/share-card")> | null = null;
 
 function contains(root: EnhancementRoot, selector: string): boolean {
   if (root instanceof Element && root.matches(selector)) return true;
@@ -49,6 +50,15 @@ function loadOfflineTrip(root: EnhancementRoot): void {
     .catch((error: unknown) => reportEnhancementFailure("Offline trip", error));
 }
 
+function loadShareCards(root: EnhancementRoot): void {
+  if (!contains(root, "[data-share-card]")) return;
+
+  shareCardModule ??= import("./behaviors/share-card");
+  void shareCardModule
+    .then((module) => module.enhanceShareCards())
+    .catch((error: unknown) => reportEnhancementFailure("Share card", error));
+}
+
 function loadRateCharts(root: EnhancementRoot): void {
   if (!contains(root, "[data-rate-chart]")) return;
 
@@ -62,6 +72,7 @@ export function loadEnhancements(root: EnhancementRoot = document): void {
   loadCurrentConverter(root);
   loadLocalSavedState(root);
   loadOfflineTrip(root);
+  loadShareCards(root);
   loadRateCharts(root);
 }
 

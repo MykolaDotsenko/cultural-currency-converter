@@ -357,6 +357,12 @@
                data-ai-pending-requests="0"
                aria-busy="false"></div>
         {% endif %}
+        {% if result_component.share_conversion %}
+          <div class="qa-result-actions" aria-label="Share this conversion">
+            <a class="qa-secondary-button"
+               href="{{ result_component.share_conversion.href }}">{{ result_component.share_conversion.label }}</a>
+          </div>
+        {% endif %}
         {% if result_component.stale %}
           <div class="qa-result-actions">
             <button class="qa-secondary-button"

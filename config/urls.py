@@ -28,6 +28,8 @@ from apps.exchange.views import (
     payment_estimate,
     picker_options,
     same_amount_destinations,
+    share_conversion_card,
+    share_conversion_card_svg,
     shopping_calculation,
 )
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
@@ -76,6 +78,12 @@ urlpatterns = [
     ),
     path("picker/options/", picker_options, name="picker_options"),
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
+    path("share/conversion/", share_conversion_card, name="share_conversion_card"),
+    path(
+        "share/conversion/card.svg",
+        share_conversion_card_svg,
+        name="share_conversion_card_svg",
+    ),
     path("shopping/", shopping_calculation, name="shopping_calculation"),
     path("payment/estimate/", payment_estimate, name="payment_estimate"),
     path("budget/interpret/", budget_interpretation, name="budget_interpretation"),

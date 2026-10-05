@@ -563,6 +563,69 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   );
   await assertAiExplanationReliability(page, consoleErrors);
 
+  const shareHref = await page
+    .getByRole("link", { name: "Share conversion", exact: true })
+    .getAttribute("href");
+  assert(shareHref, "conversion-share/e2e: Share conversion link is missing");
+  const shareUrl = new URL(shareHref, BASE_URL);
+  assert(
+    shareUrl.pathname === "/share/conversion/" && shareUrl.searchParams.has("snapshot"),
+    `conversion-share/e2e: malformed share URL ${shareHref}`,
+  );
+  const converterProvider = (
+    await page
+      .locator(".qa-rate-meta__facts > div")
+      .filter({ hasText: /^Provider/ })
+      .locator("dd")
+      .first()
+      .innerText()
+  ).trim();
+  const sharePage = await page.context().newPage();
+  const shareConsoleErrors = [];
+  sharePage.on("console", (message) => {
+    if (message.type() === "error") shareConsoleErrors.push(message.text());
+  });
+  try {
+    const shareResponse = await sharePage.goto(shareUrl.toString(), { waitUntil: "networkidle" });
+    assert(
+      shareResponse?.ok(),
+      `conversion-share/e2e: share page failed with ${shareResponse?.status() ?? "no response"}`,
+    );
+    await sharePage
+      .getByRole("heading", { name: /100 EUR → 17450 JPY/, level: 1 })
+      .waitFor();
+    await sharePage
+      .getByText("This page is a signed read-only snapshot", { exact: false })
+      .waitFor();
+    await sharePage.getByText("Effective date", { exact: true }).waitFor();
+    const shareProvider = (
+      await sharePage
+        .locator(".qa-context-facts > div")
+        .filter({ hasText: /^Source/ })
+        .locator("dd")
+        .first()
+        .innerText()
+    ).trim();
+    assert(
+      shareProvider && converterProvider.includes(shareProvider),
+      `conversion-share/e2e: provider attribution drifted: converter=${converterProvider}, share=${shareProvider}`,
+    );
+    const image = sharePage.locator(".qa-share-preview__image");
+    await image.waitFor();
+    await sharePage.waitForFunction(() => {
+      const element = document.querySelector(".qa-share-preview__image");
+      return element instanceof HTMLImageElement && element.complete && element.naturalWidth > 0;
+    });
+    await assertNoHorizontalOverflow(sharePage, "conversion-share/e2e");
+    await assertAxe(sharePage, "conversion-share/e2e");
+    assert(
+      shareConsoleErrors.length === 0,
+      `conversion-share/e2e: console errors: ${shareConsoleErrors.join(" | ")}`,
+    );
+  } finally {
+    await sharePage.close();
+  }
+
   const waitForPaymentEstimate = () =>
     page.waitForResponse(
       (response) =>
