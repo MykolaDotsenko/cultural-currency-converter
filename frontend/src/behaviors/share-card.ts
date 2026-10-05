@@ -62,7 +62,11 @@ export function enhanceShareCards(): void {
           .then(() => setStatus(root, "Shared.", "feedback"))
           .catch((error: unknown) => {
             if (error instanceof DOMException && error.name === "AbortError") return;
-            setStatus(root, "Native sharing was unavailable. Copy the share link instead.", "warning");
+            setStatus(
+              root,
+              "Native sharing was unavailable. Copy the share link instead.",
+              "warning",
+            );
           });
       });
     }
