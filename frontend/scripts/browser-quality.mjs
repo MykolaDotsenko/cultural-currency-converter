@@ -1855,6 +1855,85 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
   await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+
+  const savedScenarioPath = new URL(page.url()).pathname;
+  if (BROWSER_ENGINE === "chromium") {
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.register("/service-worker.js", {
+        scope: "/",
+      });
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) {
+        await new Promise((resolve) => {
+          navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+        });
+      }
+      return registration.scope;
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+
+    const offlineControl = page.locator("[data-offline-trip-control]");
+    const saveOfflineButton = offlineControl.getByRole("button", {
+      name: "Save trip for offline",
+      exact: true,
+    });
+    await saveOfflineButton.waitFor();
+    const snapshotResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(
+          new URL(response.url()).pathname,
+        ),
+    );
+    await saveOfflineButton.click();
+    const snapshotResponse = await snapshotResponsePromise;
+    assert(
+      snapshotResponse.status() === 200,
+      `offline-trip/e2e: snapshot returned ${snapshotResponse.status()}`,
+    );
+    assert(
+      snapshotResponse.headers()["cache-control"] === "private, no-store",
+      "offline-trip/e2e: private snapshot lost no-store server semantics",
+    );
+    await offlineControl
+      .getByText("Saved for offline on this device. Stored snapshot, never live.", {
+        exact: true,
+      })
+      .waitFor();
+
+    const privateCacheState = await page.evaluate(async () => {
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
+    });
+    assert(
+      privateCacheState.length === 1 &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(privateCacheState[0]),
+      `offline-trip/e2e: unexpected private cache contents ${JSON.stringify(privateCacheState)}`,
+    );
+    assert(
+      !privateCacheState.includes(savedScenarioPath),
+      "offline-trip/e2e: private live scenario HTML entered Cache Storage",
+    );
+
+    await page.context().setOffline(true);
+    const offlineNavigation = await page.goto(`${BASE_URL}${savedScenarioPath}`, {
+      waitUntil: "domcontentloaded",
+    });
+    assert(
+      offlineNavigation?.ok(),
+      `offline-trip/e2e: explicit snapshot did not open offline: ${offlineNavigation?.status() ?? "no response"}`,
+    );
+    await page.getByText("Offline means stored, not live.", { exact: false }).waitFor();
+    await page.getByText("A self-contained snapshot for QA Tokyo budget.", { exact: false }).waitFor();
+    await assertNoHorizontalOverflow(page, "offline-trip/e2e/stored-snapshot");
+    await assertAxe(page, "offline-trip/e2e/stored-snapshot");
+
+    await page.context().setOffline(false);
+    await page.goto(`${BASE_URL}${savedScenarioPath}`, { waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+  }
+
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const rateHistory = page.locator(".qa-reference-history");
   await rateHistory.locator("summary").click();
@@ -1987,6 +2066,51 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     `trip-budget/e2e: updated saved budget omitted remaining amount: ${updatedSummary}`,
   );
   const expectedRemainingText = `${remainingMatch[1]} JPY remaining`;
+
+  if (BROWSER_ENGINE === "chromium") {
+    const offlineControlAfterSpend = page.locator("[data-offline-trip-control]");
+    await offlineControlAfterSpend
+      .getByText(
+        "Offline copy is out of date because this saved trip changed. Refresh it before relying on the snapshot.",
+        { exact: true },
+      )
+      .waitFor();
+    const refreshOfflineButton = offlineControlAfterSpend.getByRole("button", {
+      name: "Refresh offline copy",
+      exact: true,
+    });
+    const refreshedSnapshotResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(
+          new URL(response.url()).pathname,
+        ),
+    );
+    await refreshOfflineButton.click();
+    const refreshedSnapshotResponse = await refreshedSnapshotResponsePromise;
+    assert(
+      refreshedSnapshotResponse.status() === 200,
+      `offline-trip/e2e: refresh returned ${refreshedSnapshotResponse.status()}`,
+    );
+    await offlineControlAfterSpend
+      .getByText("Saved for offline on this device. Stored snapshot, never live.", {
+        exact: true,
+      })
+      .waitFor();
+
+    const cachedSnapshotText = await page.evaluate(async () => {
+      const control = document.querySelector("[data-offline-trip-control]");
+      const snapshotPath = control?.getAttribute("data-offline-trip-snapshot-url");
+      if (!snapshotPath) return "";
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const response = await cache.match(new URL(snapshotPath, window.location.origin).toString());
+      return response ? await response.text() : "";
+    });
+    assert(
+      cachedSnapshotText.includes("confirmed spend") && cachedSnapshotText.includes("4800"),
+      "offline-trip/e2e: refreshed private snapshot did not capture confirmed spend",
+    );
+  }
 
   // Browser-level Offline Pack evidence: download the actual attachment,
   // inspect its self-contained HTML, then render that HTML without network.
