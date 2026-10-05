@@ -111,8 +111,46 @@
           image, merchant identity, account/card data or purchase description.
         </p>
         <a class="qa-secondary-button"
-           href="{% url 'download_offline_destination_pack' scenario.pk %}">Save offline copy</a>
+           href="{% url 'download_offline_destination_pack' scenario.pk %}">Download portable HTML pack</a>
       </details>
+      <section class="qa-offline-trip-control"
+               aria-labelledby="offline-trip-control-title"
+               data-offline-trip-control
+               data-offline-trip-scenario-id="{{ scenario.pk }}"
+               data-offline-trip-snapshot-url="{{ offline_snapshot_url }}"
+               data-offline-trip-detail-url="{% url 'saved_scenario_detail' scenario.pk %}"
+               data-offline-trip-revision="{{ offline_snapshot_revision }}"
+               data-offline-trip-destination="{% if scenario.destination_city %}{{ scenario.destination_city.name }}, {{ scenario.destination_country.name }}{% else %}{{ scenario.destination_country.name }}{% endif %}">
+        <div class="qa-offline-trip-control__copy">
+          <p class="qa-foundation-kicker">Installed app · explicit device copy</p>
+          <h3 id="offline-trip-control-title">Keep this saved trip available offline</h3>
+          <p>
+            Nothing is stored in the app cache until you choose Save trip for offline.
+            The private copy stays on this browser/device and is never treated as live data.
+          </p>
+          <p class="qa-saved-state__storage-note"
+             data-offline-trip-status
+             data-storage-tone="neutral"
+             aria-live="polite">
+            Checking offline app storage…
+          </p>
+        </div>
+        <div class="qa-saved-row__actions">
+          <button class="qa-secondary-button"
+                  type="button"
+                  data-offline-trip-save
+                  hidden>Save trip for offline</button>
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="button"
+                  data-offline-trip-remove
+                  hidden>Remove offline copy</button>
+        </div>
+        <noscript>
+          <p class="qa-saved-state__privacy">
+            App snapshot controls require JavaScript. The portable HTML pack above remains available.
+          </p>
+        </noscript>
+      </section>
     </section>
   {% endif %}
   <div class="qa-saved-state">

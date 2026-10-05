@@ -49,6 +49,7 @@ from apps.travel.models import (
     SavedScenarioObservationKind,
     SavedScenarioSpendEntry,
 )
+from apps.travel.offline_snapshot import build_offline_snapshot_revision
 from apps.travel.scenario_comparison import (
     ScenarioRateDirection,
     compare_scenario_observations,
@@ -541,6 +542,10 @@ def _scenario_detail_context(
         ),
         "local_context_hide_url": (
             f"{reverse('saved_scenario_detail', args=(scenario.pk,))}#scenario-local-context-title"
+        ),
+        "offline_snapshot_url": reverse("offline_trip_snapshot", args=(scenario.pk,)),
+        "offline_snapshot_revision": (
+            build_offline_snapshot_revision(scenario) if trip_budget is not None else ""
         ),
         "spend_entries": spend_entries,
         "spend_form": spend_form,
