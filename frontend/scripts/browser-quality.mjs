@@ -2129,8 +2129,15 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
     );
   }
 
-  // Browser-level Offline Pack evidence: download the actual attachment,
-  // inspect its self-contained HTML, then render that HTML without network.
+  // Browser-level Offline Pack evidence: the scenario was reloaded during the
+  // service-worker lifecycle above, so reopen the disclosure before using its canonical CTA.
+  const offlinePackDetails = page.locator("#offline-trip-tools");
+  if ((await offlinePackDetails.getAttribute("open")) === null) {
+    await offlinePackDetails.locator("summary").click();
+  }
+
+  // Download the actual attachment, inspect its self-contained HTML, then render that HTML
+  // without network.
   const [offlineDownload] = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("link", { name: "Download portable HTML pack", exact: true }).click(),
