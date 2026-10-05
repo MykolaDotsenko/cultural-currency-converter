@@ -8,6 +8,7 @@
 @import "./saved-state.css";
 @import "./account.css";
 @import "./explore.css";
+@import "./share-card.css";
 @import "./premium.css";
 
 @source "../../../templates";

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200"
+     height="630"
+     viewBox="0 0 1200 630"
+     role="img"
+     aria-labelledby="title desc">
+  <title id="title">{{ share_card.title }}</title>
+  <desc id="desc">{{ share_card.description }} {{ share_card.trust_note }}</desc>
+  <rect width="1200" height="630" fill="#f5f2eb"/>
+  <rect x="60" y="60" width="1080" height="510" rx="34" fill="#fffdf9" stroke="#dcd6cb" stroke-width="2"/>
+  <text x="108" y="124"
+        fill="#7a623d"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="22"
+        font-weight="700"
+        letter-spacing="2">CULTURAL CURRENCY · SHARED REFERENCE SNAPSHOT</text>
+  <text x="108" y="196"
+        fill="#666861"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="32"
+        font-weight="600">{{ share_card.input_text }}</text>
+  <text x="108" y="312"
+        fill="#171b19"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="{{ share_card.output_font_size }}"
+        font-weight="700"
+        letter-spacing="-2">≈ {{ share_card.output_text }}</text>
+  <rect x="108" y="354" width="270" height="48" rx="24" fill="#e4ebe7"/>
+  <text x="132" y="386"
+        fill="#173f36"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="20"
+        font-weight="700">{{ share_card.status_label }}</text>
+  <text x="108" y="448"
+        fill="#171b19"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="24"
+        font-weight="650">{{ share_card.rate_line }}</text>
+  <text x="108" y="493"
+        fill="#666861"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="20">Effective {{ share_card.effective_date_label }} · Source {{ share_card.provider_label }}</text>
+  <line x1="108" y1="520" x2="1092" y2="520" stroke="#dcd6cb" stroke-width="2"/>
+  <text x="108" y="550"
+        fill="#666861"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="17">Stored snapshot · not a live executable rate</text>
+</svg>
