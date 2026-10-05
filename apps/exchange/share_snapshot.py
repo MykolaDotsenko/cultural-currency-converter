@@ -148,9 +148,7 @@ def load_conversion_share_token(token: str) -> ConversionShareSnapshot:
     if exact and rate != Decimal("1"):
         raise ConversionShareTokenError("Exact share snapshot must use a 1:1 rate.")
     if exact and provider_keys:
-        raise ConversionShareTokenError(
-            "Exact share snapshot must not claim an external provider."
-        )
+        raise ConversionShareTokenError("Exact share snapshot must not claim an external provider.")
     if not exact and not provider_keys:
         raise ConversionShareTokenError(
             "Conversion share snapshot must retain provider attribution."
