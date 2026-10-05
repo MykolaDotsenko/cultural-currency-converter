@@ -100,9 +100,7 @@ def build_conversion_share_card(snapshot: ConversionShareSnapshot) -> Conversion
 
     effective_date_label = date_format(snapshot.effective_date, "j M Y")
     requested_date_label = (
-        date_format(snapshot.requested_date, "j M Y")
-        if snapshot.requested_date is not None
-        else ""
+        date_format(snapshot.requested_date, "j M Y") if snapshot.requested_date is not None else ""
     )
     fetched_at_label = snapshot.fetched_at.strftime("%d %b %Y · %H:%M UTC")
     title = f"{input_text} → {output_text} · Cultural Currency"
