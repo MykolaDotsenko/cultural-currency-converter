@@ -87,10 +87,10 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
-    // Navigation HTML is always network-only. This deliberately prevents
-    // account, SavedScenario, notification, admin or form responses from
-    // entering Cache Storage. Offline navigation falls back to a generic,
-    // non-personalized shell.
+    // Navigation HTML is always network-first. Live account, SavedScenario,
+    // notification, admin and form responses are never written by the worker.
+    // Offline fallback may read one explicitly user-saved private trip snapshot;
+    // otherwise it returns the generic public shell.
     event.respondWith(fetch(request).catch(() => offlineNavigationResponse(url)));
     return;
   }
