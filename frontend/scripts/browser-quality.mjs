@@ -2290,6 +2290,70 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   );
   await assertNoHorizontalOverflow(page, "returning-trip/e2e");
   await assertAxe(page, "returning-trip/e2e");
+
+  if (BROWSER_ENGINE === "chromium") {
+    await Promise.all([
+      page.waitForURL((url) => /^\/saved\/scenarios\/\d+\/$/.test(url.pathname)),
+      returningTrip.getByRole("link", { name: "Open trip", exact: true }).click(),
+    ]);
+    const deleteCleanupControl = page.locator("[data-offline-trip-control]");
+    const saveBeforeDelete = deleteCleanupControl.getByRole("button", {
+      name: "Save trip for offline",
+      exact: true,
+    });
+    await saveBeforeDelete.waitFor();
+    const deleteCleanupSnapshotPromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(new URL(response.url()).pathname),
+    );
+    await saveBeforeDelete.click();
+    const deleteCleanupSnapshot = await deleteCleanupSnapshotPromise;
+    assert(
+      deleteCleanupSnapshot.status() === 200,
+      `offline-trip/delete-cleanup: snapshot returned ${deleteCleanupSnapshot.status()}`,
+    );
+    await deleteCleanupControl
+      .getByText("Saved for offline on this device. Stored snapshot, never live.", {
+        exact: true,
+      })
+      .waitFor();
+
+    const beforeScenarioDelete = await page.evaluate(async () => {
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const cacheEntries = (await cache.keys()).map((request) => new URL(request.url).pathname);
+      const metadata = JSON.parse(
+        localStorage.getItem("cultural-currency.offline-trips.v1") ?? "[]",
+      );
+      return { cacheEntries, metadata };
+    });
+    assert(
+      beforeScenarioDelete.cacheEntries.length === 1 &&
+        Array.isArray(beforeScenarioDelete.metadata) &&
+        beforeScenarioDelete.metadata.length === 1,
+      `offline-trip/delete-cleanup: setup did not persist one private copy: ${JSON.stringify(beforeScenarioDelete)}`,
+    );
+
+    await Promise.all([
+      page.waitForURL((url) => url.pathname === "/saved/"),
+      page.getByRole("button", { name: "Remove scenario", exact: true }).click(),
+    ]);
+
+    const afterScenarioDelete = await page.evaluate(async () => {
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const cacheEntries = (await cache.keys()).map((request) => new URL(request.url).pathname);
+      const metadata = JSON.parse(
+        localStorage.getItem("cultural-currency.offline-trips.v1") ?? "[]",
+      );
+      return { cacheEntries, metadata };
+    });
+    assert(
+      afterScenarioDelete.cacheEntries.length === 0 &&
+        Array.isArray(afterScenarioDelete.metadata) &&
+        afterScenarioDelete.metadata.length === 0,
+      `offline-trip/delete-cleanup: scenario deletion left private device state behind: ${JSON.stringify(afterScenarioDelete)}`,
+    );
+  }
 }
 
 async function assertReducedMotion(page, surface) {
