@@ -1458,7 +1458,7 @@ async function assertSavedStateFlow(page) {
   await assertAxe(page, "saved-state/populated");
 }
 
-async function assertAuthenticatedRecentHistoryFlow(page) {
+async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   const localOnlyRecent = {
     version: 1,
     favourites: [],
@@ -1915,6 +1915,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
       "offline-trip/e2e: private live scenario HTML entered Cache Storage",
     );
 
+    const offlineConsoleStart = consoleErrors.length;
     await page.context().setOffline(true);
     const offlineNavigation = await page.goto(`${BASE_URL}${savedScenarioPath}`, {
       waitUntil: "domcontentloaded",
@@ -1933,6 +1934,10 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     await page.context().setOffline(false);
     await page.goto(`${BASE_URL}${savedScenarioPath}`, { waitUntil: "networkidle" });
     await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+    consumeExpectedConsoleErrors(consoleErrors, offlineConsoleStart, {
+      label: "offline-trip/e2e/network-transition",
+      expected: ["ERR_INTERNET_DISCONNECTED"],
+    });
   }
 
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
@@ -3712,7 +3717,7 @@ try {
         surface.name === "account-signup" &&
         viewport.name === "wide-1440"
       ) {
-        await assertAuthenticatedRecentHistoryFlow(page);
+        await assertAuthenticatedRecentHistoryFlow(page, consoleErrors);
         assert(
           consoleErrors.length === 0,
           `account-history/e2e: console errors: ${consoleErrors.join(" | ")}`,
