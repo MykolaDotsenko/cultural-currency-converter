@@ -152,10 +152,7 @@ def build_result_component(
         build_trusted_conversion_snapshot_token(result) if not same_currency else None
     )
     share_token = build_conversion_share_token(result)
-    share_href = (
-        f"{reverse('share_conversion_card')}?"
-        f"{urlencode({'snapshot': share_token})}"
-    )
+    share_href = f"{reverse('share_conversion_card')}?{urlencode({'snapshot': share_token})}"
     payment_estimate_form = (
         PaymentEstimateForm(
             source_currency_code=result.quote.base_currency,
