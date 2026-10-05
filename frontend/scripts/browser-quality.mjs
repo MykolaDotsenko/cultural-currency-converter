@@ -583,17 +583,17 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
       shareResponse?.ok(),
       `conversion-share/e2e: share page failed with ${shareResponse?.status() ?? "no response"}`,
     );
-    await sharePage
-      .getByRole("heading", { name: /100 EUR → 17450 JPY/, level: 1 })
-      .waitFor();
+    await sharePage.getByRole("heading", { name: /100 EUR → 17450 JPY/, level: 1 }).waitFor();
     await sharePage
       .getByText("This page is a signed read-only snapshot", { exact: false })
       .waitFor();
     await sharePage.getByText("Effective date", { exact: true }).waitFor();
     await sharePage.getByText("ECB", { exact: true }).waitFor();
-    const svgResponse = await sharePage.waitForResponse(
-      (response) => new URL(response.url()).pathname === "/share/conversion/card.svg",
-    ).catch(() => null);
+    const svgResponse = await sharePage
+      .waitForResponse(
+        (response) => new URL(response.url()).pathname === "/share/conversion/card.svg",
+      )
+      .catch(() => null);
     if (svgResponse) {
       assert(svgResponse.ok(), "conversion-share/e2e: SVG preview request failed");
     } else {
