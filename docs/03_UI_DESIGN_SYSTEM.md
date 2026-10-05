@@ -195,3 +195,18 @@ Prefer:
 The project uses a platform-native sans stack so first-paint metrics stay stable and no runtime webfont activation can move navigation or financial UI. Premium hierarchy comes from scale, weight, spacing and composition rather than a downloaded typeface.
 
 The free-tier Gemini runtime explanation remains part of the product. Premium visual direction does not imply paid AI infrastructure.
+
+
+## Product state grammar
+
+Optional or incomplete product surfaces use one semantic state grammar rather than ad-hoc alert cards.
+
+The supported presentation states are:
+
+- **empty** — no reviewed evidence exists yet;
+- **partial** — some independent results are valid while another part failed or is absent;
+- **unavailable** — the optional subsystem cannot currently resolve;
+- **stale** — stored evidence is still being shown with explicit stale semantics;
+- **not applicable** — the surrounding workflow is complete without that subsystem.
+
+Every state must be named in text, not colour alone. The state panel must explain what remains valid and must not imply that missing financial/context data was inferred. Financial stale state can stay in the dedicated provenance/status-badge system when a conversion result exists; the product-state panel is for surrounding optional surfaces, not a second FX freshness contract.

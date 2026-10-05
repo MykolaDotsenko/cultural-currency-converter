@@ -693,27 +693,15 @@ Validate mobile/tablet/desktop crops.
 
 ## PR #233 — Bilateral visual system
 
-Add restrained source/destination distinction using typography, atmosphere and reviewed media rather than decorative gimmicks.
+**Current production slice:** shipped. The converter presents source and destination as one bilateral instrument with distinct country-theme accents, route identity, restrained typography and reviewed destination media when available. Missing media does not weaken the financial result. Responsive and forced-colors browser QA keeps the bilateral route readable without turning country identity into decorative evidence.
 
 ## PR #234 — UI simplification
 
-Remove:
-
-- duplicate CTAs;
-- redundant labels;
-- repeated navigation;
-- low-value cards;
-- explanatory copy that no longer earns its space.
+**Current production slice:** shipped for the primary conversion/trip flows. Premium composition removes nested-card chrome in favour of typographic hierarchy and hairline structure. Saved-trip offline actions now have one entry point (**Offline options**) and one canonical portable-HTML download CTA instead of repeating the same download across the hero, details and scenario-summary action rows.
 
 ## PR #235 — Empty/degraded state perfection
 
-Every optional subsystem must have intentional states for:
-
-- absent;
-- unavailable;
-- stale;
-- partial;
-- provider failure.
+**Current production slice:** shipped with an explicit product-state grammar for empty, partial, unavailable and not-applicable optional surfaces, while financial stale state remains in the canonical FX provenance/status system. State meaning is named in text rather than colour alone, provider/optional-subsystem failure states preserve the valid deterministic result, and missing context is never silently inferred. Existing Camera/AI/provider-specific failure surfaces retain their stronger domain-specific recovery copy rather than being flattened into a generic message.
 
 ---
 

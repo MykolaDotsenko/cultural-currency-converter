@@ -1855,6 +1855,14 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
   await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+  assert(
+    (await page.getByRole("link", { name: "Offline options", exact: true }).count()) === 1,
+    "trip-budget/e2e: premium action hierarchy must expose one Offline options entry",
+  );
+  assert(
+    (await page.getByRole("link", { name: "Download portable HTML pack", exact: true }).count()) === 1,
+    "trip-budget/e2e: portable offline pack download must have one canonical CTA",
+  );
 
   const savedScenarioPath = new URL(page.url()).pathname;
   if (BROWSER_ENGINE === "chromium") {
@@ -2120,7 +2128,7 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   // inspect its self-contained HTML, then render that HTML without network.
   const [offlineDownload] = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("link", { name: "Download offline pack", exact: true }).click(),
+    page.getByRole("link", { name: "Download portable HTML pack", exact: true }).click(),
   ]);
   assert(
     /^cultural-currency-.*-offline-\d{4}-\d{2}-\d{2}\.html$/.test(

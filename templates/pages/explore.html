@@ -293,11 +293,8 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="qa-saved-empty" role="status">
-            <h3>No reviewed destination context is published yet.</h3>
-            <p>Explore stays empty rather than inventing destination prices, payment behaviour or rankings.</p>
-            <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
-          </div>
+          {% url 'converter' as converter_url %}
+          {% include "components/product_state.html" with state="empty" label="No reviewed destination data" title="No reviewed destination context is published yet." detail="Explore stays empty rather than inventing destination prices, payment behaviour or rankings." action_href=converter_url action_label="Open converter" %}
         {% endif %}
         <p class="qa-saved-state__privacy">
           Reviewed as of {{ explore_as_of|date:"j M Y" }}. Explore is descriptive, not a
@@ -385,9 +382,14 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="qa-saved-empty" role="status">
-            <h3>No curated collections are available yet.</h3>
+          <div class="qa-product-state qa-product-state--empty"
+               data-product-state="empty"
+               role="status">
+            <p class="qa-product-state__label">No curated collections</p>
+            <div class="qa-product-state__copy">
+              <h3>No curated collections are available yet.</h3>
             <p>Regional discovery remains available wherever reviewed evidence exists.</p>
+            </div>
           </div>
         {% endif %}
       </section>
