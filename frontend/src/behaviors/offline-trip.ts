@@ -74,6 +74,25 @@ function saveMetadata(storage: Storage, items: OfflineTripMetadata[]): void {
   storage.setItem(OFFLINE_TRIP_STORAGE_KEY, JSON.stringify(items.slice(0, MAX_OFFLINE_TRIPS)));
 }
 
+async function ensureServiceWorkerReady(): Promise<boolean> {
+  if (!("serviceWorker" in navigator)) return false;
+  const serviceWorkerUrl = document.body?.dataset.pwaServiceWorkerUrl;
+  if (!serviceWorkerUrl) return false;
+
+  try {
+    await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
+    await navigator.serviceWorker.ready;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function deleteCachedSnapshot(cache: Cache, snapshotUrl: string): Promise<void> {
+  const absoluteUrl = new URL(snapshotUrl, window.location.origin).toString();
+  await cache.delete(absoluteUrl);
+}
+
 function updateStatus(control: OfflineTripControl, message: string, tone: string): void {
   control.status.textContent = message;
   control.status.dataset.storageTone = tone;
@@ -171,7 +190,12 @@ async function saveSnapshot(control: OfflineTripControl, storage: Storage): Prom
       generatedAt,
     };
     const others = loadMetadata(storage).filter((item) => item.scenarioId !== control.scenarioId);
-    saveMetadata(storage, [metadata, ...others]);
+    const nextItems = [metadata, ...others];
+    const evicted = nextItems.slice(MAX_OFFLINE_TRIPS);
+    for (const item of evicted) {
+      await deleteCachedSnapshot(cache, item.snapshotUrl);
+    }
+    saveMetadata(storage, nextItems);
     await refreshControlState(control, storage);
   } catch {
     updateStatus(
@@ -190,8 +214,7 @@ async function removeSnapshot(control: OfflineTripControl, storage: Storage): Pr
   control.removeButton.disabled = true;
   try {
     const cache = await caches.open(PRIVATE_TRIP_CACHE);
-    const absoluteUrl = new URL(control.snapshotUrl, window.location.origin).toString();
-    await cache.delete(absoluteUrl);
+    await deleteCachedSnapshot(cache, control.snapshotUrl);
     saveMetadata(
       storage,
       loadMetadata(storage).filter((item) => item.scenarioId !== control.scenarioId),
@@ -247,6 +270,7 @@ function parseControl(root: HTMLElement): OfflineTripControl | null {
 export function enhanceOfflineTripControls(): void {
   const storage = safeStorage();
   const cacheSupported = "caches" in window;
+  const serviceWorkerSupported = "serviceWorker" in navigator;
 
   for (const root of document.querySelectorAll<HTMLElement>("[data-offline-trip-control]")) {
     if (root.dataset.offlineTripEnhanced === "true") continue;
@@ -255,7 +279,7 @@ export function enhanceOfflineTripControls(): void {
     const control = parseControl(root);
     if (!control) continue;
 
-    if (!storage || !cacheSupported) {
+    if (!storage || !cacheSupported || !serviceWorkerSupported) {
       updateStatus(
         control,
         "This browser cannot keep an app snapshot. Use the portable HTML pack instead.",
@@ -270,6 +294,18 @@ export function enhanceOfflineTripControls(): void {
     control.removeButton.addEventListener("click", () => {
       void removeSnapshot(control, storage);
     });
-    void refreshControlState(control, storage);
+
+    updateStatus(control, "Preparing offline app storage…", "neutral");
+    void ensureServiceWorkerReady().then((ready) => {
+      if (ready) {
+        void refreshControlState(control, storage);
+        return;
+      }
+      updateStatus(
+        control,
+        "Offline app storage could not start. Use the portable HTML pack instead.",
+        "warning",
+      );
+    });
   }
 }
