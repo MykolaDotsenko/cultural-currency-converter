@@ -382,6 +382,10 @@ The Camera flow for saved budget scenarios is explicit end to end:
 - replaying one confirmation cannot double-count spend, while a separately confirmed identical amount remains a separate user action.
 
 
+### Shareable conversion snapshot
+
+A successful canonical conversion exposes **Share conversion** as an explicit downstream action. The generated link is public-by-link but contains no account identity: it carries a signed immutable conversion snapshot with input/output, rate, requested/effective date, fetched-at time, provider attribution, historical granularity and stale state. Opening the link or exportable SVG does not call an FX provider and does not silently refresh the number. Current, cached, historical and exact-identity states remain visibly distinct. Native Web Share is enhancement-only; a visible copyable URL and SVG download remain the durable fallback.
+
 ### Offline destination pack
 
 The installable web shell is now a separate progressive-enhancement layer from trip snapshots. When the network is unavailable, ordinary navigation falls back to a generic offline page that contains no account or scenario data. The service worker never caches navigation HTML, so signing in, opening Saved, editing a scenario or viewing notifications cannot silently leave private pages in Cache Storage. Only public build/PWA assets and the generic offline shell are eligible for service-worker caching.

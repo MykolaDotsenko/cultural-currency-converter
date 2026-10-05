@@ -891,7 +891,7 @@ Do not optimize the product around generic DAU.
 
 ## PR #257 — Shareable conversion card
 
-Include enough source/effective-date/provider context that a shared number cannot masquerade as permanently current.
+**Current production slice:** implemented. A successful canonical conversion can create a public-by-link signed immutable share snapshot and an exportable SVG card. Opening either surface performs no FX/provider or account lookup. Current/cached/historical/exact state, effective/requested dates, provider attribution and fetched-at semantics remain attached so the number cannot masquerade as permanently current. HTML/SVG responses are noindex/private-no-store/no-referrer; native share/copy is enhancement-only.
 
 ## PR #258 — Shareable travel-money card
 
