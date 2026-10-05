@@ -657,32 +657,15 @@ Cover:
 
 ## PR #227 — Offline active-trip view
 
-Support read-only access to:
-
-- saved trip;
-- stored FX observation;
-- immutable budget baseline;
-- remaining budget;
-- captured reviewed destination context.
+**Current production slice:** shipped as an explicit installed-app device snapshot. Authenticated saved budget detail exposes **Save trip for offline** only as progressive enhancement. The resulting read-only HTML snapshot reuses `OfflineDestinationPack` and includes the saved trip scope, stored FX observation, immutable budget baseline/remaining budget and reviewed destination context. The service worker does not create this snapshot automatically and never caches the live saved-scenario page.
 
 ## PR #228 — Offline freshness semantics
 
-Relevant values must clearly resolve to one of:
-
-- live;
-- stored;
-- stale;
-- offline snapshot.
+**Current production slice:** shipped. Offline snapshot copy states **stored, not live** and preserves FX provider/effective/fetch/stale semantics plus pack generated/context-as-of dates. A deterministic scenario revision detects changed planning state, observations or confirmed spend; online detail then marks the device copy out of date. A separate conservative 24-hour age reminder suggests refresh without pretending to define financial validity.
 
 ## PR #229 — Offline pack lifecycle
 
-Add:
-
-- version;
-- generated timestamp;
-- refresh;
-- outdated state;
-- replacement semantics.
+**Current production slice:** shipped for the PWA snapshot. Device metadata stores snapshot version, deterministic revision and generated timestamp. **Refresh offline copy** explicitly replaces the private cache entry, **Remove offline copy** removes cache + metadata, and the generic offline shell lists only explicit device copies. Returning to anonymous state clears private PWA trip storage on online load. The standalone downloaded HTML pack remains a separate user-managed file and is not silently replaced.
 
 ---
 

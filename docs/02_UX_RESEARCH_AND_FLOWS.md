@@ -386,7 +386,7 @@ The Camera flow for saved budget scenarios is explicit end to end:
 
 The installable web shell is now a separate progressive-enhancement layer from trip snapshots. When the network is unavailable, ordinary navigation falls back to a generic offline page that contains no account or scenario data. The service worker never caches navigation HTML, so signing in, opening Saved, editing a scenario or viewing notifications cannot silently leave private pages in Cache Storage. Only public build/PWA assets and the generic offline shell are eligible for service-worker caching.
 
-The first offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden service-worker cache.
+The portable offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden cache.
 
 The exported HTML file is self-contained: it carries its own restrained styling, no executable scripts and no remote asset dependency. It includes:
 
@@ -401,6 +401,19 @@ The file must say clearly that **offline means stored, not live**. Opening it la
 If local destination context is unavailable while generating the file, the pack still exports the saved FX/budget state and shows a degraded context notice instead of inventing prices or advice.
 
 The pack intentionally excludes receipt images, merchant identities, account/card data and individual purchase descriptions. Because the file may still contain a user’s saved budget/travel details, the download UI should remind the user to store it privately.
+
+The installed-app active-trip slice is explicit rather than automatic. On an authenticated saved budget scenario, **Save trip for offline** fetches the same canonical snapshot representation and stores it in a dedicated private Cache Storage namespace only after the click. The service worker itself never writes private scenario data. The generic offline shell can list only these explicit device copies and route an offline saved-scenario navigation to its matching read-only snapshot.
+
+Lifecycle stays visible:
+
+- a snapshot carries a version, generated timestamp and deterministic saved-scenario revision;
+- confirmed spend, a new stored FX observation or saved planning changes make the device copy **out of date** on the next online reopen;
+- **Refresh offline copy** explicitly replaces that snapshot;
+- snapshots older than 24 hours receive a conservative refresh reminder even if the saved-scenario revision is unchanged;
+- **Remove offline copy** deletes both the private cache entry and its local metadata;
+- returning to an anonymous page after sign-out clears private PWA trip storage as a privacy backstop.
+
+The offline app snapshot is still **stored, not live**. It never refreshes FX while offline, never turns reviewed context into current truth merely because the page opens, and remains read-only. The portable HTML pack continues to work independently when service workers, Cache Storage or JavaScript are unavailable.
 
 
 ### After travel

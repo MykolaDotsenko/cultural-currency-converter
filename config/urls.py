@@ -31,7 +31,7 @@ from apps.exchange.views import (
     shopping_calculation,
 )
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
-from apps.travel.offline_pack_web import download_offline_destination_pack
+from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
@@ -112,6 +112,11 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/offline-pack/",
         download_offline_destination_pack,
         name="download_offline_destination_pack",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/offline-snapshot/",
+        offline_trip_snapshot,
+        name="offline_trip_snapshot",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/camera/",

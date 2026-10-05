@@ -38,19 +38,26 @@ class PwaSurfaceTests(SimpleTestCase):
 
         source = response.content.decode("utf-8")
         assert 'request.mode === "navigate"' in source
-        assert "fetch(request).catch(() => caches.match(OFFLINE_URL))" in source
+        assert "fetch(request).catch(() => offlineNavigationResponse(url))" in source
         assert "cache.put(request, response.clone())" in source
         assert "isPublicStaticPath(url)" in source
-        assert "/saved/" not in source
+        assert 'const PRIVATE_TRIP_CACHE = "cultural-currency-private-trip-v1"' in source
+        assert "privateCache.match(snapshotUrl)" in source
+        assert "privateCache.put" not in source
         assert "/accounts/" not in source
         assert "/admin/" not in source
 
-    def test_offline_shell_is_generic_self_contained_and_privacy_explicit(self) -> None:
+    def test_offline_shell_is_generic_and_only_lists_explicit_device_snapshots(self) -> None:
         response = self.client.get(reverse("offline_shell"))
 
         assert response.status_code == 200
         assert response["Cache-Control"] == "public, max-age=300"
         assert response["X-Robots-Tag"] == "noindex, nofollow"
+        policy = response["Content-Security-Policy"]
+        assert "default-src 'none'" in policy
+        assert "script-src 'self'" in policy
+        assert "style-src 'unsafe-inline'" in policy
+        assert "connect-src 'none'" in policy
 
         html = response.content.decode("utf-8")
         normalized = " ".join(html.split())
@@ -59,8 +66,8 @@ class PwaSurfaceTests(SimpleTestCase):
             "Private account pages and saved-scenario HTML are never cached automatically."
             in normalized
         )
-        assert "Offline Destination Pack" in normalized
-        assert "<script" not in html.lower()
+        assert "Trips saved on this device" in normalized
+        assert 'src="/static/pwa/offline-shell.js"' in html
         assert 'rel="stylesheet"' not in html.lower()
 
     def test_pwa_icons_are_real_pngs_with_required_dimensions(self) -> None:

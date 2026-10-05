@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" data-offline-pack-version="{{ pack.schema_version }}">
+<html lang="en"
+      data-offline-pack-version="{{ pack.schema_version }}"
+      {% if pwa_snapshot %}data-offline-snapshot-revision="{{ snapshot_revision }}"{% endif %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +9,10 @@
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-    <title>{{ pack.destination_label }} · Offline money pack</title>
+    <title>
+      {{ pack.destination_label }} ·
+      {% if pwa_snapshot %}Offline app snapshot{% else %}Offline money pack{% endif %}
+    </title>
     <style>
       :root {
         color-scheme: light;
@@ -42,16 +47,24 @@
   </head>
   <body>
     <main>
-      <p class="eyebrow">Offline destination pack · format v{{ pack.schema_version }}</p>
+      <p class="eyebrow">
+        {% if pwa_snapshot %}Offline app snapshot{% else %}Offline destination pack{% endif %}
+        · format v{{ pack.schema_version }}
+      </p>
       <h1>{{ pack.destination_label }}</h1>
       <p class="lede">
         A self-contained snapshot for {{ pack.scenario_title }}. It uses saved FX state and reviewed
-        destination context captured when this file was generated.
+        destination context captured when this {% if pwa_snapshot %}device copy{% else %}file{% endif %} was generated.
       </p>
       <div class="notice" role="note">
         <strong>Offline means stored, not live.</strong>
-        This file never refreshes itself. The FX figure below is a saved reference observation,
-        not a current executable rate. Re-download the pack before travel when freshness matters.
+        This {% if pwa_snapshot %}offline app snapshot{% else %}file{% endif %} never refreshes itself.
+        The FX figure below is a saved reference observation, not a current executable rate.
+        {% if pwa_snapshot %}
+          Reconnect and use Refresh offline copy before travel when freshness matters.
+        {% else %}
+          Re-download the pack before travel when freshness matters.
+        {% endif %}
       </div>
       <div class="grid">
         <section aria-labelledby="fx-title">

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -54,6 +55,28 @@
         color: #666861;
         line-height: 1.7;
       }
+      .offline-trips {
+        margin-top: 2rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid #dcd6cb;
+      }
+      .offline-trips h2 { margin: 0; font-size: 1.05rem; }
+      .offline-trip-list { display: grid; gap: .75rem; margin-top: 1rem; }
+      .offline-trip-link {
+        min-height: 2.75rem;
+        display: grid;
+        align-items: center;
+        margin: 0;
+        padding: .75rem 1rem;
+        border: 1px solid #dcd6cb;
+        border-radius: .625rem;
+        background: #fffdf9;
+      }
+      .offline-trip-link span {
+        color: #666861;
+        font-size: .82rem;
+        font-weight: 500;
+      }
       .trust {
         margin-top: 2rem;
         padding-top: 1.25rem;
@@ -85,10 +108,18 @@
         connection. Reconnect before treating any previously seen financial value as current.
       </p>
       <p class="trust">
-        Private account pages and saved-scenario HTML are never cached automatically. Use the
-        explicit Offline Destination Pack when you need a portable saved-trip snapshot.
+        Private account pages and saved-scenario HTML are never cached automatically. A trip appears
+        below only when you explicitly saved a private app snapshot on this device.
       </p>
+      <section class="offline-trips"
+               data-offline-trip-list
+               aria-labelledby="offline-trip-list-title"
+               hidden>
+        <h2 id="offline-trip-list-title">Trips saved on this device</h2>
+        <div class="offline-trip-list" data-offline-trip-items></div>
+      </section>
       <a href="/">Try the connection again</a>
     </main>
+    <script src="{% static 'pwa/offline-shell.js' %}" defer></script>
   </body>
 </html>

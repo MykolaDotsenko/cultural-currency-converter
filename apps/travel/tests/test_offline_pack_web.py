@@ -153,7 +153,9 @@ def test_owner_downloads_self_contained_offline_pack_with_saved_freshness_semant
     assert response["Content-Type"].startswith("text/html")
     assert "attachment;" in response["Content-Disposition"]
     assert "tokyo-japan" in response["Content-Disposition"]
-    assert response["Cache-Control"] == "private, no-store"
+    cache_control = response["Cache-Control"]
+    assert "private" in cache_control
+    assert "no-store" in cache_control
     assert response["X-Robots-Tag"] == "noindex, nofollow"
     assert response["Referrer-Policy"] == "no-referrer"
 
@@ -232,7 +234,10 @@ def test_offline_pack_download_is_owner_scoped_and_requires_login(
 
 
 @pytest.mark.django_db
-def test_saved_budget_detail_exposes_offline_pack_action(client, offline_pack_scenario):
+def test_saved_budget_detail_exposes_offline_pack_action_and_explicit_app_snapshot_control(
+    client,
+    offline_pack_scenario,
+):
     owner, scenario = offline_pack_scenario
     client.force_login(owner)
 
@@ -244,3 +249,80 @@ def test_saved_budget_detail_exposes_offline_pack_action(client, offline_pack_sc
         reverse("download_offline_destination_pack", args=(scenario.pk,)).encode()
         in response.content
     )
+    assert b"Save trip for offline" in response.content
+    assert b"Nothing is stored in the app cache until you choose" in response.content
+    assert reverse("offline_trip_snapshot", args=(scenario.pk,)).encode() in response.content
+    assert b'data-offline-trip-revision="' in response.content
+
+
+@pytest.mark.django_db
+def test_explicit_offline_app_snapshot_is_private_owner_scoped_and_versioned(
+    client,
+    offline_pack_scenario,
+):
+    owner, scenario = offline_pack_scenario
+    snapshot_url = reverse("offline_trip_snapshot", args=(scenario.pk,))
+
+    anonymous = client.get(snapshot_url)
+    assert anonymous.status_code == 302
+    assert reverse("login") in anonymous.url
+
+    other = User.objects.create_user(
+        username="offline-snapshot-other",
+        password="StrongPass-482!",
+    )
+    client.force_login(other)
+    assert client.get(snapshot_url).status_code == 404
+
+    client.force_login(owner)
+    response = client.get(snapshot_url)
+
+    assert response.status_code == 200
+    assert response["Content-Type"].startswith("text/html")
+    cache_control = response["Cache-Control"]
+    assert "private" in cache_control
+    assert "no-store" in cache_control
+    assert response["Pragma"] == "no-cache"
+    assert response["X-Robots-Tag"] == "noindex, nofollow"
+    assert response["Referrer-Policy"] == "no-referrer"
+    assert response["X-Cultural-Currency-Offline-Snapshot"] == "1"
+    policy = response["Content-Security-Policy"]
+    assert "default-src 'none'" in policy
+    assert "script-src 'none'" in policy
+    assert "style-src 'unsafe-inline'" in policy
+    revision = response["X-Cultural-Currency-Snapshot-Revision"]
+    assert len(revision) == 24
+    assert response["X-Cultural-Currency-Snapshot-Generated-At"]
+
+    html = response.content.decode("utf-8")
+    assert f'data-offline-snapshot-revision="{revision}"' in html
+    assert "Offline means stored, not live." in html
+    assert "<script" not in html.lower()
+    assert 'rel="stylesheet"' not in html.lower()
+    assert "attachment;" not in response.headers.get("Content-Disposition", "")
+
+
+@pytest.mark.django_db
+def test_offline_snapshot_revision_changes_when_confirmed_spend_changes(
+    client,
+    offline_pack_scenario,
+):
+    owner, scenario = offline_pack_scenario
+    client.force_login(owner)
+    snapshot_url = reverse("offline_trip_snapshot", args=(scenario.pk,))
+
+    before = client.get(snapshot_url)
+    before_revision = before["X-Cultural-Currency-Snapshot-Revision"]
+
+    record_scenario_spend(
+        scenario,
+        amount=Decimal("300"),
+        source=SavedScenarioSpendSource.MANUAL,
+    )
+
+    after = client.get(snapshot_url)
+    after_revision = after["X-Cultural-Currency-Snapshot-Revision"]
+
+    assert before_revision != after_revision
+    normalized = " ".join(after.content.decode("utf-8").split())
+    assert "confirmed spend 5000 JPY" in normalized

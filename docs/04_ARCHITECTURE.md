@@ -164,7 +164,7 @@ The offline pack is generated on demand and is not another live financial engine
 - opening the file offline performs no refresh and must never make the stored FX observation look live;
 - the server does not persist a second copy of the generated pack.
 
-This is a portable first offline surface, not a service-worker/PWA cache strategy. Future mobile/PWA clients should reuse the same snapshot semantics and freshness rules rather than cache arbitrary live pages.
+The portable HTML pack remains the most durable cross-browser/off-app export. The installed PWA now reuses this same snapshot meaning through a separate explicit device-copy contract rather than caching arbitrary live pages.
 
 ### Saved trip budget continuity
 
@@ -202,11 +202,13 @@ Object storage makes media bytes durable across application deploys, but durabil
 
 ## PWA / browser offline boundary
 
-The root-scoped service worker is an availability shell, not a second application datastore. Navigation requests are always network-only; if the network fails they fall back to one generic self-contained offline page. The worker never writes account, SavedScenario, notification, admin or form HTML into Cache Storage.
+The root-scoped service worker is an availability shell, not a second application datastore. Navigation requests are always network-first; ordinary private/account/scenario HTML is never inserted into Cache Storage merely because it was viewed. If navigation fails, the worker returns either one explicitly saved private trip snapshot for that exact saved-scenario route or the generic public offline shell.
 
-Only public same-origin build assets and managed PWA icon assets may use runtime cache-first behavior. The generic offline shell is explicitly precached. This preserves the existing trust boundary: a page seen online is not evidence that its financial values are available offline or still current. Saved-trip financial/context state remains portable only through the explicit Offline Destination Pack until a separate user-initiated offline active-trip snapshot contract is implemented.
+Only public same-origin build/PWA assets use automatic runtime caching. Private trip snapshots use a separate cache namespace and can be written only by the saved-scenario UI after the authenticated user chooses **Save trip for offline**. The service worker has no code path that writes private snapshots itself. Each snapshot is rendered from the canonical `OfflineDestinationPack` contract, carries `private, no-store` HTTP semantics on the server, contains no executable script and stores its version/revision/generation timestamp in explicit browser metadata.
 
-Service-worker registration is optional progressive enhancement. Registration failure must not affect conversion, saved state, accessibility or no-JavaScript behavior.
+`apps/travel/offline_snapshot.py` derives a deterministic revision from the saved scenario, budget items, immutable FX observations and confirmed spend. Online scenario detail compares that revision with device metadata: a changed spend/re-check/planning state marks the offline copy out of date and changes the explicit action to **Refresh offline copy**. A time-based 24-hour reminder is additional conservative lifecycle guidance, not a claim that reviewed context or FX became invalid at exactly that threshold. Offline rendering always says stored/offline snapshot, never live/current.
+
+The private cache is local to the browser/device, capped by UI metadata and removable explicitly. Returning to anonymous state clears the private cache and metadata on the next online page load. Service-worker registration and all snapshot controls remain progressive enhancement: failure must not affect conversion, saved state, the portable HTML pack, accessibility or no-JavaScript behavior.
 
 ## Caching
 
