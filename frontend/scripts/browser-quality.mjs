@@ -1882,9 +1882,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     const snapshotResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === "GET" &&
-        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(
-          new URL(response.url()).pathname,
-        ),
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(new URL(response.url()).pathname),
     );
     await saveOfflineButton.click();
     const snapshotResponse = await snapshotResponsePromise;
@@ -1925,7 +1923,9 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
       `offline-trip/e2e: explicit snapshot did not open offline: ${offlineNavigation?.status() ?? "no response"}`,
     );
     await page.getByText("Offline means stored, not live.", { exact: false }).waitFor();
-    await page.getByText("A self-contained snapshot for QA Tokyo budget.", { exact: false }).waitFor();
+    await page
+      .getByText("A self-contained snapshot for QA Tokyo budget.", { exact: false })
+      .waitFor();
     await assertNoHorizontalOverflow(page, "offline-trip/e2e/stored-snapshot");
     await assertAxe(page, "offline-trip/e2e/stored-snapshot");
 
@@ -2082,9 +2082,7 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
     const refreshedSnapshotResponsePromise = page.waitForResponse(
       (response) =>
         response.request().method() === "GET" &&
-        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(
-          new URL(response.url()).pathname,
-        ),
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(new URL(response.url()).pathname),
     );
     await refreshOfflineButton.click();
     const refreshedSnapshotResponse = await refreshedSnapshotResponsePromise;
