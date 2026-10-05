@@ -298,18 +298,9 @@
           {% if destination_context_component %}
             {% include "components/culture/destination_context.html" with component=destination_context_component %}
           {% elif result_component.destination_context_state == "degraded" %}
-            <section class="qa-inline-alert qa-degraded-panel" role="status">
-              <h3>Local money context is temporarily unavailable.</h3>
-              <p>
-                The trusted FX conversion above remains valid. Reviewed local prices and payment
-                guidance could not be loaded, so no missing context has been inferred.
-              </p>
-            </section>
+            {% include "components/product_state.html" with state="unavailable" label="Local context unavailable" title="Local money context is temporarily unavailable." detail="The trusted FX conversion above remains valid. Reviewed local prices and payment guidance could not be loaded, so no missing context has been inferred." %}
           {% elif result_component.destination_context_state == "not_applicable" %}
-            <section class="qa-inline-alert qa-degraded-panel" role="status">
-              <h3>Local money context is not applicable here.</h3>
-              <p>The conversion remains complete without destination-specific current context.</p>
-            </section>
+            {% include "components/product_state.html" with state="not-applicable" label="Local context status" title="Local money context is not applicable here." detail="The conversion remains complete without destination-specific current context." %}
           {% else %}
             {% include "components/culture/destination_context_empty.html" %}
           {% endif %}

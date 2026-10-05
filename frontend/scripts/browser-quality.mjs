@@ -1458,7 +1458,7 @@ async function assertSavedStateFlow(page) {
   await assertAxe(page, "saved-state/populated");
 }
 
-async function assertAuthenticatedRecentHistoryFlow(page) {
+async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   const localOnlyRecent = {
     version: 1,
     favourites: [],
@@ -1854,49 +1854,104 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
-  await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
-  await page.getByRole("heading", { name: "Trip notifications", level: 2 }).waitFor();
+  const offlinePackSummary = page.getByText("What the offline money pack contains", {
+    exact: true,
+  });
+  await offlinePackSummary.waitFor();
+  assert(
+    (await page.getByRole("link", { name: "Offline options", exact: true }).count()) === 1,
+    "trip-budget/e2e: premium action hierarchy must expose one Offline options entry",
+  );
+  await offlinePackSummary.click();
+  assert(
+    (await page.getByRole("link", { name: "Download portable HTML pack", exact: true }).count()) ===
+      1,
+    "trip-budget/e2e: portable offline pack download must have one canonical CTA",
+  );
 
-  const notificationScenarioUrl = page.url();
-  const rateAlertRow = page
-    .locator(".qa-saved-row")
-    .filter({ hasText: "Scenario rate alert" })
-    .first();
-  await rateAlertRow.getByRole("checkbox", { name: "Enabled", exact: true }).check();
-  await rateAlertRow.getByLabel("Rate-change threshold", { exact: true }).fill("2.5");
-  const saveNotificationResponsePromise = page.waitForResponse(
-    (response) =>
-      response.request().method() === "POST" &&
-      /\/saved\/scenarios\/\d+\/notifications\/configure\/$/.test(new URL(response.url()).pathname),
-  );
-  await rateAlertRow.getByRole("button", { name: "Save notification", exact: true }).click();
-  const saveNotificationResponse = await saveNotificationResponsePromise;
-  assert(
-    saveNotificationResponse.status() === 302,
-    `notifications/e2e: preference save returned ${saveNotificationResponse.status()}`,
-  );
-  await page.getByText("Notification preference saved.", { exact: true }).waitFor();
-  const savedRateAlertRow = page
-    .locator(".qa-saved-row")
-    .filter({ hasText: "Scenario rate alert" })
-    .first();
-  assert(
-    await savedRateAlertRow.getByRole("checkbox", { name: "Enabled", exact: true }).isChecked(),
-    "notifications/e2e: enabled state was not persisted",
-  );
-  assert(
-    (await savedRateAlertRow.getByLabel("Rate-change threshold", { exact: true }).inputValue()) ===
-      "2.50",
-    "notifications/e2e: explicit rate threshold was not persisted",
-  );
-  await assertAxe(page, "notifications/e2e/configuration");
+  const savedScenarioPath = new URL(page.url()).pathname;
+  if (BROWSER_ENGINE === "chromium") {
+    await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.register("/service-worker.js", {
+        scope: "/",
+      });
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) {
+        await new Promise((resolve) => {
+          navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+        });
+      }
+      return registration.scope;
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
 
-  await page.getByRole("link", { name: "Open notifications", exact: true }).click();
-  await page.getByRole("heading", { name: "Notifications", level: 1 }).waitFor();
-  await page.getByText("No notifications yet.", { exact: true }).waitFor();
-  await assertAxe(page, "notifications/e2e/inbox-empty");
-  await page.goto(notificationScenarioUrl);
-  await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+    const offlineControl = page.locator("[data-offline-trip-control]");
+    const saveOfflineButton = offlineControl.getByRole("button", {
+      name: "Save trip for offline",
+      exact: true,
+    });
+    await saveOfflineButton.waitFor();
+    const snapshotResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(new URL(response.url()).pathname),
+    );
+    await saveOfflineButton.click();
+    const snapshotResponse = await snapshotResponsePromise;
+    assert(
+      snapshotResponse.status() === 200,
+      `offline-trip/e2e: snapshot returned ${snapshotResponse.status()}`,
+    );
+    const snapshotCacheControl = snapshotResponse.headers()["cache-control"] ?? "";
+    assert(
+      snapshotCacheControl.includes("private") && snapshotCacheControl.includes("no-store"),
+      `offline-trip/e2e: private snapshot lost no-store server semantics: ${snapshotCacheControl}`,
+    );
+    await offlineControl
+      .getByText("Saved for offline on this device. Stored snapshot, never live.", {
+        exact: true,
+      })
+      .waitFor();
+
+    const privateCacheState = await page.evaluate(async () => {
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      return (await cache.keys()).map((request) => new URL(request.url).pathname).sort();
+    });
+    assert(
+      privateCacheState.length === 1 &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(privateCacheState[0]),
+      `offline-trip/e2e: unexpected private cache contents ${JSON.stringify(privateCacheState)}`,
+    );
+    assert(
+      !privateCacheState.includes(savedScenarioPath),
+      "offline-trip/e2e: private live scenario HTML entered Cache Storage",
+    );
+
+    const offlineConsoleStart = consoleErrors.length;
+    await page.context().setOffline(true);
+    const offlineNavigation = await page.goto(`${BASE_URL}${savedScenarioPath}`, {
+      waitUntil: "domcontentloaded",
+    });
+    assert(
+      offlineNavigation?.ok(),
+      `offline-trip/e2e: explicit snapshot did not open offline: ${offlineNavigation?.status() ?? "no response"}`,
+    );
+    await page.getByText("Offline means stored, not live.", { exact: false }).waitFor();
+    await page
+      .getByText("A self-contained snapshot for QA Tokyo budget.", { exact: false })
+      .waitFor();
+    await assertNoHorizontalOverflow(page, "offline-trip/e2e/stored-snapshot");
+    await assertAxe(page, "offline-trip/e2e/stored-snapshot");
+
+    await page.context().setOffline(false);
+    await page.goto(`${BASE_URL}${savedScenarioPath}`, { waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: "QA Tokyo budget", level: 1 }).waitFor();
+    consumeExpectedConsoleErrors(consoleErrors, offlineConsoleStart, {
+      label: "offline-trip/e2e/network-transition",
+      expected: ["ERR_INTERNET_DISCONNECTED"],
+    });
+  }
 
   await page.getByText("Reference-rate history", { exact: false }).waitFor();
   const rateHistory = page.locator(".qa-reference-history");
@@ -2031,11 +2086,61 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   );
   const expectedRemainingText = `${remainingMatch[1]} JPY remaining`;
 
-  // Browser-level Offline Pack evidence: download the actual attachment,
-  // inspect its self-contained HTML, then render that HTML without network.
+  if (BROWSER_ENGINE === "chromium") {
+    const offlineControlAfterSpend = page.locator("[data-offline-trip-control]");
+    await offlineControlAfterSpend
+      .getByText(
+        "Offline copy is out of date because this saved trip changed. Refresh it before relying on the snapshot.",
+        { exact: true },
+      )
+      .waitFor();
+    const refreshOfflineButton = offlineControlAfterSpend.getByRole("button", {
+      name: "Refresh offline copy",
+      exact: true,
+    });
+    const refreshedSnapshotResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === "GET" &&
+        /\/saved\/scenarios\/\d+\/offline-snapshot\/$/.test(new URL(response.url()).pathname),
+    );
+    await refreshOfflineButton.click();
+    const refreshedSnapshotResponse = await refreshedSnapshotResponsePromise;
+    assert(
+      refreshedSnapshotResponse.status() === 200,
+      `offline-trip/e2e: refresh returned ${refreshedSnapshotResponse.status()}`,
+    );
+    await offlineControlAfterSpend
+      .getByText("Saved for offline on this device. Stored snapshot, never live.", {
+        exact: true,
+      })
+      .waitFor();
+
+    const cachedSnapshotText = await page.evaluate(async () => {
+      const control = document.querySelector("[data-offline-trip-control]");
+      const snapshotPath = control?.getAttribute("data-offline-trip-snapshot-url");
+      if (!snapshotPath) return "";
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const response = await cache.match(new URL(snapshotPath, window.location.origin).toString());
+      return response ? await response.text() : "";
+    });
+    assert(
+      cachedSnapshotText.includes("confirmed spend") && cachedSnapshotText.includes("4800"),
+      "offline-trip/e2e: refreshed private snapshot did not capture confirmed spend",
+    );
+  }
+
+  // Browser-level Offline Pack evidence: the scenario was reloaded during the
+  // service-worker lifecycle above, so reopen the disclosure before using its canonical CTA.
+  const offlinePackDetails = page.locator("#offline-trip-tools");
+  if ((await offlinePackDetails.getAttribute("open")) === null) {
+    await offlinePackDetails.locator("summary").click();
+  }
+
+  // Download the actual attachment, inspect its self-contained HTML, then render that HTML
+  // without network.
   const [offlineDownload] = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("link", { name: "Download offline pack", exact: true }).click(),
+    page.getByRole("link", { name: "Download portable HTML pack", exact: true }).click(),
   ]);
   assert(
     /^cultural-currency-.*-offline-\d{4}-\d{2}-\d{2}\.html$/.test(
@@ -2066,6 +2171,31 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await assertNoHorizontalOverflow(offlinePage, "offline-pack/e2e");
   await assertAxe(offlinePage, "offline-pack/e2e");
   await offlinePage.close();
+
+  if (BROWSER_ENGINE === "chromium") {
+    const offlineControlForRemoval = page.locator("[data-offline-trip-control]");
+    await offlineControlForRemoval
+      .getByRole("button", { name: "Remove offline copy", exact: true })
+      .click();
+    await offlineControlForRemoval
+      .getByText("Offline app copy removed from this device.", { exact: true })
+      .waitFor();
+
+    const removedOfflineState = await page.evaluate(async () => {
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const cacheEntries = (await cache.keys()).map((request) => new URL(request.url).pathname);
+      const metadata = JSON.parse(
+        localStorage.getItem("cultural-currency.offline-trips.v1") ?? "[]",
+      );
+      return { cacheEntries, metadata };
+    });
+    assert(
+      removedOfflineState.cacheEntries.length === 0 &&
+        Array.isArray(removedOfflineState.metadata) &&
+        removedOfflineState.metadata.length === 0,
+      `offline-trip/e2e: remove left private device state behind: ${JSON.stringify(removedOfflineState)}`,
+    );
+  }
 
   await page.getByRole("button", { name: "Remove entry" }).waitFor();
   await assertNoHorizontalOverflow(page, "trip-budget/e2e");
@@ -3355,6 +3485,101 @@ async function assertConstrainedNetworkCoreFlow(browser) {
   }
 }
 
+async function assertPwaFoundation(browser) {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 1,
+  });
+  try {
+    const page = await context.newPage();
+    const response = await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+    assert(
+      response?.ok(),
+      `pwa/foundation: root failed with ${response?.status() ?? "no response"}`,
+    );
+
+    const manifestHref = await page.locator('link[rel="manifest"]').getAttribute("href");
+    assert(manifestHref, "pwa/foundation: manifest link is missing");
+
+    const manifestResponse = await context.request.get(new URL(manifestHref, BASE_URL).toString());
+    assert(manifestResponse.ok(), "pwa/foundation: manifest request failed");
+    const manifest = await manifestResponse.json();
+    assert(manifest.scope === "/", "pwa/foundation: manifest scope must stay root-scoped");
+    assert(
+      manifest.icons?.some((icon) => icon.sizes === "512x512" && icon.purpose.includes("maskable")),
+      "pwa/foundation: 512px maskable icon is missing",
+    );
+
+    const workerResponse = await context.request.get(`${BASE_URL}/service-worker.js`);
+    assert(workerResponse.ok(), "pwa/foundation: service worker request failed");
+    assert(
+      workerResponse.headers()["service-worker-allowed"] === "/",
+      "pwa/foundation: root Service-Worker-Allowed header is missing",
+    );
+
+    const registrationState = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return { supported: false };
+      const registration = await navigator.serviceWorker.register("/service-worker.js", {
+        scope: "/",
+      });
+      await navigator.serviceWorker.ready;
+      const keys = await caches.keys();
+      const requests = [];
+      for (const key of keys) {
+        if (!key.startsWith("cultural-currency-shell-")) continue;
+        const cache = await caches.open(key);
+        for (const request of await cache.keys()) requests.push(new URL(request.url).pathname);
+      }
+      return {
+        supported: true,
+        scope: registration.scope,
+        cacheKeys: keys.filter((key) => key.startsWith("cultural-currency-shell-")),
+        cachedPaths: requests.sort(),
+      };
+    });
+    assert(registrationState.supported, "pwa/foundation: service workers are unavailable");
+    assert(
+      registrationState.scope === `${new URL(BASE_URL).origin}/`,
+      `pwa/foundation: unexpected registration scope ${registrationState.scope}`,
+    );
+    assert(
+      registrationState.cacheKeys.length === 1,
+      `pwa/foundation: expected one shell cache, got ${JSON.stringify(registrationState.cacheKeys)}`,
+    );
+    assert(
+      registrationState.cachedPaths.includes("/offline/"),
+      "pwa/foundation: generic offline shell was not precached",
+    );
+    assert(
+      registrationState.cachedPaths.every(
+        (path) =>
+          !path.startsWith("/saved/") &&
+          !path.startsWith("/accounts/") &&
+          !path.startsWith("/admin/"),
+      ),
+      `pwa/foundation: private HTML leaked into Cache Storage: ${JSON.stringify(registrationState.cachedPaths)}`,
+    );
+
+    await context.setOffline(true);
+    const offlineResponse = await page.goto(`${BASE_URL}/saved/`, {
+      waitUntil: "domcontentloaded",
+    });
+    assert(
+      offlineResponse?.ok(),
+      `pwa/foundation: cached offline shell failed with ${offlineResponse?.status() ?? "no response"}`,
+    );
+    await page.getByRole("heading", { name: "You’re offline.", level: 1 }).waitFor();
+    await page
+      .getByText("Private account pages and saved-scenario HTML are never cached automatically.")
+      .waitFor();
+    await assertAxe(page, "pwa/foundation/offline-shell");
+
+    return registrationState;
+  } finally {
+    await context.close();
+  }
+}
+
 async function openSurface(page, surface) {
   const response = await page.goto(`${BASE_URL}${surface.path}`, { waitUntil: "networkidle" });
   await waitForStableLayout(page);
@@ -3512,7 +3737,7 @@ try {
         surface.name === "account-signup" &&
         viewport.name === "wide-1440"
       ) {
-        await assertAuthenticatedRecentHistoryFlow(page);
+        await assertAuthenticatedRecentHistoryFlow(page, consoleErrors);
         assert(
           consoleErrors.length === 0,
           `account-history/e2e: console errors: ${consoleErrors.join(" | ")}`,
@@ -3530,6 +3755,7 @@ try {
     evidence.serverRenderedExploreAccessibility =
       await assertServerRenderedExploreAccessibility(browser);
     evidence.constrainedNetwork = await assertConstrainedNetworkCoreFlow(browser);
+    evidence.pwa = await assertPwaFoundation(browser);
     evidence.compressedAssets = await measureBuildAssets();
     assertBuildPerformanceBudgets(evidence.compressedAssets);
 

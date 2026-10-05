@@ -167,11 +167,8 @@
           </div>
         </form>
       {% else %}
-        <div class="qa-inline-alert qa-degraded-panel" role="status">
-          <h3>Destination reference data is unavailable.</h3>
-          <p>Comparison needs at least two resolvable current destination scopes.</p>
-          <a class="qa-secondary-button" href="{% url 'converter' %}">Open converter</a>
-        </div>
+        {% url 'converter' as converter_url %}
+        {% include "components/product_state.html" with state="unavailable" label="Reference data unavailable" title="Destination reference data is unavailable." detail="Comparison needs at least two resolvable current destination scopes." action_href=converter_url action_label="Open converter" %}
       {% endif %}
     </div>
   </section>

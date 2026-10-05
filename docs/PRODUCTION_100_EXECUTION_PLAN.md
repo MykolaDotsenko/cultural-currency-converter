@@ -599,25 +599,45 @@ No parallel shopping persistence subsystem.
 
 ## PR #219 — Notification preference domain
 
-**Current production slice:** shipped and extended through the complete in-app notification phase.
+**Status: foundation implemented; no delivery side effect yet.**
 
-Explicit opt-in stores enabled state, type, validated IANA timezone, cadence, `in_app` channel, optional bounded rate threshold and last-delivered evidence. Scenario detail exposes configure/disable/delete controls.
+Explicit opt-in only.
+
+Represent:
+
+- enabled state;
+- notification type;
+- timezone;
+- cadence;
+- supported delivery configuration;
+- disable/delete semantics.
 
 ## PR #220 — Pre-trip reminder
 
-**Current production slice:** shipped. Explicit saved travel dates can generate an owner-scoped reminder in the seven-day departure window. No itinerary or exchange-timing intent is inferred.
+Use explicit saved travel dates to prompt re-open/re-check near departure.
+
+Do not provide speculative exchange-timing advice.
 
 ## PR #221 — Context/offline freshness reminder
 
-**Current production slice:** shipped as a conservative stored-reference readiness reminder. Close to departure, a reminder is due only when the newest stored FX reference is stale or at least seven days old. The copy asks the user to explicitly re-check and replace any offline pack; it does not silently refresh current context or claim that an untracked downloaded file is stale.
+Notify only when a saved trip's reviewed context or offline pack is materially stale before travel.
 
 ## PR #222 — Scenario rate alert
 
-**Current production slice:** shipped. The user supplies a 0.1–25% threshold. A scheduler run obtains a transient canonical current quote, compares it with the immutable initial saved observation and creates an informational in-app alert only when the threshold is crossed. The transient probe is not persisted as scenario history; stale/provider-failed probes create no alert.
+User-defined threshold against a saved scenario observation.
+
+Language must remain informational and scenario-oriented.
 
 ## PR #223 — Notification reliability and deduplication
 
-**Current production slice:** shipped for in-app delivery. Cadence is evaluated in the preference's timezone, `last_delivered_at` records send evidence, and a unique preference + deterministic period/event key makes repeated scheduler execution idempotent. Disable/delete remain owner-scoped; notification rows expose explicit read/unread state. `python manage.py deliver_scenario_notifications` is the repeat-safe scheduler entrypoint.
+Cover:
+
+- idempotency;
+- last-sent state;
+- retries;
+- disabling;
+- deletion;
+- timezone boundaries.
 
 ---
 
@@ -625,46 +645,27 @@ Explicit opt-in stores enabled state, type, validated IANA timezone, cadence, `i
 
 ## PR #224 — PWA manifest
 
-Add installable web-app identity and managed icon assets.
+**Current production slice:** shipped. The base shell exposes a same-origin install manifest with stable app identity, root scope/start URL, reviewed Quiet Atlas theme colors and managed 192/512 PNG icons including a maskable-safe 512 asset.
 
 ## PR #225 — Service-worker foundation
 
-Define explicit cache rules.
-
-Sensitive account pages must not be cached accidentally.
+**Current production slice:** shipped with a fail-closed privacy boundary. Navigation HTML is always network-only. Cache Storage is limited to the generic offline shell plus public same-origin build/PWA static assets; account, SavedScenario, notification, admin and form HTML are never cached merely because they were viewed. Registration is delayed outside the critical initial-render path and failures do not affect the core product.
 
 ## PR #226 — Offline app shell
 
-Provide navigation and clear offline state without pretending data is live.
+**Current production slice:** shipped. When a navigation fails offline, the worker returns a self-contained accessible generic shell that explicitly says it cannot refresh rates/context and that private pages are not cached. The shell points users toward the explicit Offline Destination Pack for portable trip data rather than presenting old financial state as live.
 
 ## PR #227 — Offline active-trip view
 
-Support read-only access to:
-
-- saved trip;
-- stored FX observation;
-- immutable budget baseline;
-- remaining budget;
-- captured reviewed destination context.
+**Current production slice:** shipped as an explicit installed-app device snapshot. Authenticated saved budget detail exposes **Save trip for offline** only as progressive enhancement. The resulting read-only HTML snapshot reuses `OfflineDestinationPack` and includes the saved trip scope, stored FX observation, immutable budget baseline/remaining budget and reviewed destination context. The service worker does not create this snapshot automatically and never caches the live saved-scenario page.
 
 ## PR #228 — Offline freshness semantics
 
-Relevant values must clearly resolve to one of:
-
-- live;
-- stored;
-- stale;
-- offline snapshot.
+**Current production slice:** shipped. Offline snapshot copy states **stored, not live** and preserves FX provider/effective/fetch/stale semantics plus pack generated/context-as-of dates. A deterministic scenario revision detects changed planning state, observations or confirmed spend; online detail then marks the device copy out of date. A separate conservative 24-hour age reminder suggests refresh without pretending to define financial validity.
 
 ## PR #229 — Offline pack lifecycle
 
-Add:
-
-- version;
-- generated timestamp;
-- refresh;
-- outdated state;
-- replacement semantics.
+**Current production slice:** shipped for the PWA snapshot. Device metadata stores snapshot version, deterministic revision and generated timestamp. **Refresh offline copy** explicitly replaces the private cache entry, **Remove offline copy** removes cache + metadata, and the generic offline shell lists only explicit device copies. Returning to anonymous state clears private PWA trip storage on online load. The standalone downloaded HTML pack remains a separate user-managed file and is not silently replaced.
 
 ---
 
@@ -692,27 +693,15 @@ Validate mobile/tablet/desktop crops.
 
 ## PR #233 — Bilateral visual system
 
-Add restrained source/destination distinction using typography, atmosphere and reviewed media rather than decorative gimmicks.
+**Current production slice:** shipped. The converter presents source and destination as one bilateral instrument with distinct country-theme accents, route identity, restrained typography and reviewed destination media when available. Missing media does not weaken the financial result. Responsive and forced-colors browser QA keeps the bilateral route readable without turning country identity into decorative evidence.
 
 ## PR #234 — UI simplification
 
-Remove:
-
-- duplicate CTAs;
-- redundant labels;
-- repeated navigation;
-- low-value cards;
-- explanatory copy that no longer earns its space.
+**Current production slice:** shipped for the primary conversion/trip flows. Premium composition removes nested-card chrome in favour of typographic hierarchy and hairline structure. Saved-trip offline actions now have one entry point (**Offline options**) and one canonical portable-HTML download CTA instead of repeating the same download across the hero, details and scenario-summary action rows.
 
 ## PR #235 — Empty/degraded state perfection
 
-Every optional subsystem must have intentional states for:
-
-- absent;
-- unavailable;
-- stale;
-- partial;
-- provider failure.
+**Current production slice:** shipped with an explicit product-state grammar for empty, partial, unavailable and not-applicable optional surfaces, while financial stale state remains in the canonical FX provenance/status system. State meaning is named in text rather than colour alone, provider/optional-subsystem failure states preserve the valid deterministic result, and missing context is never silently inferred. Existing Camera/AI/provider-specific failure surfaces retain their stronger domain-specific recovery copy rather than being flattened into a generic message.
 
 ---
 

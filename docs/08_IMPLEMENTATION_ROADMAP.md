@@ -175,7 +175,6 @@ The following additional user-facing capabilities also clear the current **60/10
    - Prefer scenario meaning over generic FX noise: explain what the movement changes for the user's saved trip amount when that is defensible.
    - Make thresholds, cadence and disable/delete controls explicit.
    - Keep alerts informational and avoid trading/investment framing.
-   - **Current production slice:** SavedScenario rate alerts now require an explicit 0.1–25% threshold and cadence. The due generator probes the canonical current FX path without writing a new scenario observation, compares the transient rate/output against the immutable initial baseline and creates an owner-scoped in-app message only when the threshold is crossed. Stale/provider-failed probes fail closed. Local-calendar cadence, last-delivered state and a database dedupe key make repeated scheduler execution safe.
 
 19. **Shareable conversion / travel-money cards — 68/100**
    - Create a compact share surface from trusted conversion and destination-context data.
@@ -205,7 +204,7 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
    - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
    - Include destination/offline-pack freshness when it materially affects readiness for travel.
    - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
-   - **Current production slice:** saved scenarios expose explicit notification configuration and an owner-scoped in-app inbox. Pre-trip reminders use only explicit saved travel dates. Context/offline freshness reminders run only near departure when the newest stored FX reference is stale or at least seven days old and ask the user to explicitly re-check context/replace any offline pack rather than silently refreshing it. Delivery generation is scheduler-friendly and repeat-safe through timezone-aware cadence, last-delivered evidence and a database dedupe key. Automatic background local-context refresh remains future work.
+   - **Current slice:** saved budget scenarios can store optional validated travel dates and derive deterministic upcoming/active/started/ended readiness on the detail page. Reference-rate re-check is explicit and owner-scoped. The notification-preference foundation is now shipped: one owner-scoped preference per scenario/type stores explicit enabled state, IANA timezone, cadence and the first supported `in_app` channel; enabling it has no delivery side effect, and pre-trip opt-in requires a saved start date. Due-reminder generation, actual delivery, deduplication/retries and automatic background local-context refresh remain future work.
 
 ### Enabling data/content foundation
 
@@ -264,7 +263,7 @@ The travel-money intelligence concept adds the following non-duplicative user-fa
    - Define freshness/expiry for rates versus slower-moving payment/cultural content; never present stale FX as current.
    - A last-known FX observation may be useful offline only when its provider/effective timestamp and stale/offline status are explicit; it must never masquerade as a live rate.
    - Keep offline scope small enough to remain maintainable and privacy-conscious.
-   - **Current slice:** an account-owned saved budget scenario can download a versioned, self-contained HTML pack. It makes no live FX call, exports the newest already-stored observation with provider/effective/fetch/stale semantics, keeps remaining-budget arithmetic anchored to the immutable initial observation, snapshots currently reviewed city/national local-price and payment context with provenance, and degrades gracefully when destination context is unavailable. The file contains no executable script or remote styling/media dependency and explicitly states that offline FX is stored—not live. Automatic refresh, PWA/service-worker installation and native-mobile pack storage remain future work.
+   - **Current production slice:** an account-owned saved budget scenario can download a versioned self-contained HTML pack **and** explicitly save a read-only installed-app snapshot on the current browser/device. Both reuse the same provider-free snapshot contract: newest stored FX evidence, immutable-baseline Trip Budget Remaining, reviewed destination context and explicit generated/as-of semantics. Ordinary navigation HTML remains network-first and is never automatically cached. The private PWA cache is written only after **Save trip for offline**, routes only the matching saved-scenario URL while offline, and is labelled stored/not-live. A deterministic revision covering scenario assumptions, observations and confirmed spend marks a device copy out of date after meaningful saved-state changes; refresh/replacement and removal are explicit. A conservative age reminder is separate from financial freshness truth. Native-mobile storage remains future work.
 
 31. **Lightweight personalization — 79/100**
    - Allow opt-in preferences such as home currency, preferred language, travel style or answer-detail level to reduce repetitive setup.
@@ -313,7 +312,7 @@ Retention work should follow the dependency order of the product, not engagement
 
 **P0 foundation sequence:** SavedScenario / Trip → Budget interpretation → Rate changed since saved → Pre-trip re-check → Destination Mode. First production slices now exist through Destination Mode.
 
-**P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination packs ✅ first portable slice → Returning-user trip home ✅ first continuity slice. Camera confirmation and persistence remain separate explicit actions, and offline export now has explicit stored-FX/freshness semantics without introducing a second calculation path.
+**P1 dependency sequence:** Trip Budget Remaining foundation ✅ → Camera extraction/confirmation ✅ → Camera-confirmed spend handoff ✅ → Offline destination pack ✅ → PWA install/offline shell ✅ → explicit active-trip device snapshot + lifecycle ✅ → Returning-user trip home ✅. Camera confirmation and persistence remain separate explicit actions, and every offline surface reuses stored-FX/freshness semantics without introducing a second calculation path.
 
 **P2:** Scenario-based notifications → mobile quick actions/widget → saved-comparison continuity → broader Explore. The first destination-comparison web slice and the first provider-free Explore slice are already shipped.
 

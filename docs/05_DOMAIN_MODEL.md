@@ -303,27 +303,19 @@ Historical FX and same-currency purchases are outside this foreign-shopping esti
 
 A ScenarioNotificationPreference is explicit notification intent/configuration attached to one account-owned SavedScenario.
 
-It stores:
+It stores only:
 
 - scenario identity (ownership is inherited from the scenario);
 - notification type: pre-trip, context/offline freshness, or scenario rate alert;
 - enabled/disabled state;
 - validated IANA timezone;
 - explicit cadence;
-- supported delivery channel (`in_app` in the current slice);
-- optional explicit rate-change threshold for rate alerts;
-- last-delivered timestamp;
+- supported delivery channel (`in_app` in the first foundation slice);
 - created/updated timestamps.
 
-There is at most one row per scenario + notification type. Writes serialize through the owned SavedScenario, and foreign users cannot create, inspect, disable or delete another user's preference. Pre-trip opt-in requires an explicit saved travel start date. An enabled rate alert requires a bounded explicit threshold; the product does not infer a trading target.
+There is at most one row per scenario + notification type. Writes serialize through the owned SavedScenario, and foreign users cannot create, inspect, disable or delete another user's preference.
 
-## ScenarioNotificationDelivery
-
-A ScenarioNotificationDelivery is an owner-visible in-app message created from an enabled preference. It stores only the preference, a deterministic dedupe key, bounded title/body copy, creation time and optional user-controlled read time.
-
-The due generator is safe to rerun. Cadence is evaluated in the preference's IANA timezone, `last_delivered_at` prevents over-delivery across local-day/week boundaries, and the database unique constraint on `preference + dedupe_key` makes scheduler retries idempotent. In-app creation is the delivery side effect; there is no external email/SMS queue in this slice.
-
-Pre-trip reminders use the explicit saved start date. Freshness reminders are allowed only close to departure when the newest stored FX reference is already stale or old enough to justify an explicit re-check and offline-pack replacement. Rate alerts use a transient canonical current quote and compare it with the immutable initial saved observation. The probe is never appended to scenario history, and stale/provider-failed probes fail closed without a notification.
+The model is **not** a delivery queue or send log. Creating or enabling a preference does not refresh FX/context, schedule work, generate a notification or claim that delivery occurred. Pre-trip opt-in requires an explicit saved travel start date. Actual reminder generation, due-state calculation, deduplication, retries and last-sent evidence belong to later notification slices.
 
 ## SavedScenario
 

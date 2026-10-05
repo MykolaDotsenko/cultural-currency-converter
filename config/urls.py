@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.common.health import health_live, health_ready
+from apps.common.pwa import offline_shell, service_worker, web_app_manifest
 from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
 from apps.culture.views import (
@@ -30,14 +31,7 @@ from apps.exchange.views import (
     shopping_calculation,
 )
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
-from apps.travel.notification_web import (
-    configure_saved_scenario_notification,
-    delete_saved_scenario_notification,
-    mark_all_notifications_read,
-    mark_notification_read,
-    notification_inbox,
-)
-from apps.travel.offline_pack_web import download_offline_destination_pack
+from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
@@ -94,17 +88,6 @@ urlpatterns = [
     ),
     path("historical/series/", historical_series, name="historical_series"),
     path("saved/", saved_state, name="saved_state"),
-    path("saved/notifications/", notification_inbox, name="notification_inbox"),
-    path(
-        "saved/notifications/read-all/",
-        mark_all_notifications_read,
-        name="mark_all_notifications_read",
-    ),
-    path(
-        "saved/notifications/<int:delivery_id>/read/",
-        mark_notification_read,
-        name="mark_notification_read",
-    ),
     path(
         "saved/scenarios/budget/create/",
         save_budget_scenario,
@@ -126,19 +109,14 @@ urlpatterns = [
         name="recheck_saved_scenario",
     ),
     path(
-        "saved/scenarios/<int:scenario_id>/notifications/configure/",
-        configure_saved_scenario_notification,
-        name="configure_saved_scenario_notification",
-    ),
-    path(
-        "saved/scenarios/<int:scenario_id>/notifications/<str:notification_type>/delete/",
-        delete_saved_scenario_notification,
-        name="delete_saved_scenario_notification",
-    ),
-    path(
         "saved/scenarios/<int:scenario_id>/offline-pack/",
         download_offline_destination_pack,
         name="download_offline_destination_pack",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/offline-snapshot/",
+        offline_trip_snapshot,
+        name="offline_trip_snapshot",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/camera/",
@@ -198,6 +176,9 @@ urlpatterns = [
         name="clear_recent_conversions",
     ),
     path("accounts/", include("apps.accounts.urls")),
+    path("manifest.webmanifest", web_app_manifest, name="web_app_manifest"),
+    path("service-worker.js", service_worker, name="service_worker"),
+    path("offline/", offline_shell, name="offline_shell"),
     path("health/live/", health_live, name="health_live"),
     path("health/ready/", health_ready, name="health_ready"),
     path("security/csp-report/", csp_report, name="csp_report"),

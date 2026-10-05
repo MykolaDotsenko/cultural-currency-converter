@@ -342,7 +342,7 @@ Provider failure must leave the saved scenario and its original observations unc
 
 The shipped save flow can optionally store a travel start/end date. Saved scenario detail derives a deterministic **upcoming / active / started-without-end / ended** readiness state from those explicit dates. A saved end date requires a start date at form, domain and database boundaries. Timing metadata must never imply a hidden itinerary, auto-refresh or notification subscription.
 
-Scenario-based in-app notifications are now explicit end to end. A saved scenario can opt into a pre-trip reminder, context/offline freshness reminder or rate alert; type, enabled state, IANA timezone, cadence and channel are stored independently from financial observations. Pre-trip opt-in still requires an explicit saved travel start date. Rate alerts require an explicit percentage threshold and compare a transient canonical current quote with the immutable initial observation without persisting the probe as scenario history. Due generation is repeat-safe: local calendar cadence plus a database dedupe key prevents duplicate messages when the scheduler retries, and last-delivered time remains visible to the user. Provider/stale failures create no rate alert. Disable/delete and read/unread actions remain owner-scoped, and all wording stays informational rather than encouraging exchange timing.
+Optional pre-trip reminders may later invite the user to re-check a saved scenario close to its travel date. The persistence foundation is now scenario-scoped and explicit: notification type, enabled/disabled state, IANA timezone, cadence and in-app delivery channel are stored independently from scenario observations. Enabling the preference does not itself schedule or send anything; actual reminder generation/delivery remains a separate slice. A pre-trip opt-in cannot be enabled until the saved scenario has an explicit travel start date. Disable and delete semantics are separate, owner-scoped actions. Reminder delivery must remain separate from rate-alert/trading-style messaging.
 
 ### During travel
 
@@ -384,7 +384,9 @@ The Camera flow for saved budget scenarios is explicit end to end:
 
 ### Offline destination pack
 
-The first offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden service-worker cache.
+The installable web shell is now a separate progressive-enhancement layer from trip snapshots. When the network is unavailable, ordinary navigation falls back to a generic offline page that contains no account or scenario data. The service worker never caches navigation HTML, so signing in, opening Saved, editing a scenario or viewing notifications cannot silently leave private pages in Cache Storage. Only public build/PWA assets and the generic offline shell are eligible for service-worker caching.
+
+The portable offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden cache.
 
 The exported HTML file is self-contained: it carries its own restrained styling, no executable scripts and no remote asset dependency. It includes:
 
@@ -399,6 +401,19 @@ The file must say clearly that **offline means stored, not live**. Opening it la
 If local destination context is unavailable while generating the file, the pack still exports the saved FX/budget state and shows a degraded context notice instead of inventing prices or advice.
 
 The pack intentionally excludes receipt images, merchant identities, account/card data and individual purchase descriptions. Because the file may still contain a user’s saved budget/travel details, the download UI should remind the user to store it privately.
+
+The installed-app active-trip slice is explicit rather than automatic. On an authenticated saved budget scenario, **Save trip for offline** fetches the same canonical snapshot representation and stores it in a dedicated private Cache Storage namespace only after the click. The service worker itself never writes private scenario data. The generic offline shell can list only these explicit device copies and route an offline saved-scenario navigation to its matching read-only snapshot.
+
+Lifecycle stays visible:
+
+- a snapshot carries a version, generated timestamp and deterministic saved-scenario revision;
+- confirmed spend, a new stored FX observation or saved planning changes make the device copy **out of date** on the next online reopen;
+- **Refresh offline copy** explicitly replaces that snapshot;
+- snapshots older than 24 hours receive a conservative refresh reminder even if the saved-scenario revision is unchanged;
+- **Remove offline copy** deletes both the private cache entry and its local metadata;
+- returning to an anonymous page after sign-out clears private PWA trip storage as a privacy backstop.
+
+The offline app snapshot is still **stored, not live**. It never refreshes FX while offline, never turns reviewed context into current truth merely because the page opens, and remains read-only. The portable HTML pack continues to work independently when service workers, Cache Storage or JavaScript are unavailable.
 
 
 ### After travel

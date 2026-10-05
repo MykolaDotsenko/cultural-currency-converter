@@ -218,7 +218,6 @@ def test_notification_preference_cannot_cross_scenario_ownership(notification_sc
         enabled=True,
         timezone_name="Europe/Helsinki",
         cadence=ScenarioNotificationCadence.DAILY,
-        rate_change_threshold_percent="2.0",
     )
     assert (
         delete_scenario_notification_preference(
@@ -282,7 +281,6 @@ def test_notification_preferences_are_cascade_deleted_with_scenario(notification
         enabled=True,
         timezone_name="Europe/Helsinki",
         cadence=ScenarioNotificationCadence.DAILY,
-        rate_change_threshold_percent="2.0",
     )
 
     scenario.delete()

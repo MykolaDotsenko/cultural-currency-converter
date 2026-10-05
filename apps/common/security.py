@@ -64,6 +64,45 @@ _ADMIN_DIRECTIVES: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 
+_OFFLINE_SHELL_DIRECTIVES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("default-src", ("'none'",)),
+    ("base-uri", ("'none'",)),
+    ("object-src", ("'none'",)),
+    ("frame-ancestors", ("'none'",)),
+    ("frame-src", ("'none'",)),
+    ("form-action", ("'none'",)),
+    ("script-src", ("'self'",)),
+    ("script-src-attr", ("'none'",)),
+    ("style-src", ("'unsafe-inline'",)),
+    ("style-src-attr", ("'none'",)),
+    ("img-src", ("'none'",)),
+    ("font-src", ("'none'",)),
+    ("connect-src", ("'none'",)),
+    ("media-src", ("'none'",)),
+    ("worker-src", ("'none'",)),
+    ("manifest-src", ("'none'",)),
+)
+
+_OFFLINE_DOCUMENT_DIRECTIVES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("default-src", ("'none'",)),
+    ("base-uri", ("'none'",)),
+    ("object-src", ("'none'",)),
+    ("frame-ancestors", ("'none'",)),
+    ("frame-src", ("'none'",)),
+    ("form-action", ("'none'",)),
+    ("script-src", ("'none'",)),
+    ("script-src-attr", ("'none'",)),
+    ("style-src", ("'unsafe-inline'",)),
+    ("style-src-attr", ("'none'",)),
+    ("img-src", ("'none'",)),
+    ("font-src", ("'none'",)),
+    ("connect-src", ("'none'",)),
+    ("media-src", ("'none'",)),
+    ("worker-src", ("'none'",)),
+    ("manifest-src", ("'none'",)),
+)
+
+
 def _serialize_policy(directives: Sequence[tuple[str, Sequence[str]]]) -> str:
     return "; ".join(
         " ".join((directive, *values)) if values else directive for directive, values in directives
@@ -72,6 +111,8 @@ def _serialize_policy(directives: Sequence[tuple[str, Sequence[str]]]) -> str:
 
 PUBLIC_CONTENT_SECURITY_POLICY = _serialize_policy(_PUBLIC_DIRECTIVES)
 ADMIN_CONTENT_SECURITY_POLICY = _serialize_policy(_ADMIN_DIRECTIVES)
+OFFLINE_SHELL_CONTENT_SECURITY_POLICY = _serialize_policy(_OFFLINE_SHELL_DIRECTIVES)
+OFFLINE_DOCUMENT_CONTENT_SECURITY_POLICY = _serialize_policy(_OFFLINE_DOCUMENT_DIRECTIVES)
 
 
 def _with_media_image_source(
@@ -90,7 +131,18 @@ def _with_media_image_source(
     return tuple(expanded)
 
 
+def _route_name(request: HttpRequest) -> str:
+    resolver_match = getattr(request, "resolver_match", None)
+    return str(resolver_match.url_name or "") if resolver_match else ""
+
+
 def _policy_for_request(request: HttpRequest) -> str:
+    route_name = _route_name(request)
+    if route_name == "offline_shell":
+        return OFFLINE_SHELL_CONTENT_SECURITY_POLICY
+    if route_name in {"offline_trip_snapshot", "download_offline_destination_pack"}:
+        return OFFLINE_DOCUMENT_CONTENT_SECURITY_POLICY
+
     directives = _ADMIN_DIRECTIVES if _is_admin_request(request) else _PUBLIC_DIRECTIVES
     return _serialize_policy(
         _with_media_image_source(

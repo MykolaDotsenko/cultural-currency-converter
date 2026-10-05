@@ -477,19 +477,11 @@
 .qa-story-surface__heading,
 .qa-story-section__heading {
   display: grid;
-  min-width: 0;
   gap: var(--qa-space-2);
-}
-
-.qa-story-surface__heading > *,
-.qa-story-section__heading > * {
-  min-width: 0;
 }
 
 .qa-story-surface__scope {
   width: fit-content;
-  max-width: 100%;
-  overflow-wrap: anywhere;
   margin: 0;
   padding: var(--qa-space-2) var(--qa-space-3);
   border: 1px solid var(--color-border-subtle);

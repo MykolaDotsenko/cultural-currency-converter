@@ -732,7 +732,8 @@ def test_owner_can_recheck_scenario_without_overwriting_initial_observation(
     assert detail.content.count(b"fetched ") >= 2
     assert b"Travel money mode" in detail.content
     assert b"What the offline money pack contains" in detail.content
-    assert b"Save offline copy" in detail.content
+    assert b"Download portable HTML pack" in detail.content
+    assert b"Save trip for offline" in detail.content
     assert b"never silently refreshes offline" in detail.content
     detail_text = " ".join(detail.content.decode("utf-8").split())
     assert "does not recommend when to exchange money" in detail_text
