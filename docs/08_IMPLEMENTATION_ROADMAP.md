@@ -175,6 +175,7 @@ The following additional user-facing capabilities also clear the current **60/10
    - Prefer scenario meaning over generic FX noise: explain what the movement changes for the user's saved trip amount when that is defensible.
    - Make thresholds, cadence and disable/delete controls explicit.
    - Keep alerts informational and avoid trading/investment framing.
+   - **Current production slice:** SavedScenario rate alerts now require an explicit 0.1–25% threshold and cadence. The due generator probes the canonical current FX path without writing a new scenario observation, compares the transient rate/output against the immutable initial baseline and creates an owner-scoped in-app message only when the threshold is crossed. Stale/provider-failed probes fail closed. Local-calendar cadence, last-delivered state and a database dedupe key make repeated scheduler execution safe.
 
 19. **Shareable conversion / travel-money cards — 68/100**
    - Create a compact share surface from trusted conversion and destination-context data.
@@ -204,7 +205,7 @@ The integrated product concept adds three non-duplicative user-facing capabiliti
    - Refresh rate/local-value context on re-open and explain what changed under the same explicit assumptions.
    - Include destination/offline-pack freshness when it materially affects readiness for travel.
    - Keep reminders separate from speculative rate timing, easy to disable and privacy-conscious.
-   - **Current slice:** saved budget scenarios can store optional validated travel dates and derive deterministic upcoming/active/started/ended readiness on the detail page. Reference-rate re-check is explicit and owner-scoped. The notification-preference foundation is now shipped: one owner-scoped preference per scenario/type stores explicit enabled state, IANA timezone, cadence and the first supported `in_app` channel; enabling it has no delivery side effect, and pre-trip opt-in requires a saved start date. Due-reminder generation, actual delivery, deduplication/retries and automatic background local-context refresh remain future work.
+   - **Current production slice:** saved scenarios expose explicit notification configuration and an owner-scoped in-app inbox. Pre-trip reminders use only explicit saved travel dates. Context/offline freshness reminders run only near departure when the newest stored FX reference is stale or at least seven days old and ask the user to explicitly re-check context/replace any offline pack rather than silently refreshing it. Delivery generation is scheduler-friendly and repeat-safe through timezone-aware cadence, last-delivered evidence and a database dedupe key. Automatic background local-context refresh remains future work.
 
 ### Enabling data/content foundation
 

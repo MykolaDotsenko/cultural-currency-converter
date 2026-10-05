@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.core.exceptions import ValidationError
@@ -45,6 +46,7 @@ def upsert_scenario_notification_preference(
     timezone_name: str,
     cadence: str,
     delivery_channel: str = ScenarioNotificationDeliveryChannel.IN_APP,
+    rate_change_threshold_percent: Decimal | str | None = None,
 ) -> ScenarioNotificationPreference:
     if not user.is_authenticated:
         raise ScenarioNotificationPreferenceError(
@@ -90,6 +92,27 @@ def upsert_scenario_notification_preference(
                 "A pre-trip reminder requires a saved travel start date."
             )
 
+        threshold_value: Decimal | None = None
+        if notification_type_value == ScenarioNotificationType.RATE_ALERT:
+            if rate_change_threshold_percent in (None, ""):
+                existing = (
+                    ScenarioNotificationPreference.objects.filter(
+                        scenario=scenario,
+                        notification_type=notification_type_value,
+                    )
+                    .only("rate_change_threshold_percent")
+                    .first()
+                )
+                threshold_value = (
+                    existing.rate_change_threshold_percent if existing is not None else None
+                )
+                if enabled and threshold_value is None:
+                    raise ScenarioNotificationPreferenceError(
+                        "Choose a rate-change threshold before enabling this alert."
+                    )
+            else:
+                threshold_value = _normalize_rate_threshold(rate_change_threshold_percent)
+
         preference, _created = ScenarioNotificationPreference.objects.update_or_create(
             scenario=scenario,
             notification_type=notification_type_value,
@@ -98,6 +121,7 @@ def upsert_scenario_notification_preference(
                 "timezone": timezone_value,
                 "cadence": cadence_value,
                 "delivery_channel": channel_value,
+                "rate_change_threshold_percent": threshold_value,
             },
         )
         try:
@@ -158,3 +182,18 @@ def _validation_message(exc: ValidationError) -> str:
     if exc.messages:
         return str(exc.messages[0])
     return "Scenario notification preference validation failed."
+
+
+def _normalize_rate_threshold(raw_value: Decimal | str) -> Decimal:
+    try:
+        value = Decimal(str(raw_value))
+    except (InvalidOperation, ValueError) as exc:
+        raise ScenarioNotificationPreferenceError(
+            "Rate-change threshold must be a valid percentage."
+        ) from exc
+
+    if not value.is_finite() or value < Decimal("0.1") or value > Decimal("25"):
+        raise ScenarioNotificationPreferenceError(
+            "Rate-change threshold must be between 0.1% and 25%."
+        )
+    return value.quantize(Decimal("0.1"))
