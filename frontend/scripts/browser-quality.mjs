@@ -2146,6 +2146,31 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
   await assertAxe(offlinePage, "offline-pack/e2e");
   await offlinePage.close();
 
+  if (BROWSER_ENGINE === "chromium") {
+    const offlineControlForRemoval = page.locator("[data-offline-trip-control]");
+    await offlineControlForRemoval
+      .getByRole("button", { name: "Remove offline copy", exact: true })
+      .click();
+    await offlineControlForRemoval
+      .getByText("Offline app copy removed from this device.", { exact: true })
+      .waitFor();
+
+    const removedOfflineState = await page.evaluate(async () => {
+      const cache = await caches.open("cultural-currency-private-trip-v1");
+      const cacheEntries = (await cache.keys()).map((request) => new URL(request.url).pathname);
+      const metadata = JSON.parse(
+        localStorage.getItem("cultural-currency.offline-trips.v1") ?? "[]",
+      );
+      return { cacheEntries, metadata };
+    });
+    assert(
+      removedOfflineState.cacheEntries.length === 0 &&
+        Array.isArray(removedOfflineState.metadata) &&
+        removedOfflineState.metadata.length === 0,
+      `offline-trip/e2e: remove left private device state behind: ${JSON.stringify(removedOfflineState)}`,
+    );
+  }
+
   await page.getByRole("button", { name: "Remove entry" }).waitFor();
   await assertNoHorizontalOverflow(page, "trip-budget/e2e");
   await assertAxe(page, "trip-budget/e2e");
