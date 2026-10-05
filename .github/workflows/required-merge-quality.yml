@@ -113,6 +113,8 @@ jobs:
             apps/exchange/money_context.py \
             apps/exchange/payment_estimate.py \
             apps/exchange/result_summary.py \
+            apps/exchange/share_presentation.py \
+            apps/exchange/share_snapshot.py \
             apps/exchange/providers/base.py \
             apps/exchange/providers/frankfurter.py \
             apps/travel/home.py \
