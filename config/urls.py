@@ -31,6 +31,13 @@ from apps.exchange.views import (
     shopping_calculation,
 )
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
+from apps.travel.notification_web import (
+    configure_saved_scenario_notification,
+    delete_saved_scenario_notification,
+    mark_all_notifications_read,
+    mark_notification_read,
+    notification_inbox,
+)
 from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
@@ -88,6 +95,17 @@ urlpatterns = [
     ),
     path("historical/series/", historical_series, name="historical_series"),
     path("saved/", saved_state, name="saved_state"),
+    path("saved/notifications/", notification_inbox, name="notification_inbox"),
+    path(
+        "saved/notifications/read-all/",
+        mark_all_notifications_read,
+        name="mark_all_notifications_read",
+    ),
+    path(
+        "saved/notifications/<int:delivery_id>/read/",
+        mark_notification_read,
+        name="mark_notification_read",
+    ),
     path(
         "saved/scenarios/budget/create/",
         save_budget_scenario,
@@ -107,6 +125,16 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/recheck/",
         recheck_saved_scenario,
         name="recheck_saved_scenario",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/notifications/configure/",
+        configure_saved_scenario_notification,
+        name="configure_saved_scenario_notification",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/notifications/<str:notification_type>/delete/",
+        delete_saved_scenario_notification,
+        name="delete_saved_scenario_notification",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/offline-pack/",
