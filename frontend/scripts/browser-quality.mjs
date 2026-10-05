@@ -575,9 +575,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   const converterProvider = (
     await page
       .locator(".qa-rate-meta__facts > div")
-      .filter({ hasText: /^Provider/ })
-      .locator("dd")
+      .filter({ hasText: "Provider" })
       .first()
+      .locator("dd")
       .innerText()
   ).trim();
   const sharePage = await page.context().newPage();
@@ -599,9 +599,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     const shareProvider = (
       await sharePage
         .locator(".qa-context-facts > div")
-        .filter({ hasText: /^Source/ })
-        .locator("dd")
+        .filter({ hasText: "Source" })
         .first()
+        .locator("dd")
         .innerText()
     ).trim();
     assert(
