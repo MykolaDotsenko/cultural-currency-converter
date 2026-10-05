@@ -26,7 +26,9 @@ type OfflineTripControl = {
 function safeStorage(): Storage | null {
   try {
     const storage = window.localStorage;
-    storage.getItem(OFFLINE_TRIP_STORAGE_KEY);
+    const probeKey = `${OFFLINE_TRIP_STORAGE_KEY}.probe`;
+    storage.setItem(probeKey, "1");
+    storage.removeItem(probeKey);
     return storage;
   } catch {
     return null;
@@ -82,7 +84,19 @@ async function ensureServiceWorkerReady(): Promise<boolean> {
   try {
     await navigator.serviceWorker.register(serviceWorkerUrl, { scope: "/" });
     await navigator.serviceWorker.ready;
-    return true;
+    if (navigator.serviceWorker.controller) return true;
+
+    return await new Promise<boolean>((resolve) => {
+      const timer = window.setTimeout(() => resolve(false), 3000);
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => {
+          window.clearTimeout(timer);
+          resolve(Boolean(navigator.serviceWorker.controller));
+        },
+        { once: true },
+      );
+    });
   } catch {
     return false;
   }
@@ -192,10 +206,15 @@ async function saveSnapshot(control: OfflineTripControl, storage: Storage): Prom
     const others = loadMetadata(storage).filter((item) => item.scenarioId !== control.scenarioId);
     const nextItems = [metadata, ...others];
     const evicted = nextItems.slice(MAX_OFFLINE_TRIPS);
+    try {
+      saveMetadata(storage, nextItems);
+    } catch {
+      await deleteCachedSnapshot(cache, control.snapshotUrl);
+      throw new Error("offline trip metadata could not be persisted");
+    }
     for (const item of evicted) {
       await deleteCachedSnapshot(cache, item.snapshotUrl);
     }
-    saveMetadata(storage, nextItems);
     await refreshControlState(control, storage);
   } catch {
     updateStatus(
