@@ -151,6 +151,10 @@ def load_conversion_share_token(token: str) -> ConversionShareSnapshot:
         raise ConversionShareTokenError(
             "Exact share snapshot must not claim an external provider."
         )
+    if not exact and not provider_keys:
+        raise ConversionShareTokenError(
+            "Conversion share snapshot must retain provider attribution."
+        )
 
     return ConversionShareSnapshot(
         input_amount=input_amount,

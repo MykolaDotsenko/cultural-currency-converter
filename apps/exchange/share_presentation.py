@@ -14,6 +14,7 @@ class ConversionShareCard:
     input_text: str
     output_text: str
     relation_label: str
+    relation_symbol: str
     rate_line: str
     status_label: str
     data_class: str
@@ -56,6 +57,7 @@ def build_conversion_share_card(snapshot: ConversionShareSnapshot) -> Conversion
     output_amount = _decimal_text(snapshot.output_amount)
     output_text = f"{output_amount} {snapshot.quote_currency}"
     relation_label = "equals" if exact else "approximately"
+    relation_symbol = "=" if exact else "≈"
     rate_line = (
         f"1 {snapshot.base_currency} = {_decimal_text(snapshot.rate)} {snapshot.quote_currency}"
     )
@@ -113,6 +115,7 @@ def build_conversion_share_card(snapshot: ConversionShareSnapshot) -> Conversion
         input_text=input_text,
         output_text=output_text,
         relation_label=relation_label,
+        relation_symbol=relation_symbol,
         rate_line=rate_line,
         status_label=status_label,
         data_class=data_class,

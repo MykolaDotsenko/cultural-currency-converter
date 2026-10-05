@@ -382,6 +382,10 @@ The Camera flow for saved budget scenarios is explicit end to end:
 - replaying one confirmation cannot double-count spend, while a separately confirmed identical amount remains a separate user action.
 
 
+### Shareable conversion snapshot
+
+A successful canonical conversion now exposes **Share conversion** as an explicit downstream action. The generated link is public-by-link but contains no account identity: it carries a signed immutable conversion snapshot with input/output, rate, requested/effective date, fetched-at time, provider attribution, historical granularity and stale state. Opening the link or exportable SVG does not call an FX provider and does not silently refresh the number. Current, cached, historical and exact-identity states remain visibly distinct. Native Web Share is enhancement-only; a visible copyable URL and SVG download remain the durable fallback.
+
 ### Offline destination pack
 
 The first offline slice is a deliberate download from an account-owned saved budget scenario, not a hidden service-worker cache.

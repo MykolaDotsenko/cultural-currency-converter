@@ -563,6 +563,57 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   );
   await assertAiExplanationReliability(page, consoleErrors);
 
+  const shareHref = await page
+    .getByRole("link", { name: "Share conversion", exact: true })
+    .getAttribute("href");
+  assert(shareHref, "conversion-share/e2e: Share conversion link is missing");
+  const shareUrl = new URL(shareHref, BASE_URL);
+  assert(
+    shareUrl.pathname === "/share/conversion/" && shareUrl.searchParams.has("snapshot"),
+    `conversion-share/e2e: malformed share URL ${shareHref}`,
+  );
+  const sharePage = await page.context().newPage();
+  const shareConsoleErrors = [];
+  sharePage.on("console", (message) => {
+    if (message.type() === "error") shareConsoleErrors.push(message.text());
+  });
+  try {
+    const shareResponse = await sharePage.goto(shareUrl.toString(), { waitUntil: "networkidle" });
+    assert(
+      shareResponse?.ok(),
+      `conversion-share/e2e: share page failed with ${shareResponse?.status() ?? "no response"}`,
+    );
+    await sharePage
+      .getByRole("heading", { name: /100 EUR → 17450 JPY/, level: 1 })
+      .waitFor();
+    await sharePage
+      .getByText("This page is a signed read-only snapshot", { exact: false })
+      .waitFor();
+    await sharePage.getByText("Effective date", { exact: true }).waitFor();
+    await sharePage.getByText("ECB", { exact: true }).waitFor();
+    const svgResponse = await sharePage.waitForResponse(
+      (response) => new URL(response.url()).pathname === "/share/conversion/card.svg",
+    ).catch(() => null);
+    if (svgResponse) {
+      assert(svgResponse.ok(), "conversion-share/e2e: SVG preview request failed");
+    } else {
+      const image = sharePage.locator(".qa-share-preview__image");
+      await image.waitFor();
+      assert(
+        await image.evaluate((element) => element instanceof HTMLImageElement && element.complete),
+        "conversion-share/e2e: SVG preview did not finish loading",
+      );
+    }
+    await assertNoHorizontalOverflow(sharePage, "conversion-share/e2e");
+    await assertAxe(sharePage, "conversion-share/e2e");
+    assert(
+      shareConsoleErrors.length === 0,
+      `conversion-share/e2e: console errors: ${shareConsoleErrors.join(" | ")}`,
+    );
+  } finally {
+    await sharePage.close();
+  }
+
   const waitForPaymentEstimate = () =>
     page.waitForResponse(
       (response) =>

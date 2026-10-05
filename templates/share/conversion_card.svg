@@ -24,7 +24,7 @@
         font-family="ui-sans-serif, system-ui, sans-serif"
         font-size="{{ share_card.output_font_size }}"
         font-weight="700"
-        letter-spacing="-2">≈ {{ share_card.output_text }}</text>
+        letter-spacing="-2">{{ share_card.relation_symbol }} {{ share_card.output_text }}</text>
   <rect x="108" y="354" width="270" height="48" rx="24" fill="#e4ebe7"/>
   <text x="132" y="386"
         fill="#173f36"
