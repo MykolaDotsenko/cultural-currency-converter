@@ -193,6 +193,8 @@
 }
 
 .qa-table-scroll {
+  inline-size: 100%;
+  min-inline-size: 0;
   max-inline-size: 100%;
   margin-block-start: var(--qa-space-3);
   overflow-x: auto;
