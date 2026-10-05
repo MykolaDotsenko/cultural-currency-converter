@@ -1860,7 +1860,8 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
     "trip-budget/e2e: premium action hierarchy must expose one Offline options entry",
   );
   assert(
-    (await page.getByRole("link", { name: "Download portable HTML pack", exact: true }).count()) === 1,
+    (await page.getByRole("link", { name: "Download portable HTML pack", exact: true }).count()) ===
+      1,
     "trip-budget/e2e: portable offline pack download must have one canonical CTA",
   );
 
