@@ -53,6 +53,11 @@ class PwaSurfaceTests(SimpleTestCase):
         assert response.status_code == 200
         assert response["Cache-Control"] == "public, max-age=300"
         assert response["X-Robots-Tag"] == "noindex, nofollow"
+        policy = response["Content-Security-Policy"]
+        assert "default-src 'none'" in policy
+        assert "script-src 'self'" in policy
+        assert "style-src 'unsafe-inline'" in policy
+        assert "connect-src 'none'" in policy
 
         html = response.content.decode("utf-8")
         normalized = " ".join(html.split())
