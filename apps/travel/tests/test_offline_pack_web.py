@@ -279,11 +279,17 @@ def test_explicit_offline_app_snapshot_is_private_owner_scoped_and_versioned(
 
     assert response.status_code == 200
     assert response["Content-Type"].startswith("text/html")
-    assert response["Cache-Control"] == "private, no-store"
+    cache_control = response["Cache-Control"]
+    assert "private" in cache_control
+    assert "no-store" in cache_control
     assert response["Pragma"] == "no-cache"
     assert response["X-Robots-Tag"] == "noindex, nofollow"
     assert response["Referrer-Policy"] == "no-referrer"
     assert response["X-Cultural-Currency-Offline-Snapshot"] == "1"
+    policy = response["Content-Security-Policy"]
+    assert "default-src 'none'" in policy
+    assert "script-src 'none'" in policy
+    assert "style-src 'unsafe-inline'" in policy
     revision = response["X-Cultural-Currency-Snapshot-Revision"]
     assert len(revision) == 24
     assert response["X-Cultural-Currency-Snapshot-Generated-At"]
