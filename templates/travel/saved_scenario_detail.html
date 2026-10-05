@@ -66,8 +66,7 @@
              href="{% url 'camera_scan_saved_scenario' scenario.pk %}">Scan amount</a>
         {% endif %}
         <a class="qa-secondary-button" href="{{ converter_url }}">Convert</a>
-        <a class="qa-secondary-button"
-           href="{% url 'download_offline_destination_pack' scenario.pk %}">Offline money pack</a>
+        <a class="qa-secondary-button" href="#offline-trip-tools">Offline options</a>
       </div>
       <p class="qa-trip-money-pass__trust">
         {% if scenario.budget_basis == "payment_estimate" %}
@@ -79,7 +78,7 @@
           are informational and never move this spending baseline.
         {% endif %}
       </p>
-      <details class="qa-offline-pack-preview">
+      <details class="qa-offline-pack-preview" id="offline-trip-tools">
         <summary>What the offline money pack contains</summary>
         <div class="qa-offline-pack-preview__grid">
           <div>
@@ -163,10 +162,6 @@
             <a class="qa-secondary-button" href="{{ reopen_url }}">Reopen Shopping estimate</a>
           {% else %}
             <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
-          {% endif %}
-          {% if trip_budget %}
-            <a class="qa-secondary-button"
-               href="{% url 'download_offline_destination_pack' scenario.pk %}">Download offline pack</a>
           {% endif %}
           <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
             {% csrf_token %}
@@ -425,12 +420,9 @@
             </p>
             {% include "components/culture/destination_context.html" with component=local_context.component %}
           {% elif local_context.state == "degraded" %}
-            <div class="qa-inline-alert qa-degraded-panel" role="status">
-              <h3>Local money guide is temporarily unavailable.</h3>
-              <p>{{ local_context.message }}</p>
-            </div>
+            {% include "components/product_state.html" with state="unavailable" label="Local guide unavailable" title="Local money guide is temporarily unavailable." detail=local_context.message %}
           {% else %}
-            <p class="qa-saved-empty">{{ local_context.message }}</p>
+            {% include "components/product_state.html" with state="empty" label="No reviewed local guide" title="No reviewed local money guide is available yet." detail=local_context.message %}
           {% endif %}
         {% else %}
           <p class="qa-saved-state__privacy">

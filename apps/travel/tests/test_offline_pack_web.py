@@ -244,11 +244,10 @@ def test_saved_budget_detail_exposes_offline_pack_action_and_explicit_app_snapsh
     response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
 
     assert response.status_code == 200
-    assert b"Download offline pack" in response.content
-    assert (
-        reverse("download_offline_destination_pack", args=(scenario.pk,)).encode()
-        in response.content
-    )
+    assert b"Offline options" in response.content
+    assert b"Download portable HTML pack" in response.content
+    download_url = reverse("download_offline_destination_pack", args=(scenario.pk,)).encode()
+    assert response.content.count(download_url) == 1
     assert b"Save trip for offline" in response.content
     assert b"Nothing is stored in the app cache until you choose" in response.content
     assert reverse("offline_trip_snapshot", args=(scenario.pk,)).encode() in response.content

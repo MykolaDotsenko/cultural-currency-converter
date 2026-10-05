@@ -1,0 +1,14 @@
+<section class="qa-product-state qa-product-state--{{ state }}"
+         data-product-state="{{ state }}"
+         role="{% if role %}{{ role }}{% else %}status{% endif %}">
+  <p class="qa-product-state__label">
+    {% if label %}{{ label }}{% elif state == "partial" %}Partial{% elif state == "unavailable" %}Unavailable{% elif state == "stale" %}Stored / stale{% elif state == "not-applicable" %}Not applicable{% else %}No reviewed data{% endif %}
+  </p>
+  <div class="qa-product-state__copy">
+    <h3>{{ title }}</h3>
+    {% if detail %}<p>{{ detail }}</p>{% endif %}
+  </div>
+  {% if action_href and action_label %}
+    <a class="qa-secondary-button" href="{{ action_href }}">{{ action_label }}</a>
+  {% endif %}
+</section>

@@ -1854,7 +1854,20 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
-  await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+  const offlinePackSummary = page.getByText("What the offline money pack contains", {
+    exact: true,
+  });
+  await offlinePackSummary.waitFor();
+  assert(
+    (await page.getByRole("link", { name: "Offline options", exact: true }).count()) === 1,
+    "trip-budget/e2e: premium action hierarchy must expose one Offline options entry",
+  );
+  await offlinePackSummary.click();
+  assert(
+    (await page.getByRole("link", { name: "Download portable HTML pack", exact: true }).count()) ===
+      1,
+    "trip-budget/e2e: portable offline pack download must have one canonical CTA",
+  );
 
   const savedScenarioPath = new URL(page.url()).pathname;
   if (BROWSER_ENGINE === "chromium") {
@@ -2116,11 +2129,18 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
     );
   }
 
-  // Browser-level Offline Pack evidence: download the actual attachment,
-  // inspect its self-contained HTML, then render that HTML without network.
+  // Browser-level Offline Pack evidence: the scenario was reloaded during the
+  // service-worker lifecycle above, so reopen the disclosure before using its canonical CTA.
+  const offlinePackDetails = page.locator("#offline-trip-tools");
+  if ((await offlinePackDetails.getAttribute("open")) === null) {
+    await offlinePackDetails.locator("summary").click();
+  }
+
+  // Download the actual attachment, inspect its self-contained HTML, then render that HTML
+  // without network.
   const [offlineDownload] = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("link", { name: "Download offline pack", exact: true }).click(),
+    page.getByRole("link", { name: "Download portable HTML pack", exact: true }).click(),
   ]);
   assert(
     /^cultural-currency-.*-offline-\d{4}-\d{2}-\d{2}\.html$/.test(
