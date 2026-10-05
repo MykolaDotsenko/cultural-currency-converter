@@ -1854,11 +1854,15 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   await page.getByRole("heading", { name: "Trip budget remaining" }).waitFor();
   await page.getByText("Travel money mode", { exact: true }).waitFor();
   await page.getByRole("link", { name: "Scan amount", exact: true }).waitFor();
-  await page.getByText("What the offline money pack contains", { exact: true }).waitFor();
+  const offlinePackSummary = page.getByText("What the offline money pack contains", {
+    exact: true,
+  });
+  await offlinePackSummary.waitFor();
   assert(
     (await page.getByRole("link", { name: "Offline options", exact: true }).count()) === 1,
     "trip-budget/e2e: premium action hierarchy must expose one Offline options entry",
   );
+  await offlinePackSummary.click();
   assert(
     (await page.getByRole("link", { name: "Download portable HTML pack", exact: true }).count()) ===
       1,
