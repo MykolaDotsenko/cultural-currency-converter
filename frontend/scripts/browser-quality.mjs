@@ -1890,9 +1890,10 @@ async function assertAuthenticatedRecentHistoryFlow(page) {
       snapshotResponse.status() === 200,
       `offline-trip/e2e: snapshot returned ${snapshotResponse.status()}`,
     );
+    const snapshotCacheControl = snapshotResponse.headers()["cache-control"] ?? "";
     assert(
-      snapshotResponse.headers()["cache-control"] === "private, no-store",
-      "offline-trip/e2e: private snapshot lost no-store server semantics",
+      snapshotCacheControl.includes("private") && snapshotCacheControl.includes("no-store"),
+      `offline-trip/e2e: private snapshot lost no-store server semantics: ${snapshotCacheControl}`,
     );
     await offlineControl
       .getByText("Saved for offline on this device. Stored snapshot, never live.", {
