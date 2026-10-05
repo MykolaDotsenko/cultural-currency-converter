@@ -599,45 +599,25 @@ No parallel shopping persistence subsystem.
 
 ## PR #219 — Notification preference domain
 
-**Status: foundation implemented; no delivery side effect yet.**
+**Current production slice:** shipped and extended through the complete in-app notification phase.
 
-Explicit opt-in only.
-
-Represent:
-
-- enabled state;
-- notification type;
-- timezone;
-- cadence;
-- supported delivery configuration;
-- disable/delete semantics.
+Explicit opt-in stores enabled state, type, validated IANA timezone, cadence, `in_app` channel, optional bounded rate threshold and last-delivered evidence. Scenario detail exposes configure/disable/delete controls.
 
 ## PR #220 — Pre-trip reminder
 
-Use explicit saved travel dates to prompt re-open/re-check near departure.
-
-Do not provide speculative exchange-timing advice.
+**Current production slice:** shipped. Explicit saved travel dates can generate an owner-scoped reminder in the seven-day departure window. No itinerary or exchange-timing intent is inferred.
 
 ## PR #221 — Context/offline freshness reminder
 
-Notify only when a saved trip's reviewed context or offline pack is materially stale before travel.
+**Current production slice:** shipped as a conservative stored-reference readiness reminder. Close to departure, a reminder is due only when the newest stored FX reference is stale or at least seven days old. The copy asks the user to explicitly re-check and replace any offline pack; it does not silently refresh current context or claim that an untracked downloaded file is stale.
 
 ## PR #222 — Scenario rate alert
 
-User-defined threshold against a saved scenario observation.
-
-Language must remain informational and scenario-oriented.
+**Current production slice:** shipped. The user supplies a 0.1–25% threshold. A scheduler run obtains a transient canonical current quote, compares it with the immutable initial saved observation and creates an informational in-app alert only when the threshold is crossed. The transient probe is not persisted as scenario history; stale/provider-failed probes create no alert.
 
 ## PR #223 — Notification reliability and deduplication
 
-Cover:
-
-- idempotency;
-- last-sent state;
-- retries;
-- disabling;
-- deletion;
-- timezone boundaries.
+**Current production slice:** shipped for in-app delivery. Cadence is evaluated in the preference's timezone, `last_delivered_at` records send evidence, and a unique preference + deterministic period/event key makes repeated scheduler execution idempotent. Disable/delete remain owner-scoped; notification rows expose explicit read/unread state. `python manage.py deliver_scenario_notifications` is the repeat-safe scheduler entrypoint.
 
 ---
 
