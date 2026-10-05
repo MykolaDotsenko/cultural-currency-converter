@@ -14,8 +14,8 @@ from apps.exchange.domain import (
     same_currency_quote,
 )
 from apps.exchange.share_snapshot import (
-    ConversionShareTokenError,
     _TOKEN_SALT,
+    ConversionShareTokenError,
     build_conversion_share_token,
     load_conversion_share_token,
 )
