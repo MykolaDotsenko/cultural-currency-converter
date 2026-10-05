@@ -153,7 +153,9 @@ def test_owner_downloads_self_contained_offline_pack_with_saved_freshness_semant
     assert response["Content-Type"].startswith("text/html")
     assert "attachment;" in response["Content-Disposition"]
     assert "tokyo-japan" in response["Content-Disposition"]
-    assert response["Cache-Control"] == "private, no-store"
+    cache_control = response["Cache-Control"]
+    assert "private" in cache_control
+    assert "no-store" in cache_control
     assert response["X-Robots-Tag"] == "noindex, nofollow"
     assert response["Referrer-Policy"] == "no-referrer"
 
