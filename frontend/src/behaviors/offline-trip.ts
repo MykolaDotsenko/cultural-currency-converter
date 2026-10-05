@@ -228,16 +228,36 @@ async function saveSnapshot(control: OfflineTripControl, storage: Storage): Prom
   }
 }
 
-async function removeSnapshot(control: OfflineTripControl, storage: Storage): Promise<void> {
-  control.saveButton.disabled = true;
-  control.removeButton.disabled = true;
+async function purgeScenarioSnapshot(
+  control: OfflineTripControl,
+  storage: Storage,
+): Promise<void> {
+  let failed = false;
+
   try {
     const cache = await caches.open(PRIVATE_TRIP_CACHE);
     await deleteCachedSnapshot(cache, control.snapshotUrl);
+  } catch {
+    failed = true;
+  }
+
+  try {
     saveMetadata(
       storage,
       loadMetadata(storage).filter((item) => item.scenarioId !== control.scenarioId),
     );
+  } catch {
+    failed = true;
+  }
+
+  if (failed) throw new Error("offline scenario cleanup was incomplete");
+}
+
+async function removeSnapshot(control: OfflineTripControl, storage: Storage): Promise<void> {
+  control.saveButton.disabled = true;
+  control.removeButton.disabled = true;
+  try {
+    await purgeScenarioSnapshot(control, storage);
     setButtons(control, false, false);
     updateStatus(control, "Offline app copy removed from this device.", "feedback");
   } catch {
@@ -250,6 +270,46 @@ async function removeSnapshot(control: OfflineTripControl, storage: Storage): Pr
     control.saveButton.disabled = false;
     control.removeButton.disabled = false;
   }
+}
+
+function scenarioDeleteForm(control: OfflineTripControl): HTMLFormElement | null {
+  const expectedPath = `${control.detailUrl}delete/`;
+  for (const form of document.querySelectorAll<HTMLFormElement>("form[method='post']")) {
+    try {
+      const action = new URL(form.action, window.location.origin);
+      if (action.origin === window.location.origin && action.pathname === expectedPath) return form;
+    } catch {
+      // Ignore malformed unrelated form actions.
+    }
+  }
+  return null;
+}
+
+function bindScenarioDeleteCleanup(control: OfflineTripControl, storage: Storage): void {
+  const form = scenarioDeleteForm(control);
+  if (!form || form.dataset.offlineTripDeleteCleanup === "true") return;
+  form.dataset.offlineTripDeleteCleanup = "true";
+
+  form.addEventListener("submit", (event) => {
+    if (form.dataset.offlineTripDeleteSubmitting === "true") return;
+
+    event.preventDefault();
+    form.dataset.offlineTripDeleteSubmitting = "true";
+    const submitter =
+      event.submitter instanceof HTMLButtonElement
+        ? event.submitter
+        : form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (submitter) submitter.disabled = true;
+
+    void purgeScenarioSnapshot(control, storage)
+      .catch(() => {
+        // Browser storage is best-effort. A cleanup failure must never block
+        // the explicit server-side scenario deletion requested by the user.
+      })
+      .finally(() => {
+        form.submit();
+      });
+  });
 }
 
 function parseControl(root: HTMLElement): OfflineTripControl | null {
@@ -313,6 +373,7 @@ export function enhanceOfflineTripControls(): void {
     control.removeButton.addEventListener("click", () => {
       void removeSnapshot(control, storage);
     });
+    bindScenarioDeleteCleanup(control, storage);
 
     updateStatus(control, "Preparing offline app storage…", "neutral");
     void ensureServiceWorkerReady().then((ready) => {
