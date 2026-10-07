@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from apps.accounts.models import AccountPreferences
+from apps.accounts.models import AccountPreferences, AnswerDetail, PreferredLanguage, TravelStyle
 from apps.countries.models import Currency
 
 
@@ -60,5 +60,35 @@ def set_home_currency(user, *, currency_code: str) -> AccountPreferences:
         preferences, _ = AccountPreferences.objects.update_or_create(
             user=user,
             defaults={"home_currency": currency},
+        )
+    return preferences
+
+
+def set_explanation_preferences(
+    user,
+    *,
+    preferred_language: str,
+    answer_detail: str,
+    travel_style: str,
+) -> AccountPreferences:
+    if not user.is_authenticated:
+        raise ValueError("Authentication is required.")
+    if preferred_language not in PreferredLanguage.values:
+        raise ValueError("Preferred language is invalid.")
+    if answer_detail not in AnswerDetail.values:
+        raise ValueError("Answer detail is invalid.")
+    if travel_style not in TravelStyle.values:
+        raise ValueError("Travel style is invalid.")
+
+    user_model = get_user_model()
+    with transaction.atomic():
+        user_model.objects.select_for_update().get(pk=user.pk)
+        preferences, _ = AccountPreferences.objects.update_or_create(
+            user=user,
+            defaults={
+                "preferred_language": preferred_language,
+                "answer_detail": answer_detail,
+                "travel_style": travel_style,
+            },
         )
     return preferences
