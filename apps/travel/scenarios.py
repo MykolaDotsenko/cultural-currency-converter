@@ -72,17 +72,13 @@ class SavedScenarioSpec:
     shopping_assumptions: ShoppingAssumptions | None = None
 
 
-def create_saved_scenario(
-    user: ScenarioOwner,
+def validate_saved_scenario_spec(
     *,
     spec: SavedScenarioSpec,
     conversion: ConversionResult,
-    import_key: UUID | None = None,
-) -> SavedScenario:
-    """Create one user-owned scenario with an immutable initial FX observation."""
+) -> tuple[str, ...]:
+    """Validate reusable scenario semantics without persisting user-owned state."""
 
-    if not user.is_authenticated or user.pk is None:
-        raise SavedScenarioError("Authentication is required to save a scenario.")
     if not isinstance(spec.kind, SavedScenarioKind):
         raise SavedScenarioError("Scenario kind must be a SavedScenarioKind value.")
     if conversion.quote.historical:
@@ -112,7 +108,21 @@ def create_saved_scenario(
             raise SavedScenarioError("Shopping assumptions must equal the scenario source amount.")
     elif spec.shopping_assumptions is not None:
         raise SavedScenarioError("Shopping assumptions are valid only for Shopping scenarios.")
-    provider_keys = _provider_keys(conversion.quote.provider_keys)
+    return _provider_keys(conversion.quote.provider_keys)
+
+
+def create_saved_scenario(
+    user: ScenarioOwner,
+    *,
+    spec: SavedScenarioSpec,
+    conversion: ConversionResult,
+    import_key: UUID | None = None,
+) -> SavedScenario:
+    """Create one user-owned scenario with an immutable initial FX observation."""
+
+    if not user.is_authenticated or user.pk is None:
+        raise SavedScenarioError("Authentication is required to save a scenario.")
+    provider_keys = validate_saved_scenario_spec(spec=spec, conversion=conversion)
 
     user_model = get_user_model()
     with transaction.atomic():
