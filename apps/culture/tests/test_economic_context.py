@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
@@ -156,9 +157,7 @@ def test_persist_economic_observation_maps_iso_codes_and_is_idempotent(finland):
     )
 
     first, created = persist_economic_observation(source)
-    updated_source = EconomicSourceObservation(
-        **{**source.__dict__, "value": Decimal("1.30")}
-    )
+    updated_source = replace(source, value=Decimal("1.30"))
     second, created_again = persist_economic_observation(updated_source)
 
     assert created is True
