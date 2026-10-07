@@ -522,10 +522,7 @@ def _scenario_detail_context(
                 extra={"scenario_id": scenario.pk},
             )
         else:
-            share_url = (
-                f"{reverse('share_scenario_card')}?"
-                f"{urlencode({'snapshot': share_token})}"
-            )
+            share_url = f"{reverse('share_scenario_card')}?{urlencode({'snapshot': share_token})}"
 
     local_context = (
         _scenario_local_context(
