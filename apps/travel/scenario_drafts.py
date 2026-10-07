@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
 from typing import Any, Mapping
-
-from django.db import DatabaseError
 
 from apps.countries.models import City, Country, Currency
 from apps.exchange.budget import BudgetAssumptions
@@ -242,7 +239,6 @@ def draft_database_error_message(kind: str) -> str:
 
 
 __all__ = [
-    "DatabaseError",
     "ScenarioDraft",
     "ScenarioDraftError",
     "build_budget_scenario_draft",
