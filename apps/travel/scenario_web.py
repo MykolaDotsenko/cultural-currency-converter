@@ -57,6 +57,11 @@ from apps.travel.scenario_comparison import (
     ScenarioRateDirection,
     compare_scenario_observations,
 )
+from apps.travel.scenario_drafts import (
+    ScenarioDraftError,
+    build_budget_scenario_draft,
+    build_shopping_scenario_draft,
+)
 from apps.travel.scenario_schedule import TripScheduleState, evaluate_trip_schedule
 from apps.travel.scenarios import (
     SavedScenarioError,
@@ -649,98 +654,23 @@ def _owned_scenario_for_detail(request: HttpRequest, scenario_id: int) -> SavedS
     )
 
 
-def _scenario_default_title(
-    *,
-    destination_country: Country,
-    destination_city: City | None,
-) -> str:
-    destination_name = (
-        destination_city.name if destination_city is not None else destination_country.name
-    )
-    return f"{destination_name} budget"
-
-
 @login_required
 @require_POST
 def save_budget_scenario(request: HttpRequest) -> HttpResponse:
-    submitted_budget_token = str(request.POST.get("budget_context_token") or "")
-    payment_budget_token = str(request.POST.get("payment_budget_token") or "")
-    payment_handoff = None
-    token = submitted_budget_token
-
-    if payment_budget_token:
-        try:
-            payment_handoff = load_payment_budget_handoff_token(payment_budget_token)
-        except PaymentBudgetHandoffTokenError as exc:
-            logger.warning(
-                "saved_budget_scenario_rejected",
-                extra={"error_code": "invalid_payment_budget_handoff", "detail_code": str(exc)},
-            )
-            messages.error(
-                request,
-                "This payment-adjusted budget is no longer valid. Recalculate the payment estimate.",
-            )
-            return redirect("converter")
-        if (
-            submitted_budget_token
-            and payment_handoff.budget_context_token != submitted_budget_token
-        ):
-            logger.warning(
-                "saved_budget_scenario_rejected",
-                extra={"error_code": "payment_budget_context_mismatch"},
-            )
-            messages.error(
-                request,
-                "The saved budget basis no longer matches this conversion. Reopen budget planning.",
-            )
-            return redirect("converter")
-        token = payment_handoff.budget_context_token
-
     try:
-        snapshot = load_budget_context_snapshot_token(token)
-    except BudgetContextTokenError as exc:
+        draft = build_budget_scenario_draft(request.POST)
+    except ScenarioDraftError as exc:
         logger.warning(
             "saved_budget_scenario_rejected",
-            extra={"error_code": "invalid_budget_context", "detail_code": str(exc)},
+            extra={"error_code": exc.code},
         )
-        messages.error(
-            request,
-            "This budget context is no longer valid. Run the conversion again before saving.",
-        )
-        return redirect("converter")
-
-    try:
-        source_currency = Currency.objects.get(code=snapshot.conversion.quote.base_currency)
-        destination_currency = Currency.objects.get(code=snapshot.conversion.quote.quote_currency)
-        destination_country = Country.objects.get(
-            iso2=snapshot.destination_country_code,
-            is_active=True,
-        )
-        destination_city = None
-        if snapshot.destination_city_slug:
-            destination_city = City.objects.get(
-                country=destination_country,
-                slug=snapshot.destination_city_slug,
-                is_active=True,
-            )
-    except (Currency.DoesNotExist, Country.DoesNotExist, City.DoesNotExist) as exc:
-        logger.warning(
-            "saved_budget_scenario_rejected",
-            extra={
-                "error_code": "destination_metadata_missing",
-                "detail_code": exc.__class__.__name__,
-            },
-        )
-        messages.error(
-            request,
-            "The saved destination metadata is no longer available. Run the conversion again.",
-        )
+        messages.error(request, exc.user_message)
         return redirect("converter")
     except DatabaseError as exc:
         logger.warning(
             "saved_budget_scenario_rejected",
             extra={
-                "error_code": "metadata_database_unavailable",
+                "error_code": "draft_database_unavailable",
                 "detail_code": exc.__class__.__name__,
             },
         )
@@ -750,112 +680,11 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         )
         return redirect("converter")
 
-    # The signed snapshot already establishes the trusted conversion and
-    # destination scope. Re-validate only the explicit user assumptions here;
-    # saving must not depend on a second live local-price lookup.
-    form = BudgetInterpretationForm(request.POST, category_options=())
-    if not form.is_valid():
-        logger.warning(
-            "saved_budget_scenario_rejected",
-            extra={
-                "error_code": "invalid_budget_assumptions",
-                "form_fields": sorted(form.errors.keys()),
-            },
-        )
-        messages.error(
-            request,
-            "The budget assumptions changed or are invalid. Interpret the budget again before saving.",
-        )
-        return redirect("converter")
-
-    assumptions = form.cleaned_data.get("budget_assumptions")
-    if not isinstance(assumptions, BudgetAssumptions):
-        raise RuntimeError("Valid budget scenario form returned no BudgetAssumptions.")
-
-    planning_form = SavedScenarioPlanningForm(request.POST)
-    if not planning_form.is_valid():
-        logger.warning(
-            "saved_budget_scenario_rejected",
-            extra={
-                "error_code": "invalid_trip_planning",
-                "form_fields": sorted(planning_form.errors.keys()),
-            },
-        )
-        first_error = next(
-            (str(message) for errors in planning_form.errors.values() for message in errors),
-            "The saved trip details are invalid.",
-        )
-        messages.error(request, f"Could not save trip timing: {first_error}")
-        return redirect("converter")
-
-    raw_title = str(planning_form.cleaned_data.get("title") or "")
-    title = raw_title or _scenario_default_title(
-        destination_country=destination_country,
-        destination_city=destination_city,
-    )
-
-    saved_budget_basis = SavedScenarioBudgetBasis.REFERENCE_CONVERSION
-    planning_destination_amount = None
-    fx_markup_percent = None
-    source_fixed_fee = None
-    destination_fixed_fee = None
-    if payment_handoff is not None:
-        try:
-            estimate = estimate_payment_value(
-                source_budget=snapshot.conversion.input_amount,
-                reference_destination_amount=snapshot.conversion.output_amount,
-                rate=snapshot.conversion.quote.rate,
-                fx_markup_percent=payment_handoff.fx_markup_percent,
-                source_fixed_fee=payment_handoff.source_fixed_fee,
-                destination_fixed_fee=payment_handoff.destination_fixed_fee,
-                destination_minor_units=destination_currency.minor_units,
-            )
-        except PaymentEstimateError as exc:
-            logger.warning(
-                "saved_budget_scenario_rejected",
-                extra={
-                    "error_code": "invalid_payment_assumptions",
-                    "detail_code": exc.__class__.__name__,
-                },
-            )
-            messages.error(
-                request,
-                "These payment assumptions can no longer be saved safely. "
-                "Recalculate the payment estimate.",
-            )
-            return redirect("converter")
-        saved_budget_basis = SavedScenarioBudgetBasis.PAYMENT_ESTIMATE
-        planning_destination_amount = estimate.estimated_destination_amount
-        fx_markup_percent = estimate.fx_markup_percent
-        source_fixed_fee = estimate.source_fixed_fee
-        destination_fixed_fee = estimate.destination_fixed_fee
-
-    spec = SavedScenarioSpec(
-        kind=SavedScenarioKind.BUDGET,
-        title=title,
-        source_currency=source_currency,
-        destination_currency=destination_currency,
-        source_country=None,
-        destination_country=destination_country,
-        destination_city=destination_city,
-        source_amount=snapshot.conversion.input_amount,
-        budget_basis=saved_budget_basis,
-        planning_destination_amount=planning_destination_amount,
-        fx_markup_percent=fx_markup_percent,
-        source_fixed_fee=source_fixed_fee,
-        destination_fixed_fee=destination_fixed_fee,
-        duration_days=assumptions.duration_days,
-        travelers=assumptions.travelers,
-        travel_start_date=planning_form.cleaned_data.get("travel_start_date"),
-        travel_end_date=planning_form.cleaned_data.get("travel_end_date"),
-        budget_categories=assumptions.categories,
-    )
-
     try:
         scenario = create_saved_scenario(
             request.user,
-            spec=spec,
-            conversion=snapshot.conversion,
+            spec=draft.spec,
+            conversion=draft.conversion,
         )
     except SavedScenarioError as exc:
         logger.warning(
@@ -885,86 +714,28 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_POST
 def save_shopping_scenario(request: HttpRequest) -> HttpResponse:
-    token = str(request.POST.get("shopping_context_token") or "")
     try:
-        snapshot = load_shopping_context_snapshot_token(token)
-    except ShoppingContextTokenError as exc:
+        draft = build_shopping_scenario_draft(request.POST)
+    except ScenarioDraftError as exc:
         logger.warning(
             "saved_shopping_scenario_rejected",
-            extra={"error_code": str(exc)},
+            extra={"error_code": exc.code},
         )
-        messages.error(
-            request,
-            "This Shopping estimate is no longer valid. Recalculate it before saving.",
-        )
+        messages.error(request, exc.user_message)
         return redirect("shopping_calculation")
-
-    try:
-        currencies = Currency.objects.in_bulk(
-            [
-                snapshot.conversion.quote.base_currency,
-                snapshot.conversion.quote.quote_currency,
-            ],
-            field_name="code",
-        )
-        source_currency = currencies[snapshot.conversion.quote.base_currency]
-        destination_currency = currencies[snapshot.conversion.quote.quote_currency]
-        source_country = None
-        if snapshot.purchase_country_code:
-            source_country = Country.objects.get(
-                iso2=snapshot.purchase_country_code,
-                is_active=True,
-            )
-    except (KeyError, Country.DoesNotExist) as exc:
-        logger.warning(
-            "saved_shopping_scenario_rejected",
-            extra={
-                "error_code": "shopping_metadata_missing",
-                "detail_code": exc.__class__.__name__,
-            },
-        )
-        messages.error(
-            request,
-            "The Shopping currency or country metadata is no longer available. Recalculate it.",
-        )
-        return redirect("shopping_calculation")
-    except DatabaseError as exc:
-        logger.warning(
-            "saved_shopping_scenario_rejected",
-            extra={
-                "error_code": "metadata_database_unavailable",
-                "detail_code": exc.__class__.__name__,
-            },
-        )
+    except DatabaseError:
+        logger.exception("saved_shopping_scenario_draft_unavailable")
         messages.error(
             request,
             "Saved scenarios are temporarily unavailable. Your Shopping estimate was not changed.",
         )
         return redirect("shopping_calculation")
 
-    raw_title = str(request.POST.get("title") or "").strip()
-    if len(raw_title) > 120:
-        messages.error(request, "Shopping scenario title must be 120 characters or fewer.")
-        return redirect("shopping_calculation")
-    title = raw_title or (
-        f"{source_country.name} purchase"
-        if source_country is not None
-        else f"{source_currency.code} purchase"
-    )
-
     try:
         scenario = create_saved_scenario(
             request.user,
-            spec=SavedScenarioSpec(
-                kind=SavedScenarioKind.SHOPPING,
-                title=title,
-                source_currency=source_currency,
-                destination_currency=destination_currency,
-                source_country=source_country,
-                source_amount=snapshot.conversion.input_amount,
-                shopping_assumptions=snapshot.assumptions,
-            ),
-            conversion=snapshot.conversion,
+            spec=draft.spec,
+            conversion=draft.conversion,
         )
     except SavedScenarioError as exc:
         messages.error(request, f"Could not save Shopping estimate: {exc}")
