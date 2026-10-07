@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_POST
 
+from apps.accounts.ai_preferences import explanation_preferences
 from apps.accounts.forms import BudgetPresetNameForm
 from apps.countries.models import Currency
 from apps.exchange.budget import (
@@ -48,6 +49,7 @@ logger = logging.getLogger("cultural_currency.exchange")
 
 @require_POST
 def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
+    ai_preferences = explanation_preferences(request.user)
     submitted_budget_token = str(request.POST.get("budget_context_token") or "")
     payment_handoff_token = str(request.POST.get("payment_budget_token") or "")
     payment_handoff: TrustedPaymentBudgetHandoff | None = None
@@ -312,6 +314,8 @@ def budget_interpretation_view(request: HttpRequest) -> HttpResponse:
                         interpretation=interpretation,
                         assumptions=assumptions if interpretation is not None else None,
                         payment_handoff_token=payment_handoff_token,
+                        ai_locale=ai_preferences.locale,
+                        ai_focus_instruction_suffix=ai_preferences.focus_instruction_suffix,
                     )
                     if component is not None:
                         component["budget_presets"] = budget_presets
