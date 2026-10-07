@@ -1,12 +1,7 @@
-import {
-  readState,
-  type SavedCurrency,
-  writeState,
-} from "./local-saved-state-store";
+import { readState, type SavedCurrency, writeState } from "./local-saved-state-store";
 
 interface AccountCurrencySyncConfig {
   url: string;
-  stateUrl: string;
   csrfToken: string;
 }
 
@@ -14,18 +9,19 @@ function config(): AccountCurrencySyncConfig | null {
   const {
     accountAuthenticated,
     accountCurrencySyncUrl: url,
-    accountCurrencyStateUrl: stateUrl,
     accountCsrfToken: csrfToken,
   } = document.body.dataset;
-  if (accountAuthenticated !== "true" || !url || !stateUrl || !csrfToken) return null;
-  return { url, stateUrl, csrfToken };
+  if (accountAuthenticated !== "true" || !url || !csrfToken) return null;
+  return { url, csrfToken };
 }
 
 export function accountCurrencySyncAvailable(): boolean {
   return config() !== null;
 }
 
-async function postCurrencies(codes: string[]): Promise<{ createdCount: number; savedCount: number }> {
+async function postCurrencies(
+  codes: string[],
+): Promise<{ createdCount: number; savedCount: number }> {
   const current = config();
   if (!current) throw new Error("Account currency sync is not available.");
 
