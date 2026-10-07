@@ -5,6 +5,7 @@
 .qa-saved-state {
   min-inline-size: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qa-space-10);
 }
 
@@ -66,6 +67,7 @@
 
 .qa-saved-section {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qa-space-5);
   padding-block-start: var(--qa-space-6);
   border-block-start: 1px solid var(--color-border-subtle);
@@ -91,6 +93,7 @@
 
 .qa-saved-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qa-space-3);
 }
 
