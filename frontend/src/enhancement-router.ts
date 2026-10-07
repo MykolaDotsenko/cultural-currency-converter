@@ -4,6 +4,7 @@ let converterEnhancementsModule: Promise<
   typeof import("./behaviors/converter-enhancements")
 > | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
+let localScenariosModule: Promise<typeof import("./behaviors/local-scenarios")> | null = null;
 let offlineTripModule: Promise<typeof import("./behaviors/offline-trip")> | null = null;
 let rateChartModule: Promise<typeof import("./behaviors/rate-chart")> | null = null;
 let shareCardModule: Promise<typeof import("./behaviors/share-card")> | null = null;
@@ -41,6 +42,22 @@ function loadLocalSavedState(root: EnhancementRoot): void {
     .catch((error: unknown) => reportEnhancementFailure("Saved state", error));
 }
 
+function loadLocalScenarios(root: EnhancementRoot): void {
+  if (
+    !contains(
+      root,
+      "[data-local-scenario-save-form], [data-local-scenario-section]",
+    )
+  ) {
+    return;
+  }
+
+  localScenariosModule ??= import("./behaviors/local-scenarios");
+  void localScenariosModule
+    .then((module) => module.enhanceLocalScenarios())
+    .catch((error: unknown) => reportEnhancementFailure("Local scenarios", error));
+}
+
 function loadOfflineTrip(root: EnhancementRoot): void {
   if (!contains(root, "[data-offline-trip-control]")) return;
 
@@ -71,6 +88,7 @@ function loadRateCharts(root: EnhancementRoot): void {
 export function loadEnhancements(root: EnhancementRoot = document): void {
   loadCurrentConverter(root);
   loadLocalSavedState(root);
+  loadLocalScenarios(root);
   loadOfflineTrip(root);
   loadShareCards(root);
   loadRateCharts(root);
