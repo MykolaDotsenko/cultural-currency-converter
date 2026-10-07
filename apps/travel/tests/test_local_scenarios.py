@@ -166,7 +166,7 @@ def test_anonymous_budget_save_returns_signed_envelope_without_server_persistenc
     assert "account" not in {field.name for field in fields(LocalScenarioSnapshot)}
     UUID(body["scenario"]["id"])
     assert body["scenario"]["scopeLabel"] == "Tokyo, Japan"
-    assert body["detailUrl"].startswith(reverse("local_scenario_detail"))
+    assert body["detailUrl"] == reverse("local_scenario_detail")
 
 
 @pytest.mark.django_db
@@ -205,7 +205,7 @@ def test_local_detail_is_provider_and_database_free(
     token = _create_budget_local(client).json()["token"]
 
     with django_assert_num_queries(0):
-        response = client.get(reverse("local_scenario_detail"), {"snapshot": token})
+        response = client.post(reverse("local_scenario_detail"), {"snapshot": token})
 
     assert response.status_code == 200
     assert response["Cache-Control"] == "private, no-store"
@@ -324,3 +324,16 @@ def test_local_import_rejects_duplicate_token_in_same_batch(
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "duplicate_import"
     assert SavedScenario.objects.filter(user=user).count() == 0
+
+
+@pytest.mark.django_db
+def test_local_detail_get_does_not_expose_snapshot_transport(
+    client,
+    local_scenario_reference_data,
+):
+    token = _create_budget_local(client).json()["token"]
+
+    response = client.get(reverse("local_scenario_detail"), {"snapshot": token})
+
+    assert response.status_code == 405
+    assert token not in (response.headers.get("Location") or "")
