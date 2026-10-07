@@ -34,6 +34,12 @@ from apps.exchange.views import (
     shopping_calculation,
 )
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
+from apps.travel.local_scenario_web import (
+    create_local_budget_scenario,
+    create_local_shopping_scenario,
+    import_local_scenarios,
+    local_scenario_detail,
+)
 from apps.travel.notification_web import (
     configure_saved_scenario_notification,
     delete_saved_scenario_notification,
@@ -131,6 +137,26 @@ urlpatterns = [
         "saved/scenarios/budget/create/",
         save_budget_scenario,
         name="save_budget_scenario",
+    ),
+    path(
+        "saved/scenarios/local/budget/create/",
+        create_local_budget_scenario,
+        name="create_local_budget_scenario",
+    ),
+    path(
+        "saved/scenarios/local/shopping/create/",
+        create_local_shopping_scenario,
+        name="create_local_shopping_scenario",
+    ),
+    path(
+        "saved/scenarios/local/import/",
+        import_local_scenarios,
+        name="import_local_scenarios",
+    ),
+    path(
+        "saved/scenarios/local/view/",
+        local_scenario_detail,
+        name="local_scenario_detail",
     ),
     path(
         "saved/scenarios/shopping/create/",
