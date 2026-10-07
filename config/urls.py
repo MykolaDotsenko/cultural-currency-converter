@@ -33,6 +33,11 @@ from apps.exchange.views import (
     share_conversion_card_svg,
     shopping_calculation,
 )
+from apps.travel.browser_scenario_web import (
+    import_browser_scenarios_view,
+    issue_browser_budget_scenario,
+    issue_browser_shopping_scenario,
+)
 from apps.travel.camera_web import add_confirmed_camera_spend, camera_scan_saved_scenario
 from apps.travel.notification_web import (
     configure_saved_scenario_notification,
@@ -116,6 +121,21 @@ urlpatterns = [
     ),
     path("historical/series/", historical_series, name="historical_series"),
     path("saved/", saved_state, name="saved_state"),
+    path(
+        "saved/scenarios/browser/budget/issue/",
+        issue_browser_budget_scenario,
+        name="issue_browser_budget_scenario",
+    ),
+    path(
+        "saved/scenarios/browser/shopping/issue/",
+        issue_browser_shopping_scenario,
+        name="issue_browser_shopping_scenario",
+    ),
+    path(
+        "saved/scenarios/browser/import/",
+        import_browser_scenarios_view,
+        name="import_browser_scenarios",
+    ),
     path("saved/notifications/", notification_inbox, name="notification_inbox"),
     path(
         "saved/notifications/read-all/",
