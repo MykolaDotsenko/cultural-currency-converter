@@ -211,6 +211,126 @@
         {% endif %}
       </section>
     {% endif %}
+    <section class="qa-saved-section" aria-labelledby="saved-currencies-title">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">Currencies</p>
+          <h2 id="saved-currencies-title">Saved currencies</h2>
+          <p>
+            Save a currency without freezing an amount, country or FX rate. Re-entry only
+            preselects that currency in the canonical converter.
+          </p>
+        </div>
+        {% if user.is_authenticated and account_saved_currency_rows %}
+          <form method="post" action="{% url 'clear_saved_currencies' %}">
+            {% csrf_token %}
+            <button class="qa-secondary-button qa-destructive-button"
+                    type="submit">Clear account currencies</button>
+          </form>
+        {% elif not user.is_authenticated %}
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="button"
+                  data-clear-currencies
+                  hidden>Clear saved currencies</button>
+        {% endif %}
+      </div>
+      {% if user.is_authenticated %}
+        <form class="qa-inline-form"
+              method="post"
+              action="{% url 'save_currency' %}">
+          {% csrf_token %}
+          <label class="qa-field__label" for="saved-currency-code">Add currency</label>
+          <select id="saved-currency-code" name="currency_code" required>
+            <option value="">Choose currency</option>
+            {% for currency in currency_choices %}
+              <option value="{{ currency.code }}">{{ currency.code }} · {{ currency.name }}</option>
+            {% endfor %}
+          </select>
+          <button class="qa-secondary-button" type="submit">Save currency</button>
+        </form>
+        {% if account_saved_currency_rows %}
+          <div class="qa-saved-list" data-account-currencies-list>
+            {% for row in account_saved_currency_rows %}
+              {% with saved=row.saved %}
+                <article class="qa-saved-row" data-account-currency-id="{{ saved.pk }}">
+                  <div class="qa-saved-row__copy">
+                    <h3>{{ saved.currency.code }} · {{ saved.currency.name }}</h3>
+                    <p class="qa-saved-row__meta">
+                      Account-owned currency shortcut · no amount, country or rate stored
+                    </p>
+                  </div>
+                  <div class="qa-saved-row__actions">
+                    {% if row.available %}
+                      <a class="qa-primary-button"
+                         href="{{ row.source_url }}"
+                         aria-label="Use {{ saved.currency.code }} as source currency">Use as source</a>
+                      <a class="qa-secondary-button"
+                         href="{{ row.destination_url }}"
+                         aria-label="Use {{ saved.currency.code }} as destination currency">Use as destination</a>
+                    {% endif %}
+                    <form method="post" action="{% url 'delete_saved_currency' saved.pk %}">
+                      {% csrf_token %}
+                      <button class="qa-secondary-button qa-destructive-button"
+                              type="submit"
+                              aria-label="Remove saved currency: {{ saved.currency.code }}">Remove</button>
+                    </form>
+                  </div>
+                </article>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">No account-saved currencies yet.</p>
+        {% endif %}
+        <div class="qa-continuity-note" data-local-currency-migration>
+          <div>
+            <strong>This device</strong>
+            <span data-local-currency-migration-summary
+                  data-local-pending>Checking browser-only currencies…</span>
+          </div>
+          <button class="qa-secondary-button"
+                  type="button"
+                  data-import-local-currencies
+                  hidden>Import browser currencies to account</button>
+          <span class="qa-visually-hidden"
+                role="status"
+                aria-live="polite"
+                data-local-currency-migration-status></span>
+        </div>
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Browser-only</p>
+            <h3>Currencies still on this device</h3>
+            <p>Sign-in never uploads these automatically. Import is an explicit action.</p>
+          </div>
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="button"
+                  data-clear-currencies
+                  hidden>Clear browser currencies</button>
+        </div>
+      {% else %}
+        <form class="qa-inline-form"
+              data-local-currency-form
+              data-currency-options-url="{% url 'saved_currency_options' %}">
+          <label class="qa-field__label" for="local-saved-currency-code">Add currency</label>
+          <select id="local-saved-currency-code" name="currency_code" required disabled>
+            <option value="">Loading currencies…</option>
+          </select>
+          <button class="qa-secondary-button"
+                  type="submit"
+                  data-local-currency-submit
+                  disabled>Save in this browser</button>
+          <span class="qa-visually-hidden"
+                role="status"
+                aria-live="polite"
+                data-local-currency-options-status></span>
+        </form>
+      {% endif %}
+      <p class="qa-saved-empty"
+         data-currencies-empty
+         data-local-pending>Checking saved currencies in this browser…</p>
+      <div class="qa-saved-list" data-currencies-list></div>
+    </section>
     <section class="qa-saved-section" aria-labelledby="saved-places-title">
       <div class="qa-saved-section__heading">
         <div>
@@ -578,13 +698,13 @@
     {% endif %}
     <p class="qa-saved-state__privacy">
       {% if user.is_authenticated %}
-        Browser-only places and history are never uploaded automatically. Place migration, scenario
+        Browser-only currencies, places and history are never uploaded automatically. Place migration, scenario
         creation and comparison saving are explicit account actions. Reopening a saved comparison
         does not request a rate; “Re-check now” does. Deleting your account removes account-owned
         scenarios, comparisons, places, favourites and recent history.
       {% else %}
         Clearing browser site data also removes these items. Signing in does not silently upload
-        browser-only places; you can explicitly import them from Saved & recent after sign-in.
+        browser-only currencies or places; you can explicitly import them from Saved & recent after sign-in.
       {% endif %}
     </p>
   </div>

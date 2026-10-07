@@ -107,6 +107,41 @@ class FavouritePair(models.Model):
         return f"{self.user_id}: {self.source_currency.code} → {self.destination_currency.code}"
 
 
+class SavedCurrency(models.Model):
+    """Account-owned shortcut to a currency independent of country or pair context."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saved_currencies",
+    )
+    currency = models.ForeignKey(
+        Currency,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "currency"),
+                name="unique_saved_currency_user_currency",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("user", "-updated_at"),
+                name="travel_currency_user_upd_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id}: {self.currency.code}"
+
+
 class SavedPlace(models.Model):
     """Canonical account-owned destination shortcut.
 

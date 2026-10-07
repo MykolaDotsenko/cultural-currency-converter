@@ -2,6 +2,7 @@ const STORAGE_VERSION = 1 as const;
 const MAX_FAVOURITES = 12;
 const MAX_RECENTS = 10;
 const MAX_PLACES = 24;
+const MAX_CURRENCIES = 24;
 const STORAGE_PROBE_KEY = "cultural-currency:storage-probe";
 
 export const STORAGE_KEY = "cultural-currency:local-preferences:v1";
@@ -34,6 +35,13 @@ export interface SavedPlace {
   savedAt: string;
 }
 
+export interface SavedCurrency {
+  id: string;
+  code: string;
+  name: string;
+  savedAt: string;
+}
+
 export interface RecentConversion extends PairContext {
   id: string;
   amount: string;
@@ -48,6 +56,7 @@ export interface LocalPreferencesV1 {
   version: typeof STORAGE_VERSION;
   favourites: FavouritePair[];
   places: SavedPlace[];
+  currencies: SavedCurrency[];
   recent: RecentConversion[];
 }
 
@@ -59,7 +68,7 @@ export interface ReadResult {
 let cachedStorage: Storage | null | undefined;
 
 function emptyState(): LocalPreferencesV1 {
-  return { version: STORAGE_VERSION, favourites: [], places: [], recent: [] };
+  return { version: STORAGE_VERSION, favourites: [], places: [], currencies: [], recent: [] };
 }
 
 function localStorageOrNull(): Storage | null {
@@ -188,6 +197,15 @@ export function normalizePlace(value: unknown): SavedPlace | null {
   };
 }
 
+export function normalizeSavedCurrency(value: unknown): SavedCurrency | null {
+  if (!isRecord(value)) return null;
+  const code = normalizedCurrencyCode(value.code);
+  const name = normalizedString(value.name, 120);
+  const savedAt = normalizedTimestamp(value.savedAt);
+  if (code === null || name === null || savedAt === null) return null;
+  return { id: code, code, name, savedAt };
+}
+
 function normalizeFavourite(value: unknown): FavouritePair | null {
   if (!isRecord(value)) return null;
   const pair = normalizePair(value);
@@ -268,6 +286,7 @@ export function readState(): ReadResult {
 
     const rawFavourites = Array.isArray(parsed.favourites) ? parsed.favourites : [];
     const rawPlaces = Array.isArray(parsed.places) ? parsed.places : [];
+    const rawCurrencies = Array.isArray(parsed.currencies) ? parsed.currencies : [];
     const rawRecent = Array.isArray(parsed.recent) ? parsed.recent : [];
     const favourites = dedupeById(
       rawFavourites.map(normalizeFavourite).filter((item): item is FavouritePair => item !== null),
@@ -276,6 +295,12 @@ export function readState(): ReadResult {
     const places = dedupeById(
       rawPlaces.map(normalizePlace).filter((item): item is SavedPlace => item !== null),
       MAX_PLACES,
+    );
+    const currencies = dedupeById(
+      rawCurrencies
+        .map(normalizeSavedCurrency)
+        .filter((item): item is SavedCurrency => item !== null),
+      MAX_CURRENCIES,
     );
     const recent = dedupeById(
       rawRecent.map(normalizeRecent).filter((item): item is RecentConversion => item !== null),
@@ -286,10 +311,12 @@ export function readState(): ReadResult {
       !Array.isArray(parsed.recent) ||
       favourites.length !== Math.min(rawFavourites.length, MAX_FAVOURITES) ||
       places.length !== Math.min(rawPlaces.length, MAX_PLACES) ||
+      (parsed.currencies !== undefined && !Array.isArray(parsed.currencies)) ||
+      currencies.length !== Math.min(rawCurrencies.length, MAX_CURRENCIES) ||
       recent.length !== Math.min(rawRecent.length, MAX_RECENTS);
 
     return {
-      state: { version: STORAGE_VERSION, favourites, places, recent },
+      state: { version: STORAGE_VERSION, favourites, places, currencies, recent },
       status: recovered ? "recovered" : "ok",
     };
   } catch {
@@ -352,6 +379,25 @@ export function togglePlaceInState(
     state: { ...state, places },
     saved: !existed,
   };
+}
+
+export function isCurrencySaved(code: string, state: LocalPreferencesV1): boolean {
+  return state.currencies.some((item) => item.code === code);
+}
+
+export function toggleCurrencyInState(
+  state: LocalPreferencesV1,
+  currency: Omit<SavedCurrency, "id" | "savedAt">,
+  savedAt = new Date().toISOString(),
+): { state: LocalPreferencesV1; saved: boolean } {
+  const existed = state.currencies.some((item) => item.code === currency.code);
+  const currencies = existed
+    ? state.currencies.filter((item) => item.code !== currency.code)
+    : [
+        { ...currency, id: currency.code, savedAt },
+        ...state.currencies.filter((item) => item.code !== currency.code),
+      ].slice(0, MAX_CURRENCIES);
+  return { state: { ...state, currencies }, saved: !existed };
 }
 
 export function upsertRecent(

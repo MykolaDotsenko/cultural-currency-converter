@@ -23,6 +23,8 @@
   <body class="qa-shell"
         data-account-authenticated="{% if user.is_authenticated %}true{% else %}false{% endif %}"
         data-account-favourite-sync-url="{% url 'sync_favourites' %}"
+        data-account-currency-sync-url="{% url 'sync_saved_currencies' %}"
+        data-account-currency-state-url="{% url 'saved_currencies_status' %}"
         data-account-place-sync-url="{% url 'sync_saved_places' %}"
         data-account-place-state-url="{% url 'saved_places_status' %}"
         data-account-csrf-token="{{ csrf_token }}"

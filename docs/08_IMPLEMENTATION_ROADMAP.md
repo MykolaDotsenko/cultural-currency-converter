@@ -116,6 +116,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
 8. **Favourite currencies — 67/100**
    - Allow users to save currencies independently of full source/destination pairs where this improves repeat conversion.
    - Keep this secondary to favourite places for the travel-first experience and avoid duplicating saved-pair controls.
+   - **Current production slice:** shipped as a currency-only shortcut that stores no amount, country or FX snapshot. Signed-in users have owner-scoped `SavedCurrency` records with no-JavaScript save/remove/clear and canonical source/destination re-entry. Anonymous users can keep up to 24 browser-local currency shortcuts; sign-in never uploads them automatically, and an explicit import action moves only the confirmed codes into the account while preserving local copies if cleanup fails.
 
 9. **Historical motion / animated history — 60/100**
    - Use restrained motion to explain currency transitions, timelines or Then & Now state changes.

@@ -49,6 +49,7 @@ Those boundaries are more important to this project than adding another conversi
 - Same Amount Across Destinations for two to four explicit destinations, preserving independent rate/provider/date/scope/provenance semantics without ranking, PPP or affordability claims;
 - canonical one-sided Compare handoffs from Explore, My Places, saved scenarios, favourites and recent conversions; Destination B is never inferred;
 - durable My Places with owner-scoped canonical country/city identity, current-currency re-resolution, explicit browser-local → account import and Saved-page continuity into Convert, Budget, Compare and City Profile;
+- currency-only favourites with browser-local anonymous storage, owner-scoped account persistence and explicit local → account import, without storing an amount, country or FX snapshot;
 - owner-scoped SavedComparison persistence that stores only canonical inputs/explicit basket assumptions; Reopen is provider-free and Re-check returns through the canonical comparison POST path;
 - provider-free City Money Profile pages with direct-city evidence requirements, explicit city/national scope, reviewed price/payment context, provenance and managed social-preview metadata when available;
 - read-only `report_city_coverage` maintenance diagnostics for reviewed city-price freshness, national fallback and provenance gaps; its score is operational only, never a cost-of-living ranking;

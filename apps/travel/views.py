@@ -14,7 +14,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
-from apps.countries.models import CountryCurrency
+from apps.countries.models import CountryCurrency, Currency
 from apps.exchange.comparison_snapshot import (
     SavedComparisonTokenError,
     load_saved_comparison_token,
@@ -23,15 +23,18 @@ from apps.travel.models import (
     FavouritePair,
     RecentConversion,
     SavedComparison,
+    SavedCurrency,
     SavedPlace,
     SavedScenario,
     SavedScenarioObservation,
 )
 from apps.travel.personalization import (
     SavedComparisonPersistenceError,
+    SavedCurrencySyncError,
     SavedPlaceSyncError,
     comparison_reopen_params,
     persist_saved_comparison,
+    sync_user_saved_currencies,
     sync_user_saved_places,
 )
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
@@ -163,6 +166,34 @@ def _scenario_rows(user) -> list[dict[str, object]]:
         }
         for scenario in scenarios
     ]
+
+
+def _saved_currency_rows(user) -> list[dict[str, object]]:
+    saved = tuple(
+        SavedCurrency.objects.filter(user=user)
+        .select_related("currency")
+        .order_by("-updated_at", "-id")
+    )
+    rows: list[dict[str, object]] = []
+    for item in saved:
+        code = item.currency.code
+        rows.append(
+            {
+                "saved": item,
+                "available": item.currency.is_active,
+                "source_url": (
+                    f"{reverse('converter')}?{urlencode({'load': '1', 'source_currency': code})}"
+                    if item.currency.is_active
+                    else ""
+                ),
+                "destination_url": (
+                    f"{reverse('converter')}?{urlencode({'load': '1', 'destination_currency': code})}"
+                    if item.currency.is_active
+                    else ""
+                ),
+            }
+        )
+    return rows
 
 
 def _saved_place_rows(user) -> list[dict[str, object]]:
@@ -305,6 +336,14 @@ def saved_state(request: HttpRequest) -> HttpResponse:
             "account_scenario_rows": (
                 _scenario_rows(request.user) if request.user.is_authenticated else []
             ),
+            "account_saved_currency_rows": (
+                _saved_currency_rows(request.user) if request.user.is_authenticated else []
+            ),
+            "currency_choices": (
+                Currency.objects.filter(is_active=True).order_by("code")
+                if request.user.is_authenticated
+                else ()
+            ),
             "account_saved_place_rows": (
                 _saved_place_rows(request.user) if request.user.is_authenticated else []
             ),
@@ -377,6 +416,122 @@ def sync_favourites(request: HttpRequest) -> JsonResponse:
             "createdCount": result.created_count,
         }
     )
+
+
+@never_cache
+@require_GET
+def saved_currency_options(request: HttpRequest) -> JsonResponse:
+    currencies = list(
+        Currency.objects.filter(is_active=True).order_by("code").values("code", "name")[:300]
+    )
+    return JsonResponse({"currencies": currencies})
+
+
+def _currency_json_error(message: str, *, status: int) -> JsonResponse:
+    return JsonResponse(
+        {"error": {"code": "invalid_currencies", "message": message}},
+        status=status,
+    )
+
+
+@never_cache
+@require_GET
+def saved_currencies_status(request: HttpRequest) -> JsonResponse:
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {
+                "error": {
+                    "code": "authentication_required",
+                    "message": "Sign in to read account-saved currencies.",
+                }
+            },
+            status=401,
+        )
+    codes = list(
+        SavedCurrency.objects.filter(user=request.user, currency__is_active=True)
+        .order_by("id")
+        .values_list("currency__code", flat=True)
+    )
+    return JsonResponse({"codes": codes})
+
+
+@require_POST
+def sync_saved_currencies(request: HttpRequest) -> JsonResponse:
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {
+                "error": {
+                    "code": "authentication_required",
+                    "message": "Sign in to save currencies to your account.",
+                }
+            },
+            status=401,
+        )
+    if request.content_type != "application/json":
+        return _currency_json_error("Content-Type must be application/json.", status=415)
+
+    content_length = request.META.get("CONTENT_LENGTH")
+    if content_length:
+        try:
+            if int(content_length) > MAX_SYNC_BODY_BYTES:
+                return _currency_json_error("Saved-currency payload is too large.", status=413)
+        except ValueError:
+            return _currency_json_error("Invalid Content-Length.", status=400)
+
+    body = request.body
+    if len(body) > MAX_SYNC_BODY_BYTES:
+        return _currency_json_error("Saved-currency payload is too large.", status=413)
+    try:
+        payload = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return _currency_json_error("Request body must contain valid JSON.", status=400)
+    if not isinstance(payload, dict) or set(payload) != {"currencies"}:
+        return _currency_json_error("Request must contain only a currencies list.", status=400)
+
+    try:
+        result = sync_user_saved_currencies(request.user, payload["currencies"])
+    except SavedCurrencySyncError as exc:
+        return _currency_json_error(str(exc), status=400)
+    return JsonResponse(
+        {
+            "createdCount": result.created_count,
+            "savedCount": len(result.currencies),
+        }
+    )
+
+
+@login_required
+@require_POST
+def save_currency(request: HttpRequest) -> HttpResponse:
+    code = str(request.POST.get("currency_code") or "")
+    try:
+        result = sync_user_saved_currencies(request.user, [code])
+    except SavedCurrencySyncError:
+        messages.error(request, "This currency could not be saved safely.")
+    else:
+        if result.created_count:
+            messages.success(request, "Currency saved to your account.")
+        else:
+            messages.info(request, "This currency is already saved to your account.")
+    return redirect("saved_state")
+
+
+@login_required
+@require_POST
+def delete_saved_currency(request: HttpRequest, currency_id: int) -> HttpResponse:
+    saved = get_object_or_404(SavedCurrency, pk=currency_id, user=request.user)
+    code = saved.currency.code
+    saved.delete()
+    messages.success(request, f"{code} removed from saved currencies.")
+    return redirect("saved_state")
+
+
+@login_required
+@require_POST
+def clear_saved_currencies(request: HttpRequest) -> HttpResponse:
+    SavedCurrency.objects.filter(user=request.user).delete()
+    messages.success(request, "Saved currencies cleared.")
+    return redirect("saved_state")
 
 
 def _place_json_error(message: str, *, status: int) -> JsonResponse:
