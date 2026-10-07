@@ -489,7 +489,6 @@ class TypicalPrice(models.Model):
         return f"{self.country.iso2} · {self.label}"
 
 
-
 class EconomicObservationSource(models.TextChoices):
     WORLD_BANK = "world_bank", "World Bank"
     EUROSTAT = "eurostat", "Eurostat"
@@ -569,7 +568,7 @@ class EconomicObservation(models.Model):
         indexes = [
             models.Index(
                 fields=("country", "indicator", "-period_start"),
-                name="culture_econ_country_indicator_idx",
+                name="culture_econ_ctry_ind_idx",
             ),
         ]
 
@@ -647,7 +646,7 @@ class PublicHolidayObservation(models.Model):
         indexes = [
             models.Index(
                 fields=("country", "date"),
-                name="culture_holiday_country_date_idx",
+                name="culture_holiday_ctry_date",
             ),
         ]
 
