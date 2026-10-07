@@ -488,11 +488,13 @@ function renderBrowserScenarios(page: HTMLElement, state: LocalPreferencesV1): v
 
     const actions = document.createElement("div");
     actions.className = "qa-saved-row__actions";
+    const reopenLabel =
+      scenario.kind === "shopping" ? "Reopen Shopping inputs" : "Reopen conversion";
     actions.append(
       actionLink(
-        "Reopen inputs",
+        reopenLabel,
         scenario.reopenUrl,
-        `Reopen browser-only scenario: ${scenario.title || scenario.scope}`,
+        `${reopenLabel}: ${scenario.title || scenario.scope}`,
         "primary",
       ),
       actionButton(
