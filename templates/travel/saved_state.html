@@ -15,14 +15,15 @@
     <h1 id="saved-page-title">Saved &amp; recent</h1>
     {% if user.is_authenticated %}
       <p class="qa-foundation-lede">
-        Saved scenarios, comparisons, places and pairs belong to your account. Browser-only places
-        move to the account only when you explicitly import them. Cross-device recent history is
-        separate and stays off until you enable it.
+        Saved scenarios, comparisons, places and pairs belong to your account. Browser-only
+        scenarios, currencies and places move to the account only when you explicitly import them.
+        Cross-device recent history is separate and stays off until you enable it.
       </p>
     {% else %}
       <p class="qa-foundation-lede">
-        These favourites and recent conversions are stored only in this browser. They are not
-        uploaded to an account or copied to the server.
+        Browser-saved scenarios, favourites and recent conversions stay only on this device.
+        Scenario snapshots are signed for integrity, but nothing is uploaded into an account unless
+        you later choose an explicit import action.
       </p>
     {% endif %}
   </section>
@@ -42,13 +43,56 @@
       <p class="qa-saved-state__storage-note" data-storage-tone="warning">
         {% if user.is_authenticated %}
           Account-saved scenarios, pairs and account recent history remain available. JavaScript is
-          required to read browser-only saved places and browser-only recent history on this device.
+          required to read browser-only scenarios, places and recent history on this device.
         {% else %}
-          JavaScript is required to read browser-local saved places, saved pairs and recent history.
-          The converter still works without JavaScript.
+          JavaScript is required to read browser-local scenarios, saved places, saved pairs and
+          recent history. The converter still works without JavaScript.
         {% endif %}
       </p>
     </noscript>
+    <section class="qa-saved-section"
+             aria-labelledby="browser-scenarios-title"
+             data-local-scenario-section
+             data-account-mode="{% if user.is_authenticated %}true{% else %}false{% endif %}"
+             data-import-url="{% url 'import_local_scenarios' %}"
+             data-detail-url="{% url 'local_scenario_detail' %}">
+      <div class="qa-saved-section__heading">
+        <div>
+          <p class="qa-foundation-kicker">This device</p>
+          <h2 id="browser-scenarios-title">Browser-saved scenarios</h2>
+          <p>
+            These are signed immutable snapshots stored only in this browser. Opening one does not
+            refresh FX. Sign-in never moves them into your account automatically.
+          </p>
+        </div>
+        <div class="qa-saved-row__actions">
+          {% if user.is_authenticated %}
+            <button class="qa-primary-button"
+                    type="button"
+                    data-import-local-scenarios
+                    hidden>Import browser scenarios to account</button>
+          {% endif %}
+          <button class="qa-secondary-button qa-destructive-button"
+                  type="button"
+                  data-clear-local-scenarios
+                  hidden>Clear browser scenarios</button>
+        </div>
+      </div>
+      <p class="qa-saved-state__storage-note"
+         data-local-scenario-page-status
+         data-storage-tone="neutral"
+         aria-live="polite">Checking browser-saved scenarios…</p>
+      <p class="qa-saved-empty"
+         data-local-scenario-empty
+         hidden>No browser-saved scenarios on this device.</p>
+      <div class="qa-saved-list" data-local-scenario-list></div>
+      <noscript>
+        <p class="qa-saved-state__storage-note" data-storage-tone="warning">
+          Browser-saved scenarios require JavaScript because they live in local device storage.
+          Account-saved scenarios remain available above after sign-in.
+        </p>
+      </noscript>
+    </section>
     {% if user.is_authenticated %}
       <section class="qa-saved-section" aria-labelledby="saved-scenarios-title">
         <div class="qa-saved-section__heading">
