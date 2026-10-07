@@ -4,6 +4,24 @@ from django.conf import settings
 from django.db import models
 
 
+class PreferredLanguage(models.TextChoices):
+    ENGLISH = "en", "English"
+    FINNISH = "fi", "Finnish"
+    UKRAINIAN = "uk", "Ukrainian"
+
+
+class AnswerDetail(models.TextChoices):
+    CONCISE = "concise", "Concise"
+    BALANCED = "balanced", "Balanced"
+    DETAILED = "detailed", "Detailed"
+
+
+class TravelStyle(models.TextChoices):
+    BALANCED = "balanced", "Balanced"
+    BUDGET = "budget", "Budget-conscious"
+    COMFORT = "comfort", "Comfort-first"
+
+
 class AccountPreferences(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -11,6 +29,21 @@ class AccountPreferences(models.Model):
         related_name="account_preferences",
     )
     sync_recent_history = models.BooleanField(default=False)
+    preferred_language = models.CharField(
+        max_length=5,
+        choices=PreferredLanguage.choices,
+        default=PreferredLanguage.ENGLISH,
+    )
+    answer_detail = models.CharField(
+        max_length=12,
+        choices=AnswerDetail.choices,
+        default=AnswerDetail.BALANCED,
+    )
+    travel_style = models.CharField(
+        max_length=16,
+        choices=TravelStyle.choices,
+        default=TravelStyle.BALANCED,
+    )
     home_currency = models.ForeignKey(
         "countries.Currency",
         null=True,
@@ -22,7 +55,11 @@ class AccountPreferences(models.Model):
 
     def __str__(self) -> str:
         home = self.home_currency_id or "unset"
-        return f"{self.user_id}: recent_history={self.sync_recent_history}, home={home}"
+        return (
+            f"{self.user_id}: recent_history={self.sync_recent_history}, home={home}, "
+            f"language={self.preferred_language}, detail={self.answer_detail}, "
+            f"travel_style={self.travel_style}"
+        )
 
 
 class PaymentFeeProfile(models.Model):
