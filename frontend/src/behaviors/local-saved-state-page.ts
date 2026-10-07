@@ -1,3 +1,4 @@
+import { accountCurrencySyncAvailable, importLocalCurrenciesToAccount } from "./account-currencies";
 import { accountPlaceSyncAvailable, importLocalPlacesToAccount } from "./account-places";
 import {
   type LocalPreferencesV1,
@@ -6,7 +7,10 @@ import {
   type ReadResult,
   type RecentConversion,
   readState,
+  normalizeSavedCurrency,
+  type SavedCurrency,
   type SavedPlace,
+  toggleCurrencyInState,
   writeState,
 } from "./local-saved-state-store";
 
@@ -132,6 +136,80 @@ function setEmptyState(
 
 function persistAndRender(state: LocalPreferencesV1, successMessage: string): void {
   renderSavedPage(writeState(state) ? successMessage : WRITE_FAILURE_MESSAGE);
+}
+
+function currencyConverterUrl(
+  converterUrl: string,
+  code: string,
+  side: "source" | "destination",
+): string {
+  const url = new URL(converterUrl, window.location.origin);
+  url.searchParams.set("load", "1");
+  url.searchParams.set(side === "source" ? "source_currency" : "destination_currency", code);
+  return `${url.pathname}${url.search}`;
+}
+
+function renderCurrencies(
+  page: HTMLElement,
+  state: LocalPreferencesV1,
+  converterUrl: string,
+): void {
+  const list = page.querySelector<HTMLElement>("[data-currencies-list]");
+  const empty = page.querySelector<HTMLElement>("[data-currencies-empty]");
+  if (!list || !empty) return;
+
+  list.replaceChildren();
+  empty.removeAttribute("data-local-pending");
+  empty.textContent = "No browser-saved currencies yet.";
+  empty.hidden = state.currencies.length > 0;
+
+  for (const currency of state.currencies) {
+    const article = document.createElement("article");
+    article.className = "qa-saved-row";
+    article.dataset.savedCurrencyCode = currency.code;
+
+    const copy = document.createElement("div");
+    copy.className = "qa-saved-row__copy";
+    const title = document.createElement("h3");
+    title.textContent = `${currency.code} · ${currency.name || "Currency"}`;
+    const meta = document.createElement("p");
+    meta.className = "qa-saved-row__meta";
+    meta.textContent =
+      `Saved ${savedAtLabel(currency.savedAt)} · currency only, no amount or country stored`;
+    copy.append(title, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "qa-saved-row__actions";
+    actions.append(
+      actionLink(
+        "Use as source",
+        currencyConverterUrl(converterUrl, currency.code, "source"),
+        `Use ${currency.code} as source currency`,
+        "primary",
+      ),
+      actionLink(
+        "Use as destination",
+        currencyConverterUrl(converterUrl, currency.code, "destination"),
+        `Use ${currency.code} as destination currency`,
+      ),
+      actionButton(
+        "Remove",
+        () => {
+          const read = readState();
+          persistAndRender(
+            {
+              ...read.state,
+              currencies: read.state.currencies.filter((item) => item.code !== currency.code),
+            },
+            `${currency.code} removed from this browser.`,
+          );
+        },
+        `Remove saved currency: ${currency.code}`,
+      ),
+    );
+    article.append(copy, actions);
+    list.append(article);
+  }
 }
 
 function renderFavourites(
@@ -461,7 +539,7 @@ function setStorageStatus(page: HTMLElement, read: ReadResult, overrideMessage =
       ? accountHistoryEnabled
         ? `Account history is on · Browser-only recent entries on this device: ${read.state.recent.length}.`
         : `Account history is off · Browser-only recent entries on this device: ${read.state.recent.length}.`
-      : `Stored locally in this browser · ${read.state.places.length} places · ${read.state.favourites.length} pairs · ${read.state.recent.length} recent.`;
+      : `Stored locally in this browser · ${read.state.currencies.length} currencies · ${read.state.places.length} places · ${read.state.favourites.length} pairs · ${read.state.recent.length} recent.`;
   }
 }
 
@@ -474,12 +552,44 @@ function renderSavedPage(overrideMessage = ""): void {
   const comparisonUrl = page.dataset.comparisonUrl ?? "/compare/";
   setStorageStatus(page, read, overrideMessage);
 
+  const clearCurrencies = page.querySelector<HTMLButtonElement>("[data-clear-currencies]");
+  const importCurrencies = page.querySelector<HTMLButtonElement>("[data-import-local-currencies]");
+  const importCurrencySummary = page.querySelector<HTMLElement>(
+    "[data-local-currency-migration-summary]",
+  );
   const clearFavourites = page.querySelector<HTMLButtonElement>("[data-clear-favourites]");
   const clearPlaces = page.querySelector<HTMLButtonElement>("[data-clear-places]");
   const clearRecents = page.querySelector<HTMLButtonElement>("[data-clear-recents]");
   const importPlaces = page.querySelector<HTMLButtonElement>("[data-import-local-places]");
   const importSummary = page.querySelector<HTMLElement>("[data-local-place-migration-summary]");
   const unavailable = read.status === "unavailable";
+  if (clearCurrencies) {
+    const canClearCurrencies = !unavailable && read.state.currencies.length > 0;
+    clearCurrencies.hidden = !canClearCurrencies;
+    clearCurrencies.disabled = !canClearCurrencies;
+  }
+  if (importCurrencies) {
+    const canImport =
+      page.dataset.accountMode === "true" &&
+      accountCurrencySyncAvailable() &&
+      !unavailable &&
+      read.state.currencies.length > 0;
+    importCurrencies.hidden = !canImport;
+    importCurrencies.disabled = !canImport;
+  }
+  if (importCurrencySummary && page.dataset.accountMode === "true") {
+    importCurrencySummary.removeAttribute("data-local-pending");
+    if (unavailable) {
+      importCurrencySummary.textContent =
+        "Browser-only currencies cannot be read on this device.";
+    } else if (read.state.currencies.length === 0) {
+      importCurrencySummary.textContent =
+        "No browser-only currencies are waiting to be imported.";
+    } else {
+      importCurrencySummary.textContent =
+        `${read.state.currencies.length} browser-only currency shortcut${read.state.currencies.length === 1 ? "" : "s"} remain on this device. Import is always explicit.`;
+    }
+  }
   if (clearFavourites) {
     const canClearFavourites = !unavailable && read.state.favourites.length > 0;
     clearFavourites.hidden = !canClearFavourites;
@@ -517,6 +627,7 @@ function renderSavedPage(overrideMessage = ""): void {
     clearRecents.disabled = !canClearRecents;
   }
 
+  renderCurrencies(page, read.state, converterUrl);
   renderPlaces(page, read.state, converterUrl, comparisonUrl);
   renderFavourites(page, read.state, converterUrl);
   renderRecents(page, read.state, converterUrl);
@@ -528,6 +639,76 @@ export function wireSavedPage(): void {
 
   if (page.dataset.localStateWired !== "true") {
     page.dataset.localStateWired = "true";
+    page
+      .querySelector<HTMLFormElement>("[data-local-currency-form]")
+      ?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.currentTarget as HTMLFormElement;
+        const select = form.querySelector<HTMLSelectElement>("[name='currency_code']");
+        const option = select?.selectedOptions[0];
+        if (!select || !option || !select.value) return;
+        const read = readState();
+        if (read.status === "unavailable") return renderSavedPage();
+        const normalized = normalizeSavedCurrency({
+          code: select.value,
+          name: option.dataset.currencyName ?? "",
+          savedAt: new Date().toISOString(),
+        });
+        if (!normalized) return;
+        if (read.state.currencies.some((item) => item.code === normalized.code)) {
+          renderSavedPage(`${normalized.code} is already saved in this browser.`);
+          return;
+        }
+        const toggled = toggleCurrencyInState(read.state, {
+          code: normalized.code,
+          name: normalized.name,
+        });
+        persistAndRender(toggled.state, `${normalized.code} saved in this browser.`);
+      });
+    page
+      .querySelector<HTMLButtonElement>("[data-clear-currencies]")
+      ?.addEventListener("click", () => {
+        const read = readState();
+        if (read.status === "unavailable") return renderSavedPage();
+        persistAndRender(
+          { ...read.state, currencies: [] },
+          "Saved currencies cleared from this browser.",
+        );
+      });
+    page
+      .querySelector<HTMLButtonElement>("[data-import-local-currencies]")
+      ?.addEventListener("click", async (event) => {
+        const button = event.currentTarget as HTMLButtonElement;
+        const status = page.querySelector<HTMLElement>(
+          "[data-local-currency-migration-status]",
+        );
+        button.disabled = true;
+        if (status) {
+          status.textContent = "Importing browser-only currencies to your account…";
+          status.setAttribute("aria-live", "polite");
+        }
+        try {
+          const result = await importLocalCurrenciesToAccount();
+          if (status) {
+            status.textContent =
+              result.importedCount === 0
+                ? "There were no browser-only currencies to import."
+                : result.localCleanupSucceeded
+                  ? `Imported ${result.importedCount} currency shortcut${result.importedCount === 1 ? "" : "s"} and removed the confirmed local copies.`
+                  : "Currencies were saved to your account, but the browser copies could not be cleared.";
+          }
+          if (result.importedCount > 0 && result.localCleanupSucceeded) {
+            window.location.reload();
+            return;
+          }
+        } catch {
+          if (status) {
+            status.textContent =
+              "Import failed. Browser-only currencies are unchanged and can be retried.";
+          }
+        }
+        renderSavedPage();
+      });
     page
       .querySelector<HTMLButtonElement>("[data-clear-favourites]")
       ?.addEventListener("click", () => {
