@@ -1,3 +1,4 @@
+import { wireBrowserScenarioForms } from "./browser-scenarios";
 import {
   accountFavouriteSyncAvailable,
   saveFavouriteToAccount,
@@ -389,6 +390,7 @@ function syncLocalAccountFavourites(): void {
 }
 
 export function enhanceLocalSavedState(): void {
+  wireBrowserScenarioForms();
   enhanceConversionSnapshots();
   enhanceExploreSavedPlaces();
   enhanceSavedPage();
