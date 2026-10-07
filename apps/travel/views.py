@@ -339,7 +339,11 @@ def saved_state(request: HttpRequest) -> HttpResponse:
             "account_saved_currency_rows": (
                 _saved_currency_rows(request.user) if request.user.is_authenticated else []
             ),
-            "currency_choices": Currency.objects.filter(is_active=True).order_by("code"),
+            "currency_choices": (
+                Currency.objects.filter(is_active=True).order_by("code")
+                if request.user.is_authenticated
+                else ()
+            ),
             "account_saved_place_rows": (
                 _saved_place_rows(request.user) if request.user.is_authenticated else []
             ),
@@ -412,6 +416,17 @@ def sync_favourites(request: HttpRequest) -> JsonResponse:
             "createdCount": result.created_count,
         }
     )
+
+
+@never_cache
+@require_GET
+def saved_currency_options(request: HttpRequest) -> JsonResponse:
+    currencies = list(
+        Currency.objects.filter(is_active=True)
+        .order_by("code")
+        .values("code", "name")[:300]
+    )
+    return JsonResponse({"currencies": currencies})
 
 
 def _currency_json_error(message: str, *, status: int) -> JsonResponse:
