@@ -9,10 +9,17 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
-from apps.accounts.forms import DeleteAccountForm, HomeCurrencyPreferenceForm, SignUpForm
+from apps.accounts.ai_preferences import explanation_preferences
+from apps.accounts.forms import (
+    DeleteAccountForm,
+    ExplanationPreferencesForm,
+    HomeCurrencyPreferenceForm,
+    SignUpForm,
+)
 from apps.accounts.preferences import (
     home_currency_code,
     recent_history_enabled,
+    set_explanation_preferences,
     set_home_currency,
     set_recent_history_enabled,
 )
@@ -70,13 +77,23 @@ def _profile_context(
     *,
     home_currency_form: HomeCurrencyPreferenceForm | None = None,
     home_currency: str | None = None,
+    explanation_form: ExplanationPreferencesForm | None = None,
 ) -> dict[str, object]:
     current_home_currency = home_currency if home_currency is not None else home_currency_code(user)
+    ai_preferences = explanation_preferences(user)
     return {
         "recent_history_enabled": recent_history_enabled(user),
         "home_currency_form": home_currency_form
         or HomeCurrencyPreferenceForm(current_code=current_home_currency),
         "home_currency_code": current_home_currency,
+        "explanation_preferences_form": explanation_form
+        or ExplanationPreferencesForm(
+            initial={
+                "preferred_language": ai_preferences.locale,
+                "answer_detail": ai_preferences.answer_detail,
+                "travel_style": ai_preferences.travel_style,
+            }
+        ),
         "payment_fee_profiles": payment_fee_profiles_for_user(user),
         "budget_presets": budget_presets_for_user(user),
     }
@@ -119,6 +136,32 @@ def update_home_currency_preference(request: HttpRequest) -> HttpResponse:
         messages.success(request, f"{code} is now your default home currency.")
     else:
         messages.success(request, "Saved home currency default was cleared.")
+    return redirect("profile")
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_explanation_preferences(request: HttpRequest) -> HttpResponse:
+    form = ExplanationPreferencesForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Explanation preferences were not changed.")
+        return render(
+            request,
+            "accounts/profile.html",
+            _profile_context(request.user, explanation_form=form),
+            status=422,
+        )
+
+    set_explanation_preferences(
+        request.user,
+        preferred_language=form.cleaned_data["preferred_language"],
+        answer_detail=form.cleaned_data["answer_detail"],
+        travel_style=form.cleaned_data["travel_style"],
+    )
+    messages.success(
+        request,
+        "Explanation preferences saved. They affect optional AI presentation only.",
+    )
     return redirect("profile")
 
 
