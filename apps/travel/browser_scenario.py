@@ -7,8 +7,8 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from django.core import signing
+from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.utils import timezone
 
 from apps.countries.models import City, Country, Currency
 from apps.exchange.budget import BudgetCategoryAssumption
@@ -342,6 +342,7 @@ def import_browser_scenarios(user, raw_tokens: Any) -> BrowserScenarioImportResu
     drafts = [_resolve_snapshot(snapshot) for snapshot in snapshots]
 
     with transaction.atomic():
+        get_user_model().objects.select_for_update().get(pk=user.pk)
         existing_keys = set(
             SavedScenario.objects.filter(
                 user=user,
@@ -491,9 +492,6 @@ def _conversion(value: Any) -> ConversionResult:
     fetched_at = datetime.fromisoformat(str(value["fetched_at"]))
     if fetched_at.tzinfo is None:
         raise BrowserScenarioTokenError("Browser scenario fetched-at must be timezone-aware.")
-    if effective_date > fetched_at.date():
-        raise BrowserScenarioTokenError("Browser scenario effective date is invalid.")
-
     include_attribution = value["provider_policy_include_attribution"]
     if not isinstance(include_attribution, bool):
         raise BrowserScenarioTokenError("Browser scenario provider policy is invalid.")
