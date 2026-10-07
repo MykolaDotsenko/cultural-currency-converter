@@ -351,6 +351,24 @@ Travel timing is explicit planning metadata, not inferred itinerary state. An en
 
 Trip and budget scenarios require destination-country context. A destination city must belong to that country. Country/currency associations are validated against the current temporal mapping when the scenario is created.
 
+### Browser-local SavedScenario continuity
+
+Anonymous Budget and Shopping persistence is not a second scenario model and does not treat arbitrary localStorage JSON as trusted financial state.
+
+The browser stores a **durable signed scenario snapshot** plus bounded display metadata. The signed snapshot is issued only after the server has validated the same Budget/Shopping handoff and explicit assumptions used by normal account saving. It contains:
+
+- one opaque browser-origin UUID;
+- scenario kind/title and canonical country/city/currency identifiers;
+- explicit amount, duration/traveller/date/category or Shopping assumptions;
+- the immutable current FX observation with effective/fetched/provider/stale semantics;
+- explicit payment-adjusted basis values when that basis was selected.
+
+It does not contain account identity, spend entries, Camera extraction state or notification state.
+
+The token has no artificial short expiry because it represents immutable stored planning state rather than a live quote. Signing-key rotation invalidates it naturally. Browser display metadata is convenience-only; account import trusts only the signed token.
+
+Import is explicit after authentication. The server resolves current canonical model identity again and routes creation through `create_saved_scenario`. `SavedScenario.browser_import_key` stores the signed browser-origin UUID and is unique per account when present, making retry after uncertain local cleanup idempotent. Sign-in alone never imports browser scenarios.
+
 ### SavedScenarioBudgetItem
 
 Budget assumptions are normalized child rows rather than an opaque JSON payload. Each scenario can store at most one assumption per category, expressed as positive units per person per day.
