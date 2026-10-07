@@ -1638,10 +1638,38 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
       },
     ],
   };
-  await page.evaluate(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), {
-    key: LOCAL_STATE_KEY,
-    state: localOnlyRecent,
-  });
+  const localScenarioBeforeSignup = {
+    version: 1,
+    scenarios: [
+      {
+        id: "b7b80820-73ee-4c8a-a2fa-aaf77420fb24",
+        kind: "budget",
+        title: "Private browser plan",
+        scopeLabel: "Tokyo, Japan",
+        sourceAmount: "600",
+        sourceCurrency: "EUR",
+        destinationCurrency: "JPY",
+        durationDays: 5,
+        travelers: 2,
+        effectiveDate: "2026-09-30",
+        stale: false,
+        token: "account-continuity-signed-token-placeholder",
+        savedAt: "2026-10-07T10:00:00.000Z",
+      },
+    ],
+  };
+  await page.evaluate(
+    ({ preferenceKey, preferenceState, scenarioKey, scenarioState }) => {
+      localStorage.setItem(preferenceKey, JSON.stringify(preferenceState));
+      localStorage.setItem(scenarioKey, JSON.stringify(scenarioState));
+    },
+    {
+      preferenceKey: LOCAL_STATE_KEY,
+      preferenceState: localOnlyRecent,
+      scenarioKey: LOCAL_SCENARIOS_KEY,
+      scenarioState: localScenarioBeforeSignup,
+    },
+  );
 
   const username = `qa-history-${crypto.randomUUID().slice(0, 12)}`;
   const testCredential = `QA-${crypto.randomUUID()}`;
@@ -1667,6 +1695,29 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
   assert(
     (await page.locator("[data-account-place-id]").count()) === 0,
     "account-places: sign-up silently imported browser-local My Places",
+  );
+  assert(
+    (await page.locator("[data-saved-scenario-id]").count()) === 0,
+    "account-scenarios: sign-up silently imported a browser-local scenario",
+  );
+  await page.getByRole("heading", { name: "Private browser plan" }).waitFor();
+  const importScenarios = page.getByRole("button", {
+    name: "Import browser scenarios to account",
+    exact: true,
+  });
+  await importScenarios.waitFor();
+  assert(
+    await importScenarios.isVisible(),
+    "account-scenarios: explicit import action is missing after sign-in",
+  );
+  await page.getByRole("button", { name: "Clear browser scenarios", exact: true }).click();
+  await page.getByText("No browser-saved scenarios on this device.", { exact: true }).waitFor();
+  assert(
+    (await page.evaluate((key) => {
+      const state = JSON.parse(localStorage.getItem(key) ?? "{}");
+      return Array.isArray(state.scenarios) ? state.scenarios.length : -1;
+    }, LOCAL_SCENARIOS_KEY)) === 0,
+    "account-scenarios: browser scenario clear did not remain device-local",
   );
   await page.getByRole("heading", { name: "Tokyo, Japan" }).waitFor();
   const importPlaces = page.getByRole("button", {
