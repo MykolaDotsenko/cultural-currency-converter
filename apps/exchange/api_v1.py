@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import json
-from datetime import date
 from decimal import Decimal
-from typing import Any
 
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, CountryCurrency, Currency
-from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
+from apps.exchange.application import (
+    ConverterSubmissionCommand,
+    ConverterSubmissionError,
+    run_converter_submission,
+)
 from apps.exchange.domain import HistoricalObservationUnavailable, HistoricalOutOfCoverage
 from apps.exchange.forms import RATE_MODE_HISTORICAL, RATE_MODE_LATEST, CurrentConversionForm
+from apps.culture.services import PurchaseEquivalent
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.providers.base import (
     FxProviderInvalidPayload,
@@ -166,7 +169,7 @@ def _conversion_command(form: CurrentConversionForm) -> ConverterSubmissionComma
     )
 
 
-def _purchase_equivalent(item) -> dict[str, str]:
+def _purchase_equivalent(item: PurchaseEquivalent) -> dict[str, str]:
     return {
         "minimumCount": _decimal_text(item.minimum_count),
         "maximumCount": _decimal_text(item.maximum_count),
@@ -253,7 +256,7 @@ def _conversion_payload(context: MoneyContext) -> dict[str, object]:
     }
 
 
-def _submission_error_response(error) -> JsonResponse:
+def _submission_error_response(error: ConverterSubmissionError) -> JsonResponse:
     if isinstance(error, HistoricalOutOfCoverage):
         return _api_error(
             code="historical_out_of_coverage",
