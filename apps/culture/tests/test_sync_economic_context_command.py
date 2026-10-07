@@ -94,8 +94,7 @@ def test_sync_economic_context_aborts_before_writes_when_any_source_fails(
         fail_eurostat,
     )
     monkeypatch.setattr(
-        "apps.culture.management.commands.sync_economic_context."
-        "OECDEconomicClient.fetch_countries",
+        "apps.culture.management.commands.sync_economic_context.OECDEconomicClient.fetch_countries",
         lambda self, country_iso3_codes: (),
     )
 
