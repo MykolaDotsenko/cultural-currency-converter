@@ -13,7 +13,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_POST
 
 from apps.travel.local_scenario_snapshot import (
     LocalScenarioTokenError,
