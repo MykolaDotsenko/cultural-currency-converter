@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -76,7 +76,6 @@ def build_local_scenario_token(
     *,
     spec: SavedScenarioSpec,
     conversion: ConversionResult,
-    import_key: UUID | None = None,
 ) -> str:
     """Sign one validated browser-portable scenario snapshot.
 
@@ -85,7 +84,7 @@ def build_local_scenario_token(
     """
 
     validate_saved_scenario_spec(spec=spec, conversion=conversion)
-    normalized_import_key = import_key or uuid4()
+    normalized_import_key = uuid4()
     quote = conversion.quote
 
     payload = {
