@@ -61,6 +61,17 @@ def _economic_metric_component(metric) -> dict[str, object]:
     }
 
 
+def _holiday_item_component(item, *, as_of) -> dict[str, object]:
+    return {
+        "name": item.name,
+        "date": date_format(item.date, "j M Y"),
+        "is_today": item.date == as_of,
+        "types": ", ".join(item.holiday_types),
+        "source_name": item.source_name,
+        "source_url": item.source_url,
+    }
+
+
 def build_destination_context_component(
     context: DestinationContext,
     *,
@@ -113,6 +124,20 @@ def build_destination_context_component(
             "metric_count": int(inflation is not None) + int(price_level is not None),
         }
 
+    calendar = None
+    if context.calendar is not None:
+        calendar = {
+            "today": [
+                _holiday_item_component(item, as_of=context.calendar.as_of)
+                for item in context.calendar.today
+            ],
+            "upcoming": [
+                _holiday_item_component(item, as_of=context.calendar.as_of)
+                for item in context.calendar.upcoming
+            ],
+            "window_days": context.calendar.window_days,
+        }
+
     payment = None
     if context.payment is not None:
         rows = [
@@ -144,6 +169,7 @@ def build_destination_context_component(
         "prices": prices,
         "payment": payment,
         "economic": economic,
+        "calendar": calendar,
         "historical_notice": (
             "Current destination context — not historical purchasing power. "
             "These local-price and payment notes use current reviewed data and are not "
