@@ -531,3 +531,14 @@ The save handoff must preserve these boundaries:
 
 The current saved-budget detail remains intentionally narrower than a full travel ledger. Rate-change comparison, deterministic trip readiness, explicit Trip Budget Remaining, explicit Camera-confirmed spend and explicit current local-money-guide refresh are now present. Automatic/background context refresh and deeper trip-day workflows remain later iterations.
 
+
+
+## Browser-local scenario continuity
+
+Anonymous users may explicitly save a successful Budget Interpretation or Shopping estimate in the current browser. The save control remains disabled until browser storage is confirmed available. The server creates a signed immutable scenario envelope from the same trusted save draft used by account persistence; JavaScript stores that envelope only after the user chooses **Save in this browser**.
+
+Saved & recent shows browser scenarios separately from account scenarios. A browser scenario says that it is a stored reference, shows effective/provider/stale meaning, and never refreshes merely because it is opened. Private envelope data is submitted to the read-only detail surface through POST rather than copied into a shareable URL. The UI states that signing protects integrity, not confidentiality.
+
+Signing in does **not** move browser scenarios into the account. When local scenarios exist, the signed-in Saved page exposes **Import browser scenarios to account**. Import is explicit, server-validated, atomic for the submitted batch and idempotent. Local copies are removed only after the server confirms every submitted item; if local cleanup fails, retry is safe.
+
+Browser-local scenarios are not a substitute for account sync, offline packs or public share cards. Public scenario sharing continues to use the separate privacy-minimized share snapshot that omits title, trip dates and other private planning fields.
