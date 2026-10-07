@@ -3,6 +3,7 @@ const MAX_FAVOURITES = 12;
 const MAX_RECENTS = 10;
 const MAX_PLACES = 24;
 const MAX_CURRENCIES = 24;
+const MAX_SCENARIOS = 12;
 const STORAGE_PROBE_KEY = "cultural-currency:storage-probe";
 
 export const STORAGE_KEY = "cultural-currency:local-preferences:v1";
@@ -42,6 +43,19 @@ export interface SavedCurrency {
   savedAt: string;
 }
 
+export interface BrowserScenario {
+  id: string;
+  token: string;
+  kind: "budget" | "shopping";
+  title: string;
+  scope: string;
+  sourceCurrency: string;
+  destinationCurrency: string;
+  sourceAmount: string;
+  savedAt: string;
+  reopenUrl: string;
+}
+
 export interface RecentConversion extends PairContext {
   id: string;
   amount: string;
@@ -57,6 +71,7 @@ export interface LocalPreferencesV1 {
   favourites: FavouritePair[];
   places: SavedPlace[];
   currencies: SavedCurrency[];
+  scenarios: BrowserScenario[];
   recent: RecentConversion[];
 }
 
@@ -68,7 +83,14 @@ export interface ReadResult {
 let cachedStorage: Storage | null | undefined;
 
 function emptyState(): LocalPreferencesV1 {
-  return { version: STORAGE_VERSION, favourites: [], places: [], currencies: [], recent: [] };
+  return {
+    version: STORAGE_VERSION,
+    favourites: [],
+    places: [],
+    currencies: [],
+    scenarios: [],
+    recent: [],
+  };
 }
 
 function localStorageOrNull(): Storage | null {
@@ -118,6 +140,11 @@ function normalizedTimestamp(value: unknown): string | null {
 function normalizedAmount(value: unknown): string | null {
   if (typeof value !== "string" || value.length > 64) return null;
   return /^\d+(?:\.\d+)?$/.test(value) ? value : null;
+}
+
+function normalizedRelativeUrl(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  return /^\/(?!\/)[^\s]*$/.test(value) ? value : null;
 }
 
 export function normalizePair(value: Record<string, unknown>): PairContext | null {
@@ -206,6 +233,56 @@ export function normalizeSavedCurrency(value: unknown): SavedCurrency | null {
   return { id: code, code, name, savedAt };
 }
 
+export function normalizeBrowserScenario(value: unknown): BrowserScenario | null {
+  if (!isRecord(value)) return null;
+  const id =
+    typeof value.id === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.id)
+      ? value.id.toLowerCase()
+      : null;
+  const token =
+    typeof value.token === "string" && value.token.length > 0 && value.token.length <= 24_576
+      ? value.token
+      : null;
+  const kind =
+    value.kind === "budget" ? "budget" : value.kind === "shopping" ? "shopping" : null;
+  const title = normalizedString(value.title, 120);
+  const scope = normalizedString(value.scope, 160);
+  const sourceCurrency = normalizedCurrencyCode(value.sourceCurrency);
+  const destinationCurrency = normalizedCurrencyCode(value.destinationCurrency);
+  const sourceAmount = normalizedAmount(value.sourceAmount);
+  const savedAt = normalizedTimestamp(value.savedAt);
+  const reopenUrl = normalizedRelativeUrl(value.reopenUrl);
+
+  if (
+    id === null ||
+    token === null ||
+    kind === null ||
+    title === null ||
+    scope === null ||
+    sourceCurrency === null ||
+    destinationCurrency === null ||
+    sourceAmount === null ||
+    savedAt === null ||
+    reopenUrl === null
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    token,
+    kind,
+    title,
+    scope,
+    sourceCurrency,
+    destinationCurrency,
+    sourceAmount,
+    savedAt,
+    reopenUrl,
+  };
+}
+
 function normalizeFavourite(value: unknown): FavouritePair | null {
   if (!isRecord(value)) return null;
   const pair = normalizePair(value);
@@ -287,6 +364,7 @@ export function readState(): ReadResult {
     const rawFavourites = Array.isArray(parsed.favourites) ? parsed.favourites : [];
     const rawPlaces = Array.isArray(parsed.places) ? parsed.places : [];
     const rawCurrencies = Array.isArray(parsed.currencies) ? parsed.currencies : [];
+    const rawScenarios = Array.isArray(parsed.scenarios) ? parsed.scenarios : [];
     const rawRecent = Array.isArray(parsed.recent) ? parsed.recent : [];
     const favourites = dedupeById(
       rawFavourites.map(normalizeFavourite).filter((item): item is FavouritePair => item !== null),
@@ -302,6 +380,12 @@ export function readState(): ReadResult {
         .filter((item): item is SavedCurrency => item !== null),
       MAX_CURRENCIES,
     );
+    const scenarios = dedupeById(
+      rawScenarios
+        .map(normalizeBrowserScenario)
+        .filter((item): item is BrowserScenario => item !== null),
+      MAX_SCENARIOS,
+    );
     const recent = dedupeById(
       rawRecent.map(normalizeRecent).filter((item): item is RecentConversion => item !== null),
       MAX_RECENTS,
@@ -313,10 +397,12 @@ export function readState(): ReadResult {
       places.length !== Math.min(rawPlaces.length, MAX_PLACES) ||
       (parsed.currencies !== undefined && !Array.isArray(parsed.currencies)) ||
       currencies.length !== Math.min(rawCurrencies.length, MAX_CURRENCIES) ||
+      (parsed.scenarios !== undefined && !Array.isArray(parsed.scenarios)) ||
+      scenarios.length !== Math.min(rawScenarios.length, MAX_SCENARIOS) ||
       recent.length !== Math.min(rawRecent.length, MAX_RECENTS);
 
     return {
-      state: { version: STORAGE_VERSION, favourites, places, currencies, recent },
+      state: { version: STORAGE_VERSION, favourites, places, currencies, scenarios, recent },
       status: recovered ? "recovered" : "ok",
     };
   } catch {
@@ -398,6 +484,19 @@ export function toggleCurrencyInState(
         ...state.currencies.filter((item) => item.code !== currency.code),
       ].slice(0, MAX_CURRENCIES);
   return { state: { ...state, currencies }, saved: !existed };
+}
+
+export function upsertBrowserScenario(
+  state: LocalPreferencesV1,
+  scenario: BrowserScenario,
+): LocalPreferencesV1 {
+  return {
+    ...state,
+    scenarios: [
+      scenario,
+      ...state.scenarios.filter((item) => item.id !== scenario.id),
+    ].slice(0, MAX_SCENARIOS),
+  };
 }
 
 export function upsertRecent(
