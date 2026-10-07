@@ -81,6 +81,36 @@ def validate_saved_scenario_spec(
 
     if not isinstance(spec.kind, SavedScenarioKind):
         raise SavedScenarioError("Scenario kind must be a SavedScenarioKind value.")
+    if not isinstance(spec.title, str) or len(spec.title.strip()) > 120:
+        raise SavedScenarioError("Scenario title must be 120 characters or fewer.")
+    if (
+        not isinstance(spec.source_amount, Decimal)
+        or not spec.source_amount.is_finite()
+        or spec.source_amount < 0
+    ):
+        raise SavedScenarioError("Scenario source amount must be a finite non-negative Decimal.")
+    if spec.duration_days is not None and (
+        isinstance(spec.duration_days, bool)
+        or not isinstance(spec.duration_days, int)
+        or not 1 <= spec.duration_days <= 365
+    ):
+        raise SavedScenarioError("Scenario duration must be between 1 and 365 days.")
+    if (
+        isinstance(spec.travelers, bool)
+        or not isinstance(spec.travelers, int)
+        or not 1 <= spec.travelers <= 20
+    ):
+        raise SavedScenarioError("Scenario traveler count must be between 1 and 20.")
+    if spec.travel_end_date is not None and spec.travel_start_date is None:
+        raise SavedScenarioError("Scenario travel end date requires a start date.")
+    if (
+        spec.travel_start_date is not None
+        and spec.travel_end_date is not None
+        and spec.travel_end_date < spec.travel_start_date
+    ):
+        raise SavedScenarioError("Scenario travel end date cannot precede the start date.")
+    if spec.kind is not SavedScenarioKind.SHOPPING and spec.destination_country is None:
+        raise SavedScenarioError("Travel scenarios require a destination country.")
     if conversion.quote.historical:
         raise SavedScenarioError("Saved travel scenarios require a current conversion.")
     if conversion.quote.base_currency != spec.source_currency.code:
