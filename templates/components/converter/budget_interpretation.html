@@ -326,86 +326,96 @@
     </form>
     {% if budget_interpretation.result and budget_interpretation.save_payload %}
       <div class="qa-budget-interpretation__save">
-        {% if user.is_authenticated %}
-          <div>
-            <p class="qa-foundation-kicker">Keep this plan</p>
+        <div>
+          <p class="qa-foundation-kicker">Keep this plan</p>
+          {% if user.is_authenticated %}
             <h4>Save this budget scenario</h4>
             <p class="qa-field__message">
               Save the trusted conversion, destination scope, planning basis and your explicit
               daily basket assumptions to your account. Nothing is inferred or uploaded from
               browser history.
             </p>
-          </div>
-          <form method="post"
-                action="{% url 'save_budget_scenario' %}"
-                class="qa-budget-interpretation__save-form">
-            {% csrf_token %}
+          {% else %}
+            <h4>Save this plan in this browser</h4>
+            <p class="qa-field__message">
+              Browser saving is optional and stays on this device. Signing in later does not upload
+              it automatically; account import is a separate explicit action from Saved &amp; recent.
+            </p>
+          {% endif %}
+        </div>
+        <form method="post"
+              action="{% if user.is_authenticated %}{% url 'save_budget_scenario' %}{% else %}{% url 'create_local_budget_scenario' %}{% endif %}"
+              class="qa-budget-interpretation__save-form"
+              {% if not user.is_authenticated %}data-local-scenario-save-form data-local-scenario-kind="budget"{% endif %}>
+          {% csrf_token %}
+          <input type="hidden"
+                 name="budget_context_token"
+                 value="{{ budget_interpretation.token }}">
+          {% if budget_interpretation.save_payload.payment_handoff_token %}
             <input type="hidden"
-                   name="budget_context_token"
-                   value="{{ budget_interpretation.token }}">
-            {% if budget_interpretation.save_payload.payment_handoff_token %}
-              <input type="hidden"
-                     name="payment_budget_token"
-                     value="{{ budget_interpretation.save_payload.payment_handoff_token }}">
-            {% endif %}
-            <input type="hidden"
-                   name="duration_days"
-                   value="{{ budget_interpretation.save_payload.duration_days }}">
-            <input type="hidden"
-                   name="travelers"
-                   value="{{ budget_interpretation.save_payload.travelers }}">
-            {% for item in budget_interpretation.save_payload.categories %}
-              <input type="hidden" name="{{ item.field_name }}" value="{{ item.value }}">
-            {% endfor %}
+                   name="payment_budget_token"
+                   value="{{ budget_interpretation.save_payload.payment_handoff_token }}">
+          {% endif %}
+          <input type="hidden"
+                 name="duration_days"
+                 value="{{ budget_interpretation.save_payload.duration_days }}">
+          <input type="hidden"
+                 name="travelers"
+                 value="{{ budget_interpretation.save_payload.travelers }}">
+          {% for item in budget_interpretation.save_payload.categories %}
+            <input type="hidden" name="{{ item.field_name }}" value="{{ item.value }}">
+          {% endfor %}
+          <label class="qa-field">
+            <span class="qa-field__label">Scenario name <span class="qa-field__optional">Optional</span></span>
+            <input class="qa-text-input"
+                   type="text"
+                   name="title"
+                   maxlength="120"
+                   autocomplete="off"
+                   placeholder="{{ budget_interpretation.destination_name }} budget">
+          </label>
+          <p class="qa-field__message">
+            Optional travel dates are planning anchors for the saved scenario. They do not
+            change the {{ budget_interpretation.save_payload.duration_days }}-day budget
+            interpretation above.
+          </p>
+          <div class="qa-budget-interpretation__trip-fields">
             <label class="qa-field">
-              <span class="qa-field__label">Scenario name <span class="qa-field__optional">Optional</span></span>
+              <span class="qa-field__label">Trip starts <span class="qa-field__optional">Optional</span></span>
               <input class="qa-text-input"
-                     type="text"
-                     name="title"
-                     maxlength="120"
-                     autocomplete="off"
-                     placeholder="{{ budget_interpretation.destination_name }} budget">
+                     type="date"
+                     name="travel_start_date"
+                     autocomplete="off">
+              <span class="qa-field__message">
+                Adds a planning anchor for later re-checks. It never refreshes rates automatically.
+              </span>
             </label>
-            <p class="qa-field__message">
-              Optional travel dates are planning anchors for the saved scenario. They do not
-              change the {{ budget_interpretation.save_payload.duration_days }}-day budget
-              interpretation above.
-            </p>
-            <div class="qa-budget-interpretation__trip-fields">
-              <label class="qa-field">
-                <span class="qa-field__label">Trip starts <span class="qa-field__optional">Optional</span></span>
-                <input class="qa-text-input"
-                       type="date"
-                       name="travel_start_date"
-                       autocomplete="off">
-                <span class="qa-field__message">
-                  Adds a planning anchor for pre-trip re-checks. It does not trigger reminders yet.
-                </span>
-              </label>
-              <label class="qa-field">
-                <span class="qa-field__label">Trip ends <span class="qa-field__optional">Optional</span></span>
-                <input class="qa-text-input"
-                       type="date"
-                       name="travel_end_date"
-                       autocomplete="off">
-                <span class="qa-field__message">
-                  Leave blank if only the departure date matters for this scenario.
-                </span>
-              </label>
-            </div>
-            <button class="qa-secondary-button" type="submit">Save budget</button>
-          </form>
-        {% else %}
-          <div>
-            <p class="qa-foundation-kicker">Keep this plan</p>
-            <h4>Save and reopen budgets across devices</h4>
-            <p class="qa-field__message">
-              Account saving is opt-in. Your browser-only favourites and recent history are not
-              uploaded automatically.
-            </p>
+            <label class="qa-field">
+              <span class="qa-field__label">Trip ends <span class="qa-field__optional">Optional</span></span>
+              <input class="qa-text-input"
+                     type="date"
+                     name="travel_end_date"
+                     autocomplete="off">
+              <span class="qa-field__message">
+                Leave blank if only the departure date matters for this scenario.
+              </span>
+            </label>
           </div>
-          <a class="qa-secondary-button" href="{% url 'login' %}">Sign in to save</a>
-        {% endif %}
+          <button class="{% if user.is_authenticated %}qa-secondary-button{% else %}qa-primary-button{% endif %}"
+                  type="submit"
+                  {% if not user.is_authenticated %}data-local-scenario-save-button disabled{% endif %}>
+            {% if user.is_authenticated %}Save budget{% else %}Save in this browser{% endif %}
+          </button>
+          {% if not user.is_authenticated %}
+            <p class="qa-field__message"
+               data-local-scenario-save-status
+               role="status"
+               aria-live="polite">
+              Checking browser storage…
+            </p>
+            <p><a class="qa-secondary-button" href="{% url 'login' %}">Sign in for account saving</a></p>
+          {% endif %}
+        </form>
       </div>
     {% endif %}
     <p class="qa-budget-interpretation__caveat">
