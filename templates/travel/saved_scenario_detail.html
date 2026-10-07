@@ -163,6 +163,10 @@
           {% else %}
             <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
           {% endif %}
+          {% if share_url %}
+            <a class="qa-secondary-button"
+               href="{{ share_url }}">Share safe snapshot</a>
+          {% endif %}
           <form method="post" action="{% url 'delete_saved_scenario' scenario.pk %}">
             {% csrf_token %}
             <button class="qa-secondary-button qa-destructive-button"
@@ -170,6 +174,13 @@
           </form>
         </div>
       </div>
+      {% if share_url %}
+        <p class="qa-saved-state__privacy">
+          The share link contains only the stored money snapshot and destination label.
+          It excludes your account identity, private scenario title, travel dates, confirmed spend,
+          Camera data and notification settings.
+        </p>
+      {% endif %}
       <div class="qa-saved-list">
         <article class="qa-saved-row">
           <div class="qa-saved-row__copy">
