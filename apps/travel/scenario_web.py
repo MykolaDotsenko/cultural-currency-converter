@@ -65,6 +65,7 @@ from apps.travel.scenarios import (
     record_scenario_recheck,
     record_scenario_spend,
 )
+from apps.travel.share_snapshot import ScenarioShareTokenError, build_scenario_share_token
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
@@ -511,6 +512,18 @@ def _scenario_detail_context(
         scenario,
         initial_observation=initial_observation,
     )
+    share_url = ""
+    if latest_observation is not None:
+        try:
+            share_token = build_scenario_share_token(scenario, latest_observation)
+        except ScenarioShareTokenError:
+            logger.warning(
+                "saved_scenario_share_snapshot_unavailable",
+                extra={"scenario_id": scenario.pk},
+            )
+        else:
+            share_url = f"{reverse('share_scenario_card')}?{urlencode({'snapshot': share_token})}"
+
     local_context = (
         _scenario_local_context(
             scenario,
@@ -606,6 +619,7 @@ def _scenario_detail_context(
         "spend_form": spend_form,
         "converter_url": _scenario_converter_url(scenario),
         "reopen_url": _scenario_reopen_url(scenario),
+        "share_url": share_url,
         "camera_extraction_available": (
             scenario.kind == SavedScenarioKind.BUDGET
             and bool(settings.AI_CAMERA_EXTRACTION_ENABLED)
