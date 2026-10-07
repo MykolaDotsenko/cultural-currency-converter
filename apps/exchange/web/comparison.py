@@ -176,6 +176,8 @@ def destination_comparison_view(
                             assumptions=cleaned["budget_assumptions"],
                             left_minor_units=cleaned["left_destination_minor_units"],
                             right_minor_units=cleaned["right_destination_minor_units"],
+                            ai_locale=ai_preferences.locale,
+                            ai_focus_instruction_suffix=ai_preferences.focus_instruction_suffix,
                         )
                     except DestinationComparisonError as exc:
                         comparison_error = {
