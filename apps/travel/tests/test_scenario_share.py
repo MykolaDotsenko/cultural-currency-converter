@@ -207,7 +207,10 @@ def test_public_scenario_share_is_provider_free_account_free_and_private(
     assert "30 Sep 2026" in body
     assert "ECB" in body
     assert "does not refresh the exchange rate" in body
-    assert "no account, scenario ID, trip dates, spending, Camera data or notification settings" in body
+    assert (
+        "no account, scenario ID, trip dates, spending, Camera data or notification settings"
+        in body
+    )
 
     for private_value in (
         owner.username,
