@@ -38,7 +38,7 @@ class SavedCurrencyTests(TestCase):
         self.assertEqual(
             set(
                 SavedCurrency.objects.filter(user=self.user).values_list(
-                    "currency_id",
+                    "currency__code",
                     flat=True,
                 )
             ),
@@ -105,6 +105,19 @@ class SavedCurrencyTests(TestCase):
         self.assertIn("source_currency=EUR", content)
         self.assertIn("destination_currency=EUR", content)
         self.assertIn("Import browser currencies to account", content)
+
+    def test_currency_options_are_loaded_explicitly(self):
+        response = self.client.get(reverse("saved_currency_options"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(
+            payload["currencies"],
+            [
+                {"code": "EUR", "name": "Euro"},
+                {"code": "JPY", "name": "Japanese yen"},
+            ],
+        )
 
     def test_status_returns_only_owner_active_currency_codes(self):
         SavedCurrency.objects.create(user=self.user, currency=self.eur)
