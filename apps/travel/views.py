@@ -422,9 +422,7 @@ def sync_favourites(request: HttpRequest) -> JsonResponse:
 @require_GET
 def saved_currency_options(request: HttpRequest) -> JsonResponse:
     currencies = list(
-        Currency.objects.filter(is_active=True)
-        .order_by("code")
-        .values("code", "name")[:300]
+        Currency.objects.filter(is_active=True).order_by("code").values("code", "name")[:300]
     )
     return JsonResponse({"currencies": currencies})
 
