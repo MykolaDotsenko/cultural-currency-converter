@@ -275,7 +275,7 @@ def load_local_scenario_token(token: str) -> LocalScenarioSnapshot:
 
 
 def materialize_local_scenario(snapshot: LocalScenarioSnapshot) -> MaterializedLocalScenario:
-    currencies = Currency.objects.in_bulk(
+    currencies = Currency.objects.filter(is_active=True).in_bulk(
         [snapshot.source_currency_code, snapshot.destination_currency_code],
         field_name="code",
     )
@@ -384,7 +384,11 @@ def _conversion(
         _required_text(value["provider_policy_mode"], maximum=16)
     )
     provider_policy_key = value["provider_policy_key"]
-    if provider_policy_key is not None and not isinstance(provider_policy_key, str):
+    if provider_policy_key is not None and (
+        not isinstance(provider_policy_key, str)
+        or not provider_policy_key.strip()
+        or len(provider_policy_key) > 80
+    ):
         raise LocalScenarioTokenError("Local scenario provider policy is invalid.")
     include_attribution = value["provider_policy_include_attribution"]
     if not isinstance(include_attribution, bool):
