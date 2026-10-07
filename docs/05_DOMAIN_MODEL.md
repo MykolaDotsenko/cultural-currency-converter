@@ -244,6 +244,16 @@ Browser-local recents and account recents are intentionally distinct privacy sur
 
 Account recent history is only recorded after explicit opt-in and does not silently import existing local browser history.
 
+## SavedCurrency / browser-local saved currencies
+
+Favourite currencies are convenience shortcuts, not financial observations.
+
+**Browser-local saved currencies** keep only a three-letter currency code, display name and save time in the versioned local-preferences record. They remain device-local after sign-in until the user explicitly imports them.
+
+**Account-owned SavedCurrency** stores only the authenticated owner, canonical Currency reference and created/updated timestamps. The account record never stores an amount, country, exchange rate or historical observation. Re-entry merely preselects the currency on one side of the canonical converter. Duplicate owner/currency rows are prevented in the database.
+
+Explicit browser-local → account import is additive and idempotent. It clears only the local records confirmed by the server; if local cleanup fails after the account write, the browser copy remains safely retryable.
+
 ## SavedPlace / browser-local My Places
 
 My Places has two intentionally separate persistence modes.
