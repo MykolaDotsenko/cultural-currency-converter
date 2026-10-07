@@ -32,6 +32,9 @@ Verify time-sensitive framework/provider details against current official docume
 - REST Countries: https://restcountries.com/
 - ISO 4217 overview: https://www.iso.org/iso-4217-currency-codes.html
 - Wikidata: https://www.wikidata.org/
+- World Bank Indicators API: https://api.worldbank.org/v2/
+- Eurostat dissemination statistics API: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/
+- OECD SDMX API: https://sdmx.oecd.org/public/rest/
 - Wikimedia Commons: https://commons.wikimedia.org/
 - Europeana: https://www.europeana.eu/
 
