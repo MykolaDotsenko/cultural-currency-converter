@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from apps.accounts.models import AnswerDetail, PreferredLanguage, TravelStyle
 from apps.countries.models import Currency
 
 User = get_user_model()
@@ -62,6 +63,24 @@ class HomeCurrencyPreferenceForm(forms.Form):
         if code and code not in self._currency_by_code:
             raise forms.ValidationError("Choose an active currency.")
         return code
+
+
+class ExplanationPreferencesForm(forms.Form):
+    preferred_language = forms.ChoiceField(
+        choices=PreferredLanguage.choices,
+        label="AI explanation language",
+        widget=forms.Select(attrs={"class": "qa-native-select"}),
+    )
+    answer_detail = forms.ChoiceField(
+        choices=AnswerDetail.choices,
+        label="Answer detail",
+        widget=forms.Select(attrs={"class": "qa-native-select"}),
+    )
+    travel_style = forms.ChoiceField(
+        choices=TravelStyle.choices,
+        label="Travel emphasis",
+        widget=forms.Select(attrs={"class": "qa-native-select"}),
+    )
 
 
 class PaymentFeeProfileNameForm(forms.Form):
