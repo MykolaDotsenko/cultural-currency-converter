@@ -1225,6 +1225,10 @@ async function assertSavedStateFlow(page) {
     return status?.getAttribute("data-storage-tone") === "neutral";
   });
   assert(
+    await page.getByRole("button", { name: "Clear browser scenarios" }).isHidden(),
+    "saved-state/empty: clear-browser-scenarios action should not compete with the empty state",
+  );
+  assert(
     await page.getByRole("button", { name: "Clear saved pairs" }).isHidden(),
     "saved-state/empty: clear-saved action should not compete with the empty state",
   );
@@ -1245,6 +1249,21 @@ async function assertSavedStateFlow(page) {
 
   const sampleState = {
     version: 1,
+    scenarios: [
+      {
+        id: "5f2bc2d8-49dd-4f17-89a4-b0b88c37fa72",
+        token: "signed-browser-scenario-fixture",
+        kind: "budget",
+        title: "Tokyo browser budget",
+        scope: "Tokyo",
+        sourceCurrency: "EUR",
+        destinationCurrency: "JPY",
+        sourceAmount: "600",
+        savedAt: "2026-09-21T12:00:00.000Z",
+        reopenUrl:
+          "/?convert=1&amount=600&source_currency=EUR&destination_country=JP&destination_currency=JPY&destination_city_slug=tokyo",
+      },
+    ],
     places: [
       {
         id: "JP:tokyo",
@@ -1309,6 +1328,23 @@ async function assertSavedStateFlow(page) {
   });
   await page.reload({ waitUntil: "networkidle" });
 
+  await page.getByRole("heading", { name: "Tokyo browser budget" }).waitFor();
+  await page.getByText("Budget · saved in this browser", { exact: true }).waitFor();
+  assert(
+    (await page
+      .getByRole("link", {
+        name: "Reopen conversion: Tokyo browser budget",
+        exact: true,
+      })
+      .getAttribute("href"))?.includes("destination_city_slug=tokyo"),
+    "saved-state: browser budget lost its canonical converter re-entry",
+  );
+  assert(
+    await page
+      .getByRole("button", { name: "Clear browser scenarios" })
+      .evaluate((element) => element.classList.contains("qa-destructive-button")),
+    "saved-state: Clear browser scenarios is missing destructive-action styling",
+  );
   await page.getByRole("heading", { name: "Tokyo, Japan" }).waitFor();
   await page.getByRole("heading", { name: "EUR → JPY" }).waitFor();
   await page.getByText("100 EUR → 17450 JPY", { exact: true }).waitFor();
@@ -1480,6 +1516,20 @@ async function assertSavedStateFlow(page) {
       `saved-state: ${label} is missing destructive-action styling`,
     );
   }
+
+  await page
+    .getByRole("button", {
+      name: "Remove browser-only scenario: Tokyo browser budget",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByText("Browser-only scenario removed from this device.", { exact: true })
+    .waitFor();
+  assert(
+    await page.getByRole("button", { name: "Clear browser scenarios" }).isHidden(),
+    "saved-state: clear-browser-scenarios remained visible after removing the final local scenario",
+  );
 
   await page.getByRole("button", { name: "Clear recent history" }).click();
   await page.getByText("Recent history cleared from this browser.", { exact: true }).waitFor();
