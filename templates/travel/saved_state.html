@@ -235,7 +235,9 @@
         {% endif %}
       </div>
       {% if user.is_authenticated %}
-        <form class="qa-inline-form" method="post" action="{% url 'save_currency' %}">
+        <form class="qa-inline-form"
+              method="post"
+              action="{% url 'save_currency' %}">
           {% csrf_token %}
           <label class="qa-field__label" for="saved-currency-code">Add currency</label>
           <select id="saved-currency-code" name="currency_code" required>
@@ -307,16 +309,21 @@
                   hidden>Clear browser currencies</button>
         </div>
       {% else %}
-        <form class="qa-inline-form" data-local-currency-form>
+        <form class="qa-inline-form"
+              data-local-currency-form
+              data-currency-options-url="{% url 'saved_currency_options' %}">
           <label class="qa-field__label" for="local-saved-currency-code">Add currency</label>
-          <select id="local-saved-currency-code" name="currency_code" required>
-            <option value="">Choose currency</option>
-            {% for currency in currency_choices %}
-              <option value="{{ currency.code }}"
-                      data-currency-name="{{ currency.name }}">{{ currency.code }} · {{ currency.name }}</option>
-            {% endfor %}
+          <select id="local-saved-currency-code" name="currency_code" required disabled>
+            <option value="">Loading currencies…</option>
           </select>
-          <button class="qa-secondary-button" type="submit">Save in this browser</button>
+          <button class="qa-secondary-button"
+                  type="submit"
+                  data-local-currency-submit
+                  disabled>Save in this browser</button>
+          <span class="qa-visually-hidden"
+                role="status"
+                aria-live="polite"
+                data-local-currency-options-status></span>
         </form>
       {% endif %}
       <p class="qa-saved-empty"
