@@ -461,6 +461,7 @@ class SavedScenario(models.Model):
     )
     kind = models.CharField(max_length=16, choices=SavedScenarioKind.choices)
     title = models.CharField(max_length=120, blank=True)
+    browser_import_key = models.UUIDField(null=True, blank=True)
     source_currency = models.ForeignKey(
         Currency,
         on_delete=models.PROTECT,
@@ -532,6 +533,11 @@ class SavedScenario(models.Model):
     class Meta:
         ordering = ("-updated_at", "-id")
         constraints = [
+            models.UniqueConstraint(
+                fields=("user", "browser_import_key"),
+                condition=Q(browser_import_key__isnull=False),
+                name="unique_scenario_browser_import",
+            ),
             models.CheckConstraint(
                 condition=Q(kind__in=SavedScenarioKind.values),
                 name="scenario_kind_valid",
