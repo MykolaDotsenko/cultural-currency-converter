@@ -5,7 +5,7 @@
     <p class="qa-foundation-kicker">Account</p>
     <h1 id="account-profile-title">{{ user.get_username }}</h1>
     <p class="qa-account-panel__lede">
-      Signed-in saved pairs, places, comparisons and scenarios are account-owned and available
+      Signed-in saved currencies, pairs, places, comparisons and scenarios are account-owned and available
       across devices. Browser-only places move to the account only when you explicitly import them.
       Recent conversion history is browser-only unless you enable cross-device history below.
     </p>
@@ -40,6 +40,52 @@
           {% endif %}
         </div>
         <button class="qa-secondary-button" type="submit">Save home currency</button>
+      </form>
+    </section>
+    <section class="qa-account-section" aria-labelledby="explanation-preferences-title">
+      <p class="qa-foundation-kicker">Optional AI presentation</p>
+      <h2 id="explanation-preferences-title">Explanation preferences</h2>
+      <p>
+        These settings may change the language, brevity and emphasis of optional AI explanations.
+        They never change FX rates, local-price evidence, budget assumptions or deterministic
+        calculations.
+      </p>
+      <form method="post" action="{% url 'update_explanation_preferences' %}">
+        {% csrf_token %}
+        <div class="qa-field{% if explanation_preferences_form.preferred_language.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ explanation_preferences_form.preferred_language.id_for_label }}">AI explanation language</label>
+          {{ explanation_preferences_form.preferred_language }}
+          {% if explanation_preferences_form.preferred_language.errors %}
+            <p class="qa-field__message qa-field__message--error">{{ explanation_preferences_form.preferred_language.errors.0 }}</p>
+          {% else %}
+            <p class="qa-field__message">Applied only to optional live AI output; tested deterministic fallback copy stays canonical.</p>
+          {% endif %}
+        </div>
+        <div class="qa-field{% if explanation_preferences_form.answer_detail.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ explanation_preferences_form.answer_detail.id_for_label }}">Answer detail</label>
+          {{ explanation_preferences_form.answer_detail }}
+          {% if explanation_preferences_form.answer_detail.errors %}
+            <p class="qa-field__message qa-field__message--error">{{ explanation_preferences_form.answer_detail.errors.0 }}</p>
+          {% else %}
+            <p class="qa-field__message">Concise, balanced or detailed within the same grounded fact packet.</p>
+          {% endif %}
+        </div>
+        <div class="qa-field{% if explanation_preferences_form.travel_style.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label"
+                 for="{{ explanation_preferences_form.travel_style.id_for_label }}">Travel emphasis</label>
+          {{ explanation_preferences_form.travel_style }}
+          {% if explanation_preferences_form.travel_style.errors %}
+            <p class="qa-field__message qa-field__message--error">{{ explanation_preferences_form.travel_style.errors.0 }}</p>
+          {% else %}
+            <p class="qa-field__message">
+              Budget-conscious may emphasize supplied price/cost facts; comfort-first may emphasize
+              supplied payment/cash/card/ATM facts. No recommendation or hidden assumption is added.
+            </p>
+          {% endif %}
+        </div>
+        <button class="qa-secondary-button" type="submit">Save explanation preferences</button>
       </form>
     </section>
     <section class="qa-account-section"
@@ -146,7 +192,7 @@
     <section class="qa-account-danger" aria-labelledby="account-privacy-title">
       <h2 id="account-privacy-title">Delete account</h2>
       <p>
-        Saved pairs, places, comparisons, scenarios and opted-in recent history are account-owned.
+        Saved currencies, pairs, places, comparisons, scenarios and opted-in recent history are account-owned.
         You can remove supported items from Saved &amp; recent, or permanently delete this account
         and all account-owned data.
       </p>
