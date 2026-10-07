@@ -6,8 +6,8 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID, uuid4
 
-from django.core import signing
 from django.contrib.auth import get_user_model
+from django.core import signing
 from django.db import transaction
 
 from apps.countries.models import City, Country, Currency
