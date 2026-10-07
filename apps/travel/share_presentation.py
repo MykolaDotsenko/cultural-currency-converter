@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC
 from decimal import Decimal
 
 from django.utils.formats import date_format
@@ -77,7 +78,7 @@ def build_scenario_share_card(snapshot: ScenarioShareSnapshot) -> ScenarioShareC
         )
 
     effective_date_label = date_format(snapshot.effective_date, "j M Y")
-    fetched_at_label = snapshot.fetched_at.strftime("%d %b %Y · %H:%M UTC")
+    fetched_at_label = snapshot.fetched_at.astimezone(UTC).strftime("%d %b %Y · %H:%M UTC")
     title = f"{snapshot.scope_label} · {kind_label} · Cultural Currency"
     description = (
         f"{snapshot.scope_label}: {input_text} {relation_label} {output_text}. "
