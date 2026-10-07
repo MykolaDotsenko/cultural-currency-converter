@@ -37,6 +37,41 @@ function apiErrorMessage(payload: unknown, fallback: string): string {
   return typeof message === "string" && message.trim() ? message : fallback;
 }
 
+function localScenarioOpenForm(
+  action: string,
+  token: string,
+  label: string,
+  *,
+  primary = false,
+): HTMLFormElement {
+  const csrfToken = document.body.dataset.accountCsrfToken;
+  const form = document.createElement("form");
+  form.method = "post";
+  form.action = action;
+  form.className = "qa-inline-form";
+  form.dataset.localScenarioOpenForm = "true";
+
+  if (csrfToken) {
+    const csrf = document.createElement("input");
+    csrf.type = "hidden";
+    csrf.name = "csrfmiddlewaretoken";
+    csrf.value = csrfToken;
+    form.append(csrf);
+  }
+
+  const snapshot = document.createElement("input");
+  snapshot.type = "hidden";
+  snapshot.name = "snapshot";
+  snapshot.value = token;
+
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.className = primary ? "qa-primary-button" : "qa-secondary-button";
+  button.textContent = label;
+  form.append(snapshot, button);
+  return form;
+}
+
 function saveStatus(form: HTMLFormElement, message: string): void {
   const status = form.querySelector<HTMLElement>("[data-local-scenario-save-status]");
   if (status) status.textContent = message;
@@ -91,17 +126,14 @@ async function saveScenarioForm(form: HTMLFormElement): Promise<void> {
       form,
       "Saved in this browser. Sign-in will not upload it automatically; import stays explicit.",
     );
-    const existing = form.querySelector<HTMLAnchorElement>("[data-local-scenario-open-link]");
-    if (existing) {
-      existing.href = parsed.detailUrl;
-    } else {
-      const link = document.createElement("a");
-      link.className = "qa-secondary-button";
-      link.href = parsed.detailUrl;
-      link.textContent = "Open saved snapshot";
-      link.dataset.localScenarioOpenLink = "true";
-      form.append(link);
-    }
+    const existing = form.querySelector<HTMLFormElement>("[data-local-scenario-open-form]");
+    if (existing) existing.remove();
+    const openForm = localScenarioOpenForm(
+      parsed.detailUrl,
+      parsed.token,
+      "Open saved snapshot",
+    );
+    form.insertAdjacentElement("afterend", openForm);
   } catch (error) {
     saveStatus(
       form,
@@ -137,12 +169,6 @@ function wireSaveForms(): void {
       void saveScenarioForm(form);
     });
   }
-}
-
-function scenarioDetailUrl(baseUrl: string, token: string): string {
-  const url = new URL(baseUrl, window.location.origin);
-  url.searchParams.set("snapshot", token);
-  return `${url.pathname}${url.search}`;
 }
 
 function dateLabel(value: string): string {
@@ -188,11 +214,14 @@ function renderScenarioRow(
 
   const actions = document.createElement("div");
   actions.className = "qa-saved-row__actions";
-  const open = document.createElement("a");
-  open.className = "qa-primary-button";
-  open.href = scenarioDetailUrl(detailBaseUrl, item.token);
-  open.textContent = "Open stored snapshot";
-  open.setAttribute("aria-label", `Open browser-saved scenario: ${item.title}`);
+  const open = localScenarioOpenForm(
+    detailBaseUrl,
+    item.token,
+    "Open stored snapshot",
+    { primary: true },
+  );
+  const openButton = open.querySelector<HTMLButtonElement>("button");
+  openButton?.setAttribute("aria-label", `Open browser-saved scenario: ${item.title}`);
 
   const remove = document.createElement("button");
   remove.className = "qa-secondary-button qa-destructive-button";
