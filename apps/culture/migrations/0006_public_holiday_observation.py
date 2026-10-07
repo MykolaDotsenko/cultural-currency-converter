@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 "indexes": [
                     models.Index(
                         fields=["country", "date"],
-                        name="culture_holiday_country_date_idx",
+                        name="culture_holiday_ctry_date",
                     )
                 ],
                 "constraints": [
