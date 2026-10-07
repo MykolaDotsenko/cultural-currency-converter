@@ -398,13 +398,72 @@
         {% else %}
           <div>
             <p class="qa-foundation-kicker">Keep this plan</p>
-            <h4>Save and reopen budgets across devices</h4>
+            <h4>Save this budget in this browser</h4>
             <p class="qa-field__message">
-              Account saving is opt-in. Your browser-only favourites and recent history are not
-              uploaded automatically.
+              The server validates this exact signed result once, then this device keeps a signed
+              private snapshot. Signing in later never uploads it automatically.
             </p>
           </div>
-          <a class="qa-secondary-button" href="{% url 'login' %}">Sign in to save</a>
+          <form method="post"
+                action="{% url 'issue_browser_budget_scenario' %}"
+                class="qa-budget-interpretation__save-form"
+                data-browser-scenario-form>
+            {% csrf_token %}
+            <input type="hidden"
+                   name="budget_context_token"
+                   value="{{ budget_interpretation.token }}">
+            {% if budget_interpretation.save_payload.payment_handoff_token %}
+              <input type="hidden"
+                     name="payment_budget_token"
+                     value="{{ budget_interpretation.save_payload.payment_handoff_token }}">
+            {% endif %}
+            <input type="hidden"
+                   name="duration_days"
+                   value="{{ budget_interpretation.save_payload.duration_days }}">
+            <input type="hidden"
+                   name="travelers"
+                   value="{{ budget_interpretation.save_payload.travelers }}">
+            {% for item in budget_interpretation.save_payload.categories %}
+              <input type="hidden" name="{{ item.field_name }}" value="{{ item.value }}">
+            {% endfor %}
+            <label class="qa-field">
+              <span class="qa-field__label">Scenario name <span class="qa-field__optional">Optional</span></span>
+              <input class="qa-text-input"
+                     type="text"
+                     name="title"
+                     maxlength="120"
+                     autocomplete="off"
+                     placeholder="{{ budget_interpretation.destination_name }} budget">
+            </label>
+            <p class="qa-field__message">
+              Optional dates stay only inside this signed browser snapshot unless you explicitly
+              import the scenario after signing in.
+            </p>
+            <div class="qa-budget-interpretation__trip-fields">
+              <label class="qa-field">
+                <span class="qa-field__label">Trip starts <span class="qa-field__optional">Optional</span></span>
+                <input class="qa-text-input"
+                       type="date"
+                       name="travel_start_date"
+                       autocomplete="off">
+              </label>
+              <label class="qa-field">
+                <span class="qa-field__label">Trip ends <span class="qa-field__optional">Optional</span></span>
+                <input class="qa-text-input"
+                       type="date"
+                       name="travel_end_date"
+                       autocomplete="off">
+              </label>
+            </div>
+            <button class="qa-secondary-button"
+                    type="submit"
+                    data-browser-scenario-save>Save in this browser</button>
+            <span class="qa-field__message"
+                  role="status"
+                  aria-live="polite"
+                  data-browser-scenario-save-status></span>
+          </form>
+          <a class="qa-saved-row__text-action" href="{% url 'login' %}">Or sign in to save to your account</a>
         {% endif %}
       </div>
     {% endif %}
