@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import UTC
 from decimal import Decimal
 from urllib.parse import urlencode
 
+from django.contrib.auth import get_user_model
 from django.db import DatabaseError, transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
@@ -105,7 +107,8 @@ def create_local_shopping_scenario(request: HttpRequest) -> JsonResponse:
 
 def _money_text(value: Decimal) -> str:
     text = format(value, "f")
-    return text.rstrip("0").rstrip(".") if "." in text else text
+    normalized = text.rstrip("0").rstrip(".") if "." in text else text
+    return normalized or "0"
 
 
 def _local_reopen_url(snapshot) -> str:
@@ -161,8 +164,8 @@ def local_scenario_detail(request: HttpRequest) -> HttpResponse:
                 snapshot.conversion.quote.effective_date,
                 "j M Y",
             ),
-            "fetched_at_label": snapshot.conversion.quote.fetched_at.strftime(
-                "%d %b %Y · %H:%M %Z"
+            "fetched_at_label": snapshot.conversion.quote.fetched_at.astimezone(UTC).strftime(
+                "%d %b %Y · %H:%M UTC"
             ),
             "provider_label": (
                 ", ".join(key.upper() for key in snapshot.conversion.quote.provider_keys)
@@ -266,6 +269,7 @@ def import_local_scenarios(request: HttpRequest) -> JsonResponse:
     keys = [item.import_key for item in materialized]
     try:
         with transaction.atomic():
+            get_user_model().objects.select_for_update().get(pk=request.user.pk)
             existing_keys = set(
                 SavedScenario.objects.filter(
                     user=request.user,
