@@ -29,7 +29,7 @@ from apps.travel.scenarios import (
 )
 
 _TOKEN_SALT = "travel.local-scenario:v1"
-_MAX_TOKEN_LENGTH = 32_768
+_MAX_TOKEN_LENGTH = 16_384
 _MAX_DECIMAL_TEXT_LENGTH = 80
 _MAX_CATEGORIES = 12
 
