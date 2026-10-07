@@ -3,14 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from django.db import DatabaseError
-
 from apps.countries.models import City, Country, Currency
 from apps.exchange.budget import BudgetAssumptions
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
     load_budget_context_snapshot_token,
 )
+from apps.exchange.domain import ConversionResult
 from apps.exchange.forms import BudgetInterpretationForm
 from apps.exchange.payment_budget_snapshot import (
     PaymentBudgetHandoffTokenError,
@@ -40,7 +39,7 @@ class ScenarioDraftError(ValueError):
 @dataclass(frozen=True, slots=True)
 class ScenarioDraft:
     spec: SavedScenarioSpec
-    conversion: Any
+    conversion: ConversionResult
 
 
 def build_budget_scenario_draft(data: Mapping[str, Any]) -> ScenarioDraft:
@@ -235,15 +234,3 @@ def build_shopping_scenario_draft(data: Mapping[str, Any]) -> ScenarioDraft:
     return ScenarioDraft(spec=spec, conversion=snapshot.conversion)
 
 
-def draft_database_error_message() -> str:
-    return "Saved scenarios are temporarily unavailable. Your calculated result was not changed."
-
-
-__all__ = [
-    "DatabaseError",
-    "ScenarioDraft",
-    "ScenarioDraftError",
-    "build_budget_scenario_draft",
-    "build_shopping_scenario_draft",
-    "draft_database_error_message",
-]
