@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.accounts.ai_preferences import explanation_preferences
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
@@ -282,10 +283,13 @@ def explore_explanation(request: HttpRequest) -> HttpResponse:
                     destinations=destinations,
                 )
                 intent = parse_explore_explanation_intent(form.cleaned_data["prompt_id"])
+                preferences = explanation_preferences(request.user)
                 context, packet, delivery = explain_reviewed_destination(
                     destination,
                     intent=intent,
                     service=build_explore_explanation_service(),
+                    locale=preferences.locale,
+                    focus_instruction_suffix=preferences.focus_instruction_suffix,
                 )
             except ExploreExplanationError:
                 response_status = 422
