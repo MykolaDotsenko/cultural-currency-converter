@@ -114,15 +114,15 @@ class Migration(migrations.Migration):
                         name="economic_observation_identity",
                     ),
                     models.CheckConstraint(
-                        condition=~models.Q(("unit", "")),
+                        condition=~models.Q(unit=""),
                         name="economic_observation_unit_required",
                     ),
                     models.CheckConstraint(
-                        condition=~models.Q(("source_dataset", "")),
+                        condition=~models.Q(source_dataset=""),
                         name="economic_observation_dataset_required",
                     ),
                     models.CheckConstraint(
-                        condition=~models.Q(("source_name", "")),
+                        condition=~models.Q(source_name=""),
                         name="economic_observation_source_name_required",
                     ),
                 ],
