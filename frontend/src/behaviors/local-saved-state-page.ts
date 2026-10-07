@@ -1,6 +1,11 @@
+import {
+  accountScenarioImportAvailable,
+  importLocalScenariosToAccount,
+} from "./account-scenarios";
 import { accountCurrencySyncAvailable, importLocalCurrenciesToAccount } from "./account-currencies";
 import { accountPlaceSyncAvailable, importLocalPlacesToAccount } from "./account-places";
 import {
+  type BrowserScenario,
   type LocalPreferencesV1,
   normalizeSavedCurrency,
   type PairContext,
@@ -444,6 +449,72 @@ function renderPlaces(
   }
 }
 
+function browserScenarioLabel(scenario: BrowserScenario): string {
+  return scenario.kind === "shopping" ? "Shopping" : "Budget";
+}
+
+function renderBrowserScenarios(page: HTMLElement, state: LocalPreferencesV1): void {
+  const list = page.querySelector<HTMLElement>("[data-browser-scenarios-list]");
+  const empty = page.querySelector<HTMLElement>("[data-browser-scenarios-empty]");
+  if (!list || !empty) return;
+
+  list.replaceChildren();
+  empty.removeAttribute("data-local-pending");
+  empty.textContent =
+    page.dataset.accountMode === "true"
+      ? "No browser-only scenarios are waiting on this device."
+      : "No browser-only scenarios yet. Save a Budget or Shopping result to keep it on this device.";
+  empty.hidden = state.scenarios.length > 0;
+
+  for (const scenario of state.scenarios) {
+    const article = document.createElement("article");
+    article.className = "qa-saved-row";
+    article.dataset.browserScenarioId = scenario.id;
+
+    const copy = document.createElement("div");
+    copy.className = "qa-saved-row__copy";
+    const kicker = document.createElement("p");
+    kicker.className = "qa-foundation-kicker";
+    kicker.textContent = `${browserScenarioLabel(scenario)} · saved in this browser`;
+    const title = document.createElement("h3");
+    title.textContent = scenario.title || scenario.scope || browserScenarioLabel(scenario);
+    const scope = document.createElement("p");
+    scope.textContent = scenario.scope;
+    const meta = document.createElement("p");
+    meta.className = "qa-saved-row__meta";
+    meta.textContent =
+      `${scenario.sourceAmount} ${scenario.sourceCurrency} → ${scenario.destinationCurrency} · Saved ${savedAtLabel(scenario.savedAt)}`;
+    copy.append(kicker, title, scope, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "qa-saved-row__actions";
+    actions.append(
+      actionLink(
+        "Reopen inputs",
+        scenario.reopenUrl,
+        `Reopen browser-only scenario: ${scenario.title || scenario.scope}`,
+        "primary",
+      ),
+      actionButton(
+        "Remove",
+        () => {
+          const read = readState();
+          persistAndRender(
+            {
+              ...read.state,
+              scenarios: read.state.scenarios.filter((item) => item.id !== scenario.id),
+            },
+            "Browser-only scenario removed from this device.",
+          );
+        },
+        `Remove browser-only scenario: ${scenario.title || scenario.scope}`,
+      ),
+    );
+    article.append(copy, actions);
+    list.append(article);
+  }
+}
+
 function recentMeta(recent: RecentConversion): string {
   if (recent.rateMode === "historical") {
     return `Historical · requested ${dateLabel(recent.requestedDate)} · observation ${dateLabel(
@@ -569,22 +640,22 @@ function setStorageStatus(page: HTMLElement, read: ReadResult, overrideMessage =
     status.dataset.storageTone = "warning";
     status.setAttribute("aria-live", "polite");
     status.textContent = accountMode
-      ? "Account data remains available. Browser storage is unavailable, so browser-only history is disabled."
-      : "Browser storage is unavailable. Saved pairs and recent history are disabled; conversion still works.";
+      ? "Account data remains available. Browser storage is unavailable, so browser-only scenarios and history are disabled on this device."
+      : "Browser storage is unavailable. Browser-only scenarios, saved pairs and recent history are disabled; conversion still works.";
   } else if (read.status === "recovered") {
     status.dataset.storageTone = "warning";
     status.setAttribute("aria-live", "polite");
     status.textContent = accountMode
-      ? "Account data remains available. Some browser-only recent history was unreadable and has been ignored."
+      ? "Account data remains available. Some browser-only saved data was unreadable and has been ignored."
       : "Some local saved data was unreadable or outdated and has been ignored. Nothing was sent to the server.";
   } else {
     status.dataset.storageTone = "neutral";
     status.setAttribute("aria-live", "off");
     status.textContent = accountMode
       ? accountHistoryEnabled
-        ? `Account history is on · Browser-only recent entries on this device: ${read.state.recent.length}.`
-        : `Account history is off · Browser-only recent entries on this device: ${read.state.recent.length}.`
-      : `Stored locally in this browser · ${read.state.currencies.length} currencies · ${read.state.places.length} places · ${read.state.favourites.length} pairs · ${read.state.recent.length} recent.`;
+        ? `Account history is on · Browser-only scenarios: ${read.state.scenarios.length} · recent entries: ${read.state.recent.length}.`
+        : `Account history is off · Browser-only scenarios: ${read.state.scenarios.length} · recent entries: ${read.state.recent.length}.`
+      : `Stored locally in this browser · ${read.state.scenarios.length} scenarios · ${read.state.currencies.length} currencies · ${read.state.places.length} places · ${read.state.favourites.length} pairs · ${read.state.recent.length} recent.`;
   }
 }
 
@@ -597,6 +668,15 @@ function renderSavedPage(overrideMessage = ""): void {
   const comparisonUrl = page.dataset.comparisonUrl ?? "/compare/";
   setStorageStatus(page, read, overrideMessage);
 
+  const clearBrowserScenarios = page.querySelector<HTMLButtonElement>(
+    "[data-clear-browser-scenarios]",
+  );
+  const importBrowserScenarios = page.querySelector<HTMLButtonElement>(
+    "[data-import-browser-scenarios]",
+  );
+  const scenarioImportSummary = page.querySelector<HTMLElement>(
+    "[data-local-scenario-migration-summary]",
+  );
   const clearCurrencies = page.querySelector<HTMLButtonElement>("[data-clear-currencies]");
   const importCurrencies = page.querySelector<HTMLButtonElement>("[data-import-local-currencies]");
   const importCurrencySummary = page.querySelector<HTMLElement>(
@@ -608,6 +688,33 @@ function renderSavedPage(overrideMessage = ""): void {
   const importPlaces = page.querySelector<HTMLButtonElement>("[data-import-local-places]");
   const importSummary = page.querySelector<HTMLElement>("[data-local-place-migration-summary]");
   const unavailable = read.status === "unavailable";
+  if (clearBrowserScenarios) {
+    const canClearScenarios = !unavailable && read.state.scenarios.length > 0;
+    clearBrowserScenarios.hidden = !canClearScenarios;
+    clearBrowserScenarios.disabled = !canClearScenarios;
+  }
+  if (importBrowserScenarios) {
+    const canImportScenarios =
+      page.dataset.accountMode === "true" &&
+      accountScenarioImportAvailable() &&
+      !unavailable &&
+      read.state.scenarios.length > 0;
+    importBrowserScenarios.hidden = !canImportScenarios;
+    importBrowserScenarios.disabled = !canImportScenarios;
+  }
+  if (scenarioImportSummary && page.dataset.accountMode === "true") {
+    scenarioImportSummary.removeAttribute("data-local-pending");
+    if (unavailable) {
+      scenarioImportSummary.textContent =
+        "Browser-only scenarios cannot be read on this device, so nothing can be imported.";
+    } else if (read.state.scenarios.length === 0) {
+      scenarioImportSummary.textContent =
+        "No browser-only scenarios are waiting to be imported on this device.";
+    } else {
+      scenarioImportSummary.textContent =
+        `${read.state.scenarios.length} browser-only scenario${read.state.scenarios.length === 1 ? "" : "s"} remain on this device. Sign-in never imports them automatically.`;
+    }
+  }
   if (clearCurrencies) {
     const canClearCurrencies = !unavailable && read.state.currencies.length > 0;
     clearCurrencies.hidden = !canClearCurrencies;
@@ -669,6 +776,7 @@ function renderSavedPage(overrideMessage = ""): void {
     clearRecents.disabled = !canClearRecents;
   }
 
+  renderBrowserScenarios(page, read.state);
   renderCurrencies(page, read.state, converterUrl);
   renderPlaces(page, read.state, converterUrl, comparisonUrl);
   renderFavourites(page, read.state, converterUrl);
@@ -681,6 +789,52 @@ export function wireSavedPage(): void {
 
   if (page.dataset.localStateWired !== "true") {
     page.dataset.localStateWired = "true";
+    page
+      .querySelector<HTMLButtonElement>("[data-clear-browser-scenarios]")
+      ?.addEventListener("click", () => {
+        const read = readState();
+        if (read.status === "unavailable") return renderSavedPage();
+        persistAndRender(
+          { ...read.state, scenarios: [] },
+          "Browser-only scenarios cleared from this device.",
+        );
+      });
+    page
+      .querySelector<HTMLButtonElement>("[data-import-browser-scenarios]")
+      ?.addEventListener("click", async (event) => {
+        const button = event.currentTarget as HTMLButtonElement;
+        const status = page.querySelector<HTMLElement>(
+          "[data-local-scenario-migration-status]",
+        );
+        button.disabled = true;
+        if (status) {
+          status.textContent = "Importing browser-only scenarios to your account…";
+          status.setAttribute("aria-live", "polite");
+        }
+        try {
+          const result = await importLocalScenariosToAccount();
+          if (status) {
+            status.textContent =
+              result.importedCount === 0
+                ? "There were no browser-only scenarios to import."
+                : result.localCleanupSucceeded
+                  ? `Imported ${result.importedCount} browser-only scenario${result.importedCount === 1 ? "" : "s"} and removed the confirmed local copies.`
+                  : "Scenarios were saved to your account, but browser copies could not be cleared. They remain safe to retry because import is idempotent.";
+          }
+          if (result.importedCount > 0 && result.localCleanupSucceeded) {
+            window.location.reload();
+            return;
+          }
+        } catch (error) {
+          if (status) {
+            status.textContent =
+              error instanceof Error
+                ? error.message
+                : "Import failed. Browser-only scenarios are unchanged and can be retried.";
+          }
+        }
+        renderSavedPage();
+      });
     page
       .querySelector<HTMLFormElement>("[data-local-currency-form]")
       ?.addEventListener("submit", (event) => {
