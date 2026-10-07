@@ -99,7 +99,7 @@ class Migration(migrations.Migration):
                 "indexes": [
                     models.Index(
                         fields=["country", "indicator", "-period_start"],
-                        name="culture_econ_country_indicator_idx",
+                        name="culture_econ_ctry_ind_idx",
                     )
                 ],
                 "constraints": [
