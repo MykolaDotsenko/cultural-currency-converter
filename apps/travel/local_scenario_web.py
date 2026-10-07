@@ -63,7 +63,7 @@ def _local_token_response(draft) -> JsonResponse:
         )
 
     summary = local_scenario_public_summary(snapshot)
-    detail_url = f"{reverse('local_scenario_detail')}?{urlencode({'snapshot': token})}"
+    detail_url = reverse("local_scenario_detail")
     return _json_response(
         {
             "token": token,
@@ -140,9 +140,9 @@ def _local_reopen_url(snapshot) -> str:
 
 
 @never_cache
-@require_GET
+@require_POST
 def local_scenario_detail(request: HttpRequest) -> HttpResponse:
-    token = str(request.GET.get("snapshot") or "")
+    token = str(request.POST.get("snapshot") or "")
     try:
         snapshot = load_local_scenario_token(token)
     except LocalScenarioTokenError:
