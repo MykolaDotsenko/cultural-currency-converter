@@ -208,9 +208,7 @@ def sync_user_saved_currencies(user, raw_items: Any) -> SavedCurrencySyncResult:
     currencies = Currency.objects.filter(code__in=codes, is_active=True).in_bulk(field_name="code")
     missing = sorted(set(codes) - set(currencies))
     if missing:
-        raise SavedCurrencySyncError(
-            f"Unknown or inactive currency code: {', '.join(missing)}."
-        )
+        raise SavedCurrencySyncError(f"Unknown or inactive currency code: {', '.join(missing)}.")
 
     user_model = get_user_model()
     with transaction.atomic():
