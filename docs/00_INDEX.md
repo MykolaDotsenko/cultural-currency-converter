@@ -18,6 +18,7 @@ For most non-trivial work, use this order:
    - [Integrations, AI and media](INTEGRATIONS_AI_MEDIA.md)
    - [Country media production system](media/00_COUNTRY_MEDIA_SYSTEM.md)
    - [Quality, security and accessibility](07_QUALITY_SECURITY_ACCESSIBILITY.md)
+   - [Public API v1](API_V1.md) when changing native/server-to-server transport contracts
 4. [Roadmap](08_IMPLEMENTATION_ROADMAP.md) when planning what to do next
 5. [Production 100/100 execution plan](PRODUCTION_100_EXECUTION_PLAN.md) when executing the production-readiness PR sequence
 6. [Release runbook](RELEASE_RUNBOOK.md) when cutting, deploying, recovering or responding to an incident
