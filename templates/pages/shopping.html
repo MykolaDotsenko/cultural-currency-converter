@@ -269,11 +269,36 @@
             <button class="qa-primary-button" type="submit">Save Shopping estimate</button>
           </form>
         {% else %}
-          <p class="qa-context-disclaimer">
-            Sign in to save these exact assumptions and their trusted reference observation.
-          </p>
-          <a class="qa-secondary-button"
-             href="{% url 'login' %}?next={% url 'shopping_calculation' %}">Sign in to save</a>
+          <form method="post"
+                action="{% url 'issue_browser_shopping_scenario' %}"
+                data-browser-scenario-form>
+            {% csrf_token %}
+            <input type="hidden"
+                   name="shopping_context_token"
+                   value="{{ shopping.save_token }}">
+            <div class="qa-field">
+              <label class="qa-field__label" for="shopping-browser-save-title">Save as</label>
+              <input class="qa-text-input"
+                     id="shopping-browser-save-title"
+                     name="title"
+                     maxlength="120"
+                     autocomplete="off"
+                     placeholder="Optional purchase name">
+              <p class="qa-field__message">
+                Saved only on this device as a signed snapshot. Sign-in never imports it
+                automatically.
+              </p>
+            </div>
+            <button class="qa-primary-button"
+                    type="submit"
+                    data-browser-scenario-save>Save in this browser</button>
+            <span class="qa-field__message"
+                  role="status"
+                  aria-live="polite"
+                  data-browser-scenario-save-status></span>
+          </form>
+          <a class="qa-saved-row__text-action"
+             href="{% url 'login' %}?next={% url 'shopping_calculation' %}">Or sign in to save to your account</a>
         {% endif %}
       </div>
     </section>
