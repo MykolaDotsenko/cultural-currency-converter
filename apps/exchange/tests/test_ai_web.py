@@ -6,9 +6,11 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
 
+from apps.accounts.models import AccountPreferences
 from apps.countries.models import Country, CountryCurrency, Currency
 from apps.exchange.ai.contracts import ExplanationInsight, ExplanationResult
 from apps.exchange.ai.intents import ExplanationIntent
@@ -115,6 +117,25 @@ class StubService:
             cache_status="live" if self.generated else "deterministic_fallback",
             packet_hash="a" * 64,
         )
+
+
+class PreferenceAwareStubService(StubService):
+    def __init__(self):
+        super().__init__()
+        self.locales = []
+        self.focus_suffixes = []
+
+    def explain(
+        self,
+        snapshot,
+        *,
+        intent=ExplanationIntent.OVERVIEW,
+        locale="en",
+        focus_instruction_suffix="",
+    ):
+        self.locales.append(locale)
+        self.focus_suffixes.append(focus_instruction_suffix)
+        return super().explain(snapshot, intent=intent)
 
 
 @pytest.mark.django_db
@@ -250,6 +271,51 @@ def test_explicit_htmx_explain_uses_signed_snapshot_and_ignores_arbitrary_prompt
     assert snapshot.rate == Decimal("174.50")
     assert service.intents == [ExplanationIntent.RATE_MEANING]
     assert b"What does this reference rate mean?" in response.content
+
+
+@pytest.mark.django_db
+def test_explicit_explanation_applies_opt_in_account_preferences(client, reference_data):
+    user = get_user_model().objects.create_user(
+        username="ai-preference-owner",
+        password="StrongPass-482!",
+    )
+    AccountPreferences.objects.create(
+        user=user,
+        preferred_language="uk",
+        answer_detail="detailed",
+        travel_style="budget",
+    )
+    client.force_login(user)
+
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch("apps.exchange.views.build_latest_quote_gateway", return_value=FakeGateway()),
+    ):
+        conversion = client.post(reverse("converter"), _payload(), HTTP_HX_REQUEST="true")
+    token = _extract_token(conversion.content)
+
+    service = PreferenceAwareStubService()
+    with (
+        override_settings(AI_RUNTIME_EXPLANATION_ENABLED=True),
+        patch(
+            "apps.exchange.views.build_runtime_explanation_service",
+            return_value=service,
+        ),
+    ):
+        response = client.post(
+            reverse("conversion_explanation"),
+            {
+                "explanation_token": token,
+                "prompt_id": "rate_meaning",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert service.locales == ["uk"]
+    assert len(service.focus_suffixes) == 1
+    assert "detailed explanations" in service.focus_suffixes[0]
+    assert "supplied price" in service.focus_suffixes[0]
 
 
 @pytest.mark.django_db
