@@ -60,7 +60,8 @@ The success payload contains:
 
 - immutable conversion facts: input/output, rate, currencies, requested/effective date, fetched time, historical granularity, provider attribution, stale state and exact-identity state;
 - Money Context state and destination scope;
-- reviewed price/payment context when available, with source/provenance and observation dates.
+- reviewed price/payment context when available, with source/provenance and observation dates;
+- optional official economic context (inflation and comparative price-level evidence) with explicit period, source dataset, benchmark, status and provenance. These fields are broad statistical context and are not merchant prices or purchasing-power claims.
 
 Historical conversions return Money Context as `not_applicable`; the API does not present current local-price/payment context as historical truth.
 
