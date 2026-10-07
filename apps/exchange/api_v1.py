@@ -150,8 +150,7 @@ def _conversion_form_payload(payload: dict[str, object]) -> dict[str, str]:
 
 def _form_errors(form: CurrentConversionForm) -> dict[str, list[str]]:
     return {
-        field: [str(message) for message in messages]
-        for field, messages in form.errors.items()
+        field: [str(message) for message in messages] for field, messages in form.errors.items()
     }
 
 
