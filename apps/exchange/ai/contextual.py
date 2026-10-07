@@ -160,8 +160,12 @@ def build_budget_explanation_packet(
     *,
     intent: BudgetExplanationIntent,
     locale: str = "en",
+    focus_instruction_suffix: str = "",
 ) -> ExplanationPacket:
     spec = _BUDGET_SPECS[intent]
+    focus_instruction = spec.focus_instruction
+    if focus_instruction_suffix.strip():
+        focus_instruction = f"{focus_instruction} {focus_instruction_suffix.strip()}"
     destination_label = _destination_label(context)
     conversion = context.conversion
     facts: list[GroundedFact] = [
@@ -278,8 +282,12 @@ def build_comparison_explanation_packet(
     right_destination_name: str,
     intent: ComparisonExplanationIntent,
     locale: str = "en",
+    focus_instruction_suffix: str = "",
 ) -> ExplanationPacket:
     spec = _COMPARISON_SPECS[intent]
+    focus_instruction = spec.focus_instruction
+    if focus_instruction_suffix.strip():
+        focus_instruction = f"{focus_instruction} {focus_instruction_suffix.strip()}"
     left = comparison.left
     right = comparison.right
     facts: list[GroundedFact] = [
@@ -473,7 +481,7 @@ def _build_packet(
         locale=locale,
         intent_id=spec.intent_id,
         intent_question=spec.question,
-        focus_instruction=spec.focus_instruction,
+        focus_instruction=focus_instruction,
         required_fact_ids=spec.required_fact_ids,
         facts=tuple(facts),
         allowed_currencies=allowed_currencies,
