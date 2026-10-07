@@ -875,7 +875,7 @@ Do not optimize the product around generic DAU.
 
 ## PR #258 — Shareable travel-money card
 
-Share only explicitly selected, non-sensitive context.
+**Current production slice:** implemented as an explicit share action on an owner-scoped saved scenario. The generated public-by-link token is a signed immutable projection of the newest already-stored scenario FX observation plus a non-sensitive destination/purchase label. It deliberately excludes account/scenario IDs, private scenario title, trip dates, duration/travellers, confirmed spend, Camera-derived data and notification preferences. Public HTML/SVG rendering is database-free, account-free and provider-free; it is private/no-store, noindex/nofollow and no-referrer, and it never silently refreshes the stored number.
 
 ## PR #259 — Saved comparison
 
