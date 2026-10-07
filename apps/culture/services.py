@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency
+from apps.culture.calendar import CalendarContext, build_calendar_context
 from apps.culture.economic import EconomicContext, build_economic_context
 from apps.culture.models import (
     CulturalProfile,
@@ -245,12 +246,18 @@ class DestinationContext:
     payment: PaymentContext | None
     prices: tuple[TypicalPriceContext, ...]
     economic: EconomicContext | None = None
+    calendar: CalendarContext | None = None
     city_slug: str = ""
     city_name: str = ""
 
     @property
     def has_content(self) -> bool:
-        return self.payment is not None or bool(self.prices) or self.economic is not None
+        return (
+            self.payment is not None
+            or bool(self.prices)
+            or self.economic is not None
+            or self.calendar is not None
+        )
 
 
 def calculate_purchase_equivalent(
@@ -427,6 +434,7 @@ def build_destination_context(
         payment=payment,
         prices=prices,
         economic=build_economic_context(country=country, as_of=selected_date),
+        calendar=build_calendar_context(country=country, as_of=selected_date),
         city_slug=city.slug if city is not None else "",
         city_name=city.name if city is not None else "",
     )
