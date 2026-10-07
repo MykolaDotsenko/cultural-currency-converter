@@ -12,8 +12,12 @@ def build_explanation_packet(
     *,
     intent: ExplanationIntent = ExplanationIntent.OVERVIEW,
     locale: str = "en",
+    focus_instruction_suffix: str = "",
 ) -> ExplanationPacket:
     intent_spec = explanation_intent_spec(intent)
+    focus_instruction = intent_spec.focus_instruction
+    if focus_instruction_suffix.strip():
+        focus_instruction = f"{focus_instruction} {focus_instruction_suffix.strip()}"
     facts: list[GroundedFact] = [
         GroundedFact(
             id="conversion",
@@ -113,7 +117,7 @@ def build_explanation_packet(
         locale=locale,
         intent_id=intent_spec.intent.value,
         intent_question=intent_spec.question,
-        focus_instruction=intent_spec.focus_instruction,
+        focus_instruction=focus_instruction,
         required_fact_ids=intent_spec.required_fact_ids,
         facts=tuple(facts),
         allowed_currencies=(snapshot.base_currency, snapshot.quote_currency),

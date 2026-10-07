@@ -8,6 +8,7 @@ from apps.accounts.views import (
     delete_fee_profile,
     profile,
     signup,
+    update_explanation_preferences,
     update_home_currency_preference,
     update_recent_history_preference,
 )
@@ -29,6 +30,11 @@ urlpatterns = [
         "home-currency/",
         update_home_currency_preference,
         name="update_home_currency_preference",
+    ),
+    path(
+        "explanation-preferences/",
+        update_explanation_preferences,
+        name="update_explanation_preferences",
     ),
     path(
         "recent-history/",

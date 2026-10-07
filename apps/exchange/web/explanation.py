@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_http_methods
 
+from apps.accounts.ai_preferences import explanation_preferences
 from apps.exchange.ai.intents import (
     ExplanationIntentError,
     ensure_explanation_intent_available,
@@ -59,7 +60,16 @@ def conversion_explanation_view(
             }
         else:
             service = explanation_service_factory()
-            delivery = service.explain(snapshot, intent=intent)
+            preferences = explanation_preferences(request.user)
+            if preferences.locale == "en" and not preferences.focus_instruction_suffix:
+                delivery = service.explain(snapshot, intent=intent)
+            else:
+                delivery = service.explain(
+                    snapshot,
+                    intent=intent,
+                    locale=preferences.locale,
+                    focus_instruction_suffix=preferences.focus_instruction_suffix,
+                )
             explanation = {
                 "result": delivery.result,
                 "cache_status": delivery.cache_status,

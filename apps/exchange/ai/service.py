@@ -65,8 +65,14 @@ class RuntimeExplanationService:
         *,
         intent: ExplanationIntent = ExplanationIntent.OVERVIEW,
         locale: str = "en",
+        focus_instruction_suffix: str = "",
     ) -> ExplanationDelivery:
-        packet = build_explanation_packet(snapshot, intent=intent, locale=locale)
+        packet = build_explanation_packet(
+            snapshot,
+            intent=intent,
+            locale=locale,
+            focus_instruction_suffix=focus_instruction_suffix,
+        )
         return self.explain_packet(
             packet,
             fallback_factory=lambda reason: (

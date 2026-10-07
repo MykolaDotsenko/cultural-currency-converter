@@ -192,6 +192,8 @@ def build_destination_comparison_component(
     source_minor_units: int,
     left_minor_units: int,
     right_minor_units: int,
+    ai_locale: str = "en",
+    ai_focus_instruction_suffix: str = "",
 ) -> dict[str, object]:
     """Build one descriptive, non-ranking presentation contract."""
 
@@ -205,6 +207,8 @@ def build_destination_comparison_component(
                     left_destination_name=left_destination_name,
                     right_destination_name=right_destination_name,
                     intent=ComparisonExplanationIntent(spec.intent_id),
+                    locale=ai_locale,
+                    focus_instruction_suffix=ai_focus_instruction_suffix,
                 )
                 prompts.append(
                     {

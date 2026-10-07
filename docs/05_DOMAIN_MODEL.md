@@ -457,3 +457,20 @@ Examples of durable invariants:
 - optional enrichment cannot invalidate a valid conversion.
 
 These invariants deserve tests. Other implementation details can evolve more freely.
+
+
+## ExplanationPreferences
+
+Account explanation preferences are presentation metadata, not financial or destination truth.
+
+The current account-owned preference set contains:
+
+- optional AI explanation language: English, Finnish or Ukrainian;
+- answer-detail level: concise, balanced or detailed;
+- travel emphasis: balanced, budget-conscious or comfort-first.
+
+These values may alter only the locale and server-owned focus instruction of an optional grounded AI explanation. They do not alter ConversionResult, MoneyContext, TypicalPrice evidence, payment assumptions, BudgetAssumptions, DestinationComparison, SavedScenario observations or any fact/number/date/currency allow-list.
+
+Budget-conscious emphasis may prioritize already-supplied price/budget/payment-cost facts when relevant. Comfort-first emphasis may prioritize already-supplied payment/cash/card/ATM facts. Neither mode may infer affordability, service quality, savings, recommendations or missing evidence.
+
+Anonymous users and preference-read failures use safe defaults. Preferences are never inferred from location, conversion history, saved trips or spending.

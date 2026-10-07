@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
+from apps.accounts.ai_preferences import explanation_preferences
 from apps.accounts.preferences import home_currency_code
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.cache import LatestQuoteGateway
@@ -100,6 +101,7 @@ def destination_comparison_view(
 ) -> HttpResponse:
     """Compare one source budget across two explicit current destination scopes."""
 
+    ai_preferences = explanation_preferences(request.user)
     initial = _comparison_initial_from_query(request) if request.method == "GET" else None
     if request.method == "GET" and request.user.is_authenticated:
         try:
@@ -191,6 +193,8 @@ def destination_comparison_view(
                             source_minor_units=cleaned["source_minor_units"],
                             left_minor_units=cleaned["left_destination_minor_units"],
                             right_minor_units=cleaned["right_destination_minor_units"],
+                            ai_locale=ai_preferences.locale,
+                            ai_focus_instruction_suffix=ai_preferences.focus_instruction_suffix,
                         )
                         comparison_save_token = build_saved_comparison_token(
                             source_amount=cleaned["amount_decimal"],
