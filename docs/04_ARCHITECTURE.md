@@ -172,6 +172,22 @@ The offline pack is generated on demand and is not another live financial engine
 
 The portable HTML pack remains the most durable cross-browser/off-app export. The installed PWA now reuses this same snapshot meaning through a separate explicit device-copy contract rather than caching arbitrary live pages.
 
+### Browser-local scenario boundary
+
+`apps/travel/scenario_drafts.py` is the shared validation/preparation boundary for both direct account saves and browser-local saves. Budget/Shopping forms, signed result handoffs, canonical currency/country/city lookup, optional payment-adjusted assumptions and travel dates are validated there before any persistence target is chosen.
+
+`apps/travel/browser_scenario.py` then provides the browser-only transport/persistence boundary:
+
+- issuance creates no SavedScenario row; it signs the validated immutable scenario draft and current FX observation;
+- localStorage receives the signed token plus bounded display metadata only;
+- browser metadata is never accepted as financial/domain truth;
+- sign-in does not trigger import;
+- explicit import validates every token before entering an atomic batch, locks the account, resolves canonical model identities again and calls the existing `create_saved_scenario` service;
+- `browser_import_key` makes a repeated confirmed import idempotent;
+- client cleanup happens only after server success, so a failed local cleanup leaves a safely retryable signed copy.
+
+This keeps anonymous continuity private-by-default without creating a parallel financial engine or an implicit account-migration side effect.
+
 ### Saved trip budget continuity
 
 Trip Budget Remaining is a persistence/domain consumer, not a second financial engine.
