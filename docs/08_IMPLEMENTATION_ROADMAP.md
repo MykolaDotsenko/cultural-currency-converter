@@ -329,11 +329,9 @@ The next work is depth, not another parallel context layer: broaden city-scoped 
 
 Prioritize comparability, freshness, provenance and clear uncertainty over adding many shallow utility widgets.
 
-## Later candidate: stable external/mobile API
+## Stable external/mobile API
 
-A versioned API is useful when a native client or external consumer becomes active.
-
-Before implementation, re-evaluate framework/schema/authentication/offline choices against the then-current product.
+**Current production slice:** a versioned public read-only `/api/v1/` foundation now exposes capability discovery, active reference metadata and canonical current/historical conversion plus Money Context. The conversion endpoint validates through the existing `CurrentConversionForm` and executes through `run_converter_submission`; it does not introduce a second FX, rounding, historical or destination-context path. Financial decimals are JSON strings, rate/provider/effective/fetched/stale semantics remain explicit, unknown request fields fail closed and provider exceptions are mapped to stable safe machine codes. v1 intentionally exposes no account/scenario/Camera/notification mutations and enables no wildcard browser CORS. A later authenticated account API must define a separate token/scoping/revocation boundary before native saved-state sync is exposed.
 
 ## Later candidate: native mobile
 

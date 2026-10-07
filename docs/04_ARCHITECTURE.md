@@ -282,3 +282,21 @@ Architecture may evolve. Update this document and the ADR log when a change crea
 `apps/travel/personalization.py` owns durable My Places and SavedComparison persistence. The browser never sends a trusted currency/rate/result for My Places: it sends only canonical country/city identity, and account re-entry resolves current currency from `CountryCurrency`. Browser-local place migration is explicit; sign-in alone does not invoke it.
 
 Destination Comparison remains the only comparison calculation path. A successful comparison may issue a short-lived signed canonical-input token. `SavedComparison` stores those inputs and normalized basket assumptions only. GET reopen is provider-free; explicit Re-check posts the saved fields back to the canonical comparison endpoint, preserving route isolation and preventing a second comparison engine.
+
+
+### Public API v1 boundary
+
+`apps/exchange/api_v1.py` is a transport adapter, not a parallel application layer. The public v1 conversion endpoint validates with `CurrentConversionForm`, builds the same `ConverterSubmissionCommand` meaning and calls `run_converter_submission` with the canonical gateway factories. It serializes `ConversionResult` and `MoneyContext` without recalculation.
+
+API invariants:
+
+- decimal financial values cross JSON as strings;
+- historical requested/effective-date and observation-granularity meaning is preserved;
+- provider attribution and stale state are never dropped;
+- current destination enrichment remains optional/fail-open exactly as in Money Context;
+- historical conversion cannot acquire current destination context;
+- public v1 is read-only and account-free;
+- future authenticated write/sync APIs require a separate credential/scope/revocation decision rather than reusing browser session assumptions.
+
+Reference metadata is provider-free and short-cacheable. Conversion output is `private, no-store`. Native clients may store returned snapshots only if they retain freshness/provenance state and do not relabel them as current.
+
