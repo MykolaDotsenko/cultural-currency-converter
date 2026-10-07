@@ -35,6 +35,7 @@ Those boundaries are more important to this project than adding another conversi
 - foreign-purchase Shopping estimate with explicit item price, shipping, known purchase-currency fees and optional user-entered FX markup, preserving current reference-rate provider/effective-date semantics while leaving unknown duties/taxes/issuer costs explicitly unknown;
 - sourced everyday-value and payment context;
 - official macro context from World Bank, Eurostat and OECD through an offline-ingested Economic Context layer, preserving inflation/price-level period, benchmark and provenance without treating macro indicators as merchant prices or FX truth;
+- cached national public-holiday context from Nager.Date Community v4, with atomic country/year reconciliation and neutral “opening hours may differ” guidance rather than unsupported business-hours claims;
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions, with account-owned reusable assumption presets that never store destination, FX or price evidence;
