@@ -41,7 +41,6 @@ from apps.travel.notification_web import (
     notification_inbox,
 )
 from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
-from apps.travel.share_web import scenario_share_card, scenario_share_card_svg
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
@@ -51,6 +50,7 @@ from apps.travel.scenario_web import (
     save_shopping_scenario,
     saved_scenario_detail,
 )
+from apps.travel.share_web import scenario_share_card, scenario_share_card_svg
 from apps.travel.views import (
     clear_favourites,
     clear_recent_conversions,
