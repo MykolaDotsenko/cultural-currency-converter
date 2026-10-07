@@ -122,9 +122,8 @@ def _post_json(client, payload):
     )
 
 
-@pytest.mark.django_db
-def test_api_v1_root_is_versioned_and_public():
-    response = pytest.importorskip("django").test.Client().get(reverse("api_v1_root"))
+def test_api_v1_root_is_versioned_and_public(client):
+    response = client.get(reverse("api_v1_root"))
 
     assert response.status_code == 200
     assert response["X-API-Version"] == "1"
@@ -199,12 +198,18 @@ def test_conversion_api_reuses_canonical_application_path_and_preserves_trust_fi
         "stale": True,
         "exact": False,
     }
-    assert body["data"]["moneyContext"] == {
-        "state": "empty",
+    money_context = body["data"]["moneyContext"]
+    assert money_context["state"] == "empty"
+    assert money_context["countryCode"] == "JP"
+    assert money_context["citySlug"] == "tokyo"
+    assert money_context["destination"] == {
         "countryCode": "JP",
+        "countryName": "Japan",
         "citySlug": "tokyo",
-        "asOf": body["data"]["moneyContext"]["asOf"],
-        "destination": None,
+        "cityName": "Tokyo",
+        "asOf": money_context["asOf"],
+        "prices": [],
+        "payment": None,
     }
     assert gateway.calls and gateway.calls[0][0:2] == ("EUR", "JPY")
 
@@ -238,10 +243,8 @@ def test_historical_api_preserves_requested_and_effective_date_semantics(
 
 @pytest.mark.django_db
 def test_same_currency_api_is_provider_free(client, api_reference_data):
-    def unexpected_gateway():
-        raise AssertionError("Same-currency conversion must not build a latest FX gateway.")
-
-    with patch("apps.exchange.api_v1.build_latest_quote_gateway", side_effect=unexpected_gateway):
+    gateway = FakeLatestGateway()
+    with patch("apps.exchange.api_v1.build_latest_quote_gateway", return_value=gateway):
         response = _post_json(
             client,
             {
@@ -253,6 +256,7 @@ def test_same_currency_api_is_provider_free(client, api_reference_data):
         )
 
     assert response.status_code == 200
+    assert gateway.calls == []
     conversion = response.json()["data"]["conversion"]
     assert conversion["outputAmount"] == "12.34"
     assert conversion["rate"] == "1"
