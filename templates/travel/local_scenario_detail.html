@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Browser-saved scenario · Cultural Currency{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved</a>
+{% endblock %}
+{% block content %}
+  <section class="qa-foundation-intro qa-saved-intro"
+           aria-labelledby="local-scenario-title">
+    <p class="qa-foundation-kicker">
+      {% if snapshot.kind == "shopping" %}Browser-saved Shopping estimate{% else %}Browser-saved budget scenario{% endif %}
+    </p>
+    <h1 id="local-scenario-title">{{ snapshot.title }}</h1>
+    <p class="qa-foundation-lede">
+      {{ snapshot.scope_label }} · stored only through this signed browser snapshot.
+      The number below is not refreshed when you open this page.
+    </p>
+  </section>
+  <section class="qa-saved-section" aria-labelledby="local-snapshot-facts-title">
+    <div class="qa-saved-section__heading">
+      <div>
+        <p class="qa-foundation-kicker">Immutable reference</p>
+        <h2 id="local-snapshot-facts-title">What was saved</h2>
+        <p>
+          This page validates the server signature only. It performs no FX request and does not
+          create account data.
+        </p>
+      </div>
+      {% if snapshot.conversion.stale %}
+        <span class="qa-status-badge">Stored stale fallback</span>
+      {% else %}
+        <span class="qa-status-badge">Stored reference</span>
+      {% endif %}
+    </div>
+    <dl class="qa-context-facts">
+      <div>
+        <dt>Saved conversion</dt>
+        <dd>{{ source_amount_text }} {{ snapshot.source_currency_code }} → {{ output_amount_text }} {{ snapshot.destination_currency_code }}</dd>
+      </div>
+      <div>
+        <dt>Reference rate</dt>
+        <dd>1 {{ snapshot.source_currency_code }} = {{ rate_text }} {{ snapshot.destination_currency_code }}</dd>
+      </div>
+      <div>
+        <dt>Effective date</dt>
+        <dd>{{ effective_date_label }}</dd>
+      </div>
+      <div>
+        <dt>Source</dt>
+        <dd>{{ provider_label }}</dd>
+      </div>
+      <div>
+        <dt>Stored observation fetched</dt>
+        <dd>{{ fetched_at_label }}</dd>
+      </div>
+    </dl>
+    {% if snapshot.kind == "budget" %}
+      <div class="qa-saved-list">
+        <article class="qa-saved-row">
+          <div class="qa-saved-row__copy">
+            <p class="qa-foundation-kicker">Planning assumptions</p>
+            <h3>
+              {{ snapshot.duration_days }} day{{ snapshot.duration_days|pluralize }}
+              · {{ snapshot.travelers }} traveler{{ snapshot.travelers|pluralize }}
+            </h3>
+            {% if snapshot.travel_start_date %}
+              <p>
+                Trip starts {{ snapshot.travel_start_date|date:"j M Y" }}
+                {% if snapshot.travel_end_date %}· ends {{ snapshot.travel_end_date|date:"j M Y" }}{% endif %}
+              </p>
+            {% endif %}
+            <p class="qa-saved-row__meta">
+              Basis:
+              {% if snapshot.budget_basis == "payment_estimate" %}
+                payment-adjusted saved baseline
+              {% else %}
+                reference conversion
+              {% endif %}
+            </p>
+          </div>
+        </article>
+        {% for item in snapshot.budget_categories %}
+          <article class="qa-saved-row">
+            <div class="qa-saved-row__copy">
+              <h3>{{ item.category|cut:"_"|title }}</h3>
+              <p>{{ item.units_per_person_per_day|floatformat:"-4" }} unit{{ item.units_per_person_per_day|pluralize }} per person / day</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+      {% if snapshot.budget_basis == "payment_estimate" %}
+        <p class="qa-context-freshness-note">
+          Saved payment assumptions:
+          {{ snapshot.fx_markup_percent }}% FX markup ·
+          {{ snapshot.source_fixed_fee }} {{ snapshot.source_currency_code }} source fee ·
+          {{ snapshot.destination_fixed_fee }} {{ snapshot.destination_currency_code }} destination fee.
+          They remain assumptions, not an issuer quote.
+        </p>
+      {% endif %}
+    {% elif snapshot.shopping_assumptions %}
+      <dl class="qa-context-facts">
+        <div>
+          <dt>Item</dt>
+          <dd>{{ snapshot.shopping_assumptions.item_price }} {{ snapshot.source_currency_code }}</dd>
+        </div>
+        <div>
+          <dt>Shipping</dt>
+          <dd>{{ snapshot.shopping_assumptions.shipping }} {{ snapshot.source_currency_code }}</dd>
+        </div>
+        <div>
+          <dt>Known fees</dt>
+          <dd>{{ snapshot.shopping_assumptions.known_fees }} {{ snapshot.source_currency_code }}</dd>
+        </div>
+        <div>
+          <dt>FX markup assumption</dt>
+          <dd>{{ snapshot.shopping_assumptions.fx_markup_percent }}%</dd>
+        </div>
+      </dl>
+    {% endif %}
+    <p class="qa-context-disclaimer">
+      This browser-saved link can contain your scenario title and planning dates. Keep it private.
+      Signing protects integrity, not confidentiality.
+    </p>
+    <div class="qa-result-actions">
+      <a class="qa-primary-button" href="{{ reopen_url }}">
+        {% if snapshot.kind == "shopping" %}Reopen inputs{% else %}Re-run current conversion{% endif %}
+      </a>
+      <a class="qa-secondary-button" href="{% url 'saved_state' %}">Back to Saved</a>
+    </div>
+  </section>
+{% endblock %}
