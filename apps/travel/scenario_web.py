@@ -58,7 +58,6 @@ from apps.travel.scenario_comparison import (
     compare_scenario_observations,
 )
 from apps.travel.scenario_schedule import TripScheduleState, evaluate_trip_schedule
-from apps.travel.share_snapshot import ScenarioShareTokenError, build_scenario_share_token
 from apps.travel.scenarios import (
     SavedScenarioError,
     SavedScenarioSpec,
@@ -66,6 +65,7 @@ from apps.travel.scenarios import (
     record_scenario_recheck,
     record_scenario_spend,
 )
+from apps.travel.share_snapshot import ScenarioShareTokenError, build_scenario_share_token
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
@@ -522,10 +522,7 @@ def _scenario_detail_context(
                 extra={"scenario_id": scenario.pk},
             )
         else:
-            share_url = (
-                f"{reverse('share_scenario_card')}?"
-                f"{urlencode({'snapshot': share_token})}"
-            )
+            share_url = f"{reverse('share_scenario_card')}?{urlencode({'snapshot': share_token})}"
 
     local_context = (
         _scenario_local_context(
