@@ -351,6 +351,19 @@ Travel timing is explicit planning metadata, not inferred itinerary state. An en
 
 Trip and budget scenarios require destination-country context. A destination city must belong to that country. Country/currency associations are validated against the current temporal mapping when the scenario is created.
 
+### Browser-local SavedScenario envelope
+
+Anonymous scenario continuity reuses the SavedScenario domain without creating anonymous server rows. A server-created signed envelope contains:
+
+- one UUID import key;
+- normalized scenario kind/title/scope and explicit planning assumptions;
+- the exact immutable current FX observation with provider/effective/fetched/stale semantics;
+- no account/user identifier.
+
+The envelope is integrity-protected but not encrypted. It is therefore private local state, not a share token. The browser caps this store at 10 scenarios and can remove it explicitly.
+
+When a signed-in user chooses **Import browser scenarios to account**, every envelope is revalidated, canonical Currency/Country/City identity is resolved again, and the same `validate_saved_scenario_spec` / `create_saved_scenario` path is used. `SavedScenario.import_key` is nullable for ordinary account saves and unique per user when present, providing idempotence for local imports.
+
 ### SavedScenarioBudgetItem
 
 Budget assumptions are normalized child rows rather than an opaque JSON payload. Each scenario can store at most one assumption per category, expressed as positive units per person per day.
