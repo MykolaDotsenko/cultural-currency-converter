@@ -122,6 +122,7 @@ After the premium visual pass, implement the strongest remaining concepts from t
    - Use restrained motion to explain currency transitions, timelines or Then & Now state changes.
    - Prefer informative timeline/map/date transitions over decorative re-enactments.
    - Respect reduced-motion preferences and never make animation necessary to understand the historical content.
+   - **Current production slice:** shipped through the canonical Historical Series rather than a separate animation system. Chronological range anchors and Then & Now cards carry the meaning in static HTML; the existing Chart.js line visualization adds only a restrained 220 ms draw transition when motion is allowed. `prefers-reduced-motion: reduce` disables chart animation entirely. The same observations remain available through the textual summary, selected/minimum/maximum/last facts and accessible data table, while `noscript` keeps the non-visual path usable. Motion never changes rate/date/provider truth and is not required to understand the history.
 
 Implementation order inside this queue can change when dependencies overlap. Prefer extending existing domain models, saved-state boundaries, historical flows and media/provenance systems over creating parallel feature-specific architecture.
 

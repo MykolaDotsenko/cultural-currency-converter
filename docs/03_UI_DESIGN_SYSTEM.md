@@ -134,6 +134,8 @@ Motion should clarify state change, not decorate routine interaction.
 
 Respect reduced-motion preferences and avoid animation that delays access to information.
 
+Historical Series is the reference implementation: chronology, Then & Now, summary facts and the data table are complete without animation. Its line chart may use one short 220 ms draw transition only when the operating system does not request reduced motion; `prefers-reduced-motion: reduce` disables that animation. Never use motion to imply causality, purchasing power, exchange timing or financial significance.
+
 Signature motion may include:
 
 - restrained country-atmosphere crossfades;
