@@ -12,6 +12,9 @@
           {% if destination_context.economic %}
             <a href="#economic-context">Economic context</a>
           {% endif %}
+          {% if destination_context.calendar %}
+            <a href="#calendar-context">Calendar</a>
+          {% endif %}
           <a href="#payment-context">Payment context</a>
           <a href="#money-culture-entry-title">Money &amp; culture</a>
         </nav>
@@ -121,6 +124,56 @@
             </p>
           </div>
         </section>
+      {% if destination_context.calendar %}
+        <section id="calendar-context"
+                 class="qa-context-section"
+                 aria-labelledby="calendar-context-title">
+          <div>
+            <p class="qa-foundation-kicker">Local calendar</p>
+            <h4 id="calendar-context-title">Public holidays that may affect your plans</h4>
+          </div>
+          <div class="qa-context-section__body">
+            {% if destination_context.calendar.today %}
+              <div class="qa-price-grid">
+                {% for holiday in destination_context.calendar.today %}
+                  <article class="qa-price-card">
+                    <div>
+                      <p class="qa-price-card__label">Public holiday today</p>
+                      <p class="qa-price-card__price">{{ holiday.name }}</p>
+                      <p class="qa-price-card__equivalent">{{ holiday.date }}</p>
+                    </div>
+                    {% if holiday.types %}
+                      <p class="qa-price-card__meta">{{ holiday.types }}</p>
+                    {% endif %}
+                    <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+                  </article>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if destination_context.calendar.upcoming %}
+              <div class="qa-price-grid">
+                {% for holiday in destination_context.calendar.upcoming %}
+                  <article class="qa-price-card">
+                    <div>
+                      <p class="qa-price-card__label">Upcoming public holiday</p>
+                      <p class="qa-price-card__price">{{ holiday.name }}</p>
+                      <p class="qa-price-card__equivalent">{{ holiday.date }}</p>
+                    </div>
+                    {% if holiday.types %}
+                      <p class="qa-price-card__meta">{{ holiday.types }}</p>
+                    {% endif %}
+                    <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+                  </article>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <p class="qa-context-disclaimer">
+              Public holidays can affect bank, shop, transport and service hours, but this calendar
+              does not know whether a specific business is open. Check the place directly before
+              relying on its hours.
+            </p>
+          </div>
+        </section>
       <section id="payment-context"
                class="qa-context-section{% if destination_context.payment_culture_image %} qa-context-section--with-media{% endif %}"
                aria-labelledby="payment-context-title">
@@ -181,6 +234,16 @@
               {{ destination_context.economic.metric_count }} official indicator{{ destination_context.economic.metric_count|pluralize }}
             {% else %}
               no recent official macro record
+            {% endif %}
+          </span>
+        </div>
+        <div>
+          <strong>Calendar evidence</strong>
+          <span>
+            {% if destination_context.calendar %}
+              national public-holiday data available
+            {% else %}
+              no national holiday in the current context window
             {% endif %}
           </span>
         </div>
