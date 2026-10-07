@@ -41,6 +41,7 @@ from apps.travel.notification_web import (
     notification_inbox,
 )
 from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
+from apps.travel.share_web import scenario_share_card, scenario_share_card_svg
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
@@ -92,6 +93,8 @@ urlpatterns = [
     path("picker/options/", picker_options, name="picker_options"),
     path("conversion/explain/", conversion_explanation, name="conversion_explanation"),
     path("share/conversion/", share_conversion_card, name="share_conversion_card"),
+    path("share/travel/", scenario_share_card, name="share_scenario_card"),
+    path("share/travel/card.svg", scenario_share_card_svg, name="share_scenario_card_svg"),
     path(
         "share/conversion/card.svg",
         share_conversion_card_svg,
