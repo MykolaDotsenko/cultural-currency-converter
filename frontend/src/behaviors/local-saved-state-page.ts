@@ -8,7 +8,6 @@ import {
   type RecentConversion,
   readState,
   normalizeSavedCurrency,
-  type SavedCurrency,
   type SavedPlace,
   toggleCurrencyInState,
   writeState,
