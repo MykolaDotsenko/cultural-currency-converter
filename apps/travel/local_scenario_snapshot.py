@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -31,7 +32,7 @@ from apps.travel.scenarios import (
 _TOKEN_SALT = "travel.local-scenario:v1"
 _MAX_TOKEN_LENGTH = 16_384
 _MAX_DECIMAL_TEXT_LENGTH = 80
-_MAX_CATEGORIES = 12
+_MAX_CATEGORIES = 8
 
 
 class LocalScenarioTokenError(ValueError):
@@ -626,10 +627,7 @@ def _country_code(value: Any) -> str:
 
 def _city_slug(value: Any) -> str:
     text = _text(value, maximum=140).strip().lower()
-    if text and (
-        any(character.isspace() for character in text)
-        or not all(character.isalnum() or character == "-" for character in text)
-    ):
+    if text and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", text):
         raise LocalScenarioTokenError("Local scenario city slug is invalid.")
     return text
 
