@@ -1384,23 +1384,24 @@ async function assertSavedStateFlow(page) {
   const localScenarioRow = page.locator(
     '[data-local-scenario-id="7dbdfd44-a7bd-4c4f-96a6-3082f08ddbd2"]',
   );
+  const localScenarioOpen = localScenarioRow.getByRole("button", {
+    name: "Open browser-saved scenario: Tokyo browser plan",
+    exact: true,
+  });
   assert(
-    (await localScenarioRow
-      .getByRole("link", { name: "Open browser-saved scenario: Tokyo browser plan", exact: true })
-      .count()) === 1,
+    (await localScenarioOpen.count()) === 1,
     "saved-state: browser scenario is missing its signed-snapshot Open action",
   );
-  const localScenarioHref = await localScenarioRow
-    .getByRole("link", { name: "Open browser-saved scenario: Tokyo browser plan", exact: true })
-    .getAttribute("href");
+  const localScenarioOpenForm = localScenarioOpen.locator("xpath=ancestor::form");
   assert(
-    localScenarioHref?.startsWith("/saved/scenarios/local/view/?snapshot="),
-    `saved-state: browser scenario detail URL drifted: ${localScenarioHref}`,
+    (await localScenarioOpenForm.getAttribute("method"))?.toLowerCase() === "post" &&
+      (await localScenarioOpenForm.getAttribute("action")) === "/saved/scenarios/local/view/" &&
+      (await localScenarioOpenForm.locator('input[name="snapshot"]').inputValue()) ===
+        "browser-quality-signed-token-placeholder",
+    "saved-state: private browser scenario must open through POST without putting its token in the URL",
   );
   assert(
-    await localScenarioRow
-      .getByRole("link", { name: "Open browser-saved scenario: Tokyo browser plan", exact: true })
-      .evaluate((element) => element.classList.contains("qa-primary-button")),
+    await localScenarioOpen.evaluate((element) => element.classList.contains("qa-primary-button")),
     "saved-state: browser scenario Open action lost primary hierarchy",
   );
   assert(
