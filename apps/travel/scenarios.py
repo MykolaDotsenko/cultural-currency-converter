@@ -70,6 +70,7 @@ class SavedScenarioSpec:
     source_fixed_fee: Decimal | None = None
     destination_fixed_fee: Decimal | None = None
     shopping_assumptions: ShoppingAssumptions | None = None
+    browser_import_key: UUID | None = None
 
 
 def create_saved_scenario(
@@ -116,6 +117,13 @@ def create_saved_scenario(
     user_model = get_user_model()
     with transaction.atomic():
         user_model.objects.select_for_update().get(pk=user.pk)
+        if spec.browser_import_key is not None:
+            existing = SavedScenario.objects.filter(
+                user=user,
+                browser_import_key=spec.browser_import_key,
+            ).first()
+            if existing is not None:
+                return existing
         if SavedScenario.objects.filter(user=user).count() >= MAX_ACCOUNT_SCENARIOS:
             raise SavedScenarioError(
                 f"An account may store at most {MAX_ACCOUNT_SCENARIOS} saved scenarios."
@@ -125,6 +133,7 @@ def create_saved_scenario(
             user=user,
             kind=spec.kind,
             title=spec.title.strip(),
+            browser_import_key=spec.browser_import_key,
             source_currency=spec.source_currency,
             destination_currency=spec.destination_currency,
             source_country=spec.source_country,
