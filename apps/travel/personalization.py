@@ -13,10 +13,12 @@ from django.db import transaction
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.models import TypicalPriceCategory
 from apps.exchange.comparison_snapshot import SavedComparisonInput
-from apps.travel.models import SavedComparison, SavedComparisonBudgetItem, SavedPlace
+from apps.travel.models import SavedComparison, SavedComparisonBudgetItem, SavedCurrency, SavedPlace
 
 MAX_SYNC_PLACES = 24
+MAX_SYNC_CURRENCIES = 24
 MAX_ACCOUNT_PLACES = 100
+MAX_ACCOUNT_CURRENCIES = 50
 MAX_ACCOUNT_COMPARISONS = 50
 
 _COUNTRY_RE = re.compile(r"^[A-Z]{2}$")
@@ -30,6 +32,10 @@ _COMPARISON_CATEGORIES = {
 
 
 class SavedPlaceSyncError(ValueError):
+    pass
+
+
+class SavedCurrencySyncError(ValueError):
     pass
 
 
@@ -50,6 +56,12 @@ class SavedPlaceSpec:
 @dataclass(frozen=True, slots=True)
 class SavedPlaceSyncResult:
     places: tuple[SavedPlace, ...]
+    created_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class SavedCurrencySyncResult:
+    currencies: tuple[SavedCurrency, ...]
     created_count: int
 
 
@@ -169,6 +181,62 @@ def sync_user_saved_places(user, raw_items: Any) -> SavedPlaceSyncResult:
         .order_by("-updated_at", "-id")
     )
     return SavedPlaceSyncResult(places=canonical, created_count=created_count)
+
+
+def sync_user_saved_currencies(user, raw_items: Any) -> SavedCurrencySyncResult:
+    if not user.is_authenticated:
+        raise SavedCurrencySyncError("Authentication is required.")
+    if not isinstance(raw_items, list):
+        raise SavedCurrencySyncError("currencies must be a list.")
+    if len(raw_items) > MAX_SYNC_CURRENCIES:
+        raise SavedCurrencySyncError(
+            f"At most {MAX_SYNC_CURRENCIES} currencies may be synced per request."
+        )
+
+    codes: list[str] = []
+    seen: set[str] = set()
+    for index, value in enumerate(raw_items):
+        if not isinstance(value, str):
+            raise SavedCurrencySyncError(f"Currency {index + 1} must be an ISO currency code.")
+        code = value.strip().upper()
+        if not re.fullmatch(r"[A-Z]{3}", code):
+            raise SavedCurrencySyncError(f"Currency {index + 1} must be a three-letter code.")
+        if code not in seen:
+            seen.add(code)
+            codes.append(code)
+
+    currencies = Currency.objects.filter(code__in=codes, is_active=True).in_bulk(field_name="code")
+    missing = sorted(set(codes) - set(currencies))
+    if missing:
+        raise SavedCurrencySyncError(
+            f"Unknown or inactive currency code: {', '.join(missing)}."
+        )
+
+    user_model = get_user_model()
+    with transaction.atomic():
+        user_model.objects.select_for_update().get(pk=user.pk)
+        existing = SavedCurrency.objects.filter(user=user)
+        existing_codes = set(existing.values_list("currency_id", flat=True))
+        missing_count = sum(currencies[code].pk not in existing_codes for code in codes)
+        if existing.count() + missing_count > MAX_ACCOUNT_CURRENCIES:
+            raise SavedCurrencySyncError(
+                f"An account may store at most {MAX_ACCOUNT_CURRENCIES} saved currencies."
+            )
+
+        created_count = 0
+        for code in codes:
+            _, created = SavedCurrency.objects.get_or_create(
+                user=user,
+                currency=currencies[code],
+            )
+            created_count += int(created)
+
+    canonical = tuple(
+        SavedCurrency.objects.filter(user=user)
+        .select_related("currency")
+        .order_by("-updated_at", "-id")
+    )
+    return SavedCurrencySyncResult(currencies=canonical, created_count=created_count)
 
 
 def _destination_parts(token: str) -> tuple[str, str]:
