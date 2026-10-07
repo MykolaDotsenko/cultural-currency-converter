@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, CountryCurrency, Currency
+from apps.culture.services import PurchaseEquivalent
 from apps.exchange.application import (
     ConverterSubmissionCommand,
     ConverterSubmissionError,
@@ -15,7 +16,6 @@ from apps.exchange.application import (
 )
 from apps.exchange.domain import HistoricalObservationUnavailable, HistoricalOutOfCoverage
 from apps.exchange.forms import RATE_MODE_HISTORICAL, RATE_MODE_LATEST, CurrentConversionForm
-from apps.culture.services import PurchaseEquivalent
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.providers.base import (
     FxProviderInvalidPayload,
