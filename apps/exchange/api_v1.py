@@ -176,11 +176,28 @@ def _purchase_equivalent(item: PurchaseEquivalent) -> dict[str, str]:
     }
 
 
+def _economic_metric_payload(metric) -> dict[str, object]:
+    return {
+        "indicator": metric.indicator,
+        "value": _decimal_text(metric.value),
+        "unit": metric.unit,
+        "benchmarkLabel": metric.benchmark_label,
+        "periodStart": metric.period_start.isoformat(),
+        "frequency": metric.frequency,
+        "observationStatus": metric.observation_status,
+        "source": metric.source,
+        "sourceName": metric.source_name,
+        "sourceUrl": metric.source_url,
+        "sourceDataset": metric.source_dataset,
+    }
+
+
 def _money_context_payload(context: MoneyContext) -> dict[str, object]:
     destination = context.destination_context
     destination_payload: dict[str, object] | None = None
     if destination is not None:
         payment = destination.payment
+        economic = destination.economic
         destination_payload = {
             "countryCode": destination.country_code,
             "countryName": destination.country_name,
@@ -209,6 +226,22 @@ def _money_context_payload(context: MoneyContext) -> dict[str, object]:
                 }
                 for item in destination.prices
             ],
+            "economic": (
+                {
+                    "inflation": (
+                        _economic_metric_payload(economic.inflation)
+                        if economic.inflation is not None
+                        else None
+                    ),
+                    "priceLevel": (
+                        _economic_metric_payload(economic.price_level)
+                        if economic.price_level is not None
+                        else None
+                    ),
+                }
+                if economic is not None
+                else None
+            ),
             "payment": (
                 {
                     "summary": payment.summary,
