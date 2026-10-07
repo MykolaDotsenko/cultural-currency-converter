@@ -76,15 +76,12 @@ def _select_latest(
 ) -> EconomicObservation | None:
     if not rows:
         return None
-    latest_period = max(row.period_start for row in rows)
-    latest_rows = [row for row in rows if row.period_start == latest_period]
-    return min(
-        latest_rows,
-        key=lambda row: (
-            priority.get(row.source, 99),
-            row.pk,
-        ),
-    )
+
+    best_priority = min(priority.get(row.source, 99) for row in rows)
+    preferred = [row for row in rows if priority.get(row.source, 99) == best_priority]
+    latest_period = max(row.period_start for row in preferred)
+    latest = [row for row in preferred if row.period_start == latest_period]
+    return min(latest, key=lambda row: row.pk)
 
 
 def build_economic_context(
