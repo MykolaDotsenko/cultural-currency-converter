@@ -46,6 +46,16 @@ Current selection rules are deliberately semantic rather than “newest number w
 
 These indicators are broad statistical context only. They must not replace reviewed merchant-price observations, executable payment quotes, FX truth, cost-of-living rankings or historical purchasing-power evidence.
 
+## Public holiday context
+
+Nager.Date Community v4 is an **ingestion source**, not a request-path dependency.
+
+`sync_public_holidays` fetches the requested country/year scopes before opening the database transaction, validates country/date/scope/type fields, then reconciles cached `PublicHolidayObservation` rows atomically. Reconciliation republishes returned rows and unpublishes Nager.Date rows that disappeared from a re-fetched year.
+
+The generic destination UI intentionally shows only `nationalHoliday=true` records. Community v4 can describe first-level subdivision scope, but the current canonical City model does not carry a verified ISO 3166-2 subdivision identity, so subdivision-only holidays are stored for future use and excluded from country/city presentation.
+
+Holiday evidence may support wording such as “public holiday today/upcoming; opening hours may differ”. It must not claim that a particular bank, shop, ATM, transport service or venue is closed/open because the holiday API does not provide entity-specific opening hours.
+
 ## Editorial/cultural sources
 
 Curated cultural, payment, typical-price and story content should keep enough provenance to explain source, observation/verification time, scope and confidence.
