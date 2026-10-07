@@ -60,6 +60,7 @@ Those boundaries are more important to this project than adding another conversi
 - optional Gemini structured insight with deterministic fallback, server-approved contextual quick prompts and per-section grounding against trusted structured packets; Explore AI is an explicit POST over a reviewed destination/intent while Explore GET remains provider-free;
 - demand-loaded converter/picker, saved-state and rate-chart enhancements with HTMX re-discovery and browser route-isolation checks;
 - browser-local anonymous favourites and recent conversions, signed-in favourite ownership and opt-in cross-device history.
+- signed browser-local Budget/Shopping scenarios with provider-free stored-snapshot reopening and explicit idempotent account import; sign-in never uploads them automatically.
 
 ## Architecture
 
