@@ -20,6 +20,7 @@ assertBrowserConfiguration();
 const OUTPUT_DIR = resolve(process.cwd(), "../artifacts/browser-quality");
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const LOCAL_STATE_KEY = "cultural-currency:local-preferences:v1";
+const LOCAL_SCENARIOS_KEY = "cultural-currency:local-scenarios:v1";
 
 const SURFACES = [
   { name: "shell", path: "/_design/shell/" },
@@ -1243,6 +1244,27 @@ async function assertSavedStateFlow(page) {
     );
   }
 
+  const sampleScenarioState = {
+    version: 1,
+    scenarios: [
+      {
+        id: "7dbdfd44-a7bd-4c4f-96a6-3082f08ddbd2",
+        kind: "budget",
+        title: "Tokyo browser plan",
+        scopeLabel: "Tokyo, Japan",
+        sourceAmount: "600",
+        sourceCurrency: "EUR",
+        destinationCurrency: "JPY",
+        durationDays: 5,
+        travelers: 2,
+        effectiveDate: "2026-09-30",
+        stale: false,
+        token: "browser-quality-signed-token-placeholder",
+        savedAt: "2026-10-07T10:00:00.000Z",
+      },
+    ],
+  };
+
   const sampleState = {
     version: 1,
     places: [
@@ -1303,13 +1325,22 @@ async function assertSavedStateFlow(page) {
     ],
   };
 
-  await page.evaluate(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), {
-    key: LOCAL_STATE_KEY,
-    state: sampleState,
-  });
+  await page.evaluate(
+    ({ preferenceKey, preferenceState, scenarioKey, scenarioState }) => {
+      localStorage.setItem(preferenceKey, JSON.stringify(preferenceState));
+      localStorage.setItem(scenarioKey, JSON.stringify(scenarioState));
+    },
+    {
+      preferenceKey: LOCAL_STATE_KEY,
+      preferenceState: sampleState,
+      scenarioKey: LOCAL_SCENARIOS_KEY,
+      scenarioState: sampleScenarioState,
+    },
+  );
   await page.reload({ waitUntil: "networkidle" });
 
   await page.getByRole("heading", { name: "Tokyo, Japan" }).waitFor();
+  await page.getByRole("heading", { name: "Tokyo browser plan" }).waitFor();
   await page.getByRole("heading", { name: "EUR → JPY" }).waitFor();
   await page.getByText("100 EUR → 17450 JPY", { exact: true }).waitFor();
   await page.getByText("100 FIM → 21.35 USD", { exact: true }).waitFor();
@@ -1348,6 +1379,33 @@ async function assertSavedStateFlow(page) {
       .getByRole("link", { name: "Convert for Tokyo, Japan", exact: true })
       .evaluate((element) => element.classList.contains("qa-primary-button")),
     "saved-state: saved place primary action hierarchy regressed",
+  );
+
+  const localScenarioRow = page.locator(
+    '[data-local-scenario-id="7dbdfd44-a7bd-4c4f-96a6-3082f08ddbd2"]',
+  );
+  assert(
+    (await localScenarioRow
+      .getByRole("link", { name: "Open browser-saved scenario: Tokyo browser plan", exact: true })
+      .count()) === 1,
+    "saved-state: browser scenario is missing its signed-snapshot Open action",
+  );
+  const localScenarioHref = await localScenarioRow
+    .getByRole("link", { name: "Open browser-saved scenario: Tokyo browser plan", exact: true })
+    .getAttribute("href");
+  assert(
+    localScenarioHref?.startsWith("/saved/scenarios/local/view/?snapshot="),
+    `saved-state: browser scenario detail URL drifted: ${localScenarioHref}`,
+  );
+  assert(
+    await localScenarioRow
+      .getByRole("link", { name: "Open browser-saved scenario: Tokyo browser plan", exact: true })
+      .evaluate((element) => element.classList.contains("qa-primary-button")),
+    "saved-state: browser scenario Open action lost primary hierarchy",
+  );
+  assert(
+    (await page.getByRole("button", { name: "Import browser scenarios to account" }).count()) === 0,
+    "saved-state: anonymous browser scenario unexpectedly exposes account import",
   );
 
   const savedRow = page.locator("[data-saved-pair-id]").first();
@@ -1497,6 +1555,23 @@ async function assertSavedStateFlow(page) {
     "saved-state: clear-saved action remained visible after the list became empty",
   );
 
+  await localScenarioRow
+    .getByRole("button", { name: "Remove browser-saved scenario: Tokyo browser plan", exact: true })
+    .click();
+  await page.getByText("No browser-saved scenarios on this device.", { exact: true }).waitFor();
+  assert(
+    await page.getByRole("button", { name: "Clear browser scenarios" }).isHidden(),
+    "saved-state: clear browser scenarios remained visible after removal",
+  );
+
+  await page.evaluate((key) => localStorage.setItem(key, "{broken"), LOCAL_SCENARIOS_KEY);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByText("No browser-saved scenarios on this device.", { exact: true }).waitFor();
+  assert(
+    (await page.evaluate((key) => localStorage.getItem(key), LOCAL_SCENARIOS_KEY)) === null,
+    "saved-state: corrupt browser scenario store was not recovered safely",
+  );
+
   await page.evaluate((key) => localStorage.setItem(key, "{broken"), LOCAL_STATE_KEY);
   await page.reload({ waitUntil: "networkidle" });
   await page
@@ -1510,12 +1585,21 @@ async function assertSavedStateFlow(page) {
     "saved-state: corrupt local data did not elevate recovery status",
   );
 
-  await page.evaluate(({ key, state }) => localStorage.setItem(key, JSON.stringify(state)), {
-    key: LOCAL_STATE_KEY,
-    state: sampleState,
-  });
+  await page.evaluate(
+    ({ preferenceKey, preferenceState, scenarioKey, scenarioState }) => {
+      localStorage.setItem(preferenceKey, JSON.stringify(preferenceState));
+      localStorage.setItem(scenarioKey, JSON.stringify(scenarioState));
+    },
+    {
+      preferenceKey: LOCAL_STATE_KEY,
+      preferenceState: sampleState,
+      scenarioKey: LOCAL_SCENARIOS_KEY,
+      scenarioState: sampleScenarioState,
+    },
+  );
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "EUR → JPY" }).waitFor();
+  await page.getByRole("heading", { name: "Tokyo browser plan" }).waitFor();
   await assertAxe(page, "saved-state/populated");
 }
 
