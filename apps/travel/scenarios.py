@@ -77,6 +77,7 @@ def create_saved_scenario(
     *,
     spec: SavedScenarioSpec,
     conversion: ConversionResult,
+    import_key: UUID | None = None,
 ) -> SavedScenario:
     """Create one user-owned scenario with an immutable initial FX observation."""
 
@@ -116,6 +117,11 @@ def create_saved_scenario(
     user_model = get_user_model()
     with transaction.atomic():
         user_model.objects.select_for_update().get(pk=user.pk)
+        if import_key is not None:
+            existing = SavedScenario.objects.filter(user=user, import_key=import_key).first()
+            if existing is not None:
+                return existing
+
         if SavedScenario.objects.filter(user=user).count() >= MAX_ACCOUNT_SCENARIOS:
             raise SavedScenarioError(
                 f"An account may store at most {MAX_ACCOUNT_SCENARIOS} saved scenarios."
@@ -140,6 +146,7 @@ def create_saved_scenario(
             travelers=spec.travelers,
             travel_start_date=spec.travel_start_date,
             travel_end_date=spec.travel_end_date,
+            import_key=import_key,
         )
         try:
             scenario.full_clean()
