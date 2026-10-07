@@ -271,6 +271,7 @@ def build_budget_explanation_packet(
         packet_version=BUDGET_PACKET_VERSION,
         locale=locale,
         spec=spec,
+        focus_instruction=focus_instruction,
         facts=facts,
         currencies=(conversion.quote.base_currency, interpretation.currency_code),
     )
@@ -351,6 +352,7 @@ def build_comparison_explanation_packet(
         packet_version=COMPARISON_PACKET_VERSION,
         locale=locale,
         spec=spec,
+        focus_instruction=focus_instruction,
         facts=facts,
         currencies=(
             comparison.source_currency_code,
@@ -466,6 +468,7 @@ def _build_packet(
     packet_version: str,
     locale: str,
     spec: ContextualIntentSpec,
+    focus_instruction: str,
     facts: list[GroundedFact],
     currencies: tuple[str, ...],
 ) -> ExplanationPacket:
