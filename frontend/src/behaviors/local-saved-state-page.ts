@@ -2,12 +2,12 @@ import { accountCurrencySyncAvailable, importLocalCurrenciesToAccount } from "./
 import { accountPlaceSyncAvailable, importLocalPlacesToAccount } from "./account-places";
 import {
   type LocalPreferencesV1,
+  normalizeSavedCurrency,
   type PairContext,
   type RateMode,
   type ReadResult,
   type RecentConversion,
   readState,
-  normalizeSavedCurrency,
   type SavedPlace,
   toggleCurrencyInState,
   writeState,
@@ -148,6 +148,53 @@ function currencyConverterUrl(
   return `${url.pathname}${url.search}`;
 }
 
+interface CurrencyOptionPayload {
+  currencies: Array<{ code: string; name: string }>;
+}
+
+async function loadLocalCurrencyOptions(page: HTMLElement): Promise<void> {
+  if (page.dataset.accountMode === "true") return;
+  const form = page.querySelector<HTMLFormElement>("[data-local-currency-form]");
+  const select = form?.querySelector<HTMLSelectElement>("[name='currency_code']");
+  const submit = form?.querySelector<HTMLButtonElement>("[data-local-currency-submit]");
+  const status = form?.querySelector<HTMLElement>("[data-local-currency-options-status]");
+  const url = form?.dataset.currencyOptionsUrl;
+  if (!form || !select || !submit || !url || form.dataset.optionsLoaded === "true") return;
+
+  form.dataset.optionsLoaded = "true";
+  try {
+    const response = await fetch(url, { credentials: "same-origin" });
+    if (!response.ok) throw new Error(`Currency options failed with status ${response.status}.`);
+    const payload = (await response.json()) as CurrencyOptionPayload;
+    const options = payload.currencies.filter(
+      (item) => /^[A-Z]{3}$/.test(item.code) && item.name.trim().length > 0,
+    );
+    select.replaceChildren(new Option("Choose currency", ""));
+    for (const item of options) {
+      const option = new Option(`${item.code} · ${item.name}`, item.code);
+      option.dataset.currencyName = item.name;
+      select.add(option);
+    }
+    select.disabled = options.length === 0;
+    submit.disabled = options.length === 0;
+    if (status) {
+      status.textContent =
+        options.length > 0
+          ? "Currency choices are ready."
+          : "No active currency choices are currently available.";
+    }
+  } catch {
+    form.dataset.optionsLoaded = "false";
+    select.replaceChildren(new Option("Currencies unavailable", ""));
+    select.disabled = true;
+    submit.disabled = true;
+    if (status) {
+      status.textContent =
+        "Currency choices could not be loaded. Existing browser-saved currencies remain available.";
+    }
+  }
+}
+
 function renderCurrencies(
   page: HTMLElement,
   state: LocalPreferencesV1,
@@ -173,8 +220,7 @@ function renderCurrencies(
     title.textContent = `${currency.code} · ${currency.name || "Currency"}`;
     const meta = document.createElement("p");
     meta.className = "qa-saved-row__meta";
-    meta.textContent =
-      `Saved ${savedAtLabel(currency.savedAt)} · currency only, no amount or country stored`;
+    meta.textContent = `Saved ${savedAtLabel(currency.savedAt)} · currency only, no amount or country stored`;
     copy.append(title, meta);
 
     const actions = document.createElement("div");
@@ -579,14 +625,11 @@ function renderSavedPage(overrideMessage = ""): void {
   if (importCurrencySummary && page.dataset.accountMode === "true") {
     importCurrencySummary.removeAttribute("data-local-pending");
     if (unavailable) {
-      importCurrencySummary.textContent =
-        "Browser-only currencies cannot be read on this device.";
+      importCurrencySummary.textContent = "Browser-only currencies cannot be read on this device.";
     } else if (read.state.currencies.length === 0) {
-      importCurrencySummary.textContent =
-        "No browser-only currencies are waiting to be imported.";
+      importCurrencySummary.textContent = "No browser-only currencies are waiting to be imported.";
     } else {
-      importCurrencySummary.textContent =
-        `${read.state.currencies.length} browser-only currency shortcut${read.state.currencies.length === 1 ? "" : "s"} remain on this device. Import is always explicit.`;
+      importCurrencySummary.textContent = `${read.state.currencies.length} browser-only currency shortcut${read.state.currencies.length === 1 ? "" : "s"} remain on this device. Import is always explicit.`;
     }
   }
   if (clearFavourites) {
@@ -678,9 +721,7 @@ export function wireSavedPage(): void {
       .querySelector<HTMLButtonElement>("[data-import-local-currencies]")
       ?.addEventListener("click", async (event) => {
         const button = event.currentTarget as HTMLButtonElement;
-        const status = page.querySelector<HTMLElement>(
-          "[data-local-currency-migration-status]",
-        );
+        const status = page.querySelector<HTMLElement>("[data-local-currency-migration-status]");
         button.disabled = true;
         if (status) {
           status.textContent = "Importing browser-only currencies to your account…";
@@ -768,4 +809,5 @@ export function wireSavedPage(): void {
   }
 
   renderSavedPage();
+  void loadLocalCurrencyOptions(page);
 }
