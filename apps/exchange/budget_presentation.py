@@ -54,6 +54,8 @@ def build_budget_component(
     interpretation: BudgetInterpretation | None = None,
     assumptions: BudgetAssumptions | None = None,
     payment_handoff_token: str = "",
+    ai_locale: str = "en",
+    ai_focus_instruction_suffix: str = "",
 ) -> dict[str, object] | None:
     anchors = available_budget_categories(context)
     if not anchors:
@@ -228,6 +230,8 @@ def build_budget_component(
                     context,
                     interpretation,
                     intent=BudgetExplanationIntent(spec.intent_id),
+                    locale=ai_locale,
+                    focus_instruction_suffix=ai_focus_instruction_suffix,
                 )
                 prompts.append(
                     {
