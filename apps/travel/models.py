@@ -526,6 +526,7 @@ class SavedScenario(models.Model):
     travelers = models.PositiveSmallIntegerField(default=1)
     travel_start_date = models.DateField(null=True, blank=True)
     travel_end_date = models.DateField(null=True, blank=True)
+    import_key = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -589,6 +590,11 @@ class SavedScenario(models.Model):
             models.CheckConstraint(
                 condition=Q(destination_city__isnull=True) | Q(destination_country__isnull=False),
                 name="scenario_city_requires_country",
+            ),
+            models.UniqueConstraint(
+                fields=("user", "import_key"),
+                condition=Q(import_key__isnull=False),
+                name="unique_scenario_import_key_per_user",
             ),
             models.CheckConstraint(
                 condition=Q(kind=SavedScenarioKind.SHOPPING) | Q(destination_country__isnull=False),
