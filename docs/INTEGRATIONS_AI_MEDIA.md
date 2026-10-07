@@ -31,6 +31,21 @@ The adapter treats provider data as untrusted input: request timeouts must be po
 
 Normalize country/currency data locally so the product can preserve stable identity, temporal relationships and controlled reconciliation during upstream changes.
 
+## Authoritative economic context
+
+World Bank, Eurostat and OECD are **ingestion sources**, not normal conversion-request dependencies.
+
+The normalized `EconomicObservation` contract stores country scope, indicator/category, value/unit, benchmark meaning, period/frequency, observation status, dataset identity, source URL and retrieval time. `sync_economic_context` completes external fetch/validation before opening the database transaction; a requested multi-source sync fails before writes if any source fails.
+
+Current selection rules are deliberately semantic rather than “newest number wins”:
+
+- Eurostat HICP is preferred for recent year-over-year inflation where available; World Bank CPI inflation is the global fallback.
+- OECD comparative price-level index is preferred for price-level context where available; World Bank price-level ratio is the global fallback.
+- provider-specific benchmark meaning is retained (for example OECD = 100 versus United States = 1) and never normalized into an invented universal score.
+- bounded freshness windows suppress old macro rows instead of presenting them as current context.
+
+These indicators are broad statistical context only. They must not replace reviewed merchant-price observations, executable payment quotes, FX truth, cost-of-living rankings or historical purchasing-power evidence.
+
 ## Editorial/cultural sources
 
 Curated cultural, payment, typical-price and story content should keep enough provenance to explain source, observation/verification time, scope and confidence.
