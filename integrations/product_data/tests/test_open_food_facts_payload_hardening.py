@@ -73,12 +73,14 @@ class RawProviderResponse:
 )
 def test_external_product_json_rejects_duplicates_nonfinite_and_malformed_body(body):
     client = OpenFoodFactsClient()
-    with patch(
-        "integrations.product_data.open_food_facts.urlopen",
-        return_value=RawProviderResponse(body),
+    with (
+        patch(
+            "integrations.product_data.open_food_facts.urlopen",
+            return_value=RawProviderResponse(body),
+        ),
+        pytest.raises(ProductDataSourceError, match="malformed JSON"),
     ):
-        with pytest.raises(ProductDataSourceError, match="malformed JSON"):
-            client._fetch_json(Request(_URL))
+        client._fetch_json(Request(_URL))
 
 
 def test_strict_product_json_preserves_valid_optional_fields():
