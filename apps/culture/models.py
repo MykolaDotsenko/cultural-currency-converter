@@ -487,3 +487,120 @@ class TypicalPrice(models.Model):
 
     def __str__(self) -> str:
         return f"{self.country.iso2} · {self.label}"
+
+
+class EconomicObservationSource(models.TextChoices):
+    WORLD_BANK = "world_bank", "World Bank"
+    EUROSTAT = "eurostat", "Eurostat"
+    OECD = "oecd", "OECD"
+
+
+class EconomicIndicator(models.TextChoices):
+    INFLATION_YOY = "inflation_yoy", "Consumer price inflation, year over year"
+    PRICE_LEVEL_INDEX = "price_level_index", "Comparative price level index"
+    PRICE_LEVEL_RATIO = "price_level_ratio", "Price level ratio to US benchmark"
+
+
+class EconomicObservationFrequency(models.TextChoices):
+    MONTHLY = "monthly", "Monthly"
+    ANNUAL = "annual", "Annual"
+
+
+class EconomicObservationStatus(models.TextChoices):
+    FINAL = "final", "Final"
+    PRELIMINARY = "preliminary", "Preliminary"
+    ESTIMATE = "estimate", "Estimate"
+    UNKNOWN = "unknown", "Unknown"
+
+
+class EconomicObservation(models.Model):
+    """Authoritative macro context kept separate from FX and merchant-price truth."""
+
+    country = models.ForeignKey(
+        "countries.Country",
+        on_delete=models.CASCADE,
+        related_name="economic_observations",
+    )
+    source = models.CharField(max_length=24, choices=EconomicObservationSource.choices)
+    indicator = models.CharField(max_length=32, choices=EconomicIndicator.choices)
+    category = models.CharField(max_length=64, default="all_items")
+    value = models.DecimalField(max_digits=18, decimal_places=6)
+    unit = models.CharField(max_length=48)
+    benchmark_label = models.CharField(max_length=120, blank=True)
+    period_start = models.DateField()
+    frequency = models.CharField(
+        max_length=12,
+        choices=EconomicObservationFrequency.choices,
+    )
+    observation_status = models.CharField(
+        max_length=16,
+        choices=EconomicObservationStatus.choices,
+        default=EconomicObservationStatus.UNKNOWN,
+    )
+    source_dataset = models.CharField(max_length=120)
+    source_name = models.CharField(max_length=120)
+    source_url = models.URLField(max_length=700)
+    source_retrieved_at = models.DateTimeField()
+    is_published = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("country__name", "indicator", "-period_start", "source")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("country", "source", "indicator", "category", "period_start"),
+                name="economic_observation_identity",
+            ),
+            models.CheckConstraint(
+                condition=~Q(unit=""),
+                name="economic_observation_unit_required",
+            ),
+            models.CheckConstraint(
+                condition=~Q(source_dataset=""),
+                name="economic_observation_dataset_required",
+            ),
+            models.CheckConstraint(
+                condition=~Q(source_name=""),
+                name="economic_observation_source_name_required",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("country", "indicator", "-period_start"),
+                name="culture_econ_ctry_ind_idx",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, str] = {}
+        if not self.category.strip():
+            errors["category"] = "Economic observation category is required."
+        if not self.unit.strip():
+            errors["unit"] = "Economic observation unit is required."
+        if not self.source_dataset.strip():
+            errors["source_dataset"] = "Economic observation dataset is required."
+        if not self.source_name.strip():
+            errors["source_name"] = "Economic observation source name is required."
+        try:
+            validate_provenance_url(self.source_url)
+        except ProvenanceUrlError as exc:
+            errors["source_url"] = str(exc)
+        if self.period_start > timezone.localdate():
+            errors["period_start"] = "Economic observation period cannot begin in the future."
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.category = normalize_price_label(self.category).lower().replace(" ", "_")
+        self.unit = normalize_price_label(self.unit)
+        self.source_dataset = normalize_price_label(self.source_dataset)
+        self.source_name = normalize_price_label(self.source_name)
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.country.iso2} · {self.indicator} · {self.value} "
+            f"({self.source}, {self.period_start})"
+        )

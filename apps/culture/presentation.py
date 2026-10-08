@@ -28,6 +28,39 @@ def _equivalent_text(value: PurchaseEquivalent) -> str:
     return f"About {_whole_count(value.minimum_count)}–{_whole_count(value.maximum_count)}"
 
 
+def _economic_metric_component(metric) -> dict[str, object]:
+    if metric.indicator == "inflation_yoy":
+        value_text = f"{metric.value.quantize(Decimal('0.1'))}%"
+        label = "Consumer-price inflation"
+        interpretation = "Year-over-year consumer-price change"
+    elif metric.indicator == "price_level_index":
+        value_text = f"{metric.value.quantize(Decimal('0.1'))}"
+        label = "Comparative price level"
+        interpretation = metric.benchmark_label or "Published benchmark = 100"
+    elif metric.indicator == "price_level_ratio":
+        value_text = f"{metric.value.quantize(Decimal('0.01'))}x"
+        label = "General price-level ratio"
+        interpretation = metric.benchmark_label or "Published benchmark ratio"
+    else:
+        value_text = str(metric.value)
+        label = "Economic context"
+        interpretation = metric.benchmark_label
+
+    return {
+        "indicator": metric.indicator,
+        "label": label,
+        "value_text": value_text,
+        "interpretation": interpretation,
+        "period": date_format(metric.period_start, "M Y")
+        if metric.frequency == "monthly"
+        else date_format(metric.period_start, "Y"),
+        "status": metric.observation_status.replace("_", " ").capitalize(),
+        "source_name": metric.source_name,
+        "source_url": metric.source_url,
+        "source_dataset": metric.source_dataset,
+    }
+
+
 def build_destination_context_component(
     context: DestinationContext,
     *,
@@ -62,6 +95,24 @@ def build_destination_context_component(
         for price in context.prices
     ]
 
+    economic = None
+    if context.economic is not None:
+        inflation = (
+            _economic_metric_component(context.economic.inflation)
+            if context.economic.inflation is not None
+            else None
+        )
+        price_level = (
+            _economic_metric_component(context.economic.price_level)
+            if context.economic.price_level is not None
+            else None
+        )
+        economic = {
+            "inflation": inflation,
+            "price_level": price_level,
+            "metric_count": int(inflation is not None) + int(price_level is not None),
+        }
+
     payment = None
     if context.payment is not None:
         rows = [
@@ -92,6 +143,7 @@ def build_destination_context_component(
         "local_detail_image": local_detail_image if prices or payment is not None else None,
         "prices": prices,
         "payment": payment,
+        "economic": economic,
         "historical_notice": (
             "Current destination context — not historical purchasing power. "
             "These local-price and payment notes use current reviewed data and are not "

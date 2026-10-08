@@ -209,6 +209,7 @@ def test_conversion_api_reuses_canonical_application_path_and_preserves_trust_fi
         "cityName": "Tokyo",
         "asOf": money_context["asOf"],
         "prices": [],
+        "economic": None,
         "payment": None,
     }
     assert gateway.calls and gateway.calls[0][0:2] == ("EUR", "JPY")

@@ -9,6 +9,9 @@
       {% if destination_context.show_explore_nav %}
         <nav class="qa-explore-nav" aria-label="Explore conversion context">
           <a href="#everyday-value">Everyday value</a>
+          {% if destination_context.economic %}
+            <a href="#economic-context">Economic context</a>
+          {% endif %}
           <a href="#payment-context">Payment context</a>
           <a href="#money-culture-entry-title">Money &amp; culture</a>
         </nav>
@@ -70,6 +73,55 @@
           </p>
         {% endif %}
       </section>
+      {% if destination_context.economic %}
+        <section id="economic-context"
+                 class="qa-context-section"
+                 aria-labelledby="economic-context-title">
+          <div>
+            <p class="qa-foundation-kicker">Economic context</p>
+            <h4 id="economic-context-title">How the broader price environment is moving</h4>
+          </div>
+          <div class="qa-context-section__body">
+            <div class="qa-price-grid">
+              {% if destination_context.economic.inflation %}
+                {% with metric=destination_context.economic.inflation %}
+                  <article class="qa-price-card">
+                    <div>
+                      <p class="qa-price-card__label">{{ metric.label }}</p>
+                      <p class="qa-price-card__price">{{ metric.value_text }}</p>
+                      <p class="qa-price-card__equivalent">{{ metric.interpretation }}</p>
+                    </div>
+                    <p class="qa-price-card__meta">
+                      {{ metric.period }} · {{ metric.status }} · {{ metric.source_dataset }}
+                    </p>
+                    <a href="{{ metric.source_url }}">Source: {{ metric.source_name }}</a>
+                  </article>
+                {% endwith %}
+              {% endif %}
+              {% if destination_context.economic.price_level %}
+                {% with metric=destination_context.economic.price_level %}
+                  <article class="qa-price-card">
+                    <div>
+                      <p class="qa-price-card__label">{{ metric.label }}</p>
+                      <p class="qa-price-card__price">{{ metric.value_text }}</p>
+                      <p class="qa-price-card__equivalent">{{ metric.interpretation }}</p>
+                    </div>
+                    <p class="qa-price-card__meta">
+                      {{ metric.period }} · {{ metric.status }} · {{ metric.source_dataset }}
+                    </p>
+                    <a href="{{ metric.source_url }}">Source: {{ metric.source_name }}</a>
+                  </article>
+                {% endwith %}
+              {% endif %}
+            </div>
+            <p class="qa-context-disclaimer">
+              These official macro indicators describe broad consumer-price conditions. They are
+              not a live merchant price, a card/ATM quote, or a claim about what the converted
+              amount can buy today.
+            </p>
+          </div>
+        </section>
+      {% endif %}
       <section id="payment-context"
                class="qa-context-section{% if destination_context.payment_culture_image %} qa-context-section--with-media{% endif %}"
                aria-labelledby="payment-context-title">
@@ -122,6 +174,16 @@
         <div>
           <strong>Price evidence</strong>
           <span>{{ destination_context.price_count }} reviewed anchor{{ destination_context.price_count|pluralize }}</span>
+        </div>
+        <div>
+          <strong>Economic evidence</strong>
+          <span>
+            {% if destination_context.economic %}
+              {{ destination_context.economic.metric_count }} official indicator{{ destination_context.economic.metric_count|pluralize }}
+            {% else %}
+              no recent official macro record
+            {% endif %}
+          </span>
         </div>
         <div>
           <strong>Payment guidance</strong>
