@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from integrations.product_data import (
     OpenFoodFactsClient,
-    ProductDataSourceError,
     ProductIdentity,
     ProductNotFound,
     ProductSourceRateLimited,
