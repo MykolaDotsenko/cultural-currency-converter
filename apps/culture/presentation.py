@@ -38,7 +38,7 @@ def _economic_metric_component(metric) -> dict[str, object]:
         label = "Comparative price level"
         interpretation = metric.benchmark_label or "Published benchmark = 100"
     elif metric.indicator == "price_level_ratio":
-        value_text = f"{metric.value.quantize(Decimal('0.01'))}×"
+        value_text = f"{metric.value.quantize(Decimal('0.01'))}x"
         label = "General price-level ratio"
         interpretation = metric.benchmark_label or "Published benchmark ratio"
     else:
