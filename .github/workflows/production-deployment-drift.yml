@@ -1,0 +1,59 @@
+name: Production deployment drift
+
+# Checks the actual Render-hosted application; this must NOT run on PR heads.
+# A missing/unavailable old deployment is a failure, not a passing smoke test.
+on:
+  schedule:
+    - cron: "17 8,20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment-drift
+  cancel-in-progress: true
+
+jobs:
+  revision:
+    name: Deployed revision matches master
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout current master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Verify actual live deployment after bounded cold-start retries
+        env:
+          REVISION_URL: https://cultural-currency-converter-mykola.onrender.com/health/revision/
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_sha="$(git rev-parse HEAD)"
+          echo "Repository master SHA: $expected_sha"
+
+          # The Render free service may be sleeping. Use bounded retries;
+          # the verifier itself rejects redirects, unknown SHA and mismatches.
+          for attempt in 1 2 3 4 5 6; do
+            if python scripts/check_deployment_revision.py \
+              --url "$REVISION_URL" \
+              --expected-sha "$expected_sha"; then
+              echo "Live deployment matches repository master."
+              exit 0
+            fi
+            if [[ "$attempt" -lt 6 ]]; then
+              echo "::warning::Revision evidence unavailable/mismatched (attempt $attempt of 6)."
+              sleep 20
+            fi
+          done
+
+          echo "::error::Live deployment SHA is not certified to match master. See production drift incident #266."
+          exit 1
