@@ -606,7 +606,6 @@ class EconomicObservation(models.Model):
         )
 
 
-
 class PublicHolidayObservation(models.Model):
     """Cached public-holiday evidence with explicit national/subdivision scope."""
 
@@ -671,10 +670,7 @@ class PublicHolidayObservation(models.Model):
                     len(code) < 4
                     or len(code) > 8
                     or "-" not in code
-                    or not all(
-                        part.isascii() and part.isalnum()
-                        for part in code.split("-", 1)
-                    )
+                    or not all(part.isascii() and part.isalnum() for part in code.split("-", 1))
                 ):
                     errors["subdivision_codes"] = (
                         "Subdivision codes must use compact ISO 3166-2 style values."
