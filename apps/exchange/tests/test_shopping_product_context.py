@@ -213,3 +213,25 @@ def test_product_api_v1_maps_not_found_and_provider_failure(client):
     assert unavailable.status_code == 503
     assert unavailable.json()["error"]["code"] == "product_source_unavailable"
     assert "secret provider detail" not in unavailable.content.decode()
+
+
+@pytest.mark.django_db
+def test_web_shopping_cache_outage_is_optional_and_preserves_manual_entry(
+    client, shopping_reference_data
+):
+    with patch("apps.exchange.product_context.cache.get", side_effect=RuntimeError("private")):
+        response = client.get(reverse("shopping_calculation"), {"barcode": "3017624010701"})
+
+    assert response.status_code == 200
+    assert b"Product context is temporarily unavailable" in response.content
+    assert b"Item price" in response.content
+    assert b"private" not in response.content
+
+
+def test_mobile_product_identity_cache_outage_returns_safe_503(client):
+    with patch("apps.exchange.product_context.cache.get", side_effect=RuntimeError("private")):
+        response = client.get(reverse("api_v1_product_identity", args=("3017624010701",)))
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "product_source_unavailable"
+    assert "private" not in response.content.decode()
