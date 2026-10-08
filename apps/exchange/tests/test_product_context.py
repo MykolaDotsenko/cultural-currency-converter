@@ -11,7 +11,11 @@ from apps.exchange.product_context import (
     load_product_context_token,
     lookup_product_identity_cached,
 )
-from integrations.product_data.base import ProductIdentity, ProductNotFound, ProductSourceRateLimited
+from integrations.product_data.base import (
+    ProductIdentity,
+    ProductNotFound,
+    ProductSourceRateLimited,
+)
 
 
 class StubProductClient:
