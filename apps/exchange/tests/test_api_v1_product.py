@@ -80,9 +80,9 @@ def test_equivalent_barcodes_share_the_real_product_cache(client):
         "bad-code",
         "123",
         "123456789012345",
-        "١٢٣٤٥٦٧٨",
-        "１２３４５６７８",
-        "1234567８",
+        "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",
+        "\uFF11\uFF12\uFF13\uFF14\uFF15\uFF16\uFF17\uFF18",
+        "1234567\uFF18",
     ],
 )
 def test_invalid_product_barcode_is_rejected_before_quota_or_upstream(client, barcode):
