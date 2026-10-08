@@ -10,6 +10,8 @@ from django.db import DatabaseError, connection
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_safe
 
+from apps.common.release_identity import get_deployed_revision
+
 logger = logging.getLogger("cultural_currency.health")
 
 
@@ -18,6 +20,17 @@ def health_live(request: HttpRequest) -> JsonResponse:
     """Report process liveness without touching database or external services."""
 
     return JsonResponse({"status": "ok"})
+
+
+@require_safe
+def health_revision(request: HttpRequest) -> JsonResponse:
+    """Expose only the full deployed Git SHA, never runtime configuration."""
+
+    revision = get_deployed_revision()
+    response = JsonResponse({"status": "known" if revision else "unknown", "revision": revision})
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 def _shared_cache_available() -> bool:

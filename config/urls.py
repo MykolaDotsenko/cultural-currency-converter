@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.common.health import health_live, health_ready
+from apps.common.health import health_live, health_ready, health_revision
 from apps.common.pwa import offline_shell, service_worker, web_app_manifest
 from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
@@ -258,6 +258,7 @@ urlpatterns = [
     path("offline/", offline_shell, name="offline_shell"),
     path("health/live/", health_live, name="health_live"),
     path("health/ready/", health_ready, name="health_ready"),
+    path("health/revision/", health_revision, name="health_revision"),
     path("security/csp-report/", csp_report, name="csp_report"),
     path("admin/", admin.site.urls),
     path("_design/shell/", shell_preview, name="shell_preview"),
