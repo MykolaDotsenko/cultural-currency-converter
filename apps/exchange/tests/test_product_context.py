@@ -105,3 +105,19 @@ def test_product_context_token_rejects_untrusted_provenance():
 
     with pytest.raises(ProductContextTokenError, match="provenance"):
         load_product_context_token(token)
+
+
+def test_signed_product_identity_rejects_mismatched_provenance_url():
+    identity = ProductIdentity(
+        barcode="3017624010701",
+        product_name="Product",
+        brands=(),
+        quantity="",
+        categories=(),
+        source_name="Open Food Facts",
+        source_url="https://world.openfoodfacts.org/product/3017624010702",
+        retrieved_at=datetime(2026, 10, 8, 10, tzinfo=UTC),
+    )
+
+    with pytest.raises(ProductContextTokenError, match="provenance"):
+        load_product_context_token(build_product_context_token(identity))
