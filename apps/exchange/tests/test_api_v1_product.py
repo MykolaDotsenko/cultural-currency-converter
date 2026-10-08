@@ -81,8 +81,8 @@ def test_equivalent_barcodes_share_the_real_product_cache(client):
         "123",
         "123456789012345",
         "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",
-        "\uFF11\uFF12\uFF13\uFF14\uFF15\uFF16\uFF17\uFF18",
-        "1234567\uFF18",
+        "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18",
+        "1234567\uff18",
     ],
 )
 def test_invalid_product_barcode_is_rejected_before_quota_or_upstream(client, barcode):
