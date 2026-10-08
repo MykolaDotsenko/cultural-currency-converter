@@ -17,12 +17,18 @@ from apps.exchange.application import (
 from apps.exchange.domain import HistoricalObservationUnavailable, HistoricalOutOfCoverage
 from apps.exchange.forms import RATE_MODE_HISTORICAL, RATE_MODE_LATEST, CurrentConversionForm
 from apps.exchange.money_context import MoneyContext
+from apps.exchange.product_context import lookup_product_identity_cached
 from apps.exchange.providers.base import (
     FxProviderInvalidPayload,
     FxProviderUnavailable,
     FxProviderUnsupportedPair,
 )
 from apps.exchange.web.gateways import build_historical_quote_gateway, build_latest_quote_gateway
+from integrations.product_data import (
+    ProductDataSourceError,
+    ProductNotFound,
+    ProductSourceRateLimited,
+)
 
 _API_VERSION = "1"
 _MAX_JSON_BODY_BYTES = 16 * 1024
@@ -494,4 +500,56 @@ def api_v1_conversion(request: HttpRequest) -> JsonResponse:
                 "moneyContext": _money_context_payload(submission.money_context),
             },
         }
+    )
+
+
+
+@require_GET
+def api_v1_product_identity(request: HttpRequest, barcode: str) -> JsonResponse:
+    try:
+        product = lookup_product_identity_cached(barcode)
+    except ValueError:
+        return _api_error(
+            code="invalid_barcode",
+            message="Barcode must contain 7–14 digits.",
+            status=400,
+        )
+    except ProductNotFound:
+        return _api_error(
+            code="product_not_found",
+            message="Product is not available in Open Food Facts.",
+            status=404,
+        )
+    except ProductSourceRateLimited:
+        return _api_error(
+            code="product_lookup_busy",
+            message="Product lookup is temporarily busy.",
+            status=429,
+        )
+    except ProductDataSourceError:
+        return _api_error(
+            code="product_source_unavailable",
+            message="Product context is temporarily unavailable.",
+            status=503,
+        )
+
+    return _api_response(
+        {
+            "schemaVersion": _API_VERSION,
+            "data": {
+                "barcode": product.barcode,
+                "productName": product.product_name,
+                "brands": list(product.brands),
+                "quantity": product.quantity,
+                "categories": list(product.categories),
+                "source": {
+                    "name": product.source_name,
+                    "url": product.source_url,
+                    "retrievedAt": product.retrieved_at.isoformat(),
+                    "databaseLicense": "Open Database License (ODbL)",
+                },
+                "price": None,
+            },
+        },
+        cache_control="private, max-age=3600",
     )
