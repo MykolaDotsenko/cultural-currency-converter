@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
+from django.core.cache import cache
 from django.urls import reverse
 
 from apps.exchange.api_quota import ConversionQuota, ConversionQuotaUnavailable
@@ -52,6 +53,24 @@ def test_product_api_canonicalizes_equivalent_codes_and_metered_cache_hits(clien
     assert quota.call_count == 2
     assert lookup.call_count == 2
     lookup.assert_any_call(EAN13)
+
+
+def test_equivalent_barcodes_share_the_real_product_cache(client):
+    cache.clear()
+    try:
+        with (
+            patch("apps.exchange.api_v1._provider_quota_error", return_value=None),
+            patch("apps.exchange.product_context.OpenFoodFactsClient") as source_factory,
+        ):
+            source_factory.return_value.fetch_product.return_value = _identity()
+            first = client.get(_url(UPCA))
+            second = client.get(_url(EAN13))
+
+        assert first.status_code == second.status_code == 200
+        assert first.json()["data"] == second.json()["data"]
+        source_factory.return_value.fetch_product.assert_called_once_with(EAN13)
+    finally:
+        cache.clear()
 
 
 @pytest.mark.parametrize("barcode", ["00000000", "bad-code", "123", "123456789012345"])
