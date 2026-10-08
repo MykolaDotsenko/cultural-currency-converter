@@ -179,7 +179,14 @@ def test_product_lookup_failure_is_optional_not_shopping_failure(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("barcode", ["\uFF11\uFF12\uFF13\uFF14\uFF15\uFF16\uFF17\uFF18", "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668", "1234567\uFF18"])
+@pytest.mark.parametrize(
+    "barcode",
+    [
+        "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18",
+        "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",
+        "1234567\uff18",
+    ],
+)
 def test_unicode_barcode_cannot_trigger_optional_shopping_provider(
     client, shopping_reference_data, barcode
 ):
