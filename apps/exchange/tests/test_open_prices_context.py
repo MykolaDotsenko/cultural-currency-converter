@@ -63,11 +63,37 @@ def test_empty_result_is_cached_without_retrying_missing_data():
 
 def test_shared_upstream_quota_blocks_seventh_distinct_lookup():
     client = StubClient()
-    with patch("apps.exchange.open_prices_context._MAX_UPSTREAM_LOOKUPS_PER_MINUTE", 1):
+    # The real limiter must reset at a minute rollover. Keep this capacity
+    # assertion on one fixed bucket even if CI executes across :59 -> :00.
+    with (
+        patch("apps.exchange.open_prices_context._MAX_UPSTREAM_LOOKUPS_PER_MINUTE", 1),
+        patch(
+            "apps.exchange.open_prices_context._limit_key",
+            return_value="shopping:open-prices:limit:fixed-test-minute",
+        ),
+    ):
         assert lookup_public_price_observations("12345678", client=client) == ()
         with pytest.raises(OpenPricesRateLimited):
             lookup_public_price_observations("12345679", client=client)
     assert client.calls == ["12345678"]
+
+
+def test_open_prices_request_budget_intentionally_resets_on_next_minute():
+    client = StubClient()
+    with (
+        patch("apps.exchange.open_prices_context._MAX_UPSTREAM_LOOKUPS_PER_MINUTE", 1),
+        patch(
+            "apps.exchange.open_prices_context._limit_key",
+            side_effect=[
+                "shopping:open-prices:limit:minute-A",
+                "shopping:open-prices:limit:minute-B",
+            ],
+        ),
+    ):
+        assert lookup_public_price_observations("12345678", client=client) == ()
+        assert lookup_public_price_observations("12345679", client=client) == ()
+
+    assert client.calls == ["12345678", "12345679"]
 
 
 def test_cache_outage_cannot_send_unbounded_provider_traffic():
