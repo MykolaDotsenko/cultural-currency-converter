@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import socket
 from datetime import UTC, date, datetime
 from http.client import HTTPException
 from typing import Any
@@ -65,9 +64,7 @@ def parse_nager_holidays(
 
         national_holiday = raw.get("nationalHoliday")
         if not isinstance(national_holiday, bool):
-            raise HolidayDataSourceError(
-                "Nager.Date holiday row is missing nationalHoliday scope."
-            )
+            raise HolidayDataSourceError("Nager.Date holiday row is missing nationalHoliday scope.")
 
         subdivision_codes = tuple(
             value.upper()
@@ -148,11 +145,13 @@ class NagerDateHolidayClient:
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
             if exc.code == 404:
-                raise HolidayDataSourceError("Nager.Date has no holiday dataset for this scope.") from exc
+                raise HolidayDataSourceError(
+                    "Nager.Date has no holiday dataset for this scope."
+                ) from exc
             if exc.code == 429:
                 raise HolidayDataSourceError("Nager.Date rate limit reached.") from exc
             raise HolidayDataSourceError(f"Nager.Date returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise HolidayDataSourceError("Nager.Date request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:

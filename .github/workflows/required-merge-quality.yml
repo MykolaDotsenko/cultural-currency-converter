@@ -37,7 +37,7 @@ jobs:
 
           while IFS= read -r file; do
             case "$file" in
-              apps/*|config/*|scripts/*|manage.py|pyproject.toml|.pre-commit-config.yaml)
+              apps/*|config/*|integrations/*|scripts/*|manage.py|pyproject.toml|.pre-commit-config.yaml)
                 python=true
                 ;;
             esac
@@ -49,7 +49,7 @@ jobs:
             esac
 
             case "$file" in
-              frontend/*|templates/*|apps/*|config/*|scripts/*|manage.py|pyproject.toml|.nvmrc)
+              frontend/*|templates/*|apps/*|config/*|integrations/*|scripts/*|manage.py|pyproject.toml|.nvmrc)
                 browser=true
                 ;;
             esac
@@ -100,8 +100,8 @@ jobs:
       - name: Validate Python and Django quality
         run: |
           pre-commit validate-config
-          ruff format --check apps config scripts manage.py
-          ruff check apps config scripts manage.py
+          ruff format --check apps config integrations scripts manage.py
+          ruff check apps config integrations scripts manage.py
           mypy \
             apps/culture/price_quality.py \
             apps/culture/city_health.py \

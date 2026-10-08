@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import io
-import socket
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
@@ -12,10 +11,7 @@ from urllib.request import Request, urlopen
 
 from integrations.economic_data.base import EconomicDataSourceError, EconomicSourceObservation
 
-DATA_URL = (
-    "https://sdmx.oecd.org/public/rest/data/"
-    "OECD.SDD.TPS,DSD_PPP@DF_PPP_CPL,1.1/.A...."
-)
+DATA_URL = "https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_PPP@DF_PPP_CPL,1.1/.A...."
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 _AREA_COLUMNS = ("REF_AREA", "Reference area")
@@ -191,7 +187,7 @@ class OECDEconomicClient:
             if exc.code == 429:
                 raise EconomicDataSourceError("OECD rate limit reached.") from exc
             raise EconomicDataSourceError(f"OECD returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise EconomicDataSourceError("OECD request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:

@@ -13,7 +13,6 @@ from integrations.wikidata.client import (
     normalize_wikidata_item,
 )
 
-
 NOW = datetime(2026, 9, 21, tzinfo=UTC)
 
 

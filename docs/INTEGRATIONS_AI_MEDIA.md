@@ -340,3 +340,21 @@ six-upstream-lookups-per-minute budget and neutral degraded UI. Optional
 context failures never affect the Shopping FX estimate. Open Prices is
 community-contributed open data under ODbL. A future mobile API extension
 must maintain the same separate, read-only evidence boundary.
+
+
+### Public-provider transport and provenance hardening
+
+Open Food Facts and Open Prices share an origin-pinned HTTPS urllib transport.
+It rejects off-host redirects **before** the follow-up network request (also
+blocking HTTP downgrade, untrusted port, subdomain and URL user-info), rather
+than relying only on the final response URL. Their initial request and final
+response are also checked. Redirect failure degrades only optional content.
+
+For Open Prices the nested location, proof and product IDs, when provided
+alongside their parent foreign keys, must agree; embedded product barcode
+must resolve to the same canonical product. Two-letter OSM country codes are
+normalized to uppercase. Observation date windows are interpreted in UTC
+consistently with the recorded retrieval timestamp. Records that disagree
+across evidence fields are excluded, not silently re-attributed. See
+https://openfoodfacts.github.io/documentation/docs/Open-prices/prices/prices_list/
+for the current public schema.

@@ -119,13 +119,13 @@ def test_eurostat_jsonstat_parser_selects_latest_month():
 
 def test_oecd_csv_parser_prefers_oecd_benchmark_for_latest_year():
     raw = (
-        "REF_AREA,Analytical categories,BASE_REF_AREA,TIME_PERIOD,OBS_VALUE,OBS_STATUS\n"
-        "FIN,Gross Domestic Product,EU27_2020,2024,118.4,P\n"
-        "FIN,Gross Domestic Product,OECD,2024,111.2,P\n"
-        "FIN,Gross Domestic Product,OECD,2023,109.8,\n"
-        "JPN,Gross Domestic Product,OECD,2024,92.1,P\n"
-        "FIN,Actual individual consumption,OECD,2024,107.0,P\n"
-    ).encode()
+        b"REF_AREA,Analytical categories,BASE_REF_AREA,TIME_PERIOD,OBS_VALUE,OBS_STATUS\n"
+        b"FIN,Gross Domestic Product,EU27_2020,2024,118.4,P\n"
+        b"FIN,Gross Domestic Product,OECD,2024,111.2,P\n"
+        b"FIN,Gross Domestic Product,OECD,2023,109.8,\n"
+        b"JPN,Gross Domestic Product,OECD,2024,92.1,P\n"
+        b"FIN,Actual individual consumption,OECD,2024,107.0,P\n"
+    )
 
     observations = parse_oecd_price_level_csv(
         raw,

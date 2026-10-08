@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "apps/**"
+      - "integrations/**"
       - "config/**"
       - "templates/**"
       - "scripts/**"
@@ -17,6 +18,7 @@ on:
       - master
     paths:
       - "apps/**"
+      - "integrations/**"
       - "config/**"
       - "templates/**"
       - "scripts/**"
@@ -69,10 +71,10 @@ jobs:
         run: pre-commit validate-config
 
       - name: Ruff format
-        run: ruff format --check --diff apps config scripts manage.py
+        run: ruff format --check --diff apps config integrations scripts manage.py
 
       - name: Ruff lint
-        run: ruff check apps config scripts manage.py
+        run: ruff check apps config integrations scripts manage.py
 
       - name: Focused Python typecheck
         if: matrix.python-version == '3.13'

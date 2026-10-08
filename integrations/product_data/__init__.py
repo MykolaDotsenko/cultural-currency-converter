@@ -16,6 +16,6 @@ __all__ = [
     "ProductIdentity",
     "ProductNotFound",
     "ProductSourceRateLimited",
-    "normalize_barcode",
     "canonical_open_food_facts_barcode",
+    "normalize_barcode",
 ]
