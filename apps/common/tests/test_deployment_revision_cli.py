@@ -49,7 +49,10 @@ class DeploymentRevisionCliTests(SimpleTestCase):
         self.assertEqual(opener.requested_url, URL)
 
     def test_missing_revision_is_not_a_passing_release(self) -> None:
-        for payload in (_json_response(status="unknown", revision=None), _json_response(revision="x")):
+        for payload in (
+            _json_response(status="unknown", revision=None),
+            _json_response(revision="x"),
+        ):
             with self.subTest(payload=payload):
                 with self.assertRaisesRegex(RevisionCheckError, "revision_unknown"):
                     check_revision(URL, SHA, opener=_Opener(payload))

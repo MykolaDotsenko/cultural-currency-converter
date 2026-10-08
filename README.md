@@ -93,9 +93,9 @@ The provider boundary keeps external payloads out of the rest of the application
 
 ## Deployment revision integrity
 
-The read-only \`/health/revision/\` endpoint exposes only a validated full Git commit
-SHA (or \`unknown\`); it never inspects the database or reveals runtime secrets.
-Run \`python scripts/check_deployment_revision.py --url <DEPLOYMENT_HTTPS_URL>/health/revision/ --expected-sha <APPROVED_FULL_SHA>\` to fail closed on an outdated
+The read-only `/health/revision/` endpoint exposes only a validated full Git commit
+SHA (or `unknown`); it never inspects the database or reveals runtime secrets.
+Run `python scripts/check_deployment_revision.py --url <DEPLOYMENT_HTTPS_URL>/health/revision/ --expected-sha <APPROVED_FULL_SHA>` to fail closed on an outdated
 or unidentifiable deployment. See the [release runbook](docs/RELEASE_RUNBOOK.md)
 for production evidence requirements.
 

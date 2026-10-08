@@ -27,9 +27,7 @@ def health_revision(request: HttpRequest) -> JsonResponse:
     """Expose only the full deployed Git SHA, never runtime configuration."""
 
     revision = get_deployed_revision()
-    response = JsonResponse(
-        {"status": "known" if revision else "unknown", "revision": revision}
-    )
+    response = JsonResponse({"status": "known" if revision else "unknown", "revision": revision})
     response["Cache-Control"] = "private, no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
