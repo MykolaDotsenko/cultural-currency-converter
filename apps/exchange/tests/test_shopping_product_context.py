@@ -183,9 +183,7 @@ def test_product_api_v1_returns_identity_without_price(client, product_identity)
         "apps.exchange.api_v1.lookup_product_identity_cached",
         return_value=product_identity,
     ):
-        response = client.get(
-            reverse("api_v1_product_identity", args=(product_identity.barcode,))
-        )
+        response = client.get(reverse("api_v1_product_identity", args=(product_identity.barcode,)))
 
     assert response.status_code == 200
     assert response["X-API-Version"] == "1"
@@ -208,9 +206,7 @@ def test_product_api_v1_maps_not_found_and_provider_failure(client):
         "apps.exchange.api_v1.lookup_product_identity_cached",
         side_effect=ProductDataSourceError("secret provider detail"),
     ):
-        unavailable = client.get(
-            reverse("api_v1_product_identity", args=("3017624010701",))
-        )
+        unavailable = client.get(reverse("api_v1_product_identity", args=("3017624010701",)))
 
     assert missing.status_code == 404
     assert missing.json()["error"]["code"] == "product_not_found"
