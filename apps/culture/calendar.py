@@ -53,8 +53,7 @@ def build_calendar_context(
             national_holiday=True,
             date__gte=selected_date,
             date__lte=end_date,
-        )
-        .order_by("date", "name", "pk")[: limit + 8]
+        ).order_by("date", "name", "pk")[: limit + 8]
     )
 
     items = tuple(
