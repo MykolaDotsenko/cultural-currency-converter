@@ -42,7 +42,7 @@ Those boundaries are more important to this project than adding another conversi
 - deterministic budget interpretation against explicit sourced reference-basket assumptions, with account-owned reusable assumption presets that never store destination, FX or price evidence;
 - side-by-side destination comparison for one source budget across two explicit country/canonical-city scopes, preserving each side's rate source/date, local-price provenance and payment context without ranking destinations;
 - signed read-only shareable conversion cards with immutable rate/date/provider semantics, public-by-link HTML and exportable SVG without a second FX request;
-- versioned public read-only API v1 for reference metadata and canonical current/historical conversion + Money Context, using decimal strings and preserving rate/provider/date/stale semantics without duplicating financial logic;
+- versioned public read-only/stateless API v1 for reference metadata, canonical current/historical conversion + Money Context, and Shopping estimates; every financial amount is a decimal string and rate/provider/date/stale semantics preserve existing domain truth without duplicated arithmetic;
 - privacy-minimized saved-scenario share cards built from an already-stored FX observation plus a non-sensitive destination/purchase label, excluding account/scenario IDs, private title, trip timing, confirmed spend, Camera data and notifications; public rendering is database-free and provider-free;
 - account-owned saved budget scenarios with optional travel dates, immutable FX observations, explicit reference-rate re-check, neutral since-saved comparison, date-aware trip readiness, confirmed-spend tracking, deterministic remaining-budget meaning and an explicit current local-money-guide refresh that never mutates saved FX evidence;
 - explicit scenario-based in-app notifications for pre-trip readiness, old/stale stored-reference refresh and bounded user-threshold rate alerts, with IANA-timezone cadence, repeat-safe delivery deduplication and no trading-style recommendation language;
@@ -144,4 +144,4 @@ AI-assisted changes have an additional repository-specific guide at [docs/AI_DEV
 
 ## Scope
 
-The current product is the Django web application described above. Mobile/API work is a possible future direction, not a shipped capability.
+The current product is the Django web application described above, plus a read-only/stateless API v1 foundation for future native/mobile clients (including canonical conversion and Shopping estimates). A native mobile application is not shipped.

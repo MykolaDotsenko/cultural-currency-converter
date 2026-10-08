@@ -27,6 +27,7 @@ The current v1 capabilities are:
 - reference metadata;
 - canonical latest conversion;
 - canonical historical conversion;
+- canonical foreign-shopping estimate;
 - Money Context attached to a successful conversion.
 
 Account mutation is explicitly reported as unavailable in this slice.
@@ -49,6 +50,42 @@ The resolved HTTP origin must stay on world.openfoodfacts.org: a redirect to
 another Open Facts database cannot silently inherit food-product attribution.
 Any mismatch is an optional product-source error, never a price, fee or FX input.
 
+
+### `POST /api/v1/shopping/estimate/`
+
+Stateless foreign-shopping estimate for native/mobile clients. This uses the
+**same** `ShoppingCalculationForm`, `quote_conversion`, and
+`calculate_shopping_estimate` as the web Shopping page. It does not call
+Open Food Facts, AI, duties/taxes providers, or a second financial engine.
+
+All fields must be JSON strings, including monetary amounts:
+
+| Field | Requirement | Meaning |
+| --- | --- | --- |
+| `purchaseCurrency` | required | Active purchase-currency code |
+| `homeCurrency` | required | Distinct active home-currency code |
+| `itemPrice` | required | Positive decimal string in purchase currency |
+| `purchaseCountry` | optional | Current country/currency relationship is validated |
+| `shipping` | optional | Purchase-currency decimal; defaults to zero |
+| `knownFees` | optional | Purchase-currency decimal; defaults to zero |
+| `fxMarkupPercent` | optional | Explicit percentage, defaults to zero; 0–25% |
+
+The same currency minor-unit limits, bounds, and precision requirements as
+the web form apply. Unknown fields fail closed; the body is capped at 16 KiB.
+The response has `purchaseTotal`, `referenceHomeCost`,
+`estimatedHomeCost`, `fxMarkupCost`, explicit `assumptions`, and
+`unknownCosts`: duties, taxes, issuer or merchant fees that have **not** been
+entered. All financial decimal fields are JSON strings. The nested
+`conversion` reuses the v1 conversion serializer to expose unmodified
+rate, provider keys, effective date, fetch timestamp, and stale state.
+No checkout total, duty/tax guess, merchant rate, or affordability claim.
+
+The shared conversion rate-limit quota applies after validation and before FX
+work. Stable errors include `validation_error` (422),
+`calculation_unavailable` (422), `provider_invalid_payload` (502),
+`provider_unavailable` (503), `rate_limited` (429 with `Retry-After`),
+and `quota_unavailable` (503). Responses are `private, no-store`.
+This CSRF-exempt endpoint is stateless and never reads or mutates account data.
 
 ### `POST /api/v1/conversions/`
 
@@ -109,6 +146,7 @@ Current stable codes include:
 - `provider_invalid_payload`;
 - `provider_unavailable`;
 - `conversion_unavailable`;
+- `calculation_unavailable` (Shopping estimate only);
 - `rate_limited` (HTTP 429, with `Retry-After` in seconds);
 - `quota_unavailable` (HTTP 503 if the shared abuse-control cache cannot enforce its budget).
 
@@ -116,7 +154,7 @@ Provider exception messages are never returned verbatim.
 
 ## Privacy and authentication boundary
 
-v1 currently exposes only public read-only product data and stateless conversion execution.
+v1 currently exposes only public read-only product data and stateless conversion/Shopping-estimate execution.
 
 It does **not** expose:
 
@@ -127,13 +165,13 @@ It does **not** expose:
 - notifications;
 - write/delete operations.
 
-The conversion POST is CSRF-exempt because it is stateless and makes no account/data mutation. This is not permission for future write APIs to be CSRF-exempt or unauthenticated.
+Conversion and Shopping estimate POSTs are CSRF-exempt because they are stateless and make no account/data mutation. This is not permission for future write APIs to be CSRF-exempt or unauthenticated.
 
 Native apps can call same-origin HTTPS endpoints without browser CORS. Cross-origin browser access is intentionally not enabled by this slice. Broad third-party browser exposure requires an explicit allow-list/rate-limit/abuse-control decision rather than a permissive wildcard.
 
 ## Abuse controls
 
-Provider-backed current/historical conversions have a shared-cache fixed-minute
+Provider-backed current/historical conversions and Shopping estimates share a fixed-minute
 quota of **60 requests per minute per server-observed peer address**. It is
 checked after input validation and before the canonical FX/application
 gateway; same-currency exact conversions do not consume provider budget.
@@ -152,7 +190,7 @@ Native clients should honor Retry-After and avoid background polling.
 ## Caching and freshness
 
 - capability/reference metadata: short public cache (`max-age=300`);
-- conversion responses and errors: `private, no-store`.
+- conversion/Shopping estimate responses and errors: `private, no-store`.
 
 A conversion response always carries its effective/fetched/provider/stale semantics. API clients must not relabel a stored response as a live current rate.
 

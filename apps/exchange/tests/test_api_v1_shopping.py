@@ -45,6 +45,11 @@ class BrokenGateway:
         raise self.exc
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def shopping_reference_data(db):
     us = Country.objects.create(iso2="US", iso3="USA", name="United States")
