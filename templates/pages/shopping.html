@@ -90,7 +90,7 @@
               {% if product_context.brands or product_context.quantity %}
                 <p class="qa-price-card__equivalent">
                   {% if product_context.brands %}{{ product_context.brands }}{% endif %}
-                  {% if product_context.brands and product_context.quantity %} · {% endif %}
+                  {% if product_context.brands and product_context.quantity %}·{% endif %}
                   {% if product_context.quantity %}{{ product_context.quantity }}{% endif %}
                 </p>
               {% endif %}
