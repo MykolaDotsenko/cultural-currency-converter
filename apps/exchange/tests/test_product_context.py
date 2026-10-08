@@ -85,6 +85,21 @@ def test_local_product_lookup_budget_stays_below_upstream_limit():
     assert len(client.calls) == 12
 
 
+def test_product_provider_budget_intentionally_resets_in_next_minute():
+    client = StubProductClient()
+    with (
+        patch("apps.exchange.product_context._LOCAL_LOOKUP_LIMIT_PER_MINUTE", 1),
+        patch(
+            "apps.exchange.product_context._rate_limit_key",
+            side_effect=["product-context:off-limit:minute-A", "product-context:off-limit:minute-B"],
+        ),
+    ):
+        lookup_product_identity_cached("100000001", client=client)
+        lookup_product_identity_cached("100000002", client=client)
+
+    assert client.calls == ["100000001", "100000002"]
+
+
 def test_upc_ean_aliases_share_one_positive_cache_and_upstream_lookup():
     client = StubProductClient()
     first = lookup_product_identity_cached("034000470693", client=client)
