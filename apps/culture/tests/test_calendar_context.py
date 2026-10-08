@@ -77,9 +77,7 @@ def test_calendar_context_exposes_only_national_holidays(finland):
     assert context is not None
     assert [item.name for item in context.today] == ["Today Holiday"]
     assert [item.name for item in context.upcoming] == ["Next Holiday"]
-    assert "Regional Holiday" not in {
-        item.name for item in (*context.today, *context.upcoming)
-    }
+    assert "Regional Holiday" not in {item.name for item in (*context.today, *context.upcoming)}
 
 
 @pytest.mark.django_db
@@ -96,9 +94,7 @@ def test_reconcile_holiday_year_retires_removed_upstream_rows(finland):
 
     assert (created, updated, retired) == (2, 0, 0)
 
-    second = (
-        _source_holiday(name="Holiday A", holiday_date=date(2026, 12, 6)),
-    )
+    second = (_source_holiday(name="Holiday A", holiday_date=date(2026, 12, 6)),)
     created, updated, retired = reconcile_public_holiday_year(
         country=finland,
         year=2026,
@@ -116,9 +112,7 @@ def test_destination_context_presents_neutral_holiday_guidance(finland):
     reconcile_public_holiday_year(
         country=finland,
         year=2026,
-        observations=(
-            _source_holiday(name="Independence Day", holiday_date=date(2026, 12, 6)),
-        ),
+        observations=(_source_holiday(name="Independence Day", holiday_date=date(2026, 12, 6)),),
     )
 
     context = build_destination_context(
