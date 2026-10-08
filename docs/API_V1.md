@@ -142,12 +142,27 @@ shared-cache outage fails closed as quota_unavailable instead of creating
 unbounded provider traffic. Conversion errors and quota responses are not stored
 by public caches.
 
-Peer identity is derived only from the web server's REMOTE_ADDR, not caller-
-controlled forwarding headers. It is HMAC-hashed before cache storage. When the
-application is deployed behind a shared reverse-proxy address, that peer may
-share one quota across end users; revise identity only alongside a verified
-trusted-proxy configuration, never by trusting arbitrary X-Forwarded-For.
-Native clients should honor Retry-After and avoid background polling.
+By default, peer identity comes strictly from REMOTE_ADDR and caller-supplied
+forwarding headers cannot affect the quota. Behind a shared reverse proxy, the
+default may put multiple clients into one bucket.
+
+Deployments can opt in with API_TRUSTED_PROXY_CIDRS, a comma-separated list of
+exact IPv4/IPv6 proxy CIDRs (for example, 10.42.0.0/16). Only when the immediate
+socket peer matches a configured trusted proxy will the quota use X-Forwarded-For;
+it walks **right to left** through the trusted proxy chain and stops at the first
+untrusted address, ignoring earlier user-spoofable entries. Malformed or oversized
+headers use the peer quota. The selected address is HMAC-hashed before caching;
+no raw client IP is stored in the quota key. Do not configure a whole-internet CIDR
+or broadly trust local networks merely because HTTPS is proxy-terminated.
+
+Before enabling the option, operators must confirm their proxy appends the real
+connecting peer to X-Forwarded-For, ensure the application is reached only via
+that verified trusted hop (or safely treats direct connections as direct peers),
+and test a direct/spoofed request. This setting is intentionally separate from
+DJANGO_HTTPS_MODE=proxy and SECURE_PROXY_SSL_HEADER. An ephemeral demo with a
+process-local cache cannot guarantee cross-worker quotas; production/preview
+requires a shared Redis cache. Native clients should honor Retry-After and
+avoid background polling.
 
 ## Caching and freshness
 

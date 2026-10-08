@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 from config.ai import load_ai_config
+from config.api_security import load_trusted_proxy_networks
 from config.cache import load_cache_config
 from config.csp import load_csp_config
 from config.database import load_database_config
@@ -86,6 +87,9 @@ CACHE_CONFIG = load_cache_config(
     environment=RUNTIME_CONFIG.environment,
 )
 CACHES = {"default": CACHE_CONFIG.as_django_settings()}
+
+# Explicit opt-in. Never infer trusted proxy IP ranges from HTTPS proxy mode.
+API_TRUSTED_PROXY_NETWORKS = load_trusted_proxy_networks(os.environ)
 
 CSP_CONFIG = load_csp_config(
     environ=os.environ,
