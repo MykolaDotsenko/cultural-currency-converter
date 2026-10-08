@@ -28,6 +28,7 @@ The current v1 capabilities are:
 - canonical latest conversion;
 - canonical historical conversion;
 - canonical foreign-shopping estimate;
+- optional historical community unit-price observations;
 - Money Context attached to a successful conversion.
 
 Account mutation is explicitly reported as unavailable in this slice.
@@ -50,6 +51,49 @@ The resolved HTTP origin must stay on world.openfoodfacts.org: a redirect to
 another Open Facts database cannot silently inherit food-product attribution.
 Any mismatch is an optional product-source error, never a price, fee or FX input.
 
+
+
+### GET /api/v1/products/{barcode}/prices/
+
+Opt-in, read-only **historical community price observations** for native/mobile
+Shopping. Does not call the Open Food Facts product-identity source or any FX
+provider. Returns up to five source-linked price observations from the existing
+Open Prices cache/provider boundary. An empty observations array means only
+that the bounded first provider page contained no eligible records; it does not
+claim that a product has no prices anywhere.
+
+The success envelope includes schemaVersion "1" and data:
+
+- barcode: canonical Open Food Facts normalized product identity;
+- evidenceType: historical_community_unit_price_observations;
+- livePrice: null (never a current price or Shopping calculation input);
+- source: Open Prices name, home URL and ODbL database license;
+- sampling: bounded=true, providerPageSize=20, maxObservations=5,
+  maxObservationAgeDays=365, representsMarketAverage=false;
+- observations[]: productBarcode, **Decimal string** amount, currency,
+  unit="UNIT", observedAt (ISO date), countryCode, locationLabel,
+  discounted, proofId, recordUrl and retrievedAt (timezone-aware ISO timestamp).
+
+Only exact matching barcodes, positive finite unit prices, dated non-duplicate
+records with an explicit location and proof reference, and records within the
+365-day window qualify. A proof ID is a reference, **not independently verified
+proof contents**. These are community-submitted observations, not live offers,
+a statistically representative market sample, a price history covering all
+merchants or a price guaranteed at the user's store.
+
+Every API request (including cached responses) shares the existing per-peer
+60/minute API abuse-control gate with conversion/Shopping endpoints. A separate
+shared Open Prices budget allows six upstream lookups/minute with 12-hour
+positive and 1-hour empty provider caches. HTTP 429 price_lookup_busy means
+provider budget exhaustion; 429 rate_limited means the caller API quota was
+exceeded (includes Retry-After). HTTP 503 price_source_unavailable and
+quota_unavailable fail closed without leaking source/cache details. Malformed,
+all-zero or nonnumeric barcodes return HTTP 400 invalid_barcode before quota
+or upstream work. All success and error responses are private, no-store.
+
+No returned amount is ever used as itemPrice by
+POST /api/v1/shopping/estimate/. The client must obtain an explicit
+user-entered item price, shipping, fees and FX-markup assumptions separately.
 
 ### `POST /api/v1/shopping/estimate/`
 
