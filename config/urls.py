@@ -16,7 +16,12 @@ from apps.culture.views import (
     explore_explanation,
     money_culture_story,
 )
-from apps.exchange.api_v1 import api_v1_conversion, api_v1_reference, api_v1_root
+from apps.exchange.api_v1 import (
+    api_v1_conversion,
+    api_v1_product_identity,
+    api_v1_reference,
+    api_v1_root,
+)
 from apps.exchange.views import (
     budget_explanation,
     budget_interpretation,
@@ -78,6 +83,11 @@ urlpatterns = [
     path("api/v1/", api_v1_root, name="api_v1_root"),
     path("api/v1/reference/", api_v1_reference, name="api_v1_reference"),
     path("api/v1/conversions/", api_v1_conversion, name="api_v1_conversion"),
+    path(
+        "api/v1/products/<str:barcode>/",
+        api_v1_product_identity,
+        name="api_v1_product_identity",
+    ),
     path("", converter, name="converter"),
     path("destination/", destination_mode, name="destination_mode"),
     path("compare/", destination_comparison, name="destination_comparison"),
