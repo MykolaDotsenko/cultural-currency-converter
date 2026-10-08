@@ -9,13 +9,13 @@ from urllib.parse import urlencode
 from urllib.request import Request
 
 from integrations.http_transport import is_trusted_https_url, make_pinned_https_urlopen
-from integrations.strict_json import strict_provider_json_loads
 from integrations.product_data.base import (
     ProductDataSourceError,
     ProductIdentity,
     ProductNotFound,
     ProductSourceRateLimited,
 )
+from integrations.strict_json import strict_provider_json_loads
 
 BASE_URL = "https://world.openfoodfacts.org/api/v3.6/product"
 urlopen = make_pinned_https_urlopen("world.openfoodfacts.org")
