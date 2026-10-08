@@ -100,6 +100,8 @@ def parse_open_food_facts_product(
         raise ProductDataSourceError("Open Food Facts response must be an object.")
 
     status = payload.get("status")
+    if status is not None and type(status) not in (str, int):
+        raise ProductDataSourceError("Open Food Facts returned an invalid product status.")
     if status in {0, "0", "not_found"}:
         raise ProductNotFound("Product is not available in Open Food Facts.")
 
