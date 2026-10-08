@@ -8,6 +8,7 @@ header, and reject caller-supplied initial URLs outside the pinned origin.
 from __future__ import annotations
 
 from collections.abc import Callable
+from email.message import Message
 from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import urlsplit
@@ -59,7 +60,7 @@ def make_pinned_https_urlopen(hostname: str) -> Callable[..., Any]:
     def open_request(request: Request, *, timeout: float) -> Any:
         if not is_trusted_https_url(request.full_url, hostname):
             raise HTTPError(
-                request.full_url, 400, "Unexpected public-data request origin", None, None
+                request.full_url, 400, "Unexpected public-data request origin", Message(), None
             )
         return opener.open(request, timeout=timeout)
 
