@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
+from unittest.mock import patch
+from urllib.request import Request
 
 import pytest
 
 from integrations.product_data.base import ProductDataSourceError, ProductNotFound
 from integrations.product_data.open_food_facts import (
+    OpenFoodFactsClient,
     normalize_barcode,
     parse_open_food_facts_product,
 )
@@ -76,3 +80,91 @@ def test_barcode_normalization_accepts_bounded_numeric_codes(raw, expected):
 def test_barcode_normalization_rejects_non_consumer_codes(raw):
     with pytest.raises(ValueError):
         normalize_barcode(raw)
+
+
+@pytest.mark.parametrize(
+    ("requested", "returned", "canonical"),
+    [
+        ("034000470693", "0034000470693", "0034000470693"),
+        ("0034000470693", "034000470693", "0034000470693"),
+        ("1234567", "01234567", "01234567"),
+        ("01234567", "1234567", "01234567"),
+        ("3017624010701", "3017624010701", "3017624010701"),
+        ("12345678901234", "12345678901234", "12345678901234"),
+    ],
+)
+def test_open_food_facts_accepts_only_canonical_barcode_equivalence(
+    requested, returned, canonical
+):
+    identity = parse_open_food_facts_product(
+        {"status": "success", "code": requested, "product": {
+            "code": returned, "product_name": "Example food"
+        }},
+        requested_barcode=requested,
+        retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+    )
+
+    assert identity.barcode == canonical
+    assert identity.source_url == f"https://world.openfoodfacts.org/product/{canonical}"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"code": "3017624010702", "product": {
+            "code": "3017624010702", "product_name": "Wrong"
+        }},
+        {"code": "3017624010701", "product": {
+            "code": "3017624010702", "product_name": "Conflicting"
+        }},
+        {"code": "not-a-code", "product": {"product_name": "Malformed"}},
+        {"product": {"product_name": "Missing code"}},
+        {"code": 3017624010701, "product": {"product_name": "Numeric identity"}},
+        {"code": "0000000000000", "product": {"product_name": "Invalid zero code"}},
+    ],
+)
+def test_open_food_facts_rejects_mismatched_or_unverifiable_product_identity(payload):
+    with pytest.raises(ProductDataSourceError, match="barcode|identity"):
+        parse_open_food_facts_product(
+            {"status": "success", **payload},
+            requested_barcode="3017624010701",
+            retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        )
+
+
+class _Response:
+    def __init__(self, url: str):
+        self.url = url
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return None
+
+    def geturl(self):
+        return self.url
+
+    def read(self, _size):
+        return json.dumps({
+            "code": "3017624010701",
+            "product": {"code": "3017624010701", "product_name": "Food"},
+        }).encode()
+
+
+def test_product_client_allows_only_expected_provenance_origin():
+    request = Request("https://world.openfoodfacts.org/api/v3.6/product/3017624010701.json")
+    client = OpenFoodFactsClient()
+
+    with patch(
+        "integrations.product_data.open_food_facts.urlopen",
+        return_value=_Response("https://world.openfoodfacts.org/api/v3.6/product/3017624010701.json"),
+    ):
+        assert client._fetch_json(request)["product"]["product_name"] == "Food"
+
+    with patch(
+        "integrations.product_data.open_food_facts.urlopen",
+        return_value=_Response("https://world.openbeautyfacts.org/api/v3.6/product/3017624010701.json"),
+    ):
+        with pytest.raises(ProductDataSourceError, match="unexpected source"):
+            client._fetch_json(request)

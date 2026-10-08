@@ -41,7 +41,14 @@ This is reference metadata only. It performs no FX request and is cacheable for 
 
 Returns optional Open Food Facts product identity through the same bounded cache/throttle service used by Shopping. The response contains barcode, product name, brand labels, quantity, categories and source provenance/license. `price` is explicitly `null`: Open Food Facts is not a price source for this product.
 
-Stable product lookup errors include `invalid_barcode`, `product_not_found`, `product_lookup_busy` and `product_source_unavailable`. Provider error details are not leaked.
+Stable product lookup errors include `invalid_barcode`, `product_not_found`, `product_lookup_busy` and `product_source_unavailable`. Provider error details are not leaked. Responses are accepted only when the
+provider's top-level and product-level barcodes, when present, match the requested
+product under Open Food Facts' documented leading-zero normalization
+(https://openfoodfacts.github.io/openfoodfacts-server/api/ref-barcode-normalization/).
+The resolved HTTP origin must stay on world.openfoodfacts.org: a redirect to
+another Open Facts database cannot silently inherit food-product attribution.
+Any mismatch is an optional product-source error, never a price, fee or FX input.
+
 
 ### `POST /api/v1/conversions/`
 

@@ -180,6 +180,10 @@
 
 .qa-rate-series__table {
   min-inline-size: 0;
+  max-inline-size: 100%;
+  /* Keep the wide, keyboard-scrollable data table from inflating the page at
+     320px / 200% text. The child .qa-table-scroll remains the scrollport. */
+  overflow: clip;
 }
 
 .qa-rate-series__table summary {

@@ -103,8 +103,9 @@ def _identity_from_payload(payload: Any) -> ProductIdentity:
 
     source_name = short_text("source_name", 120)
     source_url = short_text("source_url", 700)
-    if source_name != "Open Food Facts" or not source_url.startswith(
-        "https://world.openfoodfacts.org/product/"
+    if (
+        source_name != "Open Food Facts"
+        or source_url != f"https://world.openfoodfacts.org/product/{barcode}"
     ):
         raise ProductContextTokenError("Product context provenance is invalid.")
 

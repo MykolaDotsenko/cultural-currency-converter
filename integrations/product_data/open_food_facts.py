@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 from integrations.product_data.base import (
@@ -28,6 +28,55 @@ def normalize_barcode(value: str) -> str:
     if not _BARCODE_RE.fullmatch(barcode):
         raise ValueError("Barcode must contain 7–14 digits.")
     return barcode
+
+
+def _canonical_off_barcode(value: str) -> str:
+    """Mirror Open Food Facts' leading-zero normalization for trusted identity.
+
+    7 or fewer significant digits become EAN-8; 9–12 become EAN-13.
+    EAN-8, EAN-13 and GTIN-14 retain their significant length. Never compare
+    raw provider and scanner strings without this normalization.
+    """
+    barcode = normalize_barcode(value)
+    significant = barcode.lstrip("0")
+    if not significant:
+        raise ValueError("Barcode cannot be all zeroes.")
+    if len(significant) <= 7:
+        return significant.zfill(8)
+    if 9 <= len(significant) <= 12:
+        return significant.zfill(13)
+    return significant
+
+
+def _verified_product_barcode(
+    payload: dict[str, Any],
+    product: dict[str, Any],
+    *,
+    requested_barcode: str,
+) -> str:
+    """A provider response must identify the *requested* product, not another."""
+    try:
+        expected = _canonical_off_barcode(requested_barcode)
+    except ValueError as exc:
+        raise ProductDataSourceError("Requested product barcode is invalid.") from exc
+
+    returned_codes = [
+        raw for raw in (payload.get("code"), product.get("code")) if raw is not None
+    ]
+    if not returned_codes:
+        raise ProductDataSourceError("Open Food Facts product identity is missing.")
+    for returned in returned_codes:
+        if not isinstance(returned, str):
+            raise ProductDataSourceError("Open Food Facts product barcode is invalid.")
+        try:
+            verified = _canonical_off_barcode(returned)
+        except ValueError as exc:
+            raise ProductDataSourceError("Open Food Facts product barcode is invalid.") from exc
+        if verified != expected:
+            raise ProductDataSourceError(
+                "Open Food Facts returned a different product barcode."
+            )
+    return expected
 
 
 def _text(value: Any, *, max_length: int) -> str:
@@ -64,14 +113,15 @@ def parse_open_food_facts_product(
             raise ProductNotFound("Product is not available in Open Food Facts.")
         raise ProductDataSourceError("Open Food Facts response is missing product data.")
 
-    barcode = _text(product.get("code") or payload.get("code"), max_length=32)
-    if not barcode or not barcode.isdigit() or len(barcode) > 14:
-        barcode = requested_barcode
-
     product_name = _text(product.get("product_name"), max_length=240)
     if not product_name:
         raise ProductDataSourceError("Open Food Facts product has no usable product name.")
 
+    barcode = _verified_product_barcode(
+        payload,
+        product,
+        requested_barcode=requested_barcode,
+    )
     brands = _csv_parts(product.get("brands"), max_items=6)
     quantity = _text(product.get("quantity"), max_length=120)
     categories = _csv_parts(product.get("categories"), max_items=6)
@@ -118,6 +168,15 @@ class OpenFoodFactsClient:
     def _fetch_json(self, request: Request) -> Any:
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
+                resolved = urlsplit(response.geturl())
+                if (
+                    resolved.scheme != "https"
+                    or resolved.hostname != "world.openfoodfacts.org"
+                    or resolved.port not in (None, 443)
+                ):
+                    raise ProductDataSourceError(
+                        "Open Food Facts request resolved to an unexpected source."
+                    )
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
             if exc.code == 404:
