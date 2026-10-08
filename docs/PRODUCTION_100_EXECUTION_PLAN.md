@@ -38,6 +38,15 @@ The current product already includes:
 
 The original **92/100** figure is a historical planning snapshot, not a current score. The scoped 36-item functional roadmap is complete through trusted Budget/Comparison AI. Remaining work in this plan is release evidence: final regression, zero-P1 verification, operational runbook/restore evidence and deployed RC certification. Broader product ideas remain future scope rather than blockers for this release candidate.
 
+### Current release status — 2026-10-08
+
+The release gate is **blocked**, despite extensive passing repository CI.
+GitHub has two open P1 issues: [#266](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/266) for stale Render live deployment/configuration drift and missing deployed-RC evidence, and [#268](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/268) for unenforced `master` branch protection / required CI. The October 3 zero-P1 snapshot in release history no longer describes the current state.
+
+Verified Render live SHA at the October 8 audit was `93dda21f238e9ed942ac58131487dbb442a083f2`, from an October 3 deploy. This is **not** equivalent to the latest reviewed `master`. The scheduled drift monitor is a detection mechanism, not proof that deployment has been repaired or certification has passed.
+
+Resolution sequence: restore/enforce release authority → investigate Render/GitHub auto-deploy and readiness mismatch → deploy a pinned CI-approved candidate only with backup/recovery and rollback evidence → verify exact live revision and full runbook smoke → requery GitHub P0/P1 and certify only when every mandatory category is supported. Never assign 100/100 solely because test workflows are green.
+
 ## 100/100 definition of done
 
 The web product may be called 100/100 only when all of the following are true:

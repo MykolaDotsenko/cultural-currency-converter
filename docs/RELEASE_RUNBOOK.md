@@ -21,6 +21,24 @@ A release candidate is eligible for deployment only when all applicable gates ar
 
 Never reuse green evidence from an older SHA as certification for a newer candidate.
 
+### Enforced repository admission gate
+
+Before approving the release cut, check GitHub's actual effective branch
+rules/rulesets for `master`, not merely the existence of CI workflow files:
+
+- branch protection or an equivalent repository ruleset must be **enforced**;
+- normal direct pushes, force pushes and branch deletion must be denied;
+- failing, missing or stale required checks must block the merge of a PR;
+- the required aggregate quality check must correspond to the **exact head SHA**;
+- human review and documented audited break-glass authority must match the
+  repository's adopted release policy.
+
+A green standalone CI run with `protected=false` is insufficient. See
+[#268](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/268)
+for the known 2026-10-08 branch-protection gap. Do not mark this gate passed
+until the actual GitHub setting and negative enforcement test have been
+observed and recorded alongside the pinned release candidate.
+
 ## Strict production configuration
 
 The hosted portfolio demo is not evidence that strict production infrastructure is configured.
@@ -87,8 +105,10 @@ correctness or full production certification; those have separate gates below.
 
 ## Scheduled detection of deployment drift
 
-The repository's `.github/workflows/production-deployment-drift.yml` runs
-twice daily (08:17 and 20:17 UTC) and supports explicit manual dispatch.
+The repository's `.github/workflows/production-deployment-drift.yml` is
+configured for twice-daily checks (08:17 and 20:17 UTC) and explicit manual
+dispatch. Confirm a real completed run and its exact observed SHA; the presence
+of the YAML/schedule alone is not execution evidence.
 It checks out the latest `master` and runs the same standalone fail-closed
 revision verifier against the public Render service. A bounded six-attempt
 retry window allows the free instance to wake up without requiring Render
