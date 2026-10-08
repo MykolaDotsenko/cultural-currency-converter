@@ -11,12 +11,15 @@ from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+from urllib.request import Request
+
+from integrations.http_transport import is_trusted_https_url, make_pinned_https_urlopen
 
 from integrations.product_data import canonical_open_food_facts_barcode
 
 BASE_URL = "https://prices.openfoodfacts.org/api/v1/prices"
+urlopen = make_pinned_https_urlopen("prices.openfoodfacts.org")
 MAX_RESPONSE_BYTES = 256 * 1024
 _MAX_PROVIDER_ITEMS = 20
 _MAX_OBSERVATIONS = 5
@@ -106,9 +109,41 @@ def _parse_item(
     location = raw.get("location")
     if not isinstance(location, dict):
         return None
-    country_code = location.get("osm_address_country_code")
-    if not isinstance(country_code, str) or not _COUNTRY_RE.fullmatch(country_code):
+    raw_country = location.get("osm_address_country_code")
+    if not isinstance(raw_country, str):
         return None
+    country_code = raw_country.upper()
+    if not _COUNTRY_RE.fullmatch(country_code):
+        return None
+    # The expanded relationship IDs must agree with their top-level foreign
+    # keys when populated; never attach a different store/proof/product.
+    for linked_key, embedded_key in (
+        ("location_id", "location"),
+        ("proof_id", "proof"),
+        ("product_id", "product"),
+    ):
+        embedded = raw.get(embedded_key)
+        if not isinstance(embedded, dict):
+            continue
+        embedded_id = embedded.get("id")
+        outer_id = raw.get(linked_key)
+        if embedded_id is not None and outer_id is not None and (
+            type(embedded_id) is not int
+            or type(outer_id) is not int
+            or embedded_id != outer_id
+        ):
+            return None
+    embedded_product = raw.get("product")
+    if isinstance(embedded_product, dict) and embedded_product.get("code") is not None:
+        raw_embedded_code = embedded_product["code"]
+        if not isinstance(raw_embedded_code, str):
+            return None
+        try:
+            if canonical_open_food_facts_barcode(raw_embedded_code) != expected_code:
+                return None
+        except ValueError:
+            return None
+
     location_label = (
         _clean_label(location.get("osm_display_name"))
         or _clean_label(location.get("osm_name"))
@@ -190,22 +225,18 @@ class OpenPricesClient:
                 ),
             },
         )
+        retrieved_at = datetime.now(UTC)
         return parse_open_prices(
             self._fetch_json(request),
             barcode=normalized,
-            retrieved_at=datetime.now(UTC),
-            today=date.today(),
+            retrieved_at=retrieved_at,
+            today=retrieved_at.date(),
         )
 
     def _fetch_json(self, request: Request) -> Any:
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
-                final_url = urlsplit(response.geturl())
-                if (
-                    final_url.scheme != "https"
-                    or final_url.hostname != "prices.openfoodfacts.org"
-                    or final_url.port not in (None, 443)
-                ):
+                if not is_trusted_https_url(response.geturl(), "prices.openfoodfacts.org"):
                     raise OpenPricesSourceError("Open Prices resolved to an unexpected source.")
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:

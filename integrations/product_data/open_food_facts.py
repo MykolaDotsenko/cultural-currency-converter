@@ -7,8 +7,10 @@ from datetime import UTC, datetime
 from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+from urllib.request import Request
+
+from integrations.http_transport import is_trusted_https_url, make_pinned_https_urlopen
 
 from integrations.product_data.base import (
     ProductDataSourceError,
@@ -18,6 +20,7 @@ from integrations.product_data.base import (
 )
 
 BASE_URL = "https://world.openfoodfacts.org/api/v3.6/product"
+urlopen = make_pinned_https_urlopen("world.openfoodfacts.org")
 MAX_RESPONSE_BYTES = 512 * 1024
 _BARCODE_RE = re.compile(r"^\d{7,14}$")
 _FIELDS = "code,product_name,brands,quantity,categories"
@@ -168,12 +171,7 @@ class OpenFoodFactsClient:
     def _fetch_json(self, request: Request) -> Any:
         try:
             with urlopen(request, timeout=self.timeout_seconds) as response:
-                resolved = urlsplit(response.geturl())
-                if (
-                    resolved.scheme != "https"
-                    or resolved.hostname != "world.openfoodfacts.org"
-                    or resolved.port not in (None, 443)
-                ):
+                if not is_trusted_https_url(response.geturl(), "world.openfoodfacts.org"):
                     raise ProductDataSourceError(
                         "Open Food Facts request resolved to an unexpected source."
                     )
