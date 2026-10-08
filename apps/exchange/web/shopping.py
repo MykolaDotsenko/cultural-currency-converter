@@ -228,9 +228,7 @@ def shopping_calculation_view(
                 "stale": conversion.stale,
                 "unknown_costs": estimate.unknown_costs,
                 "product": (
-                    _product_component(product_identity)
-                    if product_identity is not None
-                    else None
+                    _product_component(product_identity) if product_identity is not None else None
                 ),
             }
 
@@ -246,9 +244,7 @@ def shopping_calculation_view(
             "shopping_error": error,
             "reference_data_ready": form.reference_data_ready,
             "product_context": (
-                _product_component(product_identity)
-                if product_identity is not None
-                else None
+                _product_component(product_identity) if product_identity is not None else None
             ),
             "product_context_token": product_token,
             "product_lookup_message": product_lookup_message,
