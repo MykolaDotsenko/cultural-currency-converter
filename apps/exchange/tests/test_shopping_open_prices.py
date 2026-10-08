@@ -19,18 +19,10 @@ def use_vite_dev_mode(settings):
 
 @pytest.fixture(autouse=True)
 def shopping_reference_data(db):
-    purchase_country = Country.objects.create(
-        iso2="US", iso3="USA", name="United States"
-    )
-    home_country = Country.objects.create(
-        iso2="FI", iso3="FIN", name="Finland"
-    )
-    usd = Currency.objects.create(
-        code="USD", name="US dollar", symbol="$", minor_units=2
-    )
-    eur = Currency.objects.create(
-        code="EUR", name="Euro", symbol="€", minor_units=2
-    )
+    purchase_country = Country.objects.create(iso2="US", iso3="USA", name="United States")
+    home_country = Country.objects.create(iso2="FI", iso3="FIN", name="Finland")
+    usd = Currency.objects.create(code="USD", name="US dollar", symbol="$", minor_units=2)
+    eur = Currency.objects.create(code="EUR", name="Euro", symbol="€", minor_units=2)
     CountryCurrency.objects.create(
         country=purchase_country, currency=usd, is_primary=True, source="test"
     )
