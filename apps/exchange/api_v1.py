@@ -15,7 +15,11 @@ from apps.exchange.application import (
     ConverterSubmissionError,
     run_converter_submission,
 )
-from apps.exchange.domain import HistoricalObservationUnavailable, HistoricalOutOfCoverage
+from apps.exchange.domain import (
+    ConversionResult,
+    HistoricalObservationUnavailable,
+    HistoricalOutOfCoverage,
+)
 from apps.exchange.forms import RATE_MODE_HISTORICAL, RATE_MODE_LATEST, CurrentConversionForm
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.product_context import lookup_product_identity_cached
@@ -295,8 +299,7 @@ def _money_context_payload(context: MoneyContext) -> dict[str, object]:
     }
 
 
-def _conversion_payload(context: MoneyContext) -> dict[str, object]:
-    conversion = context.conversion
+def _conversion_result_payload(conversion: ConversionResult) -> dict[str, object]:
     quote = conversion.quote
     return {
         "inputAmount": _decimal_text(conversion.input_amount),
@@ -313,6 +316,30 @@ def _conversion_payload(context: MoneyContext) -> dict[str, object]:
         "stale": conversion.stale,
         "exact": quote.base_currency == quote.quote_currency,
     }
+
+
+def _conversion_payload(context: MoneyContext) -> dict[str, object]:
+    return _conversion_result_payload(context.conversion)
+
+
+def _provider_quota_error(request: HttpRequest) -> JsonResponse | None:
+    try:
+        quota = consume_conversion_quota(request)
+    except ConversionQuotaUnavailable:
+        return _api_error(
+            code="quota_unavailable",
+            message="Conversion service is temporarily unavailable.",
+            status=503,
+        )
+    if not quota.allowed:
+        response = _api_error(
+            code="rate_limited",
+            message="Too many conversions. Please retry shortly.",
+            status=429,
+        )
+        response["Retry-After"] = str(quota.retry_after)
+        return response
+    return None
 
 
 def _submission_error_response(error: ConverterSubmissionError) -> JsonResponse:
@@ -371,6 +398,7 @@ def api_v1_root(request: HttpRequest) -> JsonResponse:
                     "canonical_conversion",
                     "money_context",
                     "historical_conversion",
+                    "shopping_estimate",
                 ],
                 "accountMutationApi": False,
             },
@@ -480,22 +508,9 @@ def api_v1_conversion(request: HttpRequest) -> JsonResponse:
 
     command = _conversion_command(form)
     if command.source_currency != command.destination_currency:
-        try:
-            quota = consume_conversion_quota(request)
-        except ConversionQuotaUnavailable:
-            return _api_error(
-                code="quota_unavailable",
-                message="Conversion service is temporarily unavailable.",
-                status=503,
-            )
-        if not quota.allowed:
-            response = _api_error(
-                code="rate_limited",
-                message="Too many conversions. Please retry shortly.",
-                status=429,
-            )
-            response["Retry-After"] = str(quota.retry_after)
-            return response
+        quota_error = _provider_quota_error(request)
+        if quota_error is not None:
+            return quota_error
 
     submission = run_converter_submission(
         command,
