@@ -45,16 +45,16 @@ def price_url():
 
 
 @pytest.mark.django_db
-def test_public_prices_api_has_lossless_decimal_and_explicit_provenance(
-    client, price_url
-):
+def test_public_prices_api_has_lossless_decimal_and_explicit_provenance(client, price_url):
     with (
         patch("apps.exchange.api_v1_prices._provider_quota_error", return_value=None) as quota,
         patch(
             "apps.exchange.api_v1_prices.lookup_public_price_observations",
             return_value=(_observation(),),
         ) as lookup,
-        patch("apps.exchange.api_v1_prices.lookup_product_identity_cached", create=True) as identity,
+        patch(
+            "apps.exchange.api_v1_prices.lookup_product_identity_cached", create=True
+        ) as identity,
         patch("apps.exchange.api_v1_shopping.build_latest_quote_gateway") as fx,
     ):
         response = client.get(price_url)
@@ -166,9 +166,7 @@ def test_public_prices_api_maps_provider_failure_without_leaking_secrets(
 
 
 @pytest.mark.django_db
-def test_per_peer_quota_blocks_even_cached_public_observations_before_lookup(
-    client, price_url
-):
+def test_per_peer_quota_blocks_even_cached_public_observations_before_lookup(client, price_url):
     quota_error = _api_error(
         code="rate_limited",
         message="Too many conversions. Please retry shortly.",

@@ -139,6 +139,7 @@ def test_api_v1_root_is_versioned_and_public(client):
                 "money_context",
                 "historical_conversion",
                 "shopping_estimate",
+                "community_price_observations",
             ],
             "accountMutationApi": False,
         },
