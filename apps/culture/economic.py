@@ -23,7 +23,7 @@ _INFLATION_SOURCE_PRIORITY = {
 }
 _PRICE_LEVEL_SOURCE_PRIORITY = {
     "oecd": 0,
-    EconomicObservationSource.WORLD_BANK: 1,
+    "world_bank": 1,
 }
 
 
