@@ -97,10 +97,10 @@ def test_product_provider_budget_intentionally_resets_in_next_minute():
             ],
         ),
     ):
-        lookup_product_identity_cached("100000001", client=client)
-        lookup_product_identity_cached("100000002", client=client)
+        lookup_product_identity_cached("3017624010701", client=client)
+        lookup_product_identity_cached("3017624010702", client=client)
 
-    assert client.calls == ["100000001", "100000002"]
+    assert client.calls == ["3017624010701", "3017624010702"]
 
 
 def test_upc_ean_aliases_share_one_positive_cache_and_upstream_lookup():
