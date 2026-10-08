@@ -66,8 +66,13 @@ values fail as safe `product_source_unavailable` rather than an unhandled
 exception. Existing numeric/string not-found codes still return
 `product_not_found`, and valid source identity remains unaffected.
 
-The endpoint and web Shopping normalize UPC/EAN barcode spellings at the
-shared product cache boundary, so equivalent scans reuse positive/negative
+The endpoint and web Shopping accept **ASCII 0–9 digits only** for
+GTIN-like barcode identifiers (7–14 digits, with optional surrounding or
+embedded whitespace). Unicode lookalike numerals are rejected before
+quota accounting, caching or upstream network calls; they are not silently
+transliterated into product identities. The endpoint and web Shopping
+normalize UPC/EAN barcode spellings at the shared product cache boundary,
+so equivalent scans reuse positive/negative
 cache entries and the same upstream identity. Malformed or all-zero codes
 are rejected with HTTP 400 by the API before accessing quota or upstream
 data; web Shopping shows an actionable barcode error without blocking manual

@@ -178,6 +178,27 @@ def test_product_lookup_failure_is_optional_not_shopping_failure(
     assert b"Item price" in response.content
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "barcode",
+    [
+        "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18",
+        "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",
+        "1234567\uff18",
+    ],
+)
+def test_unicode_barcode_cannot_trigger_optional_shopping_provider(
+    client, shopping_reference_data, barcode
+):
+    with patch("apps.exchange.product_context.OpenFoodFactsClient") as provider:
+        response = client.get(reverse("shopping_calculation"), {"barcode": barcode})
+
+    assert response.status_code == 200
+    assert b"Check the barcode" in response.content
+    assert b"Item price" in response.content
+    provider.assert_not_called()
+
+
 def test_product_api_v1_returns_identity_without_price(client, product_identity):
     with patch(
         "apps.exchange.api_v1.lookup_product_identity_cached",

@@ -20,7 +20,7 @@ from integrations.product_data.base import (
 BASE_URL = "https://world.openfoodfacts.org/api/v3.6/product"
 urlopen = make_pinned_https_urlopen("world.openfoodfacts.org")
 MAX_RESPONSE_BYTES = 512 * 1024
-_BARCODE_RE = re.compile(r"^\d{7,14}$")
+_BARCODE_RE = re.compile(r"[0-9]{7,14}")
 _FIELDS = "code,product_name,brands,quantity,categories"
 
 

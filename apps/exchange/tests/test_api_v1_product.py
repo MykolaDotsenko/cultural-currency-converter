@@ -73,7 +73,18 @@ def test_equivalent_barcodes_share_the_real_product_cache(client):
         cache.clear()
 
 
-@pytest.mark.parametrize("barcode", ["00000000", "bad-code", "123", "123456789012345"])
+@pytest.mark.parametrize(
+    "barcode",
+    [
+        "00000000",
+        "bad-code",
+        "123",
+        "123456789012345",
+        "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",
+        "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18",
+        "1234567\uff18",
+    ],
+)
 def test_invalid_product_barcode_is_rejected_before_quota_or_upstream(client, barcode):
     with (
         patch("apps.exchange.api_v1.consume_conversion_quota") as quota,

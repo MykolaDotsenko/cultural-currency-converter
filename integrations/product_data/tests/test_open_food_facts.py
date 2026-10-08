@@ -76,10 +76,32 @@ def test_barcode_normalization_accepts_bounded_numeric_codes(raw, expected):
     assert normalize_barcode(raw) == expected
 
 
-@pytest.mark.parametrize("raw", ["", "123", "123456789012345", "ABC12345", "1234-5678"])
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "",
+        "123",
+        "123456789012345",
+        "ABC12345",
+        "1234-5678",
+        "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",  # Arabic-Indic numerals (Python \\d accepts them)
+        "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18",  # fullwidth numerals
+        "\u0967\u0968\u0969\u096a\u096b\u096c\u096d\u096e",  # Devanagari numerals
+        "1234567\uff18",  # mixed-script digits are ambiguous identifiers
+    ],
+)
 def test_barcode_normalization_rejects_non_consumer_codes(raw):
     with pytest.raises(ValueError):
         normalize_barcode(raw)
+
+
+def test_unicode_numeral_barcode_never_reaches_product_transport():
+    with (
+        patch("integrations.product_data.open_food_facts.urlopen") as transport,
+        pytest.raises(ValueError, match="7–14 digits"),
+    ):
+        OpenFoodFactsClient().fetch_product("\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18")
+    transport.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -120,6 +142,10 @@ def test_open_food_facts_accepts_only_canonical_barcode_equivalence(requested, r
         {"product": {"product_name": "Missing code"}},
         {"code": 3017624010701, "product": {"product_name": "Numeric identity"}},
         {"code": "0000000000000", "product": {"product_name": "Invalid zero code"}},
+        {
+            "code": "\uff11\uff12\uff13\uff14\uff15\uff16\uff17\uff18",
+            "product": {"product_name": "Unicode identity"},
+        },
     ],
 )
 def test_open_food_facts_rejects_mismatched_or_unverifiable_product_identity(payload):
