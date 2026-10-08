@@ -60,6 +60,24 @@ def test_strict_json_preserves_valid_decimal_strings_and_nested_unique_objects()
     }
 
 
+def test_json_nesting_limit_is_explicit_across_python_versions():
+    def parse_with_list_depth(depth: int):
+        body = '{"amount":"1.00","extra":' + "[" * depth + "0" + "]" * depth + "}"
+        request = RequestFactory().post(
+            "/api/v1/conversions/", data=body, content_type="application/json"
+        )
+        return _json_body(request)
+
+    at_limit = parse_with_list_depth(63)
+    too_deep = parse_with_list_depth(64)
+
+    assert not isinstance(at_limit, JsonResponse)
+    assert at_limit["amount"] == "1.00"
+    assert isinstance(too_deep, JsonResponse)
+    assert too_deep.status_code == 400
+    assert b'"invalid_json"' in too_deep.content
+
+
 def test_numeric_json_inputs_are_not_promoted_to_financial_decimal_strings():
     request = RequestFactory().post(
         "/api/v1/conversions/",
