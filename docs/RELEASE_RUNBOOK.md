@@ -44,6 +44,47 @@ Test-only fixtures are never production capabilities. Production configuration m
 - `AI_RUNTIME_TEST_FIXTURE_ENABLED=true`;
 - `AI_CAMERA_TEST_FIXTURE_ENABLED=true`.
 
+## Deployed revision identity and drift gate
+
+The read-only, DB-free **GET/HEAD** \`/health/revision/\` endpoint is independent
+of liveness/readiness. It returns exactly:
+
+\`\`\`json
+{"status":"known","revision":"<full-40-character-git-sha>"}
+\`\`\`
+
+or \`{"status":"unknown","revision":null}\` with HTTP 200 when no trustworthy
+revision is available. Both responses use \`Cache-Control: private, no-store\`.
+An unknown revision does **not** mean liveness failure; it does mean that a release
+**cannot be certified**. Only the public commit SHA is returned—no deployment
+credentials, bucket IDs, runtime settings, environment variables or raw errors.
+
+Render supplies \`RENDER_GIT_COMMIT\` at runtime. For other hosting platforms,
+set \`APP_RELEASE_SHA\` to the **exact deployed** 40-character commit SHA, never a
+floating branch name. If both are configured they must match. Absent, malformed,
+truncated or conflicting values fail closed to \`unknown\`.
+
+After the target deploy is reported live, compare the **pinned release SHA**
+(the revision actually approved in CI, not an automatically refreshed branch):
+
+\`\`\`bash
+python scripts/check_deployment_revision.py \
+  --url https://cultural-currency-converter-mykola.onrender.com/health/revision/ \
+  --expected-sha <APPROVED_FULL_RELEASE_SHA>
+\`\`\`
+
+The verifier exits **0** only for a complete exact match; it exits **1** for
+unknown, mismatch, invalid payload, redirect, transport failure or invalid input.
+It rejects non-HTTPS remote URLs and never follows redirects. Local test servers
+on \`localhost\`, \`127.0.0.1\` or \`::1\` may use HTTP. No external provider,
+Render API key or database permission is required.
+
+Keep the raw output and timestamp with the Render deploy ID, exact approved Git
+SHA and CI run IDs in **external immutable release evidence**. Compare that ID
+against the actual live deployment in the hosting dashboard. A matching endpoint
+SHA alone does **not** prove database recovery, media readiness, infrastructure
+correctness or full production certification; those have separate gates below.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:
