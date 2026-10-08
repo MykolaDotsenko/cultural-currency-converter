@@ -503,7 +503,6 @@ def api_v1_conversion(request: HttpRequest) -> JsonResponse:
     )
 
 
-
 @require_GET
 def api_v1_product_identity(request: HttpRequest, barcode: str) -> JsonResponse:
     try:
