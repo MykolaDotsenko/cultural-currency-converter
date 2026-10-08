@@ -36,6 +36,7 @@ Those boundaries are more important to this project than adding another conversi
 - sourced everyday-value and payment context;
 - official macro context from World Bank, Eurostat and OECD through an offline-ingested Economic Context layer, preserving inflation/price-level period, benchmark and provenance without treating macro indicators as merchant prices or FX truth;
 - cached national public-holiday context from Nager.Date Community v4, with atomic country/year reconciliation and neutral “opening hours may differ” guidance rather than unsupported business-hours claims;
+- barcode-driven Open Food Facts product identity in Shopping, with cache/throttle/ODbL attribution and a signed carry-forward token while shelf price remains explicit user-confirmed input;
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions, with account-owned reusable assumption presets that never store destination, FX or price evidence;
