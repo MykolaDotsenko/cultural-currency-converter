@@ -604,3 +604,106 @@ class EconomicObservation(models.Model):
             f"{self.country.iso2} · {self.indicator} · {self.value} "
             f"({self.source}, {self.period_start})"
         )
+
+
+class PublicHolidayObservation(models.Model):
+    """Cached public-holiday evidence with explicit national/subdivision scope."""
+
+    country = models.ForeignKey(
+        "countries.Country",
+        on_delete=models.CASCADE,
+        related_name="public_holiday_observations",
+    )
+    date = models.DateField()
+    name = models.CharField(max_length=200)
+    national_holiday = models.BooleanField(default=True)
+    subdivision_codes = models.JSONField(default=list, blank=True)
+    holiday_types = models.JSONField(default=list, blank=True)
+    source_name = models.CharField(max_length=120, default="Nager.Date")
+    source_url = models.URLField(max_length=700)
+    source_retrieved_at = models.DateTimeField()
+    is_published = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("country__name", "date", "name")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("country", "date", "name"),
+                name="public_holiday_observation_identity",
+            ),
+            models.CheckConstraint(
+                condition=~Q(name=""),
+                name="public_holiday_name_required",
+            ),
+            models.CheckConstraint(
+                condition=~Q(source_name=""),
+                name="public_holiday_source_name_required",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("country", "date"),
+                name="culture_holiday_ctry_date",
+            ),
+        ]
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, str] = {}
+        self.name = normalize_price_label(self.name)
+        self.source_name = normalize_price_label(self.source_name)
+
+        if not self.name:
+            errors["name"] = "Public holiday name is required."
+        if not self.source_name:
+            errors["source_name"] = "Public holiday source name is required."
+
+        if not isinstance(self.subdivision_codes, list):
+            errors["subdivision_codes"] = "Subdivision codes must be a list."
+        else:
+            normalized_subdivisions: list[str] = []
+            for value in self.subdivision_codes:
+                code = str(value).strip().upper()
+                if (
+                    len(code) < 4
+                    or len(code) > 8
+                    or "-" not in code
+                    or not all(part.isascii() and part.isalnum() for part in code.split("-", 1))
+                ):
+                    errors["subdivision_codes"] = (
+                        "Subdivision codes must use compact ISO 3166-2 style values."
+                    )
+                    break
+                normalized_subdivisions.append(code)
+            self.subdivision_codes = sorted(set(normalized_subdivisions))
+
+        if not isinstance(self.holiday_types, list):
+            errors["holiday_types"] = "Holiday types must be a list."
+        else:
+            normalized_types: list[str] = []
+            for value in self.holiday_types:
+                holiday_type = normalize_price_label(str(value))
+                if not holiday_type or len(holiday_type) > 40:
+                    errors["holiday_types"] = "Holiday types must be short non-empty labels."
+                    break
+                normalized_types.append(holiday_type)
+            self.holiday_types = sorted(set(normalized_types))
+
+        try:
+            validate_provenance_url(self.source_url)
+        except ProvenanceUrlError as exc:
+            errors["source_url"] = str(exc)
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.name = normalize_price_label(self.name)
+        self.source_name = normalize_price_label(self.source_name)
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        scope = "national" if self.national_holiday else "subdivision"
+        return f"{self.country.iso2} · {self.date} · {self.name} ({scope})"

@@ -192,12 +192,23 @@ def _economic_metric_payload(metric) -> dict[str, object]:
     }
 
 
+def _holiday_item_payload(item) -> dict[str, object]:
+    return {
+        "date": item.date.isoformat(),
+        "name": item.name,
+        "holidayTypes": list(item.holiday_types),
+        "sourceName": item.source_name,
+        "sourceUrl": item.source_url,
+    }
+
+
 def _money_context_payload(context: MoneyContext) -> dict[str, object]:
     destination = context.destination_context
     destination_payload: dict[str, object] | None = None
     if destination is not None:
         payment = destination.payment
         economic = destination.economic
+        calendar = destination.calendar
         destination_payload = {
             "countryCode": destination.country_code,
             "countryName": destination.country_name,
@@ -240,6 +251,15 @@ def _money_context_payload(context: MoneyContext) -> dict[str, object]:
                     ),
                 }
                 if economic is not None
+                else None
+            ),
+            "calendar": (
+                {
+                    "today": [_holiday_item_payload(item) for item in calendar.today],
+                    "upcoming": [_holiday_item_payload(item) for item in calendar.upcoming],
+                    "windowDays": calendar.window_days,
+                }
+                if calendar is not None
                 else None
             ),
             "payment": (

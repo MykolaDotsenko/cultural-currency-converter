@@ -35,6 +35,7 @@ Verify time-sensitive framework/provider details against current official docume
 - World Bank Indicators API: https://api.worldbank.org/v2/
 - Eurostat dissemination statistics API: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/
 - OECD SDMX API: https://sdmx.oecd.org/public/rest/
+- Nager.Date Community API: https://nagerholidays.com/
 - Wikimedia Commons: https://commons.wikimedia.org/
 - Europeana: https://www.europeana.eu/
 
