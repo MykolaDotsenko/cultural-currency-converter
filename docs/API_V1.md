@@ -59,6 +59,12 @@ product under Open Food Facts' documented leading-zero normalization
 The resolved HTTP origin must stay on world.openfoodfacts.org: a redirect to
 another Open Facts database cannot silently inherit food-product attribution.
 Any mismatch is an optional product-source error, never a price, fee or FX input.
+The provider JSON decoder rejects duplicated fields (including nested identity
+fields), non-standard NaN/Infinity values and malformed payloads before a
+product can enter the shared cache. Non-scalar/boolean/float provider status
+values fail as safe `product_source_unavailable` rather than an unhandled
+exception. Existing numeric/string not-found codes still return
+`product_not_found`, and valid source identity remains unaffected.
 
 The endpoint and web Shopping normalize UPC/EAN barcode spellings at the
 shared product cache boundary, so equivalent scans reuse positive/negative
