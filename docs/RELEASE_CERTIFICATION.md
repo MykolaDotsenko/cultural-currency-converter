@@ -14,6 +14,22 @@ The functional roadmap is complete: the current product includes all 36 scoped r
 - Repository hygiene snapshot checked on **2026-10-03**: **0 TODO and 0 FIXME code-search hits**.
 - Final P0/P1 query must be repeated immediately before release.
 
+### Current blocker evidence — 2026-10-08 (not a certification)
+
+The October 3 issue snapshot above is **historical and superseded**, not a
+current zero-P1 result. A fresh GitHub query on October 8 found **two open P1
+issues** and no additional open issues:
+
+- [#266 — Restore Render auto-deploy and certify live revision](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/266): the Render service's latest **live** deployment was still `93dda21f238e9ed942ac58131487dbb442a083f2` (created October 3), while reviewed `master` had advanced. The actual Render auto-deploy trigger and readiness health path also differed from `render.yaml`. The cause and deployment recovery evidence remain unresolved.
+- [#268 — Enforce required CI and review protections on master](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/268): GitHub reported `master.protected=false`, required status enforcement `off`, and no required checks. Passing CI is not yet an enforced merge policy.
+
+**Current gate outcome: P1 = 2; final production 100/100 = BLOCKED.**
+This is a timestamped external-state snapshot. It must be queried again
+immediately before release, and no future Git commit or README claim can
+substitute for verified Render live-SHA evidence, enforced branch policy,
+operational smoke and recoverability checks. The green CI matrix validates
+source code; it does not establish deployment of that code.
+
 Green evidence from a commit other than the final candidate SHA is background evidence only.
 
 ### Repository CI evidence before certification merge
@@ -62,6 +78,8 @@ The following cannot be honestly certified from repository CI alone:
 | Measured RPO/RTO | depends on real backup age, database size, infrastructure and cutover | timed recovery drill |
 | Managed-media object recovery | CI validates application media contracts but not the production bucket's retained object versions | versioning/retention evidence + restore of a known object/version |
 | RC infrastructure smoke | depends on deployed networking, TLS/proxy, database/cache/object store and provider configuration | execute the release runbook against the RC |
+| Live revision and auto-deploy integrity | GitHub tests cannot prove that Render runs the candidate SHA or follows the intended trigger/readiness policy | close [#266](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/266), confirm exact live SHA and run the fail-closed revision verifier |
+| Enforced source release gate | a passing `Required merge quality` check is advisory while `master` is unprotected | close [#268](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/268); verify branch rules deny direct pushes and failing merges |
 | Real provider reachability | CI intentionally avoids depending on public/live providers for deterministic acceptance | bounded RC/provider smoke without changing deterministic truth semantics |
 
 Until those items are recorded, the correct release state is:
