@@ -162,8 +162,7 @@ class GeminiStructuredClient:
             if not isinstance(text, str) or not text.strip():
                 candidates = getattr(response, "candidates", None) or ()
                 finish_reasons = {
-                    str(getattr(candidate, "finish_reason", "")).upper()
-                    for candidate in candidates
+                    str(getattr(candidate, "finish_reason", "")).upper() for candidate in candidates
                 }
                 if any("SAFETY" in reason for reason in finish_reasons):
                     raise AISafetyBlocked("Gemini blocked the explanation output.")
@@ -178,15 +177,11 @@ class GeminiStructuredClient:
 
         usage_metadata = getattr(response, "usage_metadata", None)
         usage = ProviderUsage(
-            input_tokens=_positive_int_or_none(
-                getattr(usage_metadata, "prompt_token_count", None)
-            ),
+            input_tokens=_positive_int_or_none(getattr(usage_metadata, "prompt_token_count", None)),
             output_tokens=_positive_int_or_none(
                 getattr(usage_metadata, "candidates_token_count", None)
             ),
-            total_tokens=_positive_int_or_none(
-                getattr(usage_metadata, "total_token_count", None)
-            ),
+            total_tokens=_positive_int_or_none(getattr(usage_metadata, "total_token_count", None)),
         )
         provider_model = str(getattr(response, "model_version", "") or requested_model)
         response_id = getattr(response, "response_id", None)

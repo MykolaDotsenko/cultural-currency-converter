@@ -63,9 +63,7 @@ def _verified_product_barcode(
     except ValueError as exc:
         raise ProductDataSourceError("Requested product barcode is invalid.") from exc
 
-    returned_codes = [
-        raw for raw in (payload.get("code"), product.get("code")) if raw is not None
-    ]
+    returned_codes = [raw for raw in (payload.get("code"), product.get("code")) if raw is not None]
     if not returned_codes:
         raise ProductDataSourceError("Open Food Facts product identity is missing.")
     for returned in returned_codes:
@@ -76,9 +74,7 @@ def _verified_product_barcode(
         except ValueError as exc:
             raise ProductDataSourceError("Open Food Facts product barcode is invalid.") from exc
         if verified != expected:
-            raise ProductDataSourceError(
-                "Open Food Facts returned a different product barcode."
-            )
+            raise ProductDataSourceError("Open Food Facts returned a different product barcode.")
     return expected
 
 
@@ -181,9 +177,7 @@ class OpenFoodFactsClient:
                 raise ProductNotFound("Product is not available in Open Food Facts.") from exc
             if exc.code == 429:
                 raise ProductSourceRateLimited("Open Food Facts lookup limit reached.") from exc
-            raise ProductDataSourceError(
-                f"Open Food Facts returned HTTP {exc.code}."
-            ) from exc
+            raise ProductDataSourceError(f"Open Food Facts returned HTTP {exc.code}.") from exc
         except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
             raise ProductDataSourceError("Open Food Facts request failed.") from exc
 

@@ -23,7 +23,9 @@ def _finite_decimal(value: Any) -> Decimal:
     try:
         parsed = Decimal(str(value))
     except (InvalidOperation, TypeError, ValueError) as exc:
-        raise EconomicDataSourceError("World Bank observation has an invalid numeric value.") from exc
+        raise EconomicDataSourceError(
+            "World Bank observation has an invalid numeric value."
+        ) from exc
     if not parsed.is_finite():
         raise EconomicDataSourceError("World Bank observation must be finite.")
     return parsed
@@ -38,7 +40,9 @@ def parse_world_bank_indicator(
     source_url: str,
 ) -> EconomicSourceObservation | None:
     if not isinstance(payload, list) or len(payload) != 2:
-        raise EconomicDataSourceError("World Bank indicator response must contain metadata and data.")
+        raise EconomicDataSourceError(
+            "World Bank indicator response must contain metadata and data."
+        )
 
     metadata, rows = payload
     if not isinstance(metadata, dict) or not isinstance(rows, list):
@@ -68,7 +72,9 @@ def parse_world_bank_indicator(
         else:
             raise ValueError("Unsupported World Bank indicator code.")
 
-        observation_status = "estimate" if str(raw.get("obs_status") or "").upper() == "F" else "unknown"
+        observation_status = (
+            "estimate" if str(raw.get("obs_status") or "").upper() == "F" else "unknown"
+        )
         return EconomicSourceObservation(
             country_code=country_code.upper(),
             indicator=indicator,

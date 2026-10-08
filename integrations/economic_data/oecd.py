@@ -12,10 +12,7 @@ from urllib.request import Request, urlopen
 
 from integrations.economic_data.base import EconomicDataSourceError, EconomicSourceObservation
 
-DATA_URL = (
-    "https://sdmx.oecd.org/public/rest/data/"
-    "OECD.SDD.TPS,DSD_PPP@DF_PPP_CPL,1.1/.A...."
-)
+DATA_URL = "https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_PPP@DF_PPP_CPL,1.1/.A...."
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 _AREA_COLUMNS = ("REF_AREA", "Reference area")

@@ -46,7 +46,9 @@ def _item(**changes):
 def test_parser_preserves_decimal_provenance_place_and_canonical_code():
     result = parse_open_prices(
         {"items": [_item(price=Decimal("4.2900"))]},
-        barcode="034000470693", retrieved_at=_NOW, today=_TODAY,
+        barcode="034000470693",
+        retrieved_at=_NOW,
+        today=_TODAY,
     )
     assert len(result) == 1
     item = result[0]
@@ -84,9 +86,15 @@ def test_parser_preserves_decimal_provenance_place_and_canonical_code():
     ],
 )
 def test_parser_excludes_incompatible_or_unverifiable_price_evidence(row):
-    assert parse_open_prices(
-        {"items": [row]}, barcode="034000470693", retrieved_at=_NOW, today=_TODAY,
-    ) == ()
+    assert (
+        parse_open_prices(
+            {"items": [row]},
+            barcode="034000470693",
+            retrieved_at=_NOW,
+            today=_TODAY,
+        )
+        == ()
+    )
 
 
 def test_parser_rejects_invalid_envelope_and_unaware_retrieval():
@@ -94,20 +102,27 @@ def test_parser_rejects_invalid_envelope_and_unaware_retrieval():
         parse_open_prices({}, barcode="034000470693", retrieved_at=_NOW, today=_TODAY)
     with pytest.raises(OpenPricesSourceError, match="page size"):
         parse_open_prices(
-            {"items": [_item()] * 21}, barcode="034000470693",
-            retrieved_at=_NOW, today=_TODAY,
+            {"items": [_item()] * 21},
+            barcode="034000470693",
+            retrieved_at=_NOW,
+            today=_TODAY,
         )
     with pytest.raises(OpenPricesSourceError, match="timezone-aware"):
         parse_open_prices(
-            {"items": []}, barcode="034000470693",
-            retrieved_at=datetime(2026, 10, 8), today=_TODAY,
+            {"items": []},
+            barcode="034000470693",
+            retrieved_at=datetime(2026, 10, 8),
+            today=_TODAY,
         )
 
 
 def test_parser_limits_to_five_dates_without_price_ranking():
     rows = [_item(id=i + 1, date=f"2026-09-{i + 1:02d}") for i in range(10)]
     result = parse_open_prices(
-        {"items": rows}, barcode="034000470693", retrieved_at=_NOW, today=_TODAY,
+        {"items": rows},
+        barcode="034000470693",
+        retrieved_at=_NOW,
+        today=_TODAY,
     )
     assert len(result) == 5
     assert result[0].observed_at == date(2026, 9, 10)
@@ -139,9 +154,9 @@ def test_client_requests_bounded_canonical_product_page():
         assert q["type"] == ["PRODUCT"]
         assert q["size"] == ["20"]
         assert q["order_by"] == ["-date"]
-        return _Response(request.full_url, json.dumps({
-            "items": [_item(price="4.29")]
-        }, default=str).encode())
+        return _Response(
+            request.full_url, json.dumps({"items": [_item(price="4.29")]}, default=str).encode()
+        )
 
     with patch("integrations.price_data.open_prices.urlopen", side_effect=fetch):
         result = OpenPricesClient().fetch_prices("034000470693")
@@ -185,43 +200,58 @@ def test_client_handles_throttle_and_max_response_size():
 @pytest.mark.parametrize(
     "bad_row",
     [
-        _item(location_id=5, location={
-            "id": 6, "osm_display_name": "Incorrect shop",
-            "osm_address_country_code": "FI",
-        }),
+        _item(
+            location_id=5,
+            location={
+                "id": 6,
+                "osm_display_name": "Incorrect shop",
+                "osm_address_country_code": "FI",
+            },
+        ),
         _item(proof_id=998, proof={"id": 999}),
         _item(product_id=22, product={"id": 23, "code": "0034000470693"}),
         _item(product={"code": "3017624010702"}),
         _item(product={"code": "garbage"}),
-        _item(location_id=5, location={
-            "id": True, "osm_display_name": "Invalid link",
-            "osm_address_country_code": "FI",
-        }),
+        _item(
+            location_id=5,
+            location={
+                "id": True,
+                "osm_display_name": "Invalid link",
+                "osm_address_country_code": "FI",
+            },
+        ),
     ],
 )
 def test_parser_rejects_crosslinked_product_location_and_proof_identity(bad_row):
-    assert parse_open_prices(
-        {"items": [bad_row]},
-        barcode="034000470693",
-        retrieved_at=_NOW,
-        today=_TODAY,
-    ) == ()
+    assert (
+        parse_open_prices(
+            {"items": [bad_row]},
+            barcode="034000470693",
+            retrieved_at=_NOW,
+            today=_TODAY,
+        )
+        == ()
+    )
 
 
 def test_parser_accepts_equivalent_product_barcode_and_lowercase_osm_country():
     result = parse_open_prices(
-        {"items": [_item(
-            product_code="034000470693",
-            product_id=15,
-            product={"id": 15, "code": "0034000470693"},
-            proof={"id": 998},
-            location_id=12,
-            location={
-                "id": 12,
-                "osm_display_name": "Market Helsinki",
-                "osm_address_country_code": "fi",
-            },
-        )]},
+        {
+            "items": [
+                _item(
+                    product_code="034000470693",
+                    product_id=15,
+                    product={"id": 15, "code": "0034000470693"},
+                    proof={"id": 998},
+                    location_id=12,
+                    location={
+                        "id": 12,
+                        "osm_display_name": "Market Helsinki",
+                        "osm_address_country_code": "fi",
+                    },
+                )
+            ]
+        },
         barcode="0034000470693",
         retrieved_at=_NOW,
         today=_TODAY,

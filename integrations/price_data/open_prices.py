@@ -77,12 +77,7 @@ def _parse_item(
         return None
 
     row_id, proof_id = raw.get("id"), raw.get("proof_id")
-    if (
-        type(row_id) is not int
-        or row_id <= 0
-        or type(proof_id) is not int
-        or proof_id <= 0
-    ):
+    if type(row_id) is not int or row_id <= 0 or type(proof_id) is not int or proof_id <= 0:
         return None
 
     amount = raw.get("price")
@@ -127,10 +122,12 @@ def _parse_item(
             continue
         embedded_id = embedded.get("id")
         outer_id = raw.get(linked_key)
-        if embedded_id is not None and outer_id is not None and (
-            type(embedded_id) is not int
-            or type(outer_id) is not int
-            or embedded_id != outer_id
+        if (
+            embedded_id is not None
+            and outer_id is not None
+            and (
+                type(embedded_id) is not int or type(outer_id) is not int or embedded_id != outer_id
+            )
         ):
             return None
     embedded_product = raw.get("product")
@@ -189,12 +186,15 @@ def parse_open_prices(
     normalized = [
         candidate
         for row in rows
-        if (candidate := _parse_item(
-            row,
-            expected_code=expected_code,
-            retrieved_at=retrieved_at,
-            today=today,
-        )) is not None
+        if (
+            candidate := _parse_item(
+                row,
+                expected_code=expected_code,
+                retrieved_at=retrieved_at,
+                today=today,
+            )
+        )
+        is not None
     ]
     normalized.sort(key=lambda row: (row.observed_at, row.source_url), reverse=True)
     return tuple(normalized[:_MAX_OBSERVATIONS])
@@ -208,12 +208,14 @@ class OpenPricesClient:
 
     def fetch_prices(self, barcode: str) -> tuple[PublicPriceObservation, ...]:
         normalized = canonical_open_food_facts_barcode(barcode)
-        query = urlencode({
-            "product_code": normalized,
-            "type": "PRODUCT",
-            "size": _MAX_PROVIDER_ITEMS,
-            "order_by": "-date",
-        })
+        query = urlencode(
+            {
+                "product_code": normalized,
+                "type": "PRODUCT",
+                "size": _MAX_PROVIDER_ITEMS,
+                "order_by": "-date",
+            }
+        )
         url = f"{BASE_URL}?{query}"
         request = Request(
             url,
@@ -241,7 +243,9 @@ class OpenPricesClient:
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
             if exc.code == 429:
-                raise OpenPricesRateLimited("Open Prices is temporarily throttling requests.") from exc
+                raise OpenPricesRateLimited(
+                    "Open Prices is temporarily throttling requests."
+                ) from exc
             raise OpenPricesSourceError("Open Prices request failed.") from exc
         except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
             raise OpenPricesSourceError("Open Prices request failed.") from exc
