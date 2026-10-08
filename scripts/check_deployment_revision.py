@@ -11,7 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-_SHA = re.compile(r"^[0-9a-f]{40}$")
+_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
 _LOCAL_HTTP_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 _MAX_RESPONSE_BYTES = 4096
 
@@ -91,9 +91,9 @@ def check_revision(url: str, expected_sha: str, *, opener=None) -> str:
         or _SHA.fullmatch(actual_sha) is None
     ):
         raise RevisionCheckError("revision_unknown")
-    if actual_sha != expected_sha:
+    if actual_sha.lower() != expected_sha.lower():
         raise RevisionCheckError("revision_mismatch")
-    return actual_sha
+    return actual_sha.lower()
 
 
 def main(argv: list[str] | None = None) -> int:

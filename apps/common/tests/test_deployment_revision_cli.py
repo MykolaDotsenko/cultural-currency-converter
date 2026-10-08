@@ -48,6 +48,13 @@ class DeploymentRevisionCliTests(SimpleTestCase):
         self.assertEqual(check_revision(URL, SHA, opener=opener), SHA)
         self.assertEqual(opener.requested_url, URL)
 
+    def test_uppercase_hex_sha_is_equivalent_to_lowercase(self) -> None:
+        self.assertEqual(check_revision(URL, SHA.upper(), opener=_Opener(_json_response())), SHA)
+        self.assertEqual(
+            check_revision(URL, SHA, opener=_Opener(_json_response(revision=SHA.upper()))),
+            SHA,
+        )
+
     def test_missing_revision_is_not_a_passing_release(self) -> None:
         for payload in (
             _json_response(status="unknown", revision=None),
