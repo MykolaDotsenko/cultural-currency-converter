@@ -143,7 +143,11 @@ def lookup_product_identity(
     # One product identity for UPC/EAN aliases across web Shopping and API v1.
     # Reject all-zero identifiers before cache, throttle or provider access.
     normalized = canonical_open_food_facts_barcode(barcode)
-    cached = cache.get(_cache_key(normalized))
+    key = _cache_key(normalized)
+    try:
+        cached = cache.get(key)
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
     if isinstance(cached, dict):
         if cached.get("found") is False:
             raise ProductNotFound("Product is not available in Open Food Facts.")
@@ -151,7 +155,10 @@ def lookup_product_identity(
         try:
             return _identity_from_payload(payload)
         except ProductContextTokenError:
-            cache.delete(_cache_key(normalized))
+            try:
+                cache.delete(key)
+            except Exception as exc:
+                raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
 
     _consume_lookup_budget()
     product = (client or OpenFoodFactsClient()).fetch_product(normalized)
