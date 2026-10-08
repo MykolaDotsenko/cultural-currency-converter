@@ -11,6 +11,11 @@ from integrations.price_data import OpenPricesSourceError, PublicPriceObservatio
 from integrations.product_data.base import ProductIdentity
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def identity():
     return ProductIdentity(
