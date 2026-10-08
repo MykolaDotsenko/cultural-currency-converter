@@ -35,6 +35,7 @@ Before a strict production release, verify:
 - explicit CSP mode;
 - PostgreSQL `DATABASE_URL`;
 - shared Redis `CACHE_URL`;
+- optional `API_TRUSTED_PROXY_CIDRS` only after verifying actual proxy CIDRs, right-to-left X-Forwarded-For provenance, and direct-access behavior; without this opt-in quotas use the server peer and shared proxies may aggregate users;
 - S3-compatible managed-media storage with bucket, region and public HTTPS origin;
 - provider credentials only when the corresponding optional runtime capability is enabled.
 

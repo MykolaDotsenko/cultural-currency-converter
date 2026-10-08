@@ -1,8 +1,8 @@
 """Per-origin abuse budget for public API conversions.
 
-The quota protects provider-backed work only. It uses the server-provided peer
-address, never an untrusted X-Forwarded-For header, and stores only an HMAC
-identifier in the shared cache.
+The quota protects provider-backed work only. It uses the socket peer unless
+explicitly configured trusted proxy ranges verify the forwarded chain, and
+stores only an HMAC identifier in the shared cache.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpRequest
 from django.utils import timezone
+
+from config.api_security import ProxyNetwork
 
 logger = logging.getLogger("cultural_currency.security")
 
@@ -34,14 +36,52 @@ class ConversionQuota:
     retry_after: int
 
 
-def _origin_token(request: HttpRequest) -> str:
-    # REMOTE_ADDR is supplied by the application server. Never trust a
-    # caller-controlled forwarding header without a configured proxy chain.
+def _is_trusted(
+    address: ipaddress.IPv4Address | ipaddress.IPv6Address,
+    networks: tuple[ProxyNetwork, ...],
+) -> bool:
+    return any(address in network for network in networks)
+
+
+def _client_address(request: HttpRequest) -> str:
+    """Identify the first untrusted hop from the *right* of a verified chain.
+
+    A caller may prepend spoofed values. Only the immediately preceding hop
+    supplied by an explicitly trusted reverse proxy can be consumed.
+    Invalid/overlarge headers are ignored, preserving the server peer quota.
+    """
     remote_addr = request.META.get("REMOTE_ADDR")
     try:
-        origin = ipaddress.ip_address(str(remote_addr)).compressed
+        peer = ipaddress.ip_address(str(remote_addr))
     except ValueError:
-        origin = "unknown"
+        return "unknown"
+
+    networks: tuple[ProxyNetwork, ...] = getattr(
+        settings, "API_TRUSTED_PROXY_NETWORKS", ()
+    )
+    if not networks or not _is_trusted(peer, networks):
+        return peer.compressed
+
+    header = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if not isinstance(header, str) or not header or len(header) > 1024:
+        return peer.compressed
+    hops = header.split(",")
+    if len(hops) > 16 or any(not hop.strip() for hop in hops):
+        return peer.compressed
+
+    candidate = peer
+    for raw_hop in reversed(hops):
+        if not _is_trusted(candidate, networks):
+            break
+        try:
+            candidate = ipaddress.ip_address(raw_hop.strip())
+        except ValueError:
+            return peer.compressed
+    return candidate.compressed
+
+
+def _origin_token(request: HttpRequest) -> str:
+    origin = _client_address(request)
 
     return hmac.new(
         settings.SECRET_KEY.encode("utf-8"),
