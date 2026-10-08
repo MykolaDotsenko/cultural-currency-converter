@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from integrations.product_data import (
     OpenFoodFactsClient,
+    ProductDataSourceError,
     ProductIdentity,
     ProductNotFound,
     ProductSourceRateLimited,
@@ -124,12 +125,10 @@ def _identity_from_payload(payload: Any) -> ProductIdentity:
 
 def _consume_lookup_budget() -> None:
     key = _rate_limit_key()
-    cache.add(key, 0, timeout=90)
     try:
-        count = cache.incr(key)
-    except ValueError:
-        cache.set(key, 1, timeout=90)
-        count = 1
+        count = 1 if cache.add(key, 1, timeout=90) else cache.incr(key)
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
     if count > _LOCAL_LOOKUP_LIMIT_PER_MINUTE:
         raise ProductSourceRateLimited(
             "Product lookup is temporarily busy. Please retry in a moment."
@@ -144,7 +143,11 @@ def lookup_product_identity(
     # One product identity for UPC/EAN aliases across web Shopping and API v1.
     # Reject all-zero identifiers before cache, throttle or provider access.
     normalized = canonical_open_food_facts_barcode(barcode)
-    cached = cache.get(_cache_key(normalized))
+    key = _cache_key(normalized)
+    try:
+        cached = cache.get(key)
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
     if isinstance(cached, dict):
         if cached.get("found") is False:
             raise ProductNotFound("Product is not available in Open Food Facts.")
@@ -152,25 +155,34 @@ def lookup_product_identity(
         try:
             return _identity_from_payload(payload)
         except ProductContextTokenError:
-            cache.delete(_cache_key(normalized))
+            try:
+                cache.delete(key)
+            except Exception as exc:
+                raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
 
     _consume_lookup_budget()
     product = (client or OpenFoodFactsClient()).fetch_product(normalized)
-    cache.set(
-        _cache_key(normalized),
-        {"found": True, "product": _identity_payload(product)},
-        timeout=_POSITIVE_TTL_SECONDS,
-    )
+    try:
+        cache.set(
+            key,
+            {"found": True, "product": _identity_payload(product)},
+            timeout=_POSITIVE_TTL_SECONDS,
+        )
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
     return product
 
 
 def remember_product_not_found(barcode: str) -> None:
     normalized = canonical_open_food_facts_barcode(barcode)
-    cache.set(
-        _cache_key(normalized),
-        {"found": False},
-        timeout=_NEGATIVE_TTL_SECONDS,
-    )
+    try:
+        cache.set(
+            _cache_key(normalized),
+            {"found": False},
+            timeout=_NEGATIVE_TTL_SECONDS,
+        )
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
 
 
 def lookup_product_identity_cached(

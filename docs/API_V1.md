@@ -74,6 +74,14 @@ report 429 `product_lookup_busy`. Neither case changes the trusted price/FX
 boundary. Successful identity responses remain private-cacheable for one hour;
 quota and validation errors are `private, no-store`.
 
+The shared product cache is also a provider-abuse-control dependency. If its
+read/write operations or atomic lookup-budget accounting fail, the optional
+lookup fails closed with `product_source_unavailable` (HTTP 503) rather than
+issuing unmetered Open Food Facts calls. An evicted quota bucket between
+initialization and increment is **not reset**, preventing throttle bypass.
+The web Shopping page remains available for explicit shelf-price entry; no
+product-identity failure can supply or modify a price or FX input.
+
 ### GET /api/v1/products/{barcode}/prices/
 
 Opt-in, read-only **historical community price observations** for native/mobile
