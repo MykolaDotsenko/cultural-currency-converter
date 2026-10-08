@@ -61,9 +61,7 @@ def api_v1_shopping_estimate(request: HttpRequest) -> JsonResponse:
             },
         )
 
-    form = ShoppingCalculationForm(
-        {_SHOPPING_FIELDS[key]: value for key, value in payload.items()}
-    )
+    form = ShoppingCalculationForm({_SHOPPING_FIELDS[key]: value for key, value in payload.items()})
     if not form.is_valid():
         return _api_error(
             code="validation_error",
