@@ -60,9 +60,12 @@ The resolved HTTP origin must stay on world.openfoodfacts.org: a redirect to
 another Open Facts database cannot silently inherit food-product attribution.
 Any mismatch is an optional product-source error, never a price, fee or FX input.
 
-The endpoint normalizes UPC/EAN barcode spellings before checking the shared
-product cache and rejects malformed or all-zero codes with HTTP 400 before
-accessing quota or upstream data. Every valid GET, including a cache hit,
+The endpoint and web Shopping normalize UPC/EAN barcode spellings at the
+shared product cache boundary, so equivalent scans reuse positive/negative
+cache entries and the same upstream identity. Malformed or all-zero codes
+are rejected with HTTP 400 by the API before accessing quota or upstream
+data; web Shopping shows an actionable barcode error without blocking manual
+purchase-price entry. Every valid GET, including a cache hit,
 consumes the same 60/minute per-peer API budget as conversions and Open Prices
 observations. Quota exhaustion returns HTTP 429 `rate_limited` with
 `Retry-After`; shared quota unavailability fails closed with HTTP 503
