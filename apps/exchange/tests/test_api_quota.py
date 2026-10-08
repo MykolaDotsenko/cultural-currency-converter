@@ -88,9 +88,7 @@ def test_quota_fails_closed_on_missing_counter_during_race():
         consume_conversion_quota(_request("192.0.2.2"))
 
 
-@override_settings(
-    API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),)
-)
+@override_settings(API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),))
 def test_trusted_proxy_separates_real_clients_from_shared_reverse_proxy():
     first = _request("10.42.1.3", forwarded_for="203.0.113.10")
     second = _request("10.42.1.3", forwarded_for="203.0.113.11")
@@ -101,9 +99,7 @@ def test_trusted_proxy_separates_real_clients_from_shared_reverse_proxy():
         assert consume_conversion_quota(second).allowed is True
 
 
-@override_settings(
-    API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),)
-)
+@override_settings(API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),))
 def test_trusted_chain_ignores_spoofed_leftmost_address():
     first = _request("10.42.1.3", forwarded_for="192.0.2.7, 203.0.113.10")
     spoofed = _request("10.42.1.3", forwarded_for="192.0.2.8, 203.0.113.10")
@@ -113,9 +109,7 @@ def test_trusted_chain_ignores_spoofed_leftmost_address():
         assert consume_conversion_quota(spoofed).allowed is False
 
 
-@override_settings(
-    API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),)
-)
+@override_settings(API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),))
 def test_multiple_trusted_hops_skip_internal_proxies():
     first = _request("10.42.1.3", forwarded_for="203.0.113.10, 10.42.2.4")
     second = _request("10.42.1.3", forwarded_for="203.0.113.11, 10.42.2.4")
@@ -125,9 +119,7 @@ def test_multiple_trusted_hops_skip_internal_proxies():
         assert consume_conversion_quota(second).allowed is True
 
 
-@override_settings(
-    API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),)
-)
+@override_settings(API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),))
 def test_direct_connection_cannot_spoof_forwarded_ip_even_with_trust_config():
     first = _request("198.51.100.50", forwarded_for="203.0.113.10")
     spoofed = _request("198.51.100.50", forwarded_for="203.0.113.11")
@@ -137,9 +129,7 @@ def test_direct_connection_cannot_spoof_forwarded_ip_even_with_trust_config():
         assert consume_conversion_quota(spoofed).allowed is False
 
 
-@override_settings(
-    API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),)
-)
+@override_settings(API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("10.42.0.0/16"),))
 @pytest.mark.parametrize(
     "malformed",
     [
@@ -159,9 +149,7 @@ def test_invalid_trusted_chain_falls_back_to_shared_peer(malformed):
         assert consume_conversion_quota(second).allowed is False
 
 
-@override_settings(
-    API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("2001:db8:1::/48"),)
-)
+@override_settings(API_TRUSTED_PROXY_NETWORKS=(ipaddress.ip_network("2001:db8:1::/48"),))
 def test_ipv6_trusted_proxy_resolves_client_without_string_aliases():
     first = _request("2001:db8:1::5", forwarded_for="2001:db8::7")
     alias = _request("2001:db8:1::5", forwarded_for="2001:0db8:0:0:0:0:0:7")

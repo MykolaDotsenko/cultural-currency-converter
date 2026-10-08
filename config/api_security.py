@@ -33,9 +33,7 @@ def load_trusted_proxy_networks(environ: Mapping[str, str]) -> tuple[ProxyNetwor
                 "API_TRUSTED_PROXY_CIDRS entries must be valid canonical IP networks."
             ) from exc
         if network.prefixlen == 0:
-            raise ConfigurationError(
-                "API_TRUSTED_PROXY_CIDRS must not trust the entire internet."
-            )
+            raise ConfigurationError("API_TRUSTED_PROXY_CIDRS must not trust the entire internet.")
         if network not in networks:
             networks.append(network)
     return tuple(networks)

@@ -14,9 +14,9 @@ def test_trusted_proxies_default_to_off():
 
 
 def test_trusted_proxy_config_accepts_explicit_ipv4_ipv6_cidrs_and_deduplicates():
-    config = load_trusted_proxy_networks({
-        "API_TRUSTED_PROXY_CIDRS": "10.42.0.0/16,2001:db8:1::/48,10.42.0.0/16"
-    })
+    config = load_trusted_proxy_networks(
+        {"API_TRUSTED_PROXY_CIDRS": "10.42.0.0/16,2001:db8:1::/48,10.42.0.0/16"}
+    )
     assert config == (
         ipaddress.ip_network("10.42.0.0/16"),
         ipaddress.ip_network("2001:db8:1::/48"),

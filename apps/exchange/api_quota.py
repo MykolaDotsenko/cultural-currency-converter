@@ -56,9 +56,7 @@ def _client_address(request: HttpRequest) -> str:
     except ValueError:
         return "unknown"
 
-    networks: tuple[ProxyNetwork, ...] = getattr(
-        settings, "API_TRUSTED_PROXY_NETWORKS", ()
-    )
+    networks: tuple[ProxyNetwork, ...] = getattr(settings, "API_TRUSTED_PROXY_NETWORKS", ())
     if not networks or not _is_trusted(peer, networks):
         return peer.compressed
 
