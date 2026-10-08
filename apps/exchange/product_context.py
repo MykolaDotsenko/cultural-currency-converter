@@ -162,21 +162,27 @@ def lookup_product_identity(
 
     _consume_lookup_budget()
     product = (client or OpenFoodFactsClient()).fetch_product(normalized)
-    cache.set(
-        _cache_key(normalized),
-        {"found": True, "product": _identity_payload(product)},
-        timeout=_POSITIVE_TTL_SECONDS,
-    )
+    try:
+        cache.set(
+            key,
+            {"found": True, "product": _identity_payload(product)},
+            timeout=_POSITIVE_TTL_SECONDS,
+        )
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
     return product
 
 
 def remember_product_not_found(barcode: str) -> None:
     normalized = canonical_open_food_facts_barcode(barcode)
-    cache.set(
-        _cache_key(normalized),
-        {"found": False},
-        timeout=_NEGATIVE_TTL_SECONDS,
-    )
+    try:
+        cache.set(
+            _cache_key(normalized),
+            {"found": False},
+            timeout=_NEGATIVE_TTL_SECONDS,
+        )
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
 
 
 def lookup_product_identity_cached(
