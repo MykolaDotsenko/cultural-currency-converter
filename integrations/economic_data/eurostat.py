@@ -9,9 +9,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request
 
-from integrations.http_transport import make_pinned_https_urlopen
-
 from integrations.economic_data.base import EconomicDataSourceError, EconomicSourceObservation
+from integrations.http_transport import make_pinned_https_urlopen
 
 BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data"
 urlopen = make_pinned_https_urlopen("ec.europa.eu")

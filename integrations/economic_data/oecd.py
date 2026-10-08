@@ -9,9 +9,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request
 
-from integrations.http_transport import make_pinned_https_urlopen
-
 from integrations.economic_data.base import EconomicDataSourceError, EconomicSourceObservation
+from integrations.http_transport import make_pinned_https_urlopen
 
 DATA_URL = "https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_PPP@DF_PPP_CPL,1.1/.A...."
 urlopen = make_pinned_https_urlopen("sdmx.oecd.org")
