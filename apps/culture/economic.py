@@ -11,7 +11,6 @@ from apps.countries.models import Country
 from apps.culture.models import (
     EconomicIndicator,
     EconomicObservation,
-    EconomicObservationSource,
 )
 from integrations.economic_data import EconomicSourceObservation
 
@@ -19,11 +18,11 @@ INFLATION_MAX_AGE = timedelta(days=550)
 ANNUAL_CONTEXT_MAX_AGE = timedelta(days=1095)
 
 _INFLATION_SOURCE_PRIORITY = {
-    EconomicObservationSource.EUROSTAT.value: 0,
-    EconomicObservationSource.WORLD_BANK.value: 1,
+    "eurostat": 0,
+    "world_bank": 1,
 }
 _PRICE_LEVEL_SOURCE_PRIORITY = {
-    EconomicObservationSource.OECD.value: 0,
+    "oecd": 0,
     EconomicObservationSource.WORLD_BANK: 1,
 }
 
