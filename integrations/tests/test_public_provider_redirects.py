@@ -25,11 +25,14 @@ import pytest
 def test_public_provider_cannot_send_initial_request_to_another_origin(module, host):
     provider = import_module(module)
 
-    with patch("urllib.request.OpenerDirector.open") as outgoing:
-        with pytest.raises(HTTPError, match="Unexpected public-data request origin"):
-            provider.urlopen(Request("https://169.254.169.254/latest/meta-data"), timeout=2)
-        outgoing.assert_not_called()
+    with (
+        patch("urllib.request.OpenerDirector.open") as outgoing,
+        pytest.raises(HTTPError, match="Unexpected public-data request origin"),
+    ):
+        provider.urlopen(Request("https://169.254.169.254/latest/meta-data"), timeout=2)
+    outgoing.assert_not_called()
 
+    with patch("urllib.request.OpenerDirector.open") as outgoing:
         expected = Request(f"https://{host}/api/example")
         provider.urlopen(expected, timeout=2)
         outgoing.assert_called_once_with(expected, timeout=2)
