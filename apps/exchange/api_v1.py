@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, CountryCurrency, Currency
 from apps.culture.services import PurchaseEquivalent
+from apps.exchange.api_quota import ConversionQuotaUnavailable, consume_conversion_quota
 from apps.exchange.application import (
     ConverterSubmissionCommand,
     ConverterSubmissionError,
@@ -478,6 +479,24 @@ def api_v1_conversion(request: HttpRequest) -> JsonResponse:
         )
 
     command = _conversion_command(form)
+    if command.source_currency != command.destination_currency:
+        try:
+            quota = consume_conversion_quota(request)
+        except ConversionQuotaUnavailable:
+            return _api_error(
+                code="quota_unavailable",
+                message="Conversion service is temporarily unavailable.",
+                status=503,
+            )
+        if not quota.allowed:
+            response = _api_error(
+                code="rate_limited",
+                message="Too many conversions. Please retry shortly.",
+                status=429,
+            )
+            response["Retry-After"] = str(quota.retry_after)
+            return response
+
     submission = run_converter_submission(
         command,
         latest_gateway_factory=build_latest_quote_gateway,

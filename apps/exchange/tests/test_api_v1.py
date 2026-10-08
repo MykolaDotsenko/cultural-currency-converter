@@ -9,6 +9,7 @@ import pytest
 from django.urls import reverse
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
+from apps.exchange.api_quota import ConversionQuota, ConversionQuotaUnavailable
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ObservationGranularity, RateQuote
 from apps.exchange.providers.base import FxProviderUnavailable
 
@@ -326,3 +327,59 @@ def test_api_payload_size_is_bounded(client, api_reference_data):
 
     assert response.status_code == 413
     assert response.json()["error"]["code"] == "payload_too_large"
+
+
+@pytest.mark.django_db
+def test_provider_backed_api_conversion_rejects_exhausted_quota_before_fx(
+    client,
+    api_reference_data,
+):
+    with (
+        patch(
+            "apps.exchange.api_v1.consume_conversion_quota",
+            return_value=ConversionQuota(allowed=False, retry_after=27),
+        ),
+        patch("apps.exchange.api_v1.run_converter_submission") as submit,
+    ):
+        response = _post_json(client, _latest_payload())
+
+    assert response.status_code == 429
+    assert response["Retry-After"] == "27"
+    assert response["Cache-Control"] == "private, no-store"
+    assert response.json()["error"]["code"] == "rate_limited"
+    submit.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_provider_backed_api_conversion_fails_closed_when_shared_quota_fails(
+    client,
+    api_reference_data,
+):
+    with (
+        patch(
+            "apps.exchange.api_v1.consume_conversion_quota",
+            side_effect=ConversionQuotaUnavailable(),
+        ),
+        patch("apps.exchange.api_v1.run_converter_submission") as submit,
+    ):
+        response = _post_json(client, _latest_payload())
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "quota_unavailable"
+    submit.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_exact_same_currency_api_does_not_consume_upstream_quota(
+    client,
+    api_reference_data,
+):
+    with patch("apps.exchange.api_v1.consume_conversion_quota") as quota:
+        response = _post_json(
+            client,
+            {"amount": "12.34", "sourceCurrency": "EUR", "destinationCurrency": "EUR"},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["conversion"]["exact"] is True
+    quota.assert_not_called()

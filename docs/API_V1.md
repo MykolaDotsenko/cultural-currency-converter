@@ -101,7 +101,9 @@ Current stable codes include:
 - `unsupported_pair`;
 - `provider_invalid_payload`;
 - `provider_unavailable`;
-- `conversion_unavailable`.
+- `conversion_unavailable`;
+- `rate_limited` (HTTP 429, with `Retry-After` in seconds);
+- `quota_unavailable` (HTTP 503 if the shared abuse-control cache cannot enforce its budget).
 
 Provider exception messages are never returned verbatim.
 
@@ -121,6 +123,24 @@ It does **not** expose:
 The conversion POST is CSRF-exempt because it is stateless and makes no account/data mutation. This is not permission for future write APIs to be CSRF-exempt or unauthenticated.
 
 Native apps can call same-origin HTTPS endpoints without browser CORS. Cross-origin browser access is intentionally not enabled by this slice. Broad third-party browser exposure requires an explicit allow-list/rate-limit/abuse-control decision rather than a permissive wildcard.
+
+## Abuse controls
+
+Provider-backed current/historical conversions have a shared-cache fixed-minute
+quota of **60 requests per minute per server-observed peer address**. It is
+checked after input validation and before the canonical FX/application
+gateway; same-currency exact conversions do not consume provider budget.
+Exhaustion returns HTTP 429 with a whole-second Retry-After countdown. A
+shared-cache outage fails closed as quota_unavailable instead of creating
+unbounded provider traffic. Conversion errors and quota responses are not stored
+by public caches.
+
+Peer identity is derived only from the web server's REMOTE_ADDR, not caller-
+controlled forwarding headers. It is HMAC-hashed before cache storage. When the
+application is deployed behind a shared reverse-proxy address, that peer may
+share one quota across end users; revise identity only alongside a verified
+trusted-proxy configuration, never by trusting arbitrary X-Forwarded-For.
+Native clients should honor Retry-After and avoid background polling.
 
 ## Caching and freshness
 
