@@ -9,7 +9,10 @@ from urllib.request import Request
 import pytest
 
 from integrations.product_data import ProductDataSourceError, ProductNotFound
-from integrations.product_data.open_food_facts import OpenFoodFactsClient, parse_open_food_facts_product
+from integrations.product_data.open_food_facts import (
+    OpenFoodFactsClient,
+    parse_open_food_facts_product,
+)
 
 _BARCODE = "3017624010701"
 _URL = f"https://world.openfoodfacts.org/api/v3.6/product/{_BARCODE}.json"
