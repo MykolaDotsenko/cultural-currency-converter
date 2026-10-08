@@ -121,6 +121,16 @@ proof contents**. These are community-submitted observations, not live offers,
 a statistically representative market sample, a price history covering all
 merchants or a price guaranteed at the user's store.
 
+Before any price observation can enter the shared cache, Open Prices and Open
+Food Facts use the same strict external JSON decoder. Duplicate members at any
+nesting depth, non-standard NaN/Infinity literals and malformed/deeply invalid
+responses fail closed as optional source errors. A shared explicit limit of 64
+nested JSON containers provides the same behavior on supported Python versions.
+Open Prices additionally
+parses decimal number literals with `Decimal` directly, preserving reported
+precision rather than passing financial evidence through binary floats. None
+of this evidence becomes an authoritative merchant price or FX input.
+
 Every API request (including cached responses) shares the existing per-peer
 60/minute API abuse-control gate with conversion/Shopping endpoints. A separate
 shared Open Prices budget allows six upstream lookups/minute with 12-hour

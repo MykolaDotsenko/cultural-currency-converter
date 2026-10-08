@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 from datetime import UTC, datetime
 from http.client import HTTPException
@@ -16,25 +15,13 @@ from integrations.product_data.base import (
     ProductNotFound,
     ProductSourceRateLimited,
 )
+from integrations.strict_json import strict_provider_json_loads
 
 BASE_URL = "https://world.openfoodfacts.org/api/v3.6/product"
 urlopen = make_pinned_https_urlopen("world.openfoodfacts.org")
 MAX_RESPONSE_BYTES = 512 * 1024
 _BARCODE_RE = re.compile(r"[0-9]{7,14}")
 _FIELDS = "code,product_name,brands,quantity,categories"
-
-
-def _unique_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError("Duplicate provider JSON field.")
-        result[key] = value
-    return result
-
-
-def _reject_json_constant(value: str) -> object:
-    raise ValueError("Non-finite provider JSON value.")
 
 
 def normalize_barcode(value: str) -> str:
@@ -197,10 +184,6 @@ class OpenFoodFactsClient:
         if len(raw) > MAX_RESPONSE_BYTES:
             raise ProductDataSourceError("Open Food Facts response exceeded the size limit.")
         try:
-            return json.loads(
-                raw,
-                object_pairs_hook=_unique_json_members,
-                parse_constant=_reject_json_constant,
-            )
+            return strict_provider_json_loads(raw)
         except (UnicodeDecodeError, ValueError, RecursionError) as exc:
             raise ProductDataSourceError("Open Food Facts returned malformed JSON.") from exc

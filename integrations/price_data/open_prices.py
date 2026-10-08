@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -15,6 +14,7 @@ from urllib.request import Request
 
 from integrations.http_transport import is_trusted_https_url, make_pinned_https_urlopen
 from integrations.product_data import canonical_open_food_facts_barcode
+from integrations.strict_json import strict_provider_json_loads
 
 BASE_URL = "https://prices.openfoodfacts.org/api/v1/prices"
 urlopen = make_pinned_https_urlopen("prices.openfoodfacts.org")
@@ -251,6 +251,6 @@ class OpenPricesClient:
         if len(raw) > MAX_RESPONSE_BYTES:
             raise OpenPricesSourceError("Open Prices response exceeded size limit.")
         try:
-            return json.loads(raw, parse_float=Decimal)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            return strict_provider_json_loads(raw, decimal_floats=True)
+        except (UnicodeDecodeError, ValueError, RecursionError) as exc:
             raise OpenPricesSourceError("Open Prices response is malformed JSON.") from exc
