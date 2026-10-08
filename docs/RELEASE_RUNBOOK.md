@@ -85,6 +85,37 @@ against the actual live deployment in the hosting dashboard. A matching endpoint
 SHA alone does **not** prove database recovery, media readiness, infrastructure
 correctness or full production certification; those have separate gates below.
 
+## Scheduled detection of deployment drift
+
+The repository's `.github/workflows/production-deployment-drift.yml` runs
+twice daily (08:17 and 20:17 UTC) and supports explicit manual dispatch.
+It checks out the latest `master` and runs the same standalone fail-closed
+revision verifier against the public Render service. A bounded six-attempt
+retry window allows the free instance to wake up without requiring Render
+API credentials, production database access, user data or any write
+permission. Every attempt must match the **full 40-character commit SHA**.
+Unknown revisions, 404s, redirects, persistent timeouts and mismatches keep
+the workflow red; no passing result is inferred from an HTTP 200 alone.
+
+**Important scope:** this monitoring policy expects the configured
+auto-deploying `master` demo to run the latest reviewed commit. It detects
+drift at scheduled observation times, not continuously, and a failed monitor
+does **not** prove which GitHub/Render integration component is responsible.
+If the production release policy later intentionally pins an older
+independently approved candidate, update the monitor's expected-revision
+policy in a reviewed PR rather than weakening the verifier or accepting
+permanent false alarms.
+
+On failure, compare the workflow's expected SHA, the exact Render live
+deploy commit and the deployment event history. Review the GitHub integration,
+configured branch, actual auto-deploy trigger and readiness health path
+against `render.yaml`. Track findings in the deployment incident
+([#266](https://github.com/MykolaDotsenko/cultural-currency-converter/issues/266))
+and keep any repair/deploy separate from this read-only monitor. Once a
+new deploy is live, independently perform the pinned release-SHA check above
+and the full smoke/recovery certification gates below; a scheduled green
+check does **not** grant 100/100 release certification.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:
