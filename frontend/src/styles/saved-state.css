@@ -9,6 +9,40 @@
   gap: var(--qa-space-10);
 }
 
+/* Native selects have intrinsic option-label width. Keep the Saved Currencies
+   form inside its grid track at 320px / 200% text zoom, including long names. */
+.qa-saved-state .qa-inline-form {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--qa-space-3);
+}
+
+.qa-saved-state .qa-inline-form select {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.qa-saved-state .qa-inline-form button {
+  max-inline-size: 100%;
+  justify-self: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 48rem) {
+  .qa-saved-state .qa-inline-form {
+    grid-template-columns: minmax(0, 22rem) auto;
+  }
+
+  .qa-saved-state .qa-inline-form label {
+    grid-column: 1 / -1;
+  }
+}
+
 .qa-saved-state > *,
 .qa-saved-section,
 .qa-saved-list,
