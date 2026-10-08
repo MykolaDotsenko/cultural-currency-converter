@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from integrations.product_data import (
     OpenFoodFactsClient,
+    ProductDataSourceError,
     ProductIdentity,
     ProductNotFound,
     ProductSourceRateLimited,
@@ -124,12 +125,10 @@ def _identity_from_payload(payload: Any) -> ProductIdentity:
 
 def _consume_lookup_budget() -> None:
     key = _rate_limit_key()
-    cache.add(key, 0, timeout=90)
     try:
-        count = cache.incr(key)
-    except ValueError:
-        cache.set(key, 1, timeout=90)
-        count = 1
+        count = 1 if cache.add(key, 1, timeout=90) else cache.incr(key)
+    except Exception as exc:
+        raise ProductDataSourceError("Product cache is temporarily unavailable.") from exc
     if count > _LOCAL_LOOKUP_LIMIT_PER_MINUTE:
         raise ProductSourceRateLimited(
             "Product lookup is temporarily busy. Please retry in a moment."
