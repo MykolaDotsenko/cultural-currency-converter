@@ -34,10 +34,14 @@ def _identity() -> ProductIdentity:
 
 def test_product_api_canonicalizes_equivalent_codes_and_metered_cache_hits(client):
     with (
-        patch("apps.exchange.api_v1.consume_conversion_quota",
-              return_value=ConversionQuota(allowed=True, retry_after=30)) as quota,
-        patch("apps.exchange.api_v1.lookup_product_identity_cached",
-              return_value=_identity()) as lookup,
+        patch(
+            "apps.exchange.api_v1.consume_conversion_quota",
+            return_value=ConversionQuota(allowed=True, retry_after=30),
+        ) as quota,
+        patch(
+            "apps.exchange.api_v1.lookup_product_identity_cached",
+            return_value=_identity(),
+        ) as lookup,
     ):
         responses = [client.get(_url(UPCA)), client.get(_url(EAN13))]
 
@@ -67,8 +71,10 @@ def test_invalid_product_barcode_is_rejected_before_quota_or_upstream(client, ba
 
 def test_exhausted_shared_quota_blocks_product_lookup_with_retry_after(client):
     with (
-        patch("apps.exchange.api_v1.consume_conversion_quota",
-              return_value=ConversionQuota(allowed=False, retry_after=21)) as quota,
+        patch(
+            "apps.exchange.api_v1.consume_conversion_quota",
+            return_value=ConversionQuota(allowed=False, retry_after=21),
+        ) as quota,
         patch("apps.exchange.api_v1.lookup_product_identity_cached") as lookup,
     ):
         response = client.get(_url())
@@ -83,8 +89,10 @@ def test_exhausted_shared_quota_blocks_product_lookup_with_retry_after(client):
 
 def test_shared_quota_outage_fails_closed_without_product_fetch(client):
     with (
-        patch("apps.exchange.api_v1.consume_conversion_quota",
-              side_effect=ConversionQuotaUnavailable("private cache detail")),
+        patch(
+            "apps.exchange.api_v1.consume_conversion_quota",
+            side_effect=ConversionQuotaUnavailable("private cache detail"),
+        ),
         patch("apps.exchange.api_v1.lookup_product_identity_cached") as lookup,
     ):
         response = client.get(_url())
