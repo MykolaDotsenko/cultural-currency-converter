@@ -83,3 +83,11 @@ def test_corrupted_cached_value_is_refetched_instead_of_displayed():
     cache.set("shopping:open-prices:v1:0034000470693", ("untrusted",), 60)
     assert lookup_public_price_observations("034000470693", client=client) == (_observation(),)
     assert client.calls == ["0034000470693"]
+
+
+def test_cache_read_outage_is_optional_source_error_before_provider_call():
+    client = StubClient((_observation(),))
+    with patch("apps.exchange.open_prices_context.cache.get", side_effect=OSError("redis down")):
+        with pytest.raises(OpenPricesSourceError, match="cache"):
+            lookup_public_price_observations("034000470693", client=client)
+    assert client.calls == []

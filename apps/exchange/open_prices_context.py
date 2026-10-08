@@ -34,7 +34,10 @@ def lookup_public_price_observations(
 ) -> tuple[PublicPriceObservation, ...]:
     normalized = canonical_open_food_facts_barcode(barcode)
     key = _cache_key(normalized)
-    cached = cache.get(key)
+    try:
+        cached = cache.get(key)
+    except Exception as exc:
+        raise OpenPricesSourceError("Open Prices cache is unavailable.") from exc
     if isinstance(cached, tuple) and all(
         isinstance(item, PublicPriceObservation) and item.product_code == normalized
         for item in cached
