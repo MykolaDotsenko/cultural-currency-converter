@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from unittest.mock import patch
 
 import pytest
 from django.core.cache import cache
@@ -76,6 +77,35 @@ def test_local_product_lookup_budget_stays_below_upstream_limit():
         lookup_product_identity_cached("200000000", client=client)
 
     assert len(client.calls) == 12
+
+
+def test_upc_ean_aliases_share_one_positive_cache_and_upstream_lookup():
+    client = StubProductClient()
+    first = lookup_product_identity_cached("034000470693", client=client)
+    second = lookup_product_identity_cached("0034000470693", client=client)
+
+    assert first == second
+    assert first.barcode == "0034000470693"
+    assert client.calls == ["0034000470693"]
+
+
+def test_upc_ean_aliases_share_one_negative_cache():
+    client = StubProductClient(not_found=True)
+    for barcode in ("034000470693", "0034000470693"):
+        with pytest.raises(ProductNotFound):
+            lookup_product_identity_cached(barcode, client=client)
+
+    assert client.calls == ["0034000470693"]
+
+
+def test_all_zero_product_identity_rejected_before_cache_or_upstream():
+    client = StubProductClient()
+    with patch("apps.exchange.product_context._consume_lookup_budget") as throttle:
+        with pytest.raises(ValueError, match="all zeroes"):
+            lookup_product_identity_cached("00000000", client=client)
+
+    throttle.assert_not_called()
+    assert client.calls == []
 
 
 def test_product_context_token_round_trips_identity_and_rejects_tampering():
