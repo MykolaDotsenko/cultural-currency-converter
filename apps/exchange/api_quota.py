@@ -63,10 +63,7 @@ def consume_conversion_quota(request: HttpRequest) -> ConversionQuota:
     key = f"api:v1:conversion-quota:{window}:{_origin_token(request)}"
 
     try:
-        if cache.add(key, 1, timeout=_BUCKET_TTL_SECONDS):
-            count = 1
-        else:
-            count = cache.incr(key)
+        count = 1 if cache.add(key, 1, timeout=_BUCKET_TTL_SECONDS) else cache.incr(key)
     except Exception as exc:
         logger.warning("api_conversion_quota_unavailable", exc_info=True)
         raise ConversionQuotaUnavailable("Shared conversion quota is unavailable.") from exc
