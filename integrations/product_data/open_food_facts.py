@@ -24,6 +24,19 @@ _BARCODE_RE = re.compile(r"^\d{7,14}$")
 _FIELDS = "code,product_name,brands,quantity,categories"
 
 
+def _unique_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate provider JSON field.")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(value: str) -> object:
+    raise ValueError("Non-finite provider JSON value.")
+
+
 def normalize_barcode(value: str) -> str:
     barcode = "".join(value.split())
     if not _BARCODE_RE.fullmatch(barcode):
@@ -184,6 +197,10 @@ class OpenFoodFactsClient:
         if len(raw) > MAX_RESPONSE_BYTES:
             raise ProductDataSourceError("Open Food Facts response exceeded the size limit.")
         try:
-            return json.loads(raw)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            return json.loads(
+                raw,
+                object_pairs_hook=_unique_json_members,
+                parse_constant=_reject_json_constant,
+            )
+        except (UnicodeDecodeError, ValueError, RecursionError) as exc:
             raise ProductDataSourceError("Open Food Facts returned malformed JSON.") from exc
