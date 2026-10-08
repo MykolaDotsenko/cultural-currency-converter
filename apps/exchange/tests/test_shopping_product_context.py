@@ -110,7 +110,10 @@ def test_explicit_barcode_lookup_adds_identity_without_calling_fx(
     assert "Example Brand" in body
     assert "400 g" in body
     assert "Open Food Facts" in body
-    assert "Product identity is context only; it never changes the price or FX calculation below." in body
+    assert (
+        "Product identity is context only; it never changes the price or FX calculation below."
+        in body
+    )
     assert 'name="product_context_token"' in body
 
 
