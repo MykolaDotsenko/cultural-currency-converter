@@ -358,3 +358,17 @@ consistently with the recorded retrieval timestamp. Records that disagree
 across evidence fields are excluded, not silently re-attributed. See
 https://openfoodfacts.github.io/documentation/docs/Open-prices/prices/prices_list/
 for the current public schema.
+
+
+### Outbound public-provider host allow-list
+
+The origin-pinned opener is also applied to Eurostat (ec.europa.eu),
+World Bank (api.worldbank.org), OECD SDMX (sdmx.oecd.org),
+Nager.Date (nagerholidays.com), and Wikidata (www.wikidata.org).
+All seven public-data HTTP integrations now reject unsafe initial URLs and
+redirect destinations before any follow-up network request. Same-host HTTPS
+redirects continue working; source failure is handled by each existing optional
+provider error boundary. An integration test asserts actual opener wiring for
+every provider, guarding against accidental reintroduction of urllib's
+default unrestricted redirect behavior. This changes no FX, historical
+observation or curated financial truth.

@@ -7,9 +7,12 @@ from datetime import UTC, datetime
 from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import Request
+
+from integrations.http_transport import make_pinned_https_urlopen
 
 _BASE_URL = "https://www.wikidata.org/w/rest.php/wikibase/v1"
+urlopen = make_pinned_https_urlopen("www.wikidata.org")
 _MAX_RESPONSE_BYTES = 1024 * 1024
 _QID_RE = re.compile(r"^Q[1-9]\d{0,15}$")
 
