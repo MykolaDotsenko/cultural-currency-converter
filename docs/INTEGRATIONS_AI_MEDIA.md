@@ -315,3 +315,28 @@ Before adding one, answer:
 - What provenance/licensing constraints apply?
 - What tests can run without live provider dependence?
 - What data leaves our system?
+
+
+## Open Prices: optional dated price observations
+
+The Shopping product identity surface can explicitly request independent
+Open Prices price observations (https://prices.openfoodfacts.org/api/docs).
+The first slice is web-only. No upstream price call occurs on normal Shopping
+GET, product lookup alone, or calculation POST. The Shopping form still
+requires a manually entered price; public price evidence is never an input to
+ShoppingAssumptions, FX arithmetic or saved financial snapshots.
+
+A request inspects at most 20 upstream rows and presents at most five proof-linked
+UNIT-price records with a matching canonical barcode, positive finite Decimal
+amount, explicit currency, place/country, observation date within 365 days,
+and stable source record URL. Older, future-dated, ambiguous units, unproven
+or foreign-product records do not qualify. This is not a current merchant
+price, live quote, market average or cheapest-store ranking.
+
+The transport enforces HTTPS origin pinning, a five-second timeout and a
+256-KiB response cap with JSON Decimal decoding. The application adds a
+canonical-barcode cache (12h for qualifying results, 1h empty), a shared
+six-upstream-lookups-per-minute budget and neutral degraded UI. Optional
+context failures never affect the Shopping FX estimate. Open Prices is
+community-contributed open data under ODbL. A future mobile API extension
+must maintain the same separate, read-only evidence boundary.

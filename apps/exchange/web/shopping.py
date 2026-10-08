@@ -12,6 +12,7 @@ from apps.countries.theme_profiles import country_theme_key
 from apps.exchange.cache import LatestQuoteGateway
 from apps.exchange.domain import FxDomainError
 from apps.exchange.forms import ShoppingCalculationForm
+from apps.exchange.open_prices_context import lookup_public_price_observations
 from apps.exchange.product_context import (
     ProductContextTokenError,
     build_product_context_token,
@@ -22,6 +23,11 @@ from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.shopping import ShoppingCalculationError, calculate_shopping_estimate
 from apps.exchange.shopping_snapshot import build_shopping_context_snapshot_token
+from integrations.price_data import (
+    OpenPricesRateLimited,
+    OpenPricesSourceError,
+    PublicPriceObservation,
+)
 from integrations.product_data import (
     ProductDataSourceError,
     ProductIdentity,
@@ -46,6 +52,20 @@ def _product_component(identity: ProductIdentity) -> dict[str, object]:
         "source_name": identity.source_name,
         "source_url": identity.source_url,
         "retrieved_at": date_format(identity.retrieved_at, "j M Y"),
+    }
+
+
+def _public_price_component(item: PublicPriceObservation) -> dict[str, object]:
+    return {
+        "amount": format(item.amount, "f"),
+        "currency": item.currency,
+        "observed_at": date_format(item.observed_at, "j M Y"),
+        "country_code": item.country_code,
+        "location": item.location_label,
+        "discounted": item.discounted,
+        "source_url": item.source_url,
+        "proof_id": item.proof_id,
+        "retrieved_at": date_format(item.retrieved_at, "j M Y"),
     }
 
 
@@ -82,6 +102,9 @@ def shopping_calculation_view(
     product_identity = None
     product_token = ""
     product_lookup_message = None
+    public_prices: tuple[PublicPriceObservation, ...] = ()
+    public_prices_checked = False
+    public_prices_message = None
 
     if request.method == "GET" and request.GET.get("barcode") is not None:
         barcode = str(request.GET.get("barcode") or "").strip()
@@ -120,6 +143,27 @@ def shopping_calculation_view(
             }
         else:
             product_token = build_product_context_token(product_identity)
+
+    if (
+        request.method == "GET"
+        and product_identity is not None
+        and request.GET.get("show_prices") == "1"
+    ):
+        public_prices_checked = True
+        try:
+            public_prices = lookup_public_price_observations(product_identity.barcode)
+        except OpenPricesRateLimited:
+            public_prices_message = (
+                "Community price lookup is busy. The Shopping calculator is still available."
+            )
+        except OpenPricesSourceError as exc:
+            logger.warning(
+                "shopping_open_prices_lookup_unavailable",
+                extra={"error_code": exc.__class__.__name__},
+            )
+            public_prices_message = (
+                "Community price observations are unavailable. Enter your own shelf price below."
+            )
 
     if request.method == "POST":
         submitted_product_token = str(request.POST.get("product_context_token") or "")
@@ -248,6 +292,9 @@ def shopping_calculation_view(
             ),
             "product_context_token": product_token,
             "product_lookup_message": product_lookup_message,
+            "public_prices": tuple(_public_price_component(x) for x in public_prices),
+            "public_prices_checked": public_prices_checked,
+            "public_prices_message": public_prices_message,
         },
         status=status,
     )

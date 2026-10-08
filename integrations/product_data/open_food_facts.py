@@ -30,7 +30,7 @@ def normalize_barcode(value: str) -> str:
     return barcode
 
 
-def _canonical_off_barcode(value: str) -> str:
+def canonical_open_food_facts_barcode(value: str) -> str:
     """Mirror Open Food Facts' leading-zero normalization for trusted identity.
 
     7 or fewer significant digits become EAN-8; 9–12 become EAN-13.
@@ -56,7 +56,7 @@ def _verified_product_barcode(
 ) -> str:
     """A provider response must identify the *requested* product, not another."""
     try:
-        expected = _canonical_off_barcode(requested_barcode)
+        expected = canonical_open_food_facts_barcode(requested_barcode)
     except ValueError as exc:
         raise ProductDataSourceError("Requested product barcode is invalid.") from exc
 
@@ -69,7 +69,7 @@ def _verified_product_barcode(
         if not isinstance(returned, str):
             raise ProductDataSourceError("Open Food Facts product barcode is invalid.")
         try:
-            verified = _canonical_off_barcode(returned)
+            verified = canonical_open_food_facts_barcode(returned)
         except ValueError as exc:
             raise ProductDataSourceError("Open Food Facts product barcode is invalid.") from exc
         if verified != expected:

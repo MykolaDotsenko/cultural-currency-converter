@@ -109,6 +109,49 @@
             identity is context only; it never changes the price or FX calculation below.
           </p>
         {% endif %}
+        {% if product_context %}
+          <p class="qa-context-disclaimer">
+            <a href="{% url 'shopping_calculation' %}?barcode={{ product_context.barcode }}&amp;show_prices=1">
+              View optional community-observed prices
+            </a>
+            · No item price will be filled in automatically.
+          </p>
+        {% endif %}
+        {% if public_prices_checked %}
+          <section class="qa-context-section"
+                   aria-label="Independent community price observations">
+            <h4>Community price observations · Open Prices</h4>
+            <p class="qa-context-disclaimer">
+              Historical observations from named places within the past year, not live
+              merchant offers or prices at your store. Only unit prices with independent
+              proof references are shown. The Shopping estimate below always uses your
+              manually entered shelf price.
+            </p>
+            {% if public_prices_message %}
+              <p class="qa-field__message" role="status">{{ public_prices_message }}</p>
+            {% elif public_prices %}
+              {% for item in public_prices %}
+                <article class="qa-price-card">
+                  <p class="qa-price-card__label">Observed {{ item.observed_at }}</p>
+                  <p class="qa-price-card__price">{{ item.amount }} {{ item.currency }} per unit</p>
+                  <p class="qa-price-card__meta">
+                    {{ item.location }} · {{ item.country_code }}
+                    {% if item.discounted %}· discounted observation{% endif %}
+                  </p>
+                  <p class="qa-context-source">
+                    <a href="{{ item.source_url }}">Open Prices record and proof #{{ item.proof_id }}</a>
+                    · retrieved {{ item.retrieved_at }} · ODbL
+                  </p>
+                </article>
+              {% endfor %}
+            {% else %}
+              <p class="qa-field__message" role="status">
+                No qualifying, dated, proof-linked unit-price observations were found
+                for this product in the bounded public sample.
+              </p>
+            {% endif %}
+          </section>
+        {% endif %}
       </section>
       {% if reference_data_ready %}
         <form method="post"

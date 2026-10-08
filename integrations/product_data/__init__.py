@@ -4,7 +4,11 @@ from .base import (
     ProductNotFound,
     ProductSourceRateLimited,
 )
-from .open_food_facts import OpenFoodFactsClient, normalize_barcode
+from .open_food_facts import (
+    OpenFoodFactsClient,
+    canonical_open_food_facts_barcode,
+    normalize_barcode,
+)
 
 __all__ = [
     "OpenFoodFactsClient",
@@ -13,4 +17,5 @@ __all__ = [
     "ProductNotFound",
     "ProductSourceRateLimited",
     "normalize_barcode",
+    "canonical_open_food_facts_barcode",
 ]
