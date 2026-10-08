@@ -1,4 +1,3 @@
-import django.db.models.deletion
 from django.db import migrations, models
 
 
@@ -83,7 +82,7 @@ class Migration(migrations.Migration):
                 (
                     "country",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
+                        on_delete=models.CASCADE,
                         related_name="economic_observations",
                         to="countries.country",
                     ),
