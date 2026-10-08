@@ -8,7 +8,11 @@ import pytest
 from django.core.cache import cache
 
 from apps.exchange.open_prices_context import lookup_public_price_observations
-from integrations.price_data import OpenPricesRateLimited, OpenPricesSourceError, PublicPriceObservation
+from integrations.price_data import (
+    OpenPricesRateLimited,
+    OpenPricesSourceError,
+    PublicPriceObservation,
+)
 
 
 @pytest.fixture(autouse=True)

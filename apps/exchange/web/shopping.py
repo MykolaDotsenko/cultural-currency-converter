@@ -23,7 +23,11 @@ from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.shopping import ShoppingCalculationError, calculate_shopping_estimate
 from apps.exchange.shopping_snapshot import build_shopping_context_snapshot_token
-from integrations.price_data import OpenPricesRateLimited, OpenPricesSourceError, PublicPriceObservation
+from integrations.price_data import (
+    OpenPricesRateLimited,
+    OpenPricesSourceError,
+    PublicPriceObservation,
+)
 from integrations.product_data import (
     ProductDataSourceError,
     ProductIdentity,
