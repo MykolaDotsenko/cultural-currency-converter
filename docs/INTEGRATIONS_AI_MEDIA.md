@@ -56,6 +56,21 @@ The generic destination UI intentionally shows only `nationalHoliday=true` recor
 
 Holiday evidence may support wording such as “public holiday today/upcoming; opening hours may differ”. It must not claim that a particular bank, shop, ATM, transport service or venue is closed/open because the holiday API does not provide entity-specific opening hours.
 
+## Open Food Facts product identity
+
+Open Food Facts is used only for **explicit barcode-driven product identity context** in Shopping. The integration is pinned to the current v3.6 product-read API and requests a deliberately small field set: code, product name, brands, quantity and categories.
+
+Runtime rules:
+
+- normal Shopping GET/POST does not call Open Food Facts;
+- a request happens only after an explicit barcode lookup;
+- positive product identities are server-cached for seven days; not-found responses are cached for one hour;
+- a shared-cache 12 lookups/minute guard stays below the documented 15 product reads/minute/IP upstream limit;
+- successful identity is carried into the Shopping submit by a signed 24-hour token so the FX calculation does not trigger a second product lookup;
+- provider failure, rate limiting, invalid/tampered token or missing product never blocks the core Shopping calculator.
+
+Open Food Facts supplies no price to the Shopping domain. Item price, shipping, known fees and FX markup remain explicit user inputs. Community product data can be incomplete and must retain Open Food Facts attribution. The database is reused under ODbL; this slice does not reuse product images, avoiding a separate CC BY-SA image-licensing surface.
+
 ## Editorial/cultural sources
 
 Curated cultural, payment, typical-price and story content should keep enough provenance to explain source, observation/verification time, scope and confidence.

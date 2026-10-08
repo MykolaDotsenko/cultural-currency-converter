@@ -36,6 +36,8 @@ Verify time-sensitive framework/provider details against current official docume
 - Eurostat dissemination statistics API: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/
 - OECD SDMX API: https://sdmx.oecd.org/public/rest/
 - Nager.Date Community API: https://nagerholidays.com/
+- Open Food Facts API: https://openfoodfacts.github.io/documentation/docs/Product-Opener/api/
+- Open Food Facts reuse/licensing: https://openfoodfacts.github.io/openfoodfacts-server/api/tutorials/license-be-on-the-legal-side/
 - Wikimedia Commons: https://commons.wikimedia.org/
 - Europeana: https://www.europeana.eu/
 

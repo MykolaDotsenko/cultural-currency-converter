@@ -51,11 +51,75 @@
           <p>{{ shopping_error.detail }}</p>
         </div>
       {% endif %}
+      <section class="qa-context-section"
+               aria-labelledby="shopping-product-context-title">
+        <div>
+          <p class="qa-foundation-kicker">Optional product context</p>
+          <h3 id="shopping-product-context-title">Identify a food product by barcode.</h3>
+          <p>
+            Open Food Facts can add a product name, brand and pack size. It does not supply the
+            shelf price used by this calculator.
+          </p>
+        </div>
+        <form method="get"
+              action="{% url 'shopping_calculation' %}"
+              class="qa-inline-form">
+          <label class="qa-field__label" for="shopping-barcode">Barcode</label>
+          <input class="qa-text-input"
+                 id="shopping-barcode"
+                 name="barcode"
+                 inputmode="numeric"
+                 autocomplete="off"
+                 maxlength="20"
+                 value="{% if product_context %}{{ product_context.barcode }}{% endif %}"
+                 placeholder="EAN / UPC / GTIN">
+          <button class="qa-secondary-button" type="submit">Look up product</button>
+        </form>
+        {% if product_lookup_message %}
+          <div class="qa-inline-alert{% if product_lookup_message.tone == 'error' %} qa-inline-alert--error{% endif %}"
+               role="status">
+            <h4>{{ product_lookup_message.title }}</h4>
+            <p>{{ product_lookup_message.detail }}</p>
+          </div>
+        {% endif %}
+        {% if product_context %}
+          <article class="qa-price-card">
+            <div>
+              <p class="qa-price-card__label">Product identity</p>
+              <p class="qa-price-card__price">{{ product_context.name }}</p>
+              {% if product_context.brands or product_context.quantity %}
+                <p class="qa-price-card__equivalent">
+                  {% if product_context.brands %}{{ product_context.brands }}{% endif %}
+                  {% if product_context.brands and product_context.quantity %}·{% endif %}
+                  {% if product_context.quantity %}{{ product_context.quantity }}{% endif %}
+                </p>
+              {% endif %}
+            </div>
+            {% if product_context.categories %}
+              <p class="qa-price-card__meta">{{ product_context.categories|join:", " }}</p>
+            {% endif %}
+            <p class="qa-context-source">
+              Barcode {{ product_context.barcode }} ·
+              <a href="{{ product_context.source_url }}">Source: {{ product_context.source_name }}</a>
+              · retrieved {{ product_context.retrieved_at }}
+            </p>
+          </article>
+          <p class="qa-context-disclaimer">
+            Open Food Facts is community-contributed open data and can be incomplete. Product
+            identity is context only; it never changes the price or FX calculation below.
+          </p>
+        {% endif %}
+      </section>
       {% if reference_data_ready %}
         <form method="post"
               action="{% url 'shopping_calculation' %}"
               class="qa-destination-mode__form">
           {% csrf_token %}
+          {% if product_context_token %}
+            <input type="hidden"
+                   name="product_context_token"
+                   value="{{ product_context_token }}">
+          {% endif %}
           <div class="qa-field{% if form.purchase_country.errors %} qa-field--error{% endif %}">
             <label class="qa-field__label"
                    for="{{ form.purchase_country.id_for_label }}">Purchase country</label>
@@ -197,6 +261,16 @@
           {{ shopping.estimated_home_cost }} <span>{{ shopping.home_currency }}</span>
         </p>
         <dl class="qa-payment-estimate__facts">
+          {% if shopping.product %}
+            <div>
+              <dt>Product context</dt>
+              <dd>
+                {{ shopping.product.name }}
+                {% if shopping.product.brands %}· {{ shopping.product.brands }}{% endif %}
+                {% if shopping.product.quantity %}· {{ shopping.product.quantity }}{% endif %}
+              </dd>
+            </div>
+          {% endif %}
           <div>
             <dt>Item</dt>
             <dd>

@@ -12,16 +12,41 @@ from apps.countries.theme_profiles import country_theme_key
 from apps.exchange.cache import LatestQuoteGateway
 from apps.exchange.domain import FxDomainError
 from apps.exchange.forms import ShoppingCalculationForm
+from apps.exchange.product_context import (
+    ProductContextTokenError,
+    build_product_context_token,
+    load_product_context_token,
+    lookup_product_identity_cached,
+)
 from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.shopping import ShoppingCalculationError, calculate_shopping_estimate
 from apps.exchange.shopping_snapshot import build_shopping_context_snapshot_token
+from integrations.product_data import (
+    ProductDataSourceError,
+    ProductIdentity,
+    ProductNotFound,
+    ProductSourceRateLimited,
+)
 
 logger = logging.getLogger("cultural_currency.exchange")
 
 
 def _money_text(value, *, minor_units: int) -> str:
     return f"{value:.{minor_units}f}"
+
+
+def _product_component(identity: ProductIdentity) -> dict[str, object]:
+    return {
+        "barcode": identity.barcode,
+        "name": identity.product_name,
+        "brands": ", ".join(identity.brands),
+        "quantity": identity.quantity,
+        "categories": identity.categories,
+        "source_name": identity.source_name,
+        "source_url": identity.source_url,
+        "retrieved_at": date_format(identity.retrieved_at, "j M Y"),
+    }
 
 
 @require_http_methods(["GET", "POST"])
@@ -54,6 +79,64 @@ def shopping_calculation_view(
     component = None
     error = None
     status = 200
+    product_identity = None
+    product_token = ""
+    product_lookup_message = None
+
+    if request.method == "GET" and request.GET.get("barcode") is not None:
+        barcode = str(request.GET.get("barcode") or "").strip()
+        try:
+            product_identity = lookup_product_identity_cached(barcode)
+        except ValueError:
+            product_lookup_message = {
+                "tone": "error",
+                "title": "Check the barcode.",
+                "detail": "Enter 7–14 barcode digits. Spaces are ignored.",
+            }
+        except ProductNotFound:
+            product_lookup_message = {
+                "tone": "neutral",
+                "title": "Product not found in Open Food Facts.",
+                "detail": (
+                    "You can still enter the shelf price manually. "
+                    "Product identity never controls the Shopping calculation."
+                ),
+            }
+        except ProductSourceRateLimited:
+            product_lookup_message = {
+                "tone": "neutral",
+                "title": "Product lookup is temporarily busy.",
+                "detail": "The Shopping calculator still works with a manually entered price.",
+            }
+        except ProductDataSourceError as exc:
+            logger.warning(
+                "shopping_product_lookup_unavailable",
+                extra={"error_code": exc.__class__.__name__},
+            )
+            product_lookup_message = {
+                "tone": "neutral",
+                "title": "Product context is temporarily unavailable.",
+                "detail": "The Shopping calculator still works with a manually entered price.",
+            }
+        else:
+            product_token = build_product_context_token(product_identity)
+
+    if request.method == "POST":
+        submitted_product_token = str(request.POST.get("product_context_token") or "")
+        if submitted_product_token:
+            try:
+                product_identity = load_product_context_token(submitted_product_token)
+            except ProductContextTokenError:
+                product_lookup_message = {
+                    "tone": "neutral",
+                    "title": "Saved product context expired.",
+                    "detail": (
+                        "The product label was removed, but your explicit price and "
+                        "Shopping calculation are unchanged."
+                    ),
+                }
+            else:
+                product_token = submitted_product_token
 
     if request.method == "POST" and form.is_valid():
         assumptions = form.cleaned_data["shopping_assumptions"]
@@ -144,6 +227,9 @@ def shopping_calculation_view(
                 ),
                 "stale": conversion.stale,
                 "unknown_costs": estimate.unknown_costs,
+                "product": (
+                    _product_component(product_identity) if product_identity is not None else None
+                ),
             }
 
     elif request.method == "POST":
@@ -157,6 +243,11 @@ def shopping_calculation_view(
             "shopping": component,
             "shopping_error": error,
             "reference_data_ready": form.reference_data_ready,
+            "product_context": (
+                _product_component(product_identity) if product_identity is not None else None
+            ),
+            "product_context_token": product_token,
+            "product_lookup_message": product_lookup_message,
         },
         status=status,
     )
