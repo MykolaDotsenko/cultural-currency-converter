@@ -372,3 +372,16 @@ provider error boundary. An integration test asserts actual opener wiring for
 every provider, guarding against accidental reintroduction of urllib's
 default unrestricted redirect behavior. This changes no FX, historical
 observation or curated financial truth.
+
+
+### Mobile Open Prices evidence endpoint
+
+GET /api/v1/products/{barcode}/prices/ provides an opt-in, read-only public
+API v1 adapter over the exact existing web Open Prices cache, canonical
+product normalization, and verified observation *fields*. It exposes financial
+Decimal observations as JSON strings with source links, UTC retrieval time
+and observation date; the proof ID refers to provider evidence and is not a
+claim that its actual contents have been independently authenticated.
+All responses are private, no-store. Per-peer API quota protects cache reads,
+while the separate global upstream budget still applies. Never auto-fill
+Shopping itemPrice from community records or reinterpret them as live offers.
