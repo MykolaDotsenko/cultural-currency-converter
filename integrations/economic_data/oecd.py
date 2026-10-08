@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import io
-import socket
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
@@ -188,7 +187,7 @@ class OECDEconomicClient:
             if exc.code == 429:
                 raise EconomicDataSourceError("OECD rate limit reached.") from exc
             raise EconomicDataSourceError(f"OECD returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise EconomicDataSourceError("OECD request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:

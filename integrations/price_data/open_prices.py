@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import socket
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -15,7 +14,6 @@ from urllib.parse import urlencode
 from urllib.request import Request
 
 from integrations.http_transport import is_trusted_https_url, make_pinned_https_urlopen
-
 from integrations.product_data import canonical_open_food_facts_barcode
 
 BASE_URL = "https://prices.openfoodfacts.org/api/v1/prices"
@@ -247,7 +245,7 @@ class OpenPricesClient:
                     "Open Prices is temporarily throttling requests."
                 ) from exc
             raise OpenPricesSourceError("Open Prices request failed.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise OpenPricesSourceError("Open Prices request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:

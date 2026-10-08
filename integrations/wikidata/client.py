@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-import socket
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from http.client import HTTPException
@@ -99,7 +98,7 @@ class WikidataItemClient:
             if exc.code == 429:
                 raise WikidataSourceError("Wikidata rate limit reached.") from exc
             raise WikidataSourceError(f"Wikidata returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout) as exc:
+        except (URLError, HTTPException, TimeoutError) as exc:
             raise WikidataSourceError("Wikidata request failed.") from exc
 
         if len(raw) > _MAX_RESPONSE_BYTES:

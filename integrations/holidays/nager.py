@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import socket
 from datetime import UTC, date, datetime
 from http.client import HTTPException
 from typing import Any
@@ -152,7 +151,7 @@ class NagerDateHolidayClient:
             if exc.code == 429:
                 raise HolidayDataSourceError("Nager.Date rate limit reached.") from exc
             raise HolidayDataSourceError(f"Nager.Date returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise HolidayDataSourceError("Nager.Date request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:

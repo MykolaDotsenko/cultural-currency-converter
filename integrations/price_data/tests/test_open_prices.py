@@ -166,35 +166,43 @@ def test_client_requests_bounded_canonical_product_page():
 def test_client_fails_closed_on_redirect_or_invalid_json():
     client = OpenPricesClient()
     req = Request("https://prices.openfoodfacts.org/api/v1/prices")
-    with patch(
+    with (
+        patch(
         "integrations.price_data.open_prices.urlopen",
         return_value=_Response("https://unrelated.example/prices", b'{"items":[]}'),
+        ),
+        pytest.raises(OpenPricesSourceError, match="unexpected source"),
     ):
-        with pytest.raises(OpenPricesSourceError, match="unexpected source"):
-            client._fetch_json(req)
-    with patch(
+        client._fetch_json(req)
+    with (
+        patch(
         "integrations.price_data.open_prices.urlopen",
         return_value=_Response(req.full_url, b"invalid"),
+        ),
+        pytest.raises(OpenPricesSourceError, match="malformed JSON"),
     ):
-        with pytest.raises(OpenPricesSourceError, match="malformed JSON"):
-            client._fetch_json(req)
+        client._fetch_json(req)
 
 
 def test_client_handles_throttle_and_max_response_size():
     client = OpenPricesClient()
     req = Request("https://prices.openfoodfacts.org/api/v1/prices")
-    with patch(
+    with (
+        patch(
         "integrations.price_data.open_prices.urlopen",
         side_effect=HTTPError(req.full_url, 429, "busy", {}, BytesIO()),
+        ),
+        pytest.raises(OpenPricesRateLimited),
     ):
-        with pytest.raises(OpenPricesRateLimited):
-            client._fetch_json(req)
-    with patch(
+        client._fetch_json(req)
+    with (
+        patch(
         "integrations.price_data.open_prices.urlopen",
         return_value=_Response(req.full_url, b"x" * (256 * 1024 + 1)),
+        ),
+        pytest.raises(OpenPricesSourceError, match="size limit"),
     ):
-        with pytest.raises(OpenPricesSourceError, match="size limit"):
-            client._fetch_json(req)
+        client._fetch_json(req)
 
 
 @pytest.mark.parametrize(

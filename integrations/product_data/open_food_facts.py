@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-import socket
 from datetime import UTC, datetime
 from http.client import HTTPException
 from typing import Any
@@ -11,7 +10,6 @@ from urllib.parse import urlencode
 from urllib.request import Request
 
 from integrations.http_transport import is_trusted_https_url, make_pinned_https_urlopen
-
 from integrations.product_data.base import (
     ProductDataSourceError,
     ProductIdentity,
@@ -178,7 +176,7 @@ class OpenFoodFactsClient:
             if exc.code == 429:
                 raise ProductSourceRateLimited("Open Food Facts lookup limit reached.") from exc
             raise ProductDataSourceError(f"Open Food Facts returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise ProductDataSourceError("Open Food Facts request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:

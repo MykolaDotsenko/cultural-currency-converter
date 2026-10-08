@@ -123,7 +123,7 @@ def test_open_food_facts_accepts_only_canonical_barcode_equivalence(requested, r
     ],
 )
 def test_open_food_facts_rejects_mismatched_or_unverifiable_product_identity(payload):
-    with pytest.raises(ProductDataSourceError, match="barcode|identity"):
+    with pytest.raises(ProductDataSourceError, match=r"barcode|identity"):
         parse_open_food_facts_product(
             {"status": "success", **payload},
             requested_barcode="3017624010701",
@@ -157,7 +157,8 @@ def test_product_client_allows_only_expected_provenance_origin():
     request = Request("https://world.openfoodfacts.org/api/v3.6/product/3017624010701.json")
     client = OpenFoodFactsClient()
 
-    with patch(
+    with (
+        patch(
         "integrations.product_data.open_food_facts.urlopen",
         return_value=_Response(
             "https://world.openfoodfacts.org/api/v3.6/product/3017624010701.json"
@@ -170,6 +171,7 @@ def test_product_client_allows_only_expected_provenance_origin():
         return_value=_Response(
             "https://world.openbeautyfacts.org/api/v3.6/product/3017624010701.json"
         ),
+        ),
+        pytest.raises(ProductDataSourceError, match="unexpected source"),
     ):
-        with pytest.raises(ProductDataSourceError, match="unexpected source"):
-            client._fetch_json(request)
+        client._fetch_json(request)

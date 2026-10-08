@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import socket
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
@@ -177,7 +176,7 @@ class EurostatEconomicClient:
             if exc.code == 429:
                 raise EconomicDataSourceError("Eurostat rate limit reached.") from exc
             raise EconomicDataSourceError(f"Eurostat returned HTTP {exc.code}.") from exc
-        except (URLError, HTTPException, TimeoutError, socket.timeout, OSError) as exc:
+        except (URLError, HTTPException, TimeoutError, OSError) as exc:
             raise EconomicDataSourceError("Eurostat request failed.") from exc
 
         if len(raw) > MAX_RESPONSE_BYTES:
