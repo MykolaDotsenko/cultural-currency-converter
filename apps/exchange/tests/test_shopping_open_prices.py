@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from django.urls import reverse
 
+from apps.countries.models import Country, CountryCurrency, Currency
 from integrations.price_data import OpenPricesSourceError, PublicPriceObservation
 from integrations.product_data.base import ProductIdentity
 
@@ -14,6 +15,28 @@ from integrations.product_data.base import ProductIdentity
 @pytest.fixture(autouse=True)
 def use_vite_dev_mode(settings):
     settings.VITE_DEV_SERVER_ENABLED = True
+
+
+@pytest.fixture(autouse=True)
+def shopping_reference_data(db):
+    purchase_country = Country.objects.create(
+        iso2="US", iso3="USA", name="United States"
+    )
+    home_country = Country.objects.create(
+        iso2="FI", iso3="FIN", name="Finland"
+    )
+    usd = Currency.objects.create(
+        code="USD", name="US dollar", symbol="$", minor_units=2
+    )
+    eur = Currency.objects.create(
+        code="EUR", name="Euro", symbol="€", minor_units=2
+    )
+    CountryCurrency.objects.create(
+        country=purchase_country, currency=usd, is_primary=True, source="test"
+    )
+    CountryCurrency.objects.create(
+        country=home_country, currency=eur, is_primary=True, source="test"
+    )
 
 
 @pytest.fixture
