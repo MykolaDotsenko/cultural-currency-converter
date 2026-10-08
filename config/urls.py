@@ -22,6 +22,7 @@ from apps.exchange.api_v1 import (
     api_v1_reference,
     api_v1_root,
 )
+from apps.exchange.api_v1_shopping import api_v1_shopping_estimate
 from apps.exchange.views import (
     budget_explanation,
     budget_interpretation,
@@ -83,6 +84,7 @@ urlpatterns = [
     path("api/v1/", api_v1_root, name="api_v1_root"),
     path("api/v1/reference/", api_v1_reference, name="api_v1_reference"),
     path("api/v1/conversions/", api_v1_conversion, name="api_v1_conversion"),
+    path("api/v1/shopping/estimate/", api_v1_shopping_estimate, name="api_v1_shopping_estimate"),
     path(
         "api/v1/products/<str:barcode>/",
         api_v1_product_identity,
