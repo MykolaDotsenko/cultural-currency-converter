@@ -96,9 +96,11 @@ def test_barcode_normalization_rejects_non_consumer_codes(raw):
 
 
 def test_unicode_numeral_barcode_never_reaches_product_transport():
-    with patch("integrations.product_data.open_food_facts.urlopen") as transport:
-        with pytest.raises(ValueError, match="7–14 digits"):
-            OpenFoodFactsClient().fetch_product("１２３４５６７８")
+    with (
+        patch("integrations.product_data.open_food_facts.urlopen") as transport,
+        pytest.raises(ValueError, match="7–14 digits"),
+    ):
+        OpenFoodFactsClient().fetch_product("１２３４５６７８")
     transport.assert_not_called()
 
 
