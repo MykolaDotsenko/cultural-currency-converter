@@ -33,8 +33,7 @@ def _holiday(year: int) -> HolidaySourceObservation:
 @pytest.mark.django_db
 def test_sync_public_holidays_dry_run_rolls_back(monkeypatch, finland):
     monkeypatch.setattr(
-        "apps.culture.management.commands.sync_public_holidays."
-        "NagerDateHolidayClient.fetch_year",
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
         lambda self, country_iso2, year, today=None: (_holiday(year),),
     )
 
@@ -51,8 +50,7 @@ def test_sync_public_holidays_dry_run_rolls_back(monkeypatch, finland):
 @pytest.mark.django_db
 def test_sync_public_holidays_persists_current_scope(monkeypatch, finland):
     monkeypatch.setattr(
-        "apps.culture.management.commands.sync_public_holidays."
-        "NagerDateHolidayClient.fetch_year",
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
         lambda self, country_iso2, year, today=None: (_holiday(year),),
     )
 
@@ -77,8 +75,7 @@ def test_sync_public_holidays_aborts_before_writes_on_provider_failure(
         raise HolidayDataSourceError("upstream unavailable")
 
     monkeypatch.setattr(
-        "apps.culture.management.commands.sync_public_holidays."
-        "NagerDateHolidayClient.fetch_year",
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
         fail,
     )
 
