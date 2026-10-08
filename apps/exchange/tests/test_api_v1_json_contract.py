@@ -25,9 +25,7 @@ from apps.exchange.api_v1 import _json_body
     ],
 )
 @pytest.mark.parametrize("endpoint", ["api_v1_conversion", "api_v1_shopping_estimate"])
-def test_strict_financial_json_rejects_invalid_ambiguity_before_provider(
-    client, body, endpoint
-):
+def test_strict_financial_json_rejects_invalid_ambiguity_before_provider(client, body, endpoint):
     with (
         patch("apps.exchange.api_v1.consume_conversion_quota") as quota,
         patch("apps.exchange.api_v1.run_converter_submission") as conversion,
