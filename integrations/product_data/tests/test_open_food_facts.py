@@ -84,10 +84,10 @@ def test_barcode_normalization_accepts_bounded_numeric_codes(raw, expected):
         "123456789012345",
         "ABC12345",
         "1234-5678",
-        "١٢٣٤٥٦٧٨",  # Arabic-Indic numerals (Python \\d accepts them)
-        "１２３４５６７８",  # fullwidth numerals
-        "१२३४५६७८",  # Devanagari numerals
-        "1234567８",  # mixed-script digits are ambiguous identifiers
+        "\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668",  # Arabic-Indic numerals (Python \\d accepts them)
+        "\uFF11\uFF12\uFF13\uFF14\uFF15\uFF16\uFF17\uFF18",  # fullwidth numerals
+        "\u0967\u0968\u0969\u096A\u096B\u096C\u096D\u096E",  # Devanagari numerals
+        "1234567\uFF18",  # mixed-script digits are ambiguous identifiers
     ],
 )
 def test_barcode_normalization_rejects_non_consumer_codes(raw):
@@ -100,7 +100,7 @@ def test_unicode_numeral_barcode_never_reaches_product_transport():
         patch("integrations.product_data.open_food_facts.urlopen") as transport,
         pytest.raises(ValueError, match="7–14 digits"),
     ):
-        OpenFoodFactsClient().fetch_product("１２３４５６７８")
+        OpenFoodFactsClient().fetch_product("\uFF11\uFF12\uFF13\uFF14\uFF15\uFF16\uFF17\uFF18")
     transport.assert_not_called()
 
 
@@ -142,7 +142,7 @@ def test_open_food_facts_accepts_only_canonical_barcode_equivalence(requested, r
         {"product": {"product_name": "Missing code"}},
         {"code": 3017624010701, "product": {"product_name": "Numeric identity"}},
         {"code": "0000000000000", "product": {"product_name": "Invalid zero code"}},
-        {"code": "１２３４５６７８", "product": {"product_name": "Unicode identity"}},
+        {"code": "\uFF11\uFF12\uFF13\uFF14\uFF15\uFF16\uFF17\uFF18", "product": {"product_name": "Unicode identity"}},
     ],
 )
 def test_open_food_facts_rejects_mismatched_or_unverifiable_product_identity(payload):
