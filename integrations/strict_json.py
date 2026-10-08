@@ -12,6 +12,23 @@ import json
 from decimal import Decimal
 from typing import Any
 
+_MAX_CONTAINER_DEPTH = 64
+
+
+def _validate_container_depth(value: Any) -> None:
+    """Limit untrusted JSON nesting without depending on Python recursion limits."""
+    stack: list[tuple[Any, int]] = [(value, 1)]
+    while stack:
+        current, depth = stack.pop()
+        if isinstance(current, dict):
+            if depth > _MAX_CONTAINER_DEPTH:
+                raise ValueError("External JSON nesting limit exceeded.")
+            stack.extend((item, depth + 1) for item in current.values())
+        elif isinstance(current, list):
+            if depth > _MAX_CONTAINER_DEPTH:
+                raise ValueError("External JSON nesting limit exceeded.")
+            stack.extend((item, depth + 1) for item in current)
+
 
 def _unique_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     result: dict[str, Any] = {}
@@ -40,4 +57,6 @@ def strict_provider_json_loads(raw: bytes, *, decimal_floats: bool = False) -> A
     }
     if decimal_floats:
         options["parse_float"] = Decimal
-    return json.loads(raw, **options)
+    payload = json.loads(raw, **options)
+    _validate_container_depth(payload)
+    return payload
