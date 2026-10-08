@@ -38,6 +38,7 @@ from integrations.product_data import (
 
 _API_VERSION = "1"
 _MAX_JSON_BODY_BYTES = 16 * 1024
+_MAX_JSON_NESTING_DEPTH = 64
 _CONVERSION_FIELDS = frozenset(
     {
         "amount",
@@ -96,6 +97,37 @@ def _content_length(request: HttpRequest) -> int | None:
     return value if value >= 0 else None
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate fields instead of silently accepting last-key-wins JSON."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON field.")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json_constant(value: str) -> object:
+    """JSON NaN and Infinity are not valid finite financial input values."""
+    raise ValueError("Non-finite JSON number.")
+
+
+def _exceeds_json_nesting_limit(value: object) -> bool:
+    """Bound decoded container depth independent of Python's recursion limit."""
+    stack: list[tuple[object, int]] = [(value, 1)]
+    while stack:
+        current, depth = stack.pop()
+        if isinstance(current, dict):
+            if depth > _MAX_JSON_NESTING_DEPTH:
+                return True
+            stack.extend((item, depth + 1) for item in current.values())
+        elif isinstance(current, list):
+            if depth > _MAX_JSON_NESTING_DEPTH:
+                return True
+            stack.extend((item, depth + 1) for item in current)
+    return False
+
+
 def _json_body(request: HttpRequest) -> dict[str, object] | JsonResponse:
     if request.content_type != "application/json":
         return _api_error(
@@ -121,8 +153,20 @@ def _json_body(request: HttpRequest) -> dict[str, object] | JsonResponse:
         )
 
     try:
-        payload = json.loads(body.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
+        payload = json.loads(
+            body.decode("utf-8"),
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_nonfinite_json_constant,
+            parse_float=Decimal,
+        )
+    except (UnicodeDecodeError, ValueError, RecursionError):
+        return _api_error(
+            code="invalid_json",
+            message="Request body must contain valid UTF-8 JSON.",
+            status=400,
+        )
+
+    if _exceeds_json_nesting_limit(payload):
         return _api_error(
             code="invalid_json",
             message="Request body must contain valid UTF-8 JSON.",

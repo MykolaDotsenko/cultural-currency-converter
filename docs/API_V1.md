@@ -16,6 +16,15 @@ Within v1, existing field meanings are stable. New optional fields may be added 
 
 Financial decimals are serialized as **JSON strings**, never binary JSON numbers. Dates use ISO `YYYY-MM-DD`; timestamps use timezone-aware ISO 8601.
 
+Financial POST request bodies use strict UTF-8 JSON parsing (16 KiB maximum):
+repeated object keys, including in nested objects, are rejected rather than
+using the ambiguous last-value-wins convention. Non-finite `NaN`/`Infinity`
+constants, invalid JSON and excessive nesting return HTTP 400 `invalid_json`
+before form validation, quota accounting or any upstream lookup. Oversized
+bodies still return HTTP 413 `payload_too_large` first. Finite JSON number
+literals are **not** an alternative to monetary decimal strings; supported
+input fields continue to require the existing string contract.
+
 ## Endpoints
 
 ### `GET /api/v1/`
