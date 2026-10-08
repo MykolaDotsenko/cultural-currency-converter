@@ -84,7 +84,10 @@ def test_open_prices_request_budget_intentionally_resets_on_next_minute():
         patch("apps.exchange.open_prices_context._MAX_UPSTREAM_LOOKUPS_PER_MINUTE", 1),
         patch(
             "apps.exchange.open_prices_context._limit_key",
-            side_effect=["shopping:open-prices:limit:minute-A", "shopping:open-prices:limit:minute-B"],
+            side_effect=[
+                "shopping:open-prices:limit:minute-A",
+                "shopping:open-prices:limit:minute-B",
+            ],
         ),
     ):
         assert lookup_public_price_observations("12345678", client=client) == ()
