@@ -399,6 +399,7 @@ def api_v1_root(request: HttpRequest) -> JsonResponse:
                     "money_context",
                     "historical_conversion",
                     "shopping_estimate",
+                    "community_price_observations",
                 ],
                 "accountMutationApi": False,
             },
