@@ -91,7 +91,10 @@ def test_product_provider_budget_intentionally_resets_in_next_minute():
         patch("apps.exchange.product_context._LOCAL_LOOKUP_LIMIT_PER_MINUTE", 1),
         patch(
             "apps.exchange.product_context._rate_limit_key",
-            side_effect=["product-context:off-limit:minute-A", "product-context:off-limit:minute-B"],
+            side_effect=[
+                "product-context:off-limit:minute-A",
+                "product-context:off-limit:minute-B",
+            ],
         ),
     ):
         lookup_product_identity_cached("100000001", client=client)
