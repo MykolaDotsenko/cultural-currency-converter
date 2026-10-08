@@ -7,11 +7,13 @@ from decimal import Decimal, InvalidOperation
 from http.client import HTTPException
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request
 
 from integrations.economic_data.base import EconomicDataSourceError, EconomicSourceObservation
+from integrations.http_transport import make_pinned_https_urlopen
 
 DATA_URL = "https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_PPP@DF_PPP_CPL,1.1/.A...."
+urlopen = make_pinned_https_urlopen("sdmx.oecd.org")
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 
 _AREA_COLUMNS = ("REF_AREA", "Reference area")

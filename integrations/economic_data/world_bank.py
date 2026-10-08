@@ -7,11 +7,13 @@ from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request
 
 from integrations.economic_data.base import EconomicDataSourceError, EconomicSourceObservation
+from integrations.http_transport import make_pinned_https_urlopen
 
 BASE_URL = "https://api.worldbank.org/v2"
+urlopen = make_pinned_https_urlopen("api.worldbank.org")
 MAX_RESPONSE_BYTES = 1024 * 1024
 
 WORLD_BANK_INFLATION = "FP.CPI.TOTL.ZG"
