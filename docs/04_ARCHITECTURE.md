@@ -284,6 +284,12 @@ Architecture may evolve. Update this document and the ADR log when a change crea
 Destination Comparison remains the only comparison calculation path. A successful comparison may issue a short-lived signed canonical-input token. `SavedComparison` stores those inputs and normalized basket assumptions only. GET reopen is provider-free; explicit Re-check posts the saved fields back to the canonical comparison endpoint, preserving route isolation and preventing a second comparison engine.
 
 
+### Product identity boundary
+
+Open Food Facts product data is optional descriptive context. `integrations/product_data/open_food_facts.py` owns HTTP/schema normalization; `apps/exchange/product_context.py` owns cache, local upstream budget, signed carry-forward token and trusted provenance validation. The Shopping form/domain never receives a product price from this integration.
+
+A barcode lookup is an explicit user action. Product identity can disappear without changing Shopping inputs or FX output. A signed context token prevents repeat network lookups between identity discovery and calculation, while tampered/expired identity is simply omitted rather than rejecting the financial calculation.
+
 ### Public API v1 boundary
 
 `apps/exchange/api_v1.py` is a transport adapter, not a parallel application layer. The public v1 conversion endpoint validates with `CurrentConversionForm`, builds the same `ConverterSubmissionCommand` meaning and calls `run_converter_submission` with the canonical gateway factories. It serializes `ConversionResult` and `MoneyContext` without recalculation.
