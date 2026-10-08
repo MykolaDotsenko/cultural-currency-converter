@@ -70,11 +70,17 @@ def test_product_lookup_negative_cache_avoids_repeated_missing_product_calls():
 
 def test_local_product_lookup_budget_stays_below_upstream_limit():
     client = StubProductClient()
-    for index in range(12):
-        lookup_product_identity_cached(f"1000000{index:02d}", client=client)
+    # Bucket rollover is intentional production behavior, but would otherwise
+    # make this capacity test flaky if CI crosses a wall-clock minute boundary.
+    with patch(
+        "apps.exchange.product_context._rate_limit_key",
+        return_value="product-context:off-limit:fixed-test-minute",
+    ):
+        for index in range(12):
+            lookup_product_identity_cached(f"1000000{index:02d}", client=client)
 
-    with pytest.raises(ProductSourceRateLimited):
-        lookup_product_identity_cached("200000000", client=client)
+        with pytest.raises(ProductSourceRateLimited):
+            lookup_product_identity_cached("200000000", client=client)
 
     assert len(client.calls) == 12
 
