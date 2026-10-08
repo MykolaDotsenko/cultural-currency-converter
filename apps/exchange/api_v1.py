@@ -33,6 +33,7 @@ from integrations.product_data import (
     ProductDataSourceError,
     ProductNotFound,
     ProductSourceRateLimited,
+    canonical_open_food_facts_barcode,
 )
 
 _API_VERSION = "1"
@@ -540,14 +541,26 @@ def api_v1_conversion(request: HttpRequest) -> JsonResponse:
 
 @require_GET
 def api_v1_product_identity(request: HttpRequest, barcode: str) -> JsonResponse:
+    # Validate before consuming quota or contacting the optional product source.
+    # Canonical identity also prevents equivalent UPC/EAN spellings from
+    # fragmenting the upstream product cache.
     try:
-        product = lookup_product_identity_cached(barcode)
+        normalized = canonical_open_food_facts_barcode(barcode)
     except ValueError:
         return _api_error(
             code="invalid_barcode",
-            message="Barcode must contain 7–14 digits.",
+            message="Barcode must contain 7–14 digits and cannot be all zeroes.",
             status=400,
         )
+
+    # Cached product identities still consume the shared mobile caller budget;
+    # the provider service independently limits uncached upstream requests.
+    quota_error = _provider_quota_error(request)
+    if quota_error is not None:
+        return quota_error
+
+    try:
+        product = lookup_product_identity_cached(normalized)
     except ProductNotFound:
         return _api_error(
             code="product_not_found",

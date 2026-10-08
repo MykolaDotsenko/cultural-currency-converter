@@ -51,7 +51,16 @@ The resolved HTTP origin must stay on world.openfoodfacts.org: a redirect to
 another Open Facts database cannot silently inherit food-product attribution.
 Any mismatch is an optional product-source error, never a price, fee or FX input.
 
-
+The endpoint normalizes UPC/EAN barcode spellings before checking the shared
+product cache and rejects malformed or all-zero codes with HTTP 400 before
+accessing quota or upstream data. Every valid GET, including a cache hit,
+consumes the same 60/minute per-peer API budget as conversions and Open Prices
+observations. Quota exhaustion returns HTTP 429 `rate_limited` with
+`Retry-After`; shared quota unavailability fails closed with HTTP 503
+`quota_unavailable`. The separate upstream Open Food Facts limit continues to
+report 429 `product_lookup_busy`. Neither case changes the trusted price/FX
+boundary. Successful identity responses remain private-cacheable for one hour;
+quota and validation errors are `private, no-store`.
 
 ### GET /api/v1/products/{barcode}/prices/
 
@@ -215,10 +224,12 @@ Native apps can call same-origin HTTPS endpoints without browser CORS. Cross-ori
 
 ## Abuse controls
 
-Provider-backed current/historical conversions and Shopping estimates share a fixed-minute
-quota of **60 requests per minute per server-observed peer address**. It is
-checked after input validation and before the canonical FX/application
-gateway; same-currency exact conversions do not consume provider budget.
+Provider-backed current/historical conversions, Shopping estimates, product
+identity lookups and community price observations share a fixed-minute quota of
+**60 requests per minute per server-observed peer address**. It is checked
+after input/barcode validation and before the canonical FX/application or
+optional product-price providers (including cached GET responses);
+same-currency exact conversions do not consume provider budget.
 Exhaustion returns HTTP 429 with a whole-second Retry-After countdown. A
 shared-cache outage fails closed as quota_unavailable instead of creating
 unbounded provider traffic. Conversion errors and quota responses are not stored
