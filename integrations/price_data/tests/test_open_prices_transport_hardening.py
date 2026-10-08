@@ -40,7 +40,6 @@ class RawPriceResponse:
         b'{"items":[{"price":Infinity}]}',
         b'{"items":[{"price":-Infinity}]}',
         b'{"items":',
-        b'{"items":' + b"[" * 1100 + b"0" + b"]" * 1100 + b"}",
     ],
 )
 def test_open_prices_rejects_ambiguous_or_nonstandard_json_before_parsing(body):
@@ -53,6 +52,22 @@ def test_open_prices_rejects_ambiguous_or_nonstandard_json_before_parsing(body):
         pytest.raises(OpenPricesSourceError, match="malformed JSON"),
     ):
         client._fetch_json(Request(_URL))
+
+
+def test_provider_json_has_stable_explicit_container_depth_limit():
+    client = OpenPricesClient()
+
+    def decode_nested(depth: int):
+        body = b'{"items":' + b"[" * depth + b"0" + b"]" * depth + b"}"
+        with patch(
+            "integrations.price_data.open_prices.urlopen",
+            return_value=RawPriceResponse(body),
+        ):
+            return client._fetch_json(Request(_URL))
+
+    assert isinstance(decode_nested(63), dict)
+    with pytest.raises(OpenPricesSourceError, match="malformed JSON"):
+        decode_nested(64)
 
 
 def test_open_prices_json_preserves_precise_decimal_scale():
