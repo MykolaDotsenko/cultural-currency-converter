@@ -124,7 +124,9 @@ merchants or a price guaranteed at the user's store.
 Before any price observation can enter the shared cache, Open Prices and Open
 Food Facts use the same strict external JSON decoder. Duplicate members at any
 nesting depth, non-standard NaN/Infinity literals and malformed/deeply invalid
-responses fail closed as optional source errors. Open Prices additionally
+responses fail closed as optional source errors. A shared explicit limit of 64
+nested JSON containers provides the same behavior on supported Python versions.
+Open Prices additionally
 parses decimal number literals with `Decimal` directly, preserving reported
 precision rather than passing financial evidence through binary floats. None
 of this evidence becomes an authoritative merchant price or FX input.
