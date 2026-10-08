@@ -114,7 +114,7 @@ def shopping_calculation_view(
             product_lookup_message = {
                 "tone": "error",
                 "title": "Check the barcode.",
-                "detail": "Enter 7–14 barcode digits. Spaces are ignored.",
+                "detail": "Enter 7–14 barcode digits, not all zeroes. Spaces are ignored.",
             }
         except ProductNotFound:
             product_lookup_message = {

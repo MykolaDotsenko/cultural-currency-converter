@@ -12,6 +12,7 @@ from integrations.product_data import (
     ProductIdentity,
     ProductNotFound,
     ProductSourceRateLimited,
+    canonical_open_food_facts_barcode,
     normalize_barcode,
 )
 
@@ -140,7 +141,9 @@ def lookup_product_identity(
     *,
     client: OpenFoodFactsClient | None = None,
 ) -> ProductIdentity:
-    normalized = normalize_barcode(barcode)
+    # One product identity for UPC/EAN aliases across web Shopping and API v1.
+    # Reject all-zero identifiers before cache, throttle or provider access.
+    normalized = canonical_open_food_facts_barcode(barcode)
     cached = cache.get(_cache_key(normalized))
     if isinstance(cached, dict):
         if cached.get("found") is False:
@@ -162,7 +165,7 @@ def lookup_product_identity(
 
 
 def remember_product_not_found(barcode: str) -> None:
-    normalized = normalize_barcode(barcode)
+    normalized = canonical_open_food_facts_barcode(barcode)
     cache.set(
         _cache_key(normalized),
         {"found": False},
