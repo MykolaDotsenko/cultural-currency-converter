@@ -37,6 +37,12 @@ Returns active currency metadata and current primary destination currency relati
 
 This is reference metadata only. It performs no FX request and is cacheable for a short period.
 
+### `GET /api/v1/products/{barcode}/`
+
+Returns optional Open Food Facts product identity through the same bounded cache/throttle service used by Shopping. The response contains barcode, product name, brand labels, quantity, categories and source provenance/license. `price` is explicitly `null`: Open Food Facts is not a price source for this product.
+
+Stable product lookup errors include `invalid_barcode`, `product_not_found`, `product_lookup_busy` and `product_source_unavailable`. Provider error details are not leaked.
+
 ### `POST /api/v1/conversions/`
 
 Accepts `application/json` only. The body is bounded to 16 KiB and unknown fields fail closed.
