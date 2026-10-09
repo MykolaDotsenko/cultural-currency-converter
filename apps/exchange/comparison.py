@@ -35,6 +35,7 @@ class DestinationComparisonSide:
     destination_state: MoneyContextState
     budget: BudgetInterpretation
     payment_guidance: PaymentContext | None
+    city_profile_available: bool = False
 
     @property
     def scope_key(self) -> tuple[str, str]:
@@ -180,4 +181,13 @@ def _build_side(
         destination_state=context.destination_state,
         budget=budget,
         payment_guidance=context.payment_guidance,
+        # Reuse canonical reviewed destination evidence, not city identity alone.
+        city_profile_available=bool(
+            context.destination_city_slug
+            and context.destination_context is not None
+            and any(
+                price.city_slug == context.destination_city_slug
+                for price in context.destination_context.prices
+            )
+        ),
     )

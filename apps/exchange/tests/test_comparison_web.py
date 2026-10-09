@@ -554,6 +554,30 @@ def test_comparison_result_survives_optional_ai_packet_contract_failure(
 
 
 @pytest.mark.django_db
+def test_comparison_hides_city_profile_link_without_direct_reviewed_city_price(
+    client, comparison_reference_data
+):
+    # An active city and national payment advice cannot create a city profile.
+    TypicalPrice.objects.filter(city_ref=comparison_reference_data["tokyo"]).update(
+        is_published=False
+    )
+    city_url = reverse("city_money_profile", args=("JP", "tokyo"))
+    assert client.get(city_url).status_code == 404
+
+    gateway = ComparisonGateway()
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(reverse("destination_comparison"), _payload())
+
+    assert response.status_code == 200
+    left = response.context["comparison"]["left"]
+    assert left["destination_city_slug"] == "tokyo"
+    assert left["context_state"] == "available"
+    assert left["city_profile_url"] == ""
+    assert city_url.encode() not in response.content
+    assert gateway.calls == [("EUR", "JPY"), ("EUR", "NOK")]
+
+
+@pytest.mark.django_db
 def test_comparison_frontend_exposes_full_backend_context_contract(
     client,
     comparison_reference_data,
