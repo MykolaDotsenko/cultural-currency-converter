@@ -16,7 +16,6 @@ on:
   push:
     branches:
       - master
-      - feature/shopping-trip-spend-review-20261009
     paths:
       - "apps/**"
       - "integrations/**"
@@ -106,10 +105,7 @@ jobs:
           integrations/gemini/client.py
 
       - name: Django template lint
-        run: |
-          djlint templates --reformat || true
-          git --no-pager diff -- templates
-          exit 1
+        run: djlint templates --check
 
       - name: Django system check
         run: python manage.py check
