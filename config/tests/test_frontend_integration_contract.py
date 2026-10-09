@@ -61,7 +61,7 @@ from django.urls import resolve, reverse
             "money_culture_story",
             {},
             "pages/money_culture_story.html",
-            ("story", 'components/culture/story.html'),
+            ("story", "components/culture/story.html"),
         ),
         (
             "money_culture_story",
