@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import OuterRef, Subquery
+from django.db.models import F, OuterRef, Subquery
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -15,6 +15,9 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.preferences import recent_history_enabled
 from apps.countries.models import CountryCurrency, Currency
+from apps.culture.models import TypicalPrice
+from apps.culture.price_quality import PRICE_CONTEXT_MAX_AGE
+from apps.culture.provenance import is_valid_provenance_url
 from apps.exchange.comparison_snapshot import (
     SavedComparisonTokenError,
     load_saved_comparison_token,
@@ -227,13 +230,45 @@ def _saved_place_rows(user) -> list[dict[str, object]]:
         .select_related("country", "city")
         .order_by("-updated_at", "-id")
     )
+    as_of = timezone.localdate()
     current_links = {
         link.country_id: link
-        for link in CountryCurrency.objects.current(timezone.localdate())
+        for link in CountryCurrency.objects.current(as_of)
         .primary()
         .filter(country_id__in={place.country_id for place in places})
         .select_related("currency")
     }
+
+    # A canonical city identity by itself is not evidence that its money profile
+    # is publishable. Resolve direct, fresh, source-valid price coverage in one
+    # bounded database query instead of generating dead links or N+1 lookups.
+    city_ids = {place.city_id for place in places if place.city_id is not None}
+    reviewed_city_ids: set[int] = set()
+    if city_ids:
+        price_rows = (
+            TypicalPrice.objects.filter(
+                city_ref_id__in=city_ids,
+                city_ref__is_active=True,
+                city_ref__country_id=F("country_id"),
+                is_published=True,
+                verified_at__isnull=False,
+                observed_at__gte=as_of - PRICE_CONTEXT_MAX_AGE,
+                observed_at__lte=as_of,
+            )
+            .exclude(source_name="")
+            .exclude(source_url="")
+            .values("city_ref_id", "country_id", "currency_id", "source_name", "source_url")
+        )
+        for price in price_rows:
+            link = current_links.get(price["country_id"])
+            if (
+                link is not None
+                and link.currency.is_active
+                and price["currency_id"] == link.currency_id
+                and price["source_name"].strip()
+                and is_valid_provenance_url(price["source_url"])
+            ):
+                reviewed_city_ids.add(price["city_ref_id"])
 
     rows: list[dict[str, object]] = []
     for place in places:
@@ -281,7 +316,9 @@ def _saved_place_rows(user) -> list[dict[str, object]]:
                             "city_slug": place.city.slug,
                         },
                     )
-                    if available and place.city is not None
+                    if available
+                    and place.city is not None
+                    and place.city_id in reviewed_city_ids
                     else ""
                 ),
             }
