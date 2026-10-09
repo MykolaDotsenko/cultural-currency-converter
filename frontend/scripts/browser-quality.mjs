@@ -71,13 +71,19 @@ async function assertShoppingBarcodeScanner(browser) {
           state.requests += 1;
           const media = new MediaStream();
           Object.defineProperty(media, "getTracks", {
-            value: () => [{ stop: () => { state.stops += 1; } }],
+            value: () => [
+              {
+                stop: () => {
+                  state.stops += 1;
+                },
+              },
+            ],
           });
           return media;
         },
       },
     });
-    HTMLMediaElement.prototype.play = async function () {};
+    HTMLMediaElement.prototype.play = async () => {};
   });
 
   const page = await context.newPage();
@@ -96,7 +102,10 @@ async function assertShoppingBarcodeScanner(browser) {
   });
 
   const state = await page.evaluate(() => window.__shoppingScannerEvidence);
-  assert(state.requests === 1, "shopping scanner: expected one explicitly requested camera session");
+  assert(
+    state.requests === 1,
+    "shopping scanner: expected one explicitly requested camera session",
+  );
   assert(state.stops === 1, "shopping scanner: camera was not stopped on capture");
   assert(
     await page.locator("[data-shopping-scan-panel]").isHidden(),
