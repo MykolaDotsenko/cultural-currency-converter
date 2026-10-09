@@ -130,7 +130,9 @@
                           {{ country.currency_code }}
                           {% if country.subregion %}· {{ country.subregion }}{% endif %}
                         </p>
-                        <h4>{{ country.country_name }}</h4>
+                        <h4>
+                          <a href="{{ country.profile_url }}">{{ country.country_name }}</a>
+                        </h4>
                         {% if country.cities %}
                           <div class="qa-saved-list qa-explore-city-list"
                                aria-label="Reviewed cities in {{ country.country_name }}">
@@ -198,7 +200,9 @@
                              data-place-city-name=""
                              data-place-currency-code="{{ country.currency_code }}">
                           <a class="qa-explore-action qa-explore-action--primary"
-                             href="{{ country.converter_url }}">Open country context</a>
+                             href="{{ country.profile_url }}">Country money guide</a>
+                          <a class="qa-explore-action"
+                             href="{{ country.converter_url }}">Convert</a>
                           <a class="qa-explore-action"
                              href="{{ country.comparison_url }}">Compare</a>
                           <button class="qa-explore-save-button"
@@ -261,7 +265,9 @@
                   <div class="qa-saved-row__actions">
                     {% if card.profile_url %}
                       <a class="qa-explore-action qa-explore-action--primary"
-                         href="{{ card.profile_url }}">View city money profile</a>
+                         href="{{ card.profile_url }}">
+                        {% if card.destination.city_slug %}View city money profile{% else %}View country money guide{% endif %}
+                      </a>
                     {% else %}
                       <a class="qa-explore-action qa-explore-action--primary"
                          href="{{ card.converter_url }}">Open destination</a>

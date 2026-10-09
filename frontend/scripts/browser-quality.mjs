@@ -30,6 +30,7 @@ const SURFACES = [
   { name: "explore", path: "/explore/" },
   { name: "same-amount", path: "/explore/same-amount/" },
   { name: "city-money-profile", path: "/city/JP/tokyo/" },
+  { name: "country-money-guide", path: "/country/JP/" },
   {
     name: "money-culture-story",
     path: "/story/?source_country=FI&source_currency=EUR&destination_country=JP&destination_currency=JPY&selected_date=2026-09-21&historical=0",
@@ -3143,6 +3144,74 @@ async function assertSameAmountQuality(page) {
   );
   await assertAxe(page, "same-amount/interactive");
 }
+async function assertCountryMoneyGuideQuality(page) {
+  await page.getByRole("heading", { name: "Money in Japan", level: 1 }).waitFor();
+
+  assert(
+    (await page.getByText("without requesting an exchange rate", { exact: false }).count()) === 1,
+    "country-guide: must clearly disclose its provider-free scope",
+  );
+
+  const priceCards = page
+    .locator('[aria-labelledby="country-profile-prices-title"]')
+    .locator(".qa-price-card");
+  assert((await priceCards.count()) > 0, "country-guide: missing reviewed evidence cards");
+  for (const card of await priceCards.all()) {
+    const scope = await card.locator(".qa-price-card__equivalent").innerText();
+    assert(
+      scope.includes("National estimate") || scope.includes("City-specific example"),
+      "country-guide: every price example must show its national-or-city scope",
+    );
+    assert(
+      (await card.locator('a[href^="https://"]').count()) === 1,
+      "country-guide: price card lost its verified provenance link",
+    );
+  }
+
+  // A labelled div does not imply a group role: inspect via its owned DOM anchor instead.
+  const actions = page.locator('[aria-label="Country money next steps"]');
+  assert((await actions.locator("a").count()) === 3, "country-guide: canonical actions missing");
+  const converterHref = await actions
+    .getByRole("link", { name: "Convert money" })
+    .getAttribute("href");
+  const budgetHref = await actions
+    .getByRole("link", { name: "Plan a budget" })
+    .getAttribute("href");
+  const compareHref = await actions
+    .getByRole("link", { name: "Compare destinations" })
+    .getAttribute("href");
+  assert(converterHref && budgetHref && compareHref, "country-guide: a canonical URL is missing");
+  const converterUrl = new URL(converterHref, BASE_URL);
+  const budgetUrl = new URL(budgetHref, BASE_URL);
+  const compareUrl = new URL(compareHref, BASE_URL);
+  assert(
+    converterUrl.searchParams.get("destination_country") === "JP" &&
+      converterUrl.searchParams.get("destination_currency") === "JPY",
+    "country-guide: converter lost canonical country/currency",
+  );
+  assert(
+    budgetUrl.searchParams.get("destination") === "JP",
+    "country-guide: budget handoff lost selected country",
+  );
+  assert(
+    compareUrl.searchParams.get("left_destination") === "JP",
+    "country-guide: comparison handoff lost country scope",
+  );
+
+  assert(
+    (await page.locator("a[href^='https://']").count()) > 0,
+    "country-guide: evidence source links disappeared",
+  );
+  // Inline provenance links have the WCAG inline-link target-size exception;
+  // primary action controls remain subject to the 44px mobile target guard.
+  await assertPremiumResponsiveTargets(
+    page,
+    "country-guide/responsive",
+    '[aria-label="Country money next steps"] a, .qa-saved-row__actions a',
+  );
+  await assertAxe(page, "country-guide/interactive");
+}
+
 async function assertCityProfileQuality(page) {
   await page.getByRole("heading", { level: 1 }).waitFor();
 
@@ -3798,6 +3867,10 @@ try {
 
       if (surface.name === "city-money-profile" && viewport.name === "wide-1440") {
         await assertCityProfileQuality(page);
+      }
+
+      if (surface.name === "country-money-guide" && viewport.name === "wide-1440") {
+        await assertCountryMoneyGuideQuality(page);
       }
 
       if (surface.name === "money-culture-story" && viewport.name === "wide-1440") {
