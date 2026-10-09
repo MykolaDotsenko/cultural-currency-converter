@@ -119,9 +119,7 @@ def build_trip_readiness(
             else ""
         ),
         "trip_calendar_window_end": (
-            date_format(calendar_review.window_end, "j M Y")
-            if calendar_review is not None
-            else ""
+            date_format(calendar_review.window_end, "j M Y") if calendar_review is not None else ""
         ),
         "trip_calendar_truncated": (
             calendar_review.truncated if calendar_review is not None else False
