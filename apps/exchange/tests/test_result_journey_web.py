@@ -26,8 +26,9 @@ def test_current_conversion_exposes_genuine_next_actions(client, reference_data)
     assert "data-conversion-decision-journey" in body
     assert 'href="#payment-estimate-region"' in body
     assert 'id="payment-estimate-region"' in body
-    assert 'href="#budget-interpretation-region"' in body
-    assert 'id="budget-interpretation-region"' in body
+    # Without reviewed prices the budget editor is deliberately absent.
+    assert 'href="#budget-interpretation-region"' not in body
+    assert 'id="budget-interpretation-region"' not in body
     assert 'data-decision-kind="compare"' in body
     assert reverse("destination_comparison") in body
     assert len(gateway.calls) == 1
@@ -119,7 +120,7 @@ def test_comparison_handoff_requires_two_available_scopes(reference_data):
 
     assert not comparison_destination_handoff_supported("JP")
     City.objects.create(country=jp, slug="tokyo", name="Tokyo")
-    assert comparison_destination_handoff_supported("JP:tokyo") is False
+    assert comparison_destination_handoff_supported("JP")
     assert comparison_destination_handoff_supported("JP", "tokyo")
 
 
@@ -131,7 +132,7 @@ def test_historical_result_never_offers_current_decision_flow(client, reference_
     with patch("apps.exchange.views.build_historical_quote_gateway", return_value=gateway):
         response = client.post(
             reverse("converter"),
-            payload(rate_mode="historical", selected_date="2026-09-18"),
+            payload(rate_mode="historical", requested_date="2026-09-18"),
             HTTP_HX_REQUEST="true",
         )
 
