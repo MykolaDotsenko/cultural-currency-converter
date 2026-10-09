@@ -66,6 +66,7 @@ from apps.travel.scenarios import (
     record_scenario_spend,
 )
 from apps.travel.share_snapshot import ScenarioShareTokenError, build_scenario_share_token
+from apps.travel.trip_readiness import build_trip_readiness
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
@@ -461,6 +462,12 @@ def _scenario_local_context(
             show_explore_nav=False,
         ),
         "message": "",
+        "trip_readiness": build_trip_readiness(
+            context,
+            as_of=as_of,
+            travel_start_date=scenario.travel_start_date,
+            travel_end_date=scenario.travel_end_date,
+        ),
         "amount": _format_currency_amount(
             observation.output_amount,
             minor_units=scenario.destination_currency.minor_units,

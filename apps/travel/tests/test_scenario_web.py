@@ -10,7 +10,9 @@ from django.db import DatabaseError
 from django.urls import reverse
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
+from apps.culture.calendar import CalendarContext, PublicHolidayContextItem
 from apps.culture.services import DestinationContext, PaymentContext
+from apps.travel.trip_readiness import build_trip_readiness
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
@@ -892,3 +894,141 @@ def test_unscheduled_scenario_does_not_invent_trip_timing(
 
     assert response.status_code == 200
     assert b'id="scenario-readiness-title"' not in response.content
+
+
+def _readiness_destination() -> DestinationContext:
+    return DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 10, 9),
+        payment=PaymentContext(
+            summary="Reviewed country payment guidance.",
+            payment_customs="Cards are accepted.",
+            cash_usage="Carry some local cash.",
+            tipping="Not usually expected.",
+            atm_notes="Check the ATM fee screen.",
+            dcc_warning="Choose the local currency, not DCC.",
+            source_name="Reviewed bank guide",
+            source_url="https://example.test/payment-guide",
+            verified_at=datetime(2026, 10, 1, tzinfo=UTC),
+        ),
+        prices=(),
+        calendar=CalendarContext(
+            as_of=date(2026, 10, 9),
+            today=(),
+            upcoming=(
+                PublicHolidayContextItem(
+                    date=date(2026, 10, 15),
+                    name="National holiday within trip",
+                    holiday_types=("Public",),
+                    source_name="Nager.Date",
+                    source_url="https://example.test/national-holiday",
+                ),
+                PublicHolidayContextItem(
+                    date=date(2026, 10, 25),
+                    name="Holiday outside trip",
+                    holiday_types=("Public",),
+                    source_name="Nager.Date",
+                    source_url="https://example.test/holiday-outside-trip",
+                ),
+            ),
+            window_days=30,
+        ),
+    )
+
+
+def test_readiness_uses_reviewed_data_and_filters_holidays_to_saved_trip_window():
+    result = build_trip_readiness(
+        _readiness_destination(),
+        as_of=date(2026, 10, 9),
+        travel_start_date=date(2026, 10, 13),
+        travel_end_date=date(2026, 10, 18),
+    )
+
+    assert result is not None
+    assert [item["name"] for item in result["holidays"]] == [
+        "National holiday within trip"
+    ]
+    assert result["tips"][0]["text"] == "Choose the local currency, not DCC."
+    assert result["payment_source_url"] == "https://example.test/payment-guide"
+    assert result["calendar_window_days"] == 30
+    assert result["has_trip_dates"] is True
+
+
+def test_readiness_does_not_invent_holidays_for_unscheduled_or_future_trip():
+    destination = _readiness_destination()
+    for start, end in (
+        (None, None),
+        (date(2026, 12, 1), date(2026, 12, 8)),
+    ):
+        result = build_trip_readiness(
+            destination,
+            as_of=date(2026, 10, 9),
+            travel_start_date=start,
+            travel_end_date=end,
+        )
+        assert result is not None
+        assert result["holidays"] == ()
+        assert result["tips"]
+
+
+def test_readiness_does_not_invent_guidance_when_no_reviewed_evidence():
+    destination = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 10, 9),
+        payment=None,
+        prices=(),
+        calendar=None,
+    )
+    assert (
+        build_trip_readiness(
+            destination,
+            as_of=date(2026, 10, 9),
+            travel_start_date=date(2026, 10, 13),
+            travel_end_date=date(2026, 10, 18),
+        )
+        is None
+    )
+
+
+@pytest.mark.django_db
+def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_reference_data):
+    user = User.objects.create_user(username="readiness-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Tokyo readiness",
+            "duration_days": "6",
+            "travelers": "1",
+            "travel_start_date": "2026-10-13",
+            "travel_end_date": "2026-10-18",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+
+    with patch("apps.travel.scenario_web.build_destination_context") as builder:
+        idle = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    builder.assert_not_called()
+    assert b"data-trip-readiness-evidence" not in idle.content
+
+    with patch(
+        "apps.travel.scenario_web.build_destination_context",
+        return_value=_readiness_destination(),
+    ):
+        refreshed = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert refreshed.status_code == 200
+    assert b"data-trip-readiness-evidence" in refreshed.content
+    assert b"National holiday within trip" in refreshed.content
+    assert b"Holiday outside trip" in refreshed.content
+    assert b"National holiday during saved travel dates" in refreshed.content
+    assert b"Choose the local currency, not DCC." in refreshed.content
+    assert b"Source: Reviewed bank guide" in refreshed.content
+    assert b"Absence of a listed holiday does not mean" in refreshed.content
+    assert b"does not refresh the FX rate" in refreshed.content
