@@ -11,7 +11,8 @@ from django.utils import timezone
 from apps.countries.models import City
 from apps.culture.models import TypicalPrice, TypicalPriceCategory
 
-from apps.exchange.tests.test_web import FakeGateway, FakeHistoricalGateway, payload, reference_data
+from apps.exchange.tests.test_web import FakeGateway, FakeHistoricalGateway, payload
+from apps.exchange.tests.test_web import reference_data as reference_data
 
 
 @pytest.fixture
