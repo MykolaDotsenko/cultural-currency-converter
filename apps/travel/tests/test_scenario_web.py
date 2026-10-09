@@ -1199,9 +1199,7 @@ def test_explicit_trip_calendar_check_reports_missing_evidence_without_inventing
 def test_saved_trip_holiday_evidence_is_not_hidden_by_empty_current_money_context(
     client, scenario_reference_data
 ):
-    user = User.objects.create_user(
-        username="holiday-only-owner", password="StrongPass-482!"
-    )
+    user = User.objects.create_user(username="holiday-only-owner", password="StrongPass-482!")
     client.force_login(user)
     country = Country.objects.get(iso2="JP")
     PublicHolidayObservation.objects.create(
@@ -1257,9 +1255,7 @@ def test_saved_trip_holiday_evidence_is_not_hidden_by_empty_current_money_contex
 def test_saved_trip_without_current_context_or_trip_dates_stays_empty(
     client, scenario_reference_data
 ):
-    user = User.objects.create_user(
-        username="no-context-owner", password="StrongPass-482!"
-    )
+    user = User.objects.create_user(username="no-context-owner", password="StrongPass-482!")
     client.force_login(user)
     client.post(
         reverse("save_budget_scenario"),
