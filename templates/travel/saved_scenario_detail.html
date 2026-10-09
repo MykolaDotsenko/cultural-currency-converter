@@ -555,7 +555,7 @@
                     <p class="qa-foundation-kicker">Before you go · reviewed evidence</p>
                     <h3 id="saved-trip-readiness-evidence-title">Useful checks for {{ readiness.country_name }}</h3>
                     <p>
-                      Country-level guidance checked on {{ readiness.as_of }}.
+                      Context assembled {{ readiness.as_of }} from previously reviewed country records.
                       These details are informational and do not predict exchange rates,
                       prices or whether a particular business will be open.
                     </p>
@@ -583,7 +583,11 @@
                     {% endfor %}
                   </div>
                   <p class="qa-context-disclaimer">
-                    Calendar context covers only its reviewed {{ readiness.calendar_window_days }}-day window.
+                    {% if readiness.has_calendar_evidence %}
+                      National holiday evidence covers only its reviewed {{ readiness.calendar_window_days }}-day window.
+                    {% else %}
+                      No national holiday observations are available in the current reviewed context.
+                    {% endif %}
                     {% if not readiness.has_trip_dates %}
                       Add explicit travel dates to identify holidays during your trip.
                     {% endif %}
