@@ -188,12 +188,13 @@ def build_supporting_money_insights(
 
     # The main summary already explains the first usable purchase anchor.
     # Show a different reviewed category rather than repeating the same fact.
-    price_candidates = money_context.local_value
-    if primary_kind is SmartResultSummaryKind.LOCAL_VALUE:
-        price_candidates = price_candidates[1:]
-    for price in price_candidates:
+    primary_price_skipped = False
+    for price in money_context.local_value:
         purchase_phrase = _purchase_phrase(price.equivalent)
         if purchase_phrase is None:
+            continue
+        if primary_kind is SmartResultSummaryKind.LOCAL_VALUE and not primary_price_skipped:
+            primary_price_skipped = True
             continue
         insights.append(
             SupportingMoneyInsight(
