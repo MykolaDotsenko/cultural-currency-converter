@@ -158,8 +158,7 @@ def build_supporting_money_insights(
                     title="At the card terminal",
                     text=payment.dcc_warning.strip(),
                     evidence_label=(
-                        f"Reviewed {payment.verified_at.date().isoformat()} · "
-                        f"{payment.source_name}"
+                        f"Reviewed {payment.verified_at.date().isoformat()} · {payment.source_name}"
                     ),
                     evidence_url=payment.source_url,
                     detail_href="#payment-context",
@@ -204,9 +203,7 @@ def build_supporting_money_insights(
                     f"For the reviewed {price.scope_label} price range, this amount "
                     f"corresponds to {purchase_phrase}. Actual prices can vary."
                 ),
-                evidence_label=(
-                    f"Observed {price.observed_at.isoformat()} · {price.source_name}"
-                ),
+                evidence_label=(f"Observed {price.observed_at.isoformat()} · {price.source_name}"),
                 evidence_url=price.source_url,
                 detail_href="#everyday-value",
                 detail_label="Price context",
