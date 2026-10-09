@@ -125,8 +125,25 @@
   max-width: 100%;
 }
 
-.qa-shopping-review {
+/* Override the horizontal continuity note used elsewhere: this is a readable
+   vertical financial review, including on narrow screens and at large zoom. */
+.qa-continuity-note.qa-shopping-review {
+  display: grid;
+  align-items: start;
+  gap: var(--qa-space-3);
   scroll-margin-block-start: var(--qa-space-6);
+}
+
+.qa-continuity-note.qa-shopping-review > strong {
+  font-size: var(--text-body-sm);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.qa-continuity-note.qa-shopping-review .qa-shopping-review__lead strong {
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .qa-shopping-review__lead,
