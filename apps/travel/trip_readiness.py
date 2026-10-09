@@ -63,9 +63,7 @@ def build_trip_readiness(
         "tips": tuple(tips),
         "payment_source": payment.source_name if tips and payment else "",
         "payment_source_url": payment.source_url if tips and payment else "",
-        "payment_verified": (
-            date_format(payment.verified_at, "j M Y") if tips and payment else ""
-        ),
+        "payment_verified": (date_format(payment.verified_at, "j M Y") if tips and payment else ""),
         "holidays": tuple(holidays),
         "calendar_window_days": calendar.window_days if calendar is not None else 30,
         "has_trip_dates": travel_start_date is not None,
