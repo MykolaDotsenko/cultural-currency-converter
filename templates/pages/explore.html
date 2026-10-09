@@ -266,8 +266,8 @@
                     {% if card.profile_url %}
                       <a class="qa-explore-action qa-explore-action--primary"
                          href="{{ card.profile_url }}">
-                          {% if card.destination.city_slug %}View city money profile{% else %}View country money guide{% endif %}
-                        </a>
+                        {% if card.destination.city_slug %}View city money profile{% else %}View country money guide{% endif %}
+                      </a>
                     {% else %}
                       <a class="qa-explore-action qa-explore-action--primary"
                          href="{{ card.converter_url }}">Open destination</a>

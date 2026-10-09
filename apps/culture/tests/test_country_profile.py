@@ -154,12 +154,14 @@ def test_country_guide_excludes_stale_economy_and_non_national_holidays(
     assert response.status_code == 200
     assert b"99.9%" not in response.content
     assert b"Regional-only day" not in response.content
-    assert b'country-profile-economy-title' not in response.content
-    assert b'country-profile-calendar-title' not in response.content
+    assert b"country-profile-economy-title" not in response.content
+    assert b"country-profile-calendar-title" not in response.content
 
 
 @pytest.mark.django_db
-def test_country_guide_does_not_publish_unknown_or_unreviewed_context(client, reviewed_country_data):
+def test_country_guide_does_not_publish_unknown_or_unreviewed_context(
+    client, reviewed_country_data
+):
     assert client.get(reverse("country_money_profile", args=("ZZ",))).status_code == 404
     country = Country.objects.create(iso2="XZ", iso3="XZZ", name="Example unreviewed")
     currency = Currency.objects.get(code="EUR")
@@ -180,4 +182,7 @@ def test_explore_country_card_and_region_link_to_reviewed_country_guide(
     assert response.status_code == 200
     href = reverse("country_money_profile", args=("JP",))
     assert href.encode() in response.content
-    assert b"View country money guide" in response.content or b"Country money guide" in response.content
+    assert (
+        b"View country money guide" in response.content
+        or b"Country money guide" in response.content
+    )

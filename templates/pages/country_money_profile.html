@@ -14,7 +14,8 @@
 {% endblock %}
 {% block content %}
   {% if country_profile_error %}
-    <section class="qa-foundation-intro" aria-labelledby="country-profile-error-title">
+    <section class="qa-foundation-intro"
+             aria-labelledby="country-profile-error-title">
       <p class="qa-foundation-kicker">Country money guide</p>
       <h1 id="country-profile-error-title">{{ country_profile_error.title }}</h1>
       <p class="qa-foundation-lede">{{ country_profile_error.detail }}</p>
@@ -38,11 +39,13 @@
       <div class="qa-saved-row__actions" aria-label="Country money next steps">
         <a class="qa-primary-button" href="{{ country_profile.converter_url }}">Convert money</a>
         <a class="qa-secondary-button" href="{{ country_profile.budget_url }}">Plan a budget</a>
-        <a class="qa-secondary-button" href="{{ country_profile.compare_url }}">Compare destinations</a>
+        <a class="qa-secondary-button"
+           href="{{ country_profile.compare_url }}">Compare destinations</a>
       </div>
     </section>
     <div class="qa-saved-state">
-      <section class="qa-saved-section" aria-labelledby="country-profile-payment-title">
+      <section class="qa-saved-section"
+               aria-labelledby="country-profile-payment-title">
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Paying locally</p>
@@ -55,7 +58,9 @@
             {% for row in country_profile.payment.rows %}
               <div>
                 <dt>{{ row.label }}</dt>
-                <dd>{{ row.text }}</dd>
+                <dd>
+                  {{ row.text }}
+                </dd>
               </div>
             {% endfor %}
           </dl>
@@ -67,7 +72,8 @@
           <p class="qa-saved-empty">No reviewed payment guidance is available for this country yet.</p>
         {% endif %}
       </section>
-      <section class="qa-saved-section" aria-labelledby="country-profile-prices-title">
+      <section class="qa-saved-section"
+               aria-labelledby="country-profile-prices-title">
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Everyday money evidence</p>

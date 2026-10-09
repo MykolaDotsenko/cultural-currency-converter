@@ -112,7 +112,9 @@ def build_country_money_profile_component(profile: CountryMoneyProfile) -> dict[
         )
         payment = {
             "summary": profile.payment.summary,
-            "rows": tuple({"label": label, "text": value} for label, value in rows if value.strip()),
+            "rows": tuple(
+                {"label": label, "text": value} for label, value in rows if value.strip()
+            ),
             "source_name": profile.payment.source_name,
             "source_url": profile.payment.source_url,
             "verified": date_format(profile.payment.verified_at, "j M Y"),
@@ -168,7 +170,6 @@ def build_country_money_profile_component(profile: CountryMoneyProfile) -> dict[
         "converter_url": f"{reverse('converter')}?{urlencode(converter_params)}",
         "budget_url": f"{reverse('destination_mode')}?{urlencode({'destination': destination})}",
         "compare_url": (
-            f"{reverse('destination_comparison')}?"
-            f"{urlencode({'left_destination': destination})}"
+            f"{reverse('destination_comparison')}?{urlencode({'left_destination': destination})}"
         ),
     }

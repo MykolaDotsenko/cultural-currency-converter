@@ -47,6 +47,8 @@
         <a class="qa-secondary-button" href="{{ city_profile.budget_url }}">Build a budget</a>
         <a class="qa-city-profile__text-action"
            href="{{ city_profile.compare_url }}">Compare this city</a>
+        <a class="qa-city-profile__text-action"
+           href="{% url 'country_money_profile' city_profile.country_code %}">Country money guide</a>
       </div>
     </section>
     <section class="qa-saved-state qa-city-profile"
