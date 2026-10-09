@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from threading import Barrier
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth import get_user_model
 from django.db import DatabaseError, close_old_connections
@@ -190,11 +191,17 @@ class RecentHistoryWebTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("saved_state"))
         self.assertContains(response, "Plan again")
-        self.assertContains(response, "destination=JP")
-        self.assertContains(response, "source_currency=EUR")
-        self.assertContains(response, "amount=10")
-        self.assertContains(response, "from_history=1")
-        self.assertNotContains(response, "requested_date=2020")
+        url = response.context["account_recent_rows"][0]["plan_url"]
+        parsed = urlparse(url)
+        query = parse_qs(parsed.query)
+        self.assertEqual(parsed.path, reverse("destination_mode"))
+        self.assertEqual(query["destination"], ["JP"])
+        self.assertEqual(query["source_currency"], ["EUR"])
+        self.assertEqual(query["amount"], ["10"])
+        self.assertEqual(query["from_history"], ["1"])
+        self.assertNotIn("requested_date", query)
+        self.assertNotIn("rate_mode", query)
+        self.assertNotIn("output_amount", query)
 
     def test_recent_plan_requires_current_destination(self):
         recent = self._create_recent(user=self.user)
@@ -212,7 +219,11 @@ class RecentHistoryWebTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("saved_state"))
         self.assertContains(response, "Plan again")
-        self.assertNotContains(response, "source_currency=EUR&amp;amount=10")
+        url = response.context["account_recent_rows"][0]["plan_url"]
+        query = parse_qs(urlparse(url).query)
+        self.assertEqual(query["destination"], ["JP"])
+        self.assertNotIn("source_currency", query)
+        self.assertNotIn("amount", query)
 
     def test_disabling_history_keeps_existing_account_rows(self):
         recent = self._create_recent(user=self.user)
