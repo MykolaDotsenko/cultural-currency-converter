@@ -1078,6 +1078,13 @@ def review_shopping_spend(request: HttpRequest, scenario_id: int) -> HttpRespons
     context["shopping_spend_review"] = {
         "amount": proposed_amount,
         "currency": scenario.destination_currency.code,
+        # Display only the user-entered composition from the verified signed token.
+        # No additional rate, price lookup, or saved expense is created here.
+        "item_price": _decimal_input_text(snapshot.assumptions.item_price),
+        "shipping": _decimal_input_text(snapshot.assumptions.shipping),
+        "known_fees": _decimal_input_text(snapshot.assumptions.known_fees),
+        "fx_markup_percent": _decimal_input_text(snapshot.assumptions.fx_markup_percent),
+        "has_fx_markup": snapshot.assumptions.fx_markup_percent > 0,
     }
     return render(request, "travel/saved_scenario_detail.html", context)
 

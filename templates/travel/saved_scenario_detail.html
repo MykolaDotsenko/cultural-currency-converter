@@ -25,6 +25,15 @@
         with your account. It does not silently refresh rates or local prices.
       {% endif %}
     </p>
+    {% if shopping_spend_review %}
+      <div class="qa-shopping-review-jump" data-shopping-review-jump>
+        <div>
+          <p class="qa-foundation-kicker">Action needed · not recorded</p>
+          <p>Check the original Shopping inputs before you add any confirmed trip spending.</p>
+        </div>
+        <a class="qa-primary-button" href="#shopping-spend-review">Review purchase breakdown</a>
+      </div>
+    {% endif %}
   </section>
   {% if trip_budget %}
     <section class="qa-trip-money-pass" aria-labelledby="trip-money-pass-title">
@@ -433,13 +442,51 @@
           <div class="qa-saved-row__copy">
             <h3>Add confirmed spend</h3>
             {% if shopping_spend_review %}
-              <aside class="qa-continuity-note" role="note" data-shopping-spend-review>
+              <aside id="shopping-spend-review"
+                     class="qa-continuity-note qa-shopping-review"
+                     role="note"
+                     data-shopping-spend-review>
                 <strong>Review Shopping estimate · {{ shopping_spend_review.amount }} {{ shopping_spend_review.currency }}</strong>
-                <span>
-                  We prefilled the explicit purchase total, including any shipping and known fees you entered.
-                  Only confirm what you have actually paid. Edit the amount before pressing Add spend.
-                  Nothing has been recorded yet.
-                </span>
+                <p class="qa-shopping-review__lead">
+                  The following amounts came from your signed Shopping calculation.
+                  They are assumptions, <strong>not proof of payment</strong>.
+                </p>
+                <dl class="qa-shopping-review__breakdown">
+                  <div>
+                    <dt>Item price</dt>
+                    <dd>
+                      {{ shopping_spend_review.item_price }} {{ shopping_spend_review.currency }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Shipping entered</dt>
+                    <dd>
+                      {{ shopping_spend_review.shipping }} {{ shopping_spend_review.currency }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Known fees entered</dt>
+                    <dd>
+                      {{ shopping_spend_review.known_fees }} {{ shopping_spend_review.currency }}
+                    </dd>
+                  </div>
+                  <div class="qa-shopping-review__total">
+                    <dt>Proposed purchase total</dt>
+                    <dd>
+                      {{ shopping_spend_review.amount }} {{ shopping_spend_review.currency }}
+                    </dd>
+                  </div>
+                </dl>
+                {% if shopping_spend_review.has_fx_markup %}
+                  <p class="qa-shopping-review__boundary">
+                    Your {{ shopping_spend_review.fx_markup_percent }}% home-currency FX markup
+                    assumption is not part of this purchase-currency trip spend.
+                  </p>
+                {% endif %}
+                <p class="qa-shopping-review__boundary">
+                  Only enter the amount actually paid. Edit the prefilled amount if shipping,
+                  taxes or fees have not been charged. Nothing has been recorded yet.
+                </p>
               </aside>
             {% endif %}
             <div class="qa-field{% if spend_form.amount.errors %} qa-field--error{% endif %}">
