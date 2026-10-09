@@ -66,12 +66,12 @@ from apps.travel.scenarios import (
     record_scenario_spend,
 )
 from apps.travel.share_snapshot import ScenarioShareTokenError, build_scenario_share_token
-from apps.travel.trip_readiness import build_trip_readiness
 from apps.travel.trip_budget import (
     TripBudgetDayBasis,
     calculate_trip_budget_summary,
     resolve_trip_budget_reference,
 )
+from apps.travel.trip_readiness import build_trip_readiness
 
 logger = logging.getLogger("cultural_currency.travel")
 
