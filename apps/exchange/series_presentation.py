@@ -163,6 +163,23 @@ def build_rate_series_component(
     )
     provider_keys = sorted({key.upper() for point in series.points for key in point.provider_keys})
 
+    # A historical observation is only a source-backed navigation starting point.
+    # Never embed an observed rate in the URL: the converter must independently
+    # validate the pair, amount and historical date on the user's explicit request.
+    historical_replay_url = None
+    if selected_point is not None and amount is not None:
+        replay_params = {
+            "convert": "1",
+            "rate_mode": "historical",
+            "requested_date": selected_point.observation_date.isoformat(),
+            "source_country": "",
+            "source_currency": series.base_currency,
+            "destination_country": "",
+            "destination_currency": series.quote_currency,
+            "amount": format(amount, "f"),
+        }
+        historical_replay_url = f"{reverse('converter')}?{urlencode(replay_params)}"
+
     period_links = []
     for key, label in (("1y", "1Y"), ("5y", "5Y"), ("10y", "10Y")):
         period_links.append(
@@ -236,6 +253,7 @@ def build_rate_series_component(
         "now_media": now_media if then_now is not None else None,
         "timeline_media": timeline_media,
         "comparison_notice": comparison_notice,
+        "historical_replay_url": historical_replay_url,
         "selected_point": (
             {
                 "date_label": date_format(selected_point.observation_date, "j M Y"),

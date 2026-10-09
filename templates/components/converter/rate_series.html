@@ -29,6 +29,23 @@
         <span class="qa-status-badge qa-status-badge--cached">Cached series</span>
       {% endif %}
     </div>
+    {% if series_component.historical_replay_url %}
+      <aside class="qa-historical-replay"
+             data-historical-replay
+             aria-label="Recalculate this selected historical observation">
+        <div>
+          <p class="qa-foundation-kicker">Revisit this observation</p>
+          <h3>Take your amount back to the converter.</h3>
+          <p>
+            Recalculate {{ series_component.amount }} {{ series_component.base_currency }} on the
+            selected observation date, {{ series_component.selected_date_label }}.
+            The converter requests its own historical reference; no rate is copied from this chart.
+          </p>
+        </div>
+        <a class="qa-secondary-button"
+           href="{{ series_component.historical_replay_url }}">Recalculate selected date <span aria-hidden="true">↗</span></a>
+      </aside>
+    {% endif %}
     <div class="qa-chart-period-row">
       <nav class="qa-chart-period-control" aria-label="Historical trend period">
         {% for period in series_component.period_links %}

@@ -734,3 +734,63 @@
     border-color: CanvasText;
   }
 }
+
+/* A documented historical observation can lead to a new explicit conversion.
+   The original series does not silently turn into current purchasing-power advice. */
+.qa-historical-replay {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qa-space-5);
+  padding: var(--qa-space-5);
+  border: 1px solid var(--qa-hairline);
+  border-inline-start: 3px solid var(--color-brand);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+
+.qa-historical-replay > div {
+  flex: 1 1 19rem;
+  min-width: 0;
+  max-width: 64ch;
+}
+
+.qa-historical-replay h3 {
+  margin-block: var(--qa-space-2);
+  font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+.qa-historical-replay > div > p:last-child {
+  margin-block: 0;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+}
+
+.qa-historical-replay .qa-secondary-button {
+  min-height: 44px;
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.qa-historical-replay .qa-secondary-button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 38rem) {
+  .qa-historical-replay .qa-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-historical-replay {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+}
