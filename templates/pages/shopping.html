@@ -131,7 +131,9 @@
               <p class="qa-field__message" role="status">{{ public_prices_message }}</p>
             {% elif public_prices %}
               {% if public_price_sample %}
-                <div class="qa-context-freshness-note" role="note" data-public-price-sample>
+                <div class="qa-context-freshness-note"
+                     role="note"
+                     data-public-price-sample>
                   <p>
                     Bounded evidence sample: {{ public_price_sample.count }} dated observation{{ public_price_sample.count|pluralize }},
                     {{ public_price_sample.place_count }} reported place{{ public_price_sample.place_count|pluralize }}
