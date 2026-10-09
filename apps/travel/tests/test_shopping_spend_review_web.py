@@ -100,7 +100,7 @@ def test_shopping_review_needs_separate_spend_confirmation(client, matching_shop
     assert review.status_code == 200
     assert b"data-shopping-spend-review" in review.content
     assert b"Nothing has been recorded yet" in review.content
-    assert b'data-shopping-review-jump' in review.content
+    assert b"data-shopping-review-jump" in review.content
     assert b'href="#shopping-spend-review"' in review.content
     assert b'id="shopping-spend-review"' in review.content
     assert b"Item price" in review.content
@@ -198,9 +198,7 @@ def test_anonymous_shopping_does_not_expose_private_trips(client, matching_shopp
 
 
 @pytest.mark.django_db
-def test_normal_saved_trip_detail_has_no_pending_shopping_breakdown(
-    client, matching_shopping_trip
-):
+def test_normal_saved_trip_detail_has_no_pending_shopping_breakdown(client, matching_shopping_trip):
     owner, scenario = matching_shopping_trip
     client.force_login(owner)
     response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))

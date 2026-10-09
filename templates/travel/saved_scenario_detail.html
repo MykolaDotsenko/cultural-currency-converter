@@ -454,19 +454,27 @@
                 <dl class="qa-shopping-review__breakdown">
                   <div>
                     <dt>Item price</dt>
-                    <dd>{{ shopping_spend_review.item_price }} {{ shopping_spend_review.currency }}</dd>
+                    <dd>
+                      {{ shopping_spend_review.item_price }} {{ shopping_spend_review.currency }}
+                    </dd>
                   </div>
                   <div>
                     <dt>Shipping entered</dt>
-                    <dd>{{ shopping_spend_review.shipping }} {{ shopping_spend_review.currency }}</dd>
+                    <dd>
+                      {{ shopping_spend_review.shipping }} {{ shopping_spend_review.currency }}
+                    </dd>
                   </div>
                   <div>
                     <dt>Known fees entered</dt>
-                    <dd>{{ shopping_spend_review.known_fees }} {{ shopping_spend_review.currency }}</dd>
+                    <dd>
+                      {{ shopping_spend_review.known_fees }} {{ shopping_spend_review.currency }}
+                    </dd>
                   </div>
                   <div class="qa-shopping-review__total">
                     <dt>Proposed purchase total</dt>
-                    <dd>{{ shopping_spend_review.amount }} {{ shopping_spend_review.currency }}</dd>
+                    <dd>
+                      {{ shopping_spend_review.amount }} {{ shopping_spend_review.currency }}
+                    </dd>
                   </div>
                 </dl>
                 {% if shopping_spend_review.has_fx_markup %}
