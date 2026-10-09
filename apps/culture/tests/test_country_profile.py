@@ -250,3 +250,36 @@ def test_country_guide_does_not_link_deactivated_city_price_history(reviewed_cou
     assert profile.active_city_slugs == frozenset()
     component = build_country_money_profile_component(profile)
     assert component["reviewed_cities"] == ()
+
+
+@pytest.mark.django_db
+def test_country_guide_evidence_map_has_only_real_targets_without_fx(client, reviewed_country_data):
+    from html.parser import HTMLParser
+
+    class GuideMapParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.ids = set()
+            self.links = []
+
+        def handle_starttag(self, tag, attrs):
+            data = dict(attrs)
+            if "id" in data:
+                self.ids.add(data["id"])
+            if tag == "a" and data.get("class") == "qa-guide-map__link":
+                self.links.append(data.get("href", ""))
+
+    with patch("apps.exchange.views.build_latest_quote_gateway") as gateway_factory:
+        response = client.get(reverse("country_money_profile", args=("JP",)))
+
+    assert response.status_code == 200
+    page = response.content.decode()
+    assert 'data-guide-evidence-map="country"' in page
+    parser = GuideMapParser()
+    parser.feed(page)
+    assert parser.links
+    assert "#country-profile-payment-title" in parser.links
+    assert "#country-profile-prices-title" in parser.links
+    assert "#country-profile-next-title" in parser.links
+    assert all(link.startswith("#") and link[1:] in parser.ids for link in parser.links)
+    gateway_factory.assert_not_called()
