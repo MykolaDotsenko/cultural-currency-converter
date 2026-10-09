@@ -47,9 +47,16 @@ def destination_mode_view(request: HttpRequest) -> HttpResponse:
     # current-currency and Decimal/minor-unit validation policy.
     if request.method == "GET":
         source_code = str(request.GET.get("source_currency") or "").strip().upper()
-        if form.active_source_currency(source_code) is not None:
-            form.initial["source_currency"] = source_code
-        source = form.active_source_currency(str(form.initial.get("source_currency") or ""))
+        selected_source = form.active_source_currency(source_code) if source_code else None
+        if selected_source is not None:
+            form.initial["source_currency"] = selected_source.code
+        # Never re-label an amount from an unsupported source currency with
+        # an unrelated default (e.g. archived FIM as current EUR).
+        source = (
+            selected_source
+            if source_code
+            else form.active_source_currency(str(form.initial.get("source_currency") or ""))
+        )
         candidate = str(request.GET.get("amount") or "").strip()
         if source is not None and 0 < len(candidate) <= 64:
             try:

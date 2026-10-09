@@ -248,7 +248,7 @@ def test_destination_mode_ignores_unsupported_or_invalid_input_prefill(
     client, destination_reference_data
 ):
     Currency.objects.create(code="FIM", name="Finnish markka", is_active=False)
-    for amount in ("-10", "1.234", "9999999999", "5" * 65):
+    for amount in ("-10", "1.234", "9999999999", "500", "5" * 65):
         response = client.get(
             reverse("destination_mode"),
             {"source_currency": "FIM", "amount": amount, "destination": "JP"},
@@ -271,3 +271,16 @@ def test_destination_mode_explicit_source_overrides_default_without_provider(
     assert response.status_code == 200
     assert response.context["form"].initial["source_currency"] == "JPY"
     assert response.context["form"].initial["amount"] == "5000"
+
+
+@pytest.mark.django_db
+def test_destination_mode_rejects_excess_precision_in_explicit_zero_decimal_currency(
+    client, destination_reference_data
+):
+    response = client.get(
+        reverse("destination_mode"),
+        {"source_currency": "JPY", "amount": "10.50", "destination": "JP"},
+    )
+    assert response.status_code == 200
+    assert response.context["form"].initial["source_currency"] == "JPY"
+    assert response.context["form"].initial["amount"] == "100"
