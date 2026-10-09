@@ -1270,7 +1270,7 @@ def test_saved_trip_without_current_context_or_trip_dates_stays_empty(
     scenario = SavedScenario.objects.get(user=user)
     with (
         patch("apps.travel.scenario_web.build_destination_context", return_value=None),
-        patch("apps.travel.scenario_web.build_trip_calendar_review") as builder,
+        patch("apps.travel.scenario_web.build_trip_calendar_review", return_value=None) as builder,
     ):
         page = client.get(
             reverse("saved_scenario_detail", args=(scenario.pk,)),
