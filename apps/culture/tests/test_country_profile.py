@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from io import StringIO
@@ -12,7 +13,7 @@ import pytest
 from django.core.management import call_command
 from django.urls import reverse
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.country_profile import (
     build_country_money_profile,
     build_country_money_profile_component,
@@ -62,6 +63,13 @@ def test_country_guide_never_promotes_city_price_into_national_average(reviewed_
     city_rows = [row for row in component["prices"] if not row["is_national"]]
     assert city_rows
     assert all("Tokyo" in row["scope"] for row in city_rows)
+    assert component["reviewed_cities"] == (
+        {
+            "name": "Tokyo",
+            "scope": "Tokyo",
+            "profile_url": reverse("city_money_profile", args=("JP", "tokyo")),
+        },
+    )
 
 
 @pytest.mark.django_db
@@ -186,3 +194,59 @@ def test_explore_country_card_and_region_link_to_reviewed_country_guide(
         b"View country money guide" in response.content
         or b"Country money guide" in response.content
     )
+
+
+@pytest.mark.django_db
+def test_country_guide_links_only_reviewed_canonical_city_evidence(client, reviewed_country_data):
+    with patch("apps.exchange.views.build_latest_quote_gateway") as fx_gateway:
+        response = client.get(reverse("country_money_profile", args=("JP",)))
+    assert response.status_code == 200
+    city_url = reverse("city_money_profile", args=("JP", "tokyo"))
+    assert city_url.encode() in response.content
+    assert b"Explore Tokyo city money profile" in response.content
+    assert b"City profiles open the reviewed evidence" in response.content
+    assert client.get(city_url).status_code == 200
+    fx_gateway.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_country_city_navigation_never_links_free_text_or_national_price(reviewed_country_data):
+    profile = build_country_money_profile(country_code="JP", as_of=date(2026, 10, 9))
+    assert profile is not None and profile.prices
+    national_only = replace(
+        profile,
+        prices=(replace(profile.prices[0], city="", city_slug=""),),
+    )
+    assert build_country_money_profile_component(national_only)["reviewed_cities"] == ()
+
+    # Unresolved legacy city labels cannot manufacture a canonical route.
+    unlinked_city = replace(
+        profile,
+        prices=(replace(profile.prices[0], city="Unreviewed city", city_slug=""),),
+    )
+    assert build_country_money_profile_component(unlinked_city)["reviewed_cities"] == ()
+
+
+@pytest.mark.django_db
+def test_country_city_navigation_deduplicates_reviewed_city_links(reviewed_country_data):
+    profile = build_country_money_profile(country_code="JP", as_of=date(2026, 10, 9))
+    assert profile is not None
+    city_price = next(price for price in profile.prices if price.city_slug == "tokyo")
+    repeated = replace(profile, prices=(city_price, city_price, city_price))
+    cities = build_country_money_profile_component(repeated)["reviewed_cities"]
+    assert len(cities) == 1
+    assert cities[0]["profile_url"] == reverse("city_money_profile", args=("JP", "tokyo"))
+
+
+@pytest.mark.django_db
+def test_country_guide_does_not_link_deactivated_city_price_history(reviewed_country_data):
+    city = City.objects.get(country__iso2="JP", slug="tokyo")
+    city.is_active = False
+    city.save(update_fields=("is_active",))
+
+    profile = build_country_money_profile(country_code="JP", as_of=date(2026, 10, 9))
+    assert profile is not None
+    assert any(price.city_slug == "tokyo" for price in profile.prices)
+    assert profile.active_city_slugs == frozenset()
+    component = build_country_money_profile_component(profile)
+    assert component["reviewed_cities"] == ()

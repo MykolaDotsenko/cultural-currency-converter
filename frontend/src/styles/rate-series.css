@@ -32,6 +32,9 @@
 
 .qa-rate-series {
   display: grid;
+  /* A minmax(0, 1fr) track prevents a wide, locally scrollable data table
+     from contributing its min-content width to the page at 200% text zoom. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qa-space-5);
   padding: clamp(1rem, 4vw, 2rem);
 }
@@ -202,6 +205,9 @@
   max-inline-size: 100%;
   margin-block-start: var(--qa-space-3);
   overflow-x: auto;
+  /* Isolate the 34rem-wide, keyboard-scrollable table from the page's
+     intrinsic inline sizing at 320px / 200% text. Scrolling stays local. */
+  contain: inline-size;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
 }
