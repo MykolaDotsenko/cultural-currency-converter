@@ -62,7 +62,7 @@ def _side_action_urls(side: DestinationComparisonSide) -> dict[str, str]:
         converter_params["destination_city_slug"] = side.destination_city_slug
 
     city_profile_url = ""
-    if side.destination_city_slug:
+    if side.destination_city_slug and side.city_profile_available:
         city_profile_url = reverse(
             "city_money_profile",
             kwargs={
