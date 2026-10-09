@@ -217,15 +217,29 @@ async function assertNoHorizontalOverflow(page, label) {
       )
       .slice(0, 5);
 
+    const outsideViewport = [...document.querySelectorAll("body *")]
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          tag: element.tagName.toLowerCase(),
+          className: typeof element.className === "string" ? element.className.trim() : "",
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+        };
+      })
+      .filter((element) => element.right > clientWidth + 1 || element.left < -1)
+      .slice(0, 8);
+
     return {
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth,
       offenders,
+      outsideViewport,
     };
   });
   assert(
     dimensions.scrollWidth <= dimensions.clientWidth + 1,
-    `${label}: horizontal overflow ${dimensions.scrollWidth} > ${dimensions.clientWidth}; offenders: ${JSON.stringify(dimensions.offenders)}`,
+    `${label}: horizontal overflow ${dimensions.scrollWidth} > ${dimensions.clientWidth}; outside viewport: ${JSON.stringify(dimensions.outsideViewport)}; internal overflow: ${JSON.stringify(dimensions.offenders)}`,
   );
 }
 

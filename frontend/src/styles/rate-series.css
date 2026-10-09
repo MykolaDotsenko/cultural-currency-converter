@@ -184,9 +184,10 @@
 .qa-rate-series__table {
   min-inline-size: 0;
   max-inline-size: 100%;
-  /* Keep the wide, keyboard-scrollable data table from inflating the page at
-     320px / 200% text. The child .qa-table-scroll remains the scrollport. */
-  overflow: clip;
+  /* Clip scrollable overflow at this bounded details wrapper rather than
+     allowing the wide table to contribute to the document scroll width.
+     The inner .qa-table-scroll remains independently keyboard-scrollable. */
+  overflow: hidden;
 }
 
 .qa-rate-series__table summary {
@@ -200,6 +201,7 @@
 }
 
 .qa-table-scroll {
+  box-sizing: border-box;
   inline-size: 100%;
   min-inline-size: 0;
   max-inline-size: 100%;
