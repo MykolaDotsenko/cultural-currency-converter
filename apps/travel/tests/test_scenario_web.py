@@ -12,7 +12,6 @@ from django.urls import reverse
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.calendar import CalendarContext, PublicHolidayContextItem
 from apps.culture.services import DestinationContext, PaymentContext
-from apps.travel.trip_readiness import build_trip_readiness
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
 from apps.exchange.money_context import MoneyContext, MoneyContextState
@@ -20,6 +19,7 @@ from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_t
 from apps.exchange.payment_estimate import estimate_payment_value
 from apps.exchange.providers.base import FxProviderUnavailable
 from apps.travel.models import SavedScenario, SavedScenarioBudgetBasis, SavedScenarioKind
+from apps.travel.trip_readiness import build_trip_readiness
 
 User = get_user_model()
 
