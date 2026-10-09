@@ -4,6 +4,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.db import DatabaseError
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
@@ -12,7 +13,11 @@ from apps.countries.theme_profiles import country_theme_key
 from apps.exchange.ai.intents import available_explanation_intents
 from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
-from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
+from apps.exchange.forms import (
+    CurrentConversionForm,
+    PaymentEstimateForm,
+    comparison_destination_handoff_supported,
+)
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.result_summary import (
     build_smart_result_summary,
@@ -58,6 +63,7 @@ def _current_result_next_steps(
     *,
     destination_country_code: str,
     destination_city_slug: str,
+    comparison_available: bool,
     payment_available: bool,
     budget_available: bool,
 ) -> tuple[dict[str, str], ...]:
@@ -87,7 +93,7 @@ def _current_result_next_steps(
                 "cta": "Plan the budget",
             }
         )
-    if destination_country_code:
+    if comparison_available:
         destination_token = (
             f"{destination_country_code}:{destination_city_slug}"
             if destination_city_slug
@@ -233,10 +239,21 @@ def build_result_component(
         and bool(money_context.destination_country_code)
         else None
     )
+    destination_city_slug = str(form.cleaned_data.get("destination_city_slug") or "")
+    comparison_available = False
+    if not historical and destination_country_code:
+        try:
+            comparison_available = comparison_destination_handoff_supported(
+                destination_country_code, destination_city_slug
+            )
+        except DatabaseError:
+            # Optional next-step discovery must never invalidate a valid FX result.
+            comparison_available = False
     next_steps = _current_result_next_steps(
         result,
         destination_country_code=destination_country_code,
-        destination_city_slug=str(form.cleaned_data.get("destination_city_slug") or ""),
+        destination_city_slug=destination_city_slug,
+        comparison_available=comparison_available,
         payment_available=payment_estimate_form is not None,
         budget_available=budget_interpretation is not None,
     )

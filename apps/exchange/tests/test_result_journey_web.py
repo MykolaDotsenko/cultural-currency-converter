@@ -83,6 +83,47 @@ def test_no_plan_handoff_when_destination_country_is_unknown(client, reference_d
 
 
 @pytest.mark.django_db
+def test_comparison_handoff_requires_canonical_primary_country_scope(client, reference_data):
+    from apps.countries.models import Country, CountryCurrency
+    from apps.exchange.forms import comparison_destination_handoff_supported
+
+    _fi, _jp, _eur, jpy, _fim = reference_data
+    br = Country.objects.create(iso2="BR", iso3="BRA", name="Brazil")
+    CountryCurrency.objects.create(
+        country=br,
+        currency=jpy,
+        is_primary=False,
+        source="test",
+    )
+    assert not comparison_destination_handoff_supported("BR")
+
+    gateway = FakeGateway()
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
+        response = client.post(
+            reverse("converter"),
+            payload(destination_country="BR"),
+            HTTP_HX_REQUEST="true",
+        )
+    assert response.status_code == 200
+    assert b'data-decision-kind="compare"' not in response.content
+    assert len(gateway.calls) == 1
+
+
+@pytest.mark.django_db
+def test_comparison_handoff_requires_two_available_scopes(reference_data):
+    from apps.countries.models import City, CountryCurrency
+    from apps.exchange.forms import comparison_destination_handoff_supported
+
+    fi, jp, _eur, _jpy, _fim = reference_data
+    CountryCurrency.objects.filter(country=fi).delete()
+
+    assert not comparison_destination_handoff_supported("JP")
+    City.objects.create(country=jp, slug="tokyo", name="Tokyo")
+    assert comparison_destination_handoff_supported("JP:tokyo") is False
+    assert comparison_destination_handoff_supported("JP", "tokyo")
+
+
+@pytest.mark.django_db
 def test_historical_result_never_offers_current_decision_flow(client, reference_data):
     from apps.exchange.tests.test_web import FakeHistoricalGateway
 

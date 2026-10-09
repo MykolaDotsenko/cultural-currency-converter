@@ -132,6 +132,18 @@ def _destination_reference_choices() -> tuple[
     return currency_by_code, destination_by_token, currency_choices, destination_choices
 
 
+def comparison_destination_handoff_supported(
+    country_code: str, city_slug: str = ""
+) -> bool:
+    """Share the exact canonical comparison destination registry and readiness rule."""
+
+    _currencies, destinations, _currency_choices, _destination_choices = (
+        _destination_reference_choices()
+    )
+    token = f"{country_code}:{city_slug}" if city_slug else country_code
+    return len(destinations) >= 2 and token in destinations
+
+
 class DestinationModeForm(forms.Form):
     """Destination-first entry point that resolves into the canonical converter."""
 
