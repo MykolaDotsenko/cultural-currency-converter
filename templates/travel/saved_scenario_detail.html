@@ -150,6 +150,9 @@
       </section>
     </section>
   {% endif %}
+  {% if trip_budget %}
+    {% include "travel/trip_command_index.html" %}
+  {% endif %}
   <div class="qa-saved-state">
     <section class="qa-saved-section" aria-labelledby="scenario-summary-title">
       <div class="qa-saved-section__heading">

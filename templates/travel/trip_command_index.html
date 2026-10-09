@@ -1,0 +1,62 @@
+<section class="qa-trip-command-index"
+         data-trip-command-index
+         aria-labelledby="trip-command-index-title">
+  <div class="qa-trip-command-index__intro">
+    <p class="qa-foundation-kicker">Your trip workspace</p>
+    <h2 id="trip-command-index-title">Everything for the next decision.</h2>
+    <p>
+      Choose a task to continue this saved trip. Your original FX observation and
+      confirmed-spend baseline stay unchanged until you explicitly add or remove spend.
+    </p>
+  </div>
+  <nav class="qa-trip-command-index__nav" aria-label="Saved trip actions">
+    <a class="qa-trip-command-index__item"
+       data-trip-command-action="spend"
+       href="#scenario-trip-budget-title">
+      <span class="qa-trip-command-index__eyebrow">01 / Track</span>
+      <strong>Record spending</strong>
+      <span>Subtract only confirmed amounts.</span>
+      <span class="qa-trip-command-index__arrow" aria-hidden="true">↓</span>
+    </a>
+    <a class="qa-trip-command-index__item"
+       data-trip-command-action="rate"
+       href="#scenario-observation-title">
+      <span class="qa-trip-command-index__eyebrow">02 / Recheck</span>
+      <strong>Check today's rate</strong>
+      <span>Compare observations without changing the baseline.</span>
+      <span class="qa-trip-command-index__arrow" aria-hidden="true">↓</span>
+    </a>
+    {% if scenario.kind == "budget" and scenario.destination_country %}
+      <a class="qa-trip-command-index__item"
+         data-trip-command-action="guide"
+         href="#scenario-local-context-title">
+        <span class="qa-trip-command-index__eyebrow">03 / Understand</span>
+        <strong>Open the local guide</strong>
+        <span>Refresh reviewed prices and payment advice on demand.</span>
+        <span class="qa-trip-command-index__arrow" aria-hidden="true">↓</span>
+      </a>
+    {% endif %}
+    {% if notification_rows %}
+      <a class="qa-trip-command-index__item"
+         data-trip-command-action="notifications"
+         href="#scenario-notifications-title">
+        <span class="qa-trip-command-index__eyebrow">04 / Remember</span>
+        <strong>Manage reminders</strong>
+        <span>Choose whether to enable informational trip alerts.</span>
+        <span class="qa-trip-command-index__arrow" aria-hidden="true">↓</span>
+      </a>
+    {% endif %}
+    <a class="qa-trip-command-index__item"
+       data-trip-command-action="offline"
+       href="#offline-trip-tools">
+      <span class="qa-trip-command-index__eyebrow">05 / Take along</span>
+      <strong>Prepare offline access</strong>
+      <span>Keep a user-controlled copy for travel.</span>
+      <span class="qa-trip-command-index__arrow" aria-hidden="true">↓</span>
+    </a>
+  </nav>
+  <p class="qa-trip-command-index__note">
+    Navigating this workspace never triggers a currency refresh, sends reminders,
+    downloads data or saves a device copy without your action.
+  </p>
+</section>
