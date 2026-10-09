@@ -999,6 +999,19 @@ def test_readiness_does_not_invent_guidance_when_no_reviewed_evidence():
 def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_reference_data):
     user = User.objects.create_user(username="readiness-owner", password="StrongPass-482!")
     client.force_login(user)
+    japan = Country.objects.get(iso2="JP")
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 10, 15),
+        name="National holiday within trip",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/national-holiday",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
     client.post(
         reverse("save_budget_scenario"),
         {
@@ -1018,9 +1031,12 @@ def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_r
     builder.assert_not_called()
     assert b"data-trip-readiness-evidence" not in idle.content
 
-    with patch(
-        "apps.travel.scenario_web.build_destination_context",
-        return_value=_readiness_destination(),
+    with (
+        patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            return_value=_readiness_destination(),
+        ),
     ):
         refreshed = client.get(
             reverse("saved_scenario_detail", args=(scenario.pk,)),
@@ -1096,7 +1112,12 @@ def test_future_saved_trip_uses_reviewed_holidays_from_its_dates_without_provide
     assert response.status_code == 200
     assert b"Future reviewed national holiday" in response.content
     assert b"Unrelated regional-only holiday" not in response.content
-    assert b"National holiday within trip" not in response.content
+    # The refreshed Money Context Lens may separately include today's
+    # 30-day calendar. Only the trip-readiness section must use trip dates.
+    readiness = response.context["local_context"]["trip_readiness"]
+    assert [holiday["name"] for holiday in readiness["holidays"]] == [
+        "Future reviewed national holiday"
+    ]
     assert b"3 Dec 2026" in response.content
     assert b"9 Dec 2026" in response.content
     assert b"A missing record does not establish" in response.content
