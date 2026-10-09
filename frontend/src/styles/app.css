@@ -10,6 +10,7 @@
 @import "./account.css";
 @import "./explore.css";
 @import "./premium.css";
+@import "./bilateral-value-lens.css";
 @import "./shopping-scanner.css";
 
 @source "../../../templates";

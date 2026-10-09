@@ -34,6 +34,12 @@ from django.urls import resolve, reverse
             ),
         ),
         (
+            "converter",
+            {},
+            "components/converter/bilateral_value_lens.html",
+            ("source_value_lens.prices", "destination_context_component.prices"),
+        ),
+        (
             "shopping_calculation",
             {},
             "pages/shopping.html",

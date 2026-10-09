@@ -1,0 +1,143 @@
+/* Progressive bilateral value: premium editorial evidence, not a price ranking. */
+.qa-bilateral-value-lens {
+  margin-block: var(--qa-space-10);
+  padding-block: clamp(1.75rem, 4vw, 2.75rem);
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-bilateral-value-lens__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--qa-space-4);
+  margin-block-end: var(--qa-space-8);
+}
+
+.qa-bilateral-value-lens__heading > div {
+  max-width: 43rem;
+  min-width: 0;
+}
+
+.qa-bilateral-value-lens__heading h3 {
+  margin-block-end: var(--qa-space-3);
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-weight: 480;
+  letter-spacing: -0.04em;
+}
+
+.qa-bilateral-value-lens__heading p:not(.qa-foundation-kicker),
+.qa-bilateral-value-lens__note {
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.qa-bilateral-value-lens__eyebrow {
+  color: var(--color-muted);
+  font-size: var(--text-meta);
+  letter-spacing: 0.04em;
+}
+
+.qa-bilateral-value-lens__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--qa-space-4);
+}
+
+.qa-bilateral-value-lens__side {
+  min-width: 0;
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--qa-context-soft) 32%, var(--color-surface)),
+      var(--color-surface) 65%
+    );
+  padding: clamp(1.125rem, 3vw, 2rem);
+}
+
+.qa-bilateral-value-lens__role {
+  margin-block-end: var(--qa-space-4);
+  color: var(--qa-context-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.qa-bilateral-value-lens__side h4 {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 530;
+  letter-spacing: -0.04em;
+}
+
+.qa-bilateral-value-lens__amount {
+  margin-block: var(--qa-space-3) var(--qa-space-6);
+  color: var(--qa-context-accent);
+  font-size: clamp(1.25rem, 2.8vw, 1.75rem);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.qa-bilateral-value-lens__observations {
+  display: grid;
+  gap: var(--qa-space-5);
+}
+
+.qa-bilateral-value-lens__item {
+  min-width: 0;
+  border-block-start: 1px solid var(--qa-hairline);
+  padding-block-start: var(--qa-space-4);
+}
+
+.qa-bilateral-value-lens__item h5 {
+  font-size: var(--text-body-sm);
+  font-weight: 650;
+}
+
+.qa-bilateral-value-lens__equivalent {
+  margin-block: var(--qa-space-2);
+  color: var(--color-ink);
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  font-weight: 550;
+  letter-spacing: -0.025em;
+}
+
+.qa-bilateral-value-lens__price,
+.qa-bilateral-value-lens__evidence,
+.qa-bilateral-value-lens__empty {
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.qa-bilateral-value-lens__evidence {
+  margin-block: var(--qa-space-3) 0;
+  font-size: var(--text-meta);
+}
+
+.qa-bilateral-value-lens__evidence a {
+  color: var(--color-brand);
+  text-underline-offset: 0.2em;
+}
+
+.qa-bilateral-value-lens__note {
+  margin-block: var(--qa-space-5) 0;
+  max-width: 66rem;
+  font-size: var(--text-body-sm);
+}
+
+@media (max-width: 44rem) {
+  .qa-bilateral-value-lens__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-bilateral-value-lens__side {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+}

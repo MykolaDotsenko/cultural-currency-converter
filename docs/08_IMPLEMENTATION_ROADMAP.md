@@ -38,6 +38,8 @@ Roadmap item numbers are stable planning IDs. When an item ships, it moves to th
 
 ## Shipped roadmap items
 
+- **Bilateral source-value lens — shipped first reviewed-evidence slice.** A successful current conversion with a selected source country can now show its already-reviewed local everyday-value anchors alongside the existing destination anchors, using the same canonical backend context engine and each side's own amount/currency. It is progressive, omitted without source price evidence, explicitly non-comparative, and never shown for historical FX. Provider failure remains isolated from the trusted conversion.
+
 The following previously planned items are now part of the current product baseline:
 
 - **#4 Country ↔ currency smart filtering — shipped.** The current picker supports country-context and currency-only choices, respects historical mode/date semantics and labels historical options; form validation rejects mismatched country/currency submissions before provider access.
