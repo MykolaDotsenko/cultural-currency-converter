@@ -32,6 +32,9 @@
 
 .qa-rate-series {
   display: grid;
+  /* A minmax(0, 1fr) track prevents a wide, locally scrollable data table
+     from contributing its min-content width to the page at 200% text zoom. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qa-space-5);
   padding: clamp(1rem, 4vw, 2rem);
 }
