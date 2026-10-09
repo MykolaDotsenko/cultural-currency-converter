@@ -5,9 +5,9 @@ from collections.abc import Callable
 
 from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.cache import patch_cache_control, patch_vary_headers
-from django.shortcuts import render
 from django.utils.formats import date_format
 from django.views.decorators.http import require_http_methods
 
