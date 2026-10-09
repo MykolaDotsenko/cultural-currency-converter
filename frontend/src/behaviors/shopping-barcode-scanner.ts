@@ -33,11 +33,7 @@ export function enhanceShoppingBarcodeScanner(): void {
     if (!input || !start || !stop || !panel || !video || !status) continue;
 
     const detectorConstructor = (window as ScannerWindow).BarcodeDetector;
-    if (
-      !window.isSecureContext ||
-      !navigator.mediaDevices?.getUserMedia ||
-      !detectorConstructor
-    ) {
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia || !detectorConstructor) {
       continue; // The manual GET lookup always remains fully functional.
     }
 
@@ -52,7 +48,9 @@ export function enhanceShoppingBarcodeScanner(): void {
       scanTimeout = null;
       video.pause();
       video.srcObject = null;
-      stream?.getTracks().forEach((track) => track.stop());
+      stream?.getTracks().forEach((track) => {
+        track.stop();
+      });
       stream = null;
       panel.hidden = true;
       start.disabled = false;
@@ -69,8 +67,7 @@ export function enhanceShoppingBarcodeScanner(): void {
           input.value = code;
           input.dispatchEvent(new Event("input", { bubbles: true }));
           input.focus();
-          status.textContent =
-            "Barcode captured. Review the digits, then select Look up product.";
+          status.textContent = "Barcode captured. Review the digits, then select Look up product.";
           return;
         }
       } catch {
@@ -96,7 +93,9 @@ export function enhanceShoppingBarcodeScanner(): void {
             video: { facingMode: { ideal: "environment" } },
           });
           if (generation !== token) {
-            acquired.getTracks().forEach((track) => track.stop());
+            acquired.getTracks().forEach((track) => {
+              track.stop();
+            });
             return;
           }
           stream = acquired;
