@@ -20,7 +20,11 @@ from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_t
 from apps.exchange.payment_estimate import estimate_payment_value
 from apps.exchange.providers.base import FxProviderUnavailable
 from apps.travel.models import SavedScenario, SavedScenarioBudgetBasis, SavedScenarioKind
-from apps.travel.trip_readiness import build_trip_calendar_review, build_trip_readiness
+from apps.travel.trip_readiness import (
+    TripCalendarReview,
+    build_trip_calendar_review,
+    build_trip_readiness,
+)
 
 User = get_user_model()
 
@@ -1139,3 +1143,34 @@ def test_trip_calendar_review_is_bounded_to_first_90_days_and_excludes_past_date
         )
         is None
     )
+
+
+def test_explicit_trip_calendar_check_reports_missing_evidence_without_inventing_a_holiday():
+    destination = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 10, 9),
+        payment=None,
+        prices=(),
+        calendar=None,
+    )
+    reviewed = TripCalendarReview(
+        calendar=None,
+        window_start=date(2026, 12, 3),
+        window_end=date(2026, 12, 9),
+        truncated=False,
+    )
+    result = build_trip_readiness(
+        destination,
+        as_of=date(2026, 10, 9),
+        travel_start_date=date(2026, 12, 3),
+        travel_end_date=date(2026, 12, 9),
+        calendar_review=reviewed,
+    )
+    assert result is not None
+    assert result["holidays"] == ()
+    assert result["tips"] == ()
+    assert result["trip_calendar_checked"] is True
+    assert result["has_calendar_evidence"] is False
+    assert result["trip_calendar_window_start"] == "3 Dec 2026"
+    assert result["trip_calendar_window_end"] == "9 Dec 2026"
