@@ -1,0 +1,30 @@
+<section class="qa-decision-journey"
+         data-conversion-decision-journey
+         aria-labelledby="decision-journey-title">
+  <div class="qa-decision-journey__intro">
+    <p class="qa-foundation-kicker">Your next move</p>
+    <h3 id="decision-journey-title">Make the number useful.</h3>
+    <p>
+      This is a reference conversion, not a payment quote or trip-cost forecast.
+      Choose what to work out next.
+    </p>
+  </div>
+  <nav class="qa-decision-journey__steps"
+       aria-label="Next steps from this conversion">
+    {% for step in result_component.next_steps %}
+      <a class="qa-decision-journey__step"
+         data-decision-kind="{{ step.kind }}"
+         href="{{ step.href }}">
+        <span class="qa-decision-journey__ordinal" aria-hidden="true">0{{ forloop.counter }}</span>
+        <span class="qa-decision-journey__content">
+          <strong>{{ step.label }}</strong>
+          <span>{{ step.detail }}</span>
+          <span class="qa-decision-journey__cta">{{ step.cta }} <span aria-hidden="true">↗</span></span>
+        </span>
+      </a>
+    {% endfor %}
+  </nav>
+  <p class="qa-decision-journey__trust">
+    Your reference FX result never changes when you model fees, compare a basket, or open a second destination.
+  </p>
+</section>

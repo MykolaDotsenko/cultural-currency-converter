@@ -294,6 +294,9 @@
         {% with component=result_component %}
           {% include "components/converter/primitives.html#conversion-result" %}
         {% endwith %}
+        {% if result_component.next_steps %}
+          {% include "components/converter/decision_journey.html" %}
+        {% endif %}
         {% if source_value_lens %}
           {% include "components/converter/bilateral_value_lens.html" %}
         {% endif %}

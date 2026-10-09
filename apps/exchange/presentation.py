@@ -4,6 +4,7 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.db import DatabaseError
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
@@ -12,7 +13,11 @@ from apps.countries.theme_profiles import country_theme_key
 from apps.exchange.ai.intents import available_explanation_intents
 from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
-from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
+from apps.exchange.forms import (
+    CurrentConversionForm,
+    PaymentEstimateForm,
+    comparison_destination_handoff_supported,
+)
 from apps.exchange.money_context import MoneyContext
 from apps.exchange.result_summary import (
     build_smart_result_summary,
@@ -51,6 +56,64 @@ def _selection_context(form: CurrentConversionForm, side: str) -> dict[str, str]
         "currency_name": currency.name if currency else "Choose currency",
         "theme": country_theme_key(country.iso2) if country else "",
     }
+
+
+def _current_result_next_steps(
+    result: ConversionResult,
+    *,
+    destination_country_code: str,
+    destination_city_slug: str,
+    comparison_available: bool,
+    payment_available: bool,
+    budget_available: bool,
+) -> tuple[dict[str, str], ...]:
+    """Route verified current-result inputs to existing actions, never rates or fees."""
+
+    if result.quote.historical:
+        return ()
+
+    steps: list[dict[str, str]] = []
+    if payment_available:
+        steps.append(
+            {
+                "kind": "payment",
+                "label": "Estimate a payment",
+                "detail": "Test explicit card or bank fees against this reference rate.",
+                "href": "#payment-estimate-region",
+                "cta": "Adjust fees",
+            }
+        )
+    if budget_available:
+        steps.append(
+            {
+                "kind": "budget",
+                "label": "Build a trip budget",
+                "detail": "Use reviewed local prices, then save a scenario if you choose.",
+                "href": "#budget-interpretation-region",
+                "cta": "Plan the budget",
+            }
+        )
+    if comparison_available:
+        destination_token = (
+            f"{destination_country_code}:{destination_city_slug}"
+            if destination_city_slug
+            else destination_country_code
+        )
+        params = {
+            "amount": format(result.input_amount, "f"),
+            "source_currency": result.quote.base_currency,
+            "left_destination": destination_token,
+        }
+        steps.append(
+            {
+                "kind": "compare",
+                "label": "Compare another place",
+                "detail": "Carry only your starting amount and chosen place into a new comparison.",
+                "href": f"{reverse('destination_comparison')}?{urlencode(params)}",
+                "cta": "Choose a second place",
+            }
+        )
+    return tuple(steps)
 
 
 def build_result_component(
@@ -176,6 +239,24 @@ def build_result_component(
         and bool(money_context.destination_country_code)
         else None
     )
+    destination_city_slug = str(form.cleaned_data.get("destination_city_slug") or "")
+    comparison_available = False
+    if not historical and destination_country_code:
+        try:
+            comparison_available = comparison_destination_handoff_supported(
+                destination_country_code, destination_city_slug
+            )
+        except DatabaseError:
+            # Optional next-step discovery must never invalidate a valid FX result.
+            comparison_available = False
+    next_steps = _current_result_next_steps(
+        result,
+        destination_country_code=destination_country_code,
+        destination_city_slug=destination_city_slug,
+        comparison_available=comparison_available,
+        payment_available=payment_estimate_form is not None,
+        budget_available=budget_interpretation is not None,
+    )
     smart_summary = build_smart_result_summary(result, money_context=money_context)
     supporting_insights = build_supporting_money_insights(
         result,
@@ -194,6 +275,7 @@ def build_result_component(
         "historical": historical,
         "smart_summary": smart_summary,
         "supporting_insights": supporting_insights,
+        "next_steps": next_steps,
         "local_state": {
             "input_amount": format(result.input_amount, "f"),
             "output_amount": format(result.output_amount, "f"),
