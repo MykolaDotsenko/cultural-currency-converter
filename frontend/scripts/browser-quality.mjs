@@ -3202,10 +3202,12 @@ async function assertCountryMoneyGuideQuality(page) {
     (await page.locator("a[href^='https://']").count()) > 0,
     "country-guide: evidence source links disappeared",
   );
+  // Inline provenance links have the WCAG inline-link target-size exception;
+  // primary action controls remain subject to the 44px mobile target guard.
   await assertPremiumResponsiveTargets(
     page,
     "country-guide/responsive",
-    '[aria-label="Country money next steps"] a, .qa-price-card a, .qa-saved-row__actions a',
+    '[aria-label="Country money next steps"] a, .qa-saved-row__actions a',
   );
   await assertAxe(page, "country-guide/interactive");
 }
