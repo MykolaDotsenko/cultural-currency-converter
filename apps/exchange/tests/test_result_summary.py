@@ -298,25 +298,34 @@ def test_supporting_insights_fail_closed_on_stale_historical_exact_or_mismatched
         (_conversion(output=Decimal("34900")), context),
     )
     for result, attached_context in variants:
-        assert build_supporting_money_insights(
-            result,
-            money_context=attached_context,
+        assert (
+            build_supporting_money_insights(
+                result,
+                money_context=attached_context,
+                primary_kind=SmartResultSummaryKind.REFERENCE,
+            )
+            == ()
+        )
+    assert (
+        build_supporting_money_insights(
+            conversion,
+            money_context=None,
             primary_kind=SmartResultSummaryKind.REFERENCE,
-        ) == ()
-    assert build_supporting_money_insights(
-        conversion,
-        money_context=None,
-        primary_kind=SmartResultSummaryKind.REFERENCE,
-    ) == ()
+        )
+        == ()
+    )
 
 
 def test_supporting_insights_do_not_repeat_primary_payment_or_price_message():
     conversion = _conversion()
-    assert build_supporting_money_insights(
-        conversion,
-        money_context=_context(conversion, payment=_payment()),
-        primary_kind=SmartResultSummaryKind.PAYMENT,
-    ) == ()
+    assert (
+        build_supporting_money_insights(
+            conversion,
+            money_context=_context(conversion, payment=_payment()),
+            primary_kind=SmartResultSummaryKind.PAYMENT,
+        )
+        == ()
+    )
 
     insights = build_supporting_money_insights(
         conversion,
