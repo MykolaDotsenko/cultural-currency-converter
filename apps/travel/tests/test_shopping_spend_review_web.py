@@ -10,9 +10,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
+from apps.exchange.tests.test_shopping_web import ShoppingGateway, _payload
 from apps.exchange.tests.test_shopping_web import (
-    ShoppingGateway,
-    _payload,
     shopping_reference_data as shopping_reference_data,
 )
 from apps.travel.models import SavedScenario, SavedScenarioKind
