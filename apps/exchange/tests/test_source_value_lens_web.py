@@ -48,13 +48,17 @@ def test_bilateral_lens_preserves_independent_amounts_and_sourced_prices(
         if htmx:
             response = client.post(reverse("converter"), payload(), **headers)
         else:
-            response = client.get(reverse("converter"), {
-                "convert": "1", **payload(),
-            })
+            response = client.get(
+                reverse("converter"),
+                {
+                    "convert": "1",
+                    **payload(),
+                },
+            )
 
     assert response.status_code == 200
     html = response.content.decode()
-    assert 'data-bilateral-value-lens' in html
+    assert "data-bilateral-value-lens" in html
     assert 'data-value-side="source"' in html
     assert 'data-value-side="destination"' in html
     assert "Finland coffee" in html
@@ -72,9 +76,7 @@ def test_bilateral_lens_preserves_independent_amounts_and_sourced_prices(
 def test_bilateral_lens_is_omitted_without_published_source_prices(client, reference_data):
     gateway = FakeGateway()
     with patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway):
-        response = client.post(
-            reverse("converter"), payload(), HTTP_HX_REQUEST="true"
-        )
+        response = client.post(reverse("converter"), payload(), HTTP_HX_REQUEST="true")
 
     assert response.status_code == 200
     assert b"data-bilateral-value-lens" not in response.content
@@ -109,9 +111,7 @@ def test_source_context_failure_never_hides_a_valid_conversion(client, bilateral
             side_effect=DatabaseError("optional evidence store down"),
         ),
     ):
-        response = client.post(
-            reverse("converter"), payload(), HTTP_HX_REQUEST="true"
-        )
+        response = client.post(reverse("converter"), payload(), HTTP_HX_REQUEST="true")
 
     assert response.status_code == 200
     assert b'id="current-conversion-result"' in response.content
@@ -146,6 +146,6 @@ def test_destination_city_scope_remains_explicit_in_bilateral_lens(client, bilat
         )
     assert response.status_code == 200
     html = response.content.decode()
-    assert 'data-bilateral-value-lens' in html
+    assert "data-bilateral-value-lens" in html
     assert "Tokyo coffee" in html
     assert "600 JPY typical · Tokyo" in html
