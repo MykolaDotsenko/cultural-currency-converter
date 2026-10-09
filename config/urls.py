@@ -11,6 +11,7 @@ from apps.common.security import csp_report
 from apps.common.views import converter_preview, rate_series_preview, shell_preview
 from apps.culture.views import (
     city_money_profile,
+    country_money_profile,
     current_destination_context,
     explore,
     explore_explanation,
@@ -107,6 +108,11 @@ urlpatterns = [
     ),
     path("explore/", explore, name="explore"),
     path("explore/explain/", explore_explanation, name="explore_explanation"),
+    path(
+        "country/<str:country_code>/",
+        country_money_profile,
+        name="country_money_profile",
+    ),
     path(
         "city/<str:country_code>/<slug:city_slug>/",
         city_money_profile,

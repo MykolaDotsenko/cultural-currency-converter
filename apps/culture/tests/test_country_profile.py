@@ -1,0 +1,183 @@
+"""Source-trust, user-visible and fail-closed contract for country money guides."""
+
+from __future__ import annotations
+
+from datetime import UTC, date, datetime
+from decimal import Decimal
+from io import StringIO
+from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
+
+import pytest
+from django.core.management import call_command
+from django.urls import reverse
+
+from apps.countries.models import Country, CountryCurrency, Currency
+from apps.culture.country_profile import (
+    build_country_money_profile,
+    build_country_money_profile_component,
+)
+from apps.culture.models import EconomicObservation, PublicHolidayObservation
+
+
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
+@pytest.fixture
+def reviewed_country_data(db):
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+
+@pytest.mark.django_db
+def test_country_guide_reuses_canonical_current_currency_and_evidence(reviewed_country_data):
+    profile = build_country_money_profile(country_code="jp", as_of=date(2026, 10, 9))
+    assert profile is not None
+    assert profile.country_name == "Japan"
+    assert profile.currency_code == "JPY"
+    assert profile.payment is not None
+    assert profile.prices
+    assert all(item.currency_code == "JPY" for item in profile.prices)
+    result = build_country_money_profile_component(profile)
+    assert result["payment"]["source_url"].startswith("https://")
+    assert result["prices"]
+    assert all(item["source_url"].startswith("https://") for item in result["prices"])
+    converter_query = parse_qs(urlparse(result["converter_url"]).query)
+    assert converter_query["destination_country"] == ["JP"]
+    assert converter_query["destination_currency"] == ["JPY"]
+    assert parse_qs(urlparse(result["budget_url"]).query)["destination"] == ["JP"]
+    assert parse_qs(urlparse(result["compare_url"]).query)["left_destination"] == ["JP"]
+
+
+@pytest.mark.django_db
+def test_country_guide_never_promotes_city_price_into_national_average(reviewed_country_data):
+    profile = build_country_money_profile(country_code="JP", as_of=date(2026, 10, 9))
+    assert profile is not None
+    component = build_country_money_profile_component(profile)
+    for raw, displayed in zip(profile.prices, component["prices"], strict=True):
+        assert displayed["is_national"] is (not bool(raw.city or raw.city_slug))
+        assert displayed["scope"] == raw.scope_label
+    city_rows = [row for row in component["prices"] if not row["is_national"]]
+    assert city_rows
+    assert all("Tokyo" in row["scope"] for row in city_rows)
+
+
+@pytest.mark.django_db
+def test_country_guide_renders_macro_and_holiday_evidence_without_external_fx(
+    client, reviewed_country_data
+):
+    country = Country.objects.get(iso2="JP")
+    EconomicObservation.objects.create(
+        country=country,
+        source="world_bank",
+        indicator="inflation_yoy",
+        category="all_items",
+        value=Decimal("2.3"),
+        unit="percent",
+        period_start=date(2026, 1, 1),
+        frequency="annual",
+        observation_status="unknown",
+        source_dataset="FP.CPI.TOTL.ZG",
+        source_name="World Bank",
+        source_url="https://example.org/japan-economy",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    PublicHolidayObservation.objects.create(
+        country=country,
+        date=date(2026, 10, 16),
+        name="Reviewed country holiday",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.org/japan-holidays",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    with (
+        patch("apps.culture.country_profile.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch("apps.exchange.views.build_latest_quote_gateway") as gateway_factory,
+    ):
+        response = client.get(reverse("country_money_profile", args=("JP",)))
+    assert response.status_code == 200
+    assert b"Money in Japan" in response.content
+    assert b"2.3%" in response.content
+    assert b"Source: World Bank" in response.content
+    assert b"Reviewed country holiday" in response.content
+    assert b"Source: Nager.Date" in response.content
+    assert b"Regional dates are not included" in response.content
+    assert b"without requesting an exchange rate" in response.content
+    gateway_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_country_guide_excludes_stale_economy_and_non_national_holidays(
+    client, reviewed_country_data
+):
+    country = Country.objects.get(iso2="JP")
+    EconomicObservation.objects.create(
+        country=country,
+        source="world_bank",
+        indicator="inflation_yoy",
+        category="all_items",
+        value=Decimal("99.9"),
+        unit="percent",
+        period_start=date(2018, 1, 1),
+        frequency="annual",
+        observation_status="unknown",
+        source_dataset="old",
+        source_name="World Bank",
+        source_url="https://example.org/old",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    PublicHolidayObservation.objects.create(
+        country=country,
+        date=date(2026, 10, 16),
+        name="Regional-only day",
+        national_holiday=False,
+        subdivision_codes=["JP-01"],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.org/regional",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    with patch(
+        "apps.culture.country_profile.timezone.localdate",
+        return_value=date(2026, 10, 9),
+    ):
+        response = client.get(reverse("country_money_profile", args=("JP",)))
+    assert response.status_code == 200
+    assert b"99.9%" not in response.content
+    assert b"Regional-only day" not in response.content
+    assert b'country-profile-economy-title' not in response.content
+    assert b'country-profile-calendar-title' not in response.content
+
+
+@pytest.mark.django_db
+def test_country_guide_does_not_publish_unknown_or_unreviewed_context(client, reviewed_country_data):
+    assert client.get(reverse("country_money_profile", args=("ZZ",))).status_code == 404
+    country = Country.objects.create(iso2="XZ", iso3="XZZ", name="Example unreviewed")
+    currency = Currency.objects.get(code="EUR")
+    CountryCurrency.objects.create(
+        country=country,
+        currency=currency,
+        is_primary=True,
+        source="test",
+    )
+    assert client.get(reverse("country_money_profile", args=("XZ",))).status_code == 404
+
+
+@pytest.mark.django_db
+def test_explore_country_card_and_region_link_to_reviewed_country_guide(
+    client, reviewed_country_data
+):
+    response = client.get(reverse("explore"))
+    assert response.status_code == 200
+    href = reverse("country_money_profile", args=("JP",))
+    assert href.encode() in response.content
+    assert b"View country money guide" in response.content or b"Country money guide" in response.content

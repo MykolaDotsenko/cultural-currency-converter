@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}
+  {% if country_profile %}{{ country_profile.country_name }} money guide · Cultural Currency Converter{% else %}Country money guide · Cultural Currency Converter{% endif %}
+{% endblock %}
+{% block head_meta %}
+  <meta name="description"
+        content="Reviewed country payment customs, scoped everyday-price examples, official economic indicators and national holiday evidence, without a live FX lookup.">
+  {% include "components/media/social_preview_meta.html" %}
+{% endblock %}
+{% block header_actions %}
+  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
+  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan</a>
+{% endblock %}
+{% block content %}
+  {% if country_profile_error %}
+    <section class="qa-foundation-intro" aria-labelledby="country-profile-error-title">
+      <p class="qa-foundation-kicker">Country money guide</p>
+      <h1 id="country-profile-error-title">{{ country_profile_error.title }}</h1>
+      <p class="qa-foundation-lede">{{ country_profile_error.detail }}</p>
+      <a class="qa-primary-button" href="{% url 'explore' %}">Browse reviewed destinations</a>
+    </section>
+  {% elif country_profile %}
+    <section class="qa-foundation-intro qa-country-atmosphere"
+             data-country-theme="{{ country_profile.theme }}"
+             aria-labelledby="country-profile-title">
+      <p class="qa-foundation-kicker">Country money guide · reviewed context</p>
+      <h1 id="country-profile-title">Money in {{ country_profile.country_name }}</h1>
+      <p class="qa-foundation-lede">
+        Local currency: <strong>{{ country_profile.currency_name }} · {{ country_profile.currency_code }}</strong>.
+        Country-level payment information, sourced local-price examples and official evidence,
+        without requesting an exchange rate.
+      </p>
+      <p class="qa-context-freshness-note">
+        Context assembled {{ country_profile.as_of }}. Evidence observation and review dates
+        are shown separately, and missing information is not inferred.
+      </p>
+      <div class="qa-saved-row__actions" aria-label="Country money next steps">
+        <a class="qa-primary-button" href="{{ country_profile.converter_url }}">Convert money</a>
+        <a class="qa-secondary-button" href="{{ country_profile.budget_url }}">Plan a budget</a>
+        <a class="qa-secondary-button" href="{{ country_profile.compare_url }}">Compare destinations</a>
+      </div>
+    </section>
+    <div class="qa-saved-state">
+      <section class="qa-saved-section" aria-labelledby="country-profile-payment-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Paying locally</p>
+            <h2 id="country-profile-payment-title">Cards, cash, ATMs &amp; tips</h2>
+          </div>
+        </div>
+        {% if country_profile.payment %}
+          <p>{{ country_profile.payment.summary }}</p>
+          <dl class="qa-context-facts">
+            {% for row in country_profile.payment.rows %}
+              <div>
+                <dt>{{ row.label }}</dt>
+                <dd>{{ row.text }}</dd>
+              </div>
+            {% endfor %}
+          </dl>
+          <p class="qa-context-source">
+            Reviewed {{ country_profile.payment.verified }} ·
+            <a href="{{ country_profile.payment.source_url }}">Source: {{ country_profile.payment.source_name }}</a>
+          </p>
+        {% else %}
+          <p class="qa-saved-empty">No reviewed payment guidance is available for this country yet.</p>
+        {% endif %}
+      </section>
+      <section class="qa-saved-section" aria-labelledby="country-profile-prices-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Everyday money evidence</p>
+            <h2 id="country-profile-prices-title">Illustrative local prices</h2>
+            <p>
+              {{ country_profile.national_price_count }} national estimate{{ country_profile.national_price_count|pluralize }}
+              · {{ country_profile.city_example_count }} city example{{ country_profile.city_example_count|pluralize }}.
+              Individual city examples do not represent national averages.
+            </p>
+          </div>
+        </div>
+        {% if country_profile.prices %}
+          <div class="qa-price-grid">
+            {% for price in country_profile.prices %}
+              <article class="qa-price-card">
+                <p class="qa-price-card__label">{{ price.label }}</p>
+                <p class="qa-price-card__price">{{ price.price_text }} typical</p>
+                <p class="qa-price-card__equivalent">
+                  {% if price.is_national %}National estimate{% else %}City-specific example{% endif %}
+                  · {{ price.scope }}
+                </p>
+                <p class="qa-price-card__meta">
+                  Observed {{ price.observed }} · {{ price.source_class }} · {{ price.confidence }} confidence
+                </p>
+                <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="qa-saved-empty">No current verified everyday-price examples are available.</p>
+        {% endif %}
+        <p class="qa-context-disclaimer">
+          These are bounded sourced examples, not live shelf prices, a national price average,
+          a cost-of-living ranking or a purchasing-power calculation.
+        </p>
+      </section>
+      {% if country_profile.economic %}
+        <section class="qa-saved-section"
+                 aria-labelledby="country-profile-economy-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">Official statistics</p>
+              <h2 id="country-profile-economy-title">National economic context</h2>
+            </div>
+          </div>
+          <div class="qa-price-grid">
+            {% if country_profile.economic.inflation %}
+              {% with metric=country_profile.economic.inflation %}
+                <article class="qa-price-card">
+                  <p class="qa-price-card__label">{{ metric.label }}</p>
+                  <p class="qa-price-card__price">{{ metric.value_text }}</p>
+                  <p class="qa-price-card__equivalent">{{ metric.interpretation }}</p>
+                  <p class="qa-price-card__meta">{{ metric.period }} · {{ metric.status }} · {{ metric.source_dataset }}</p>
+                  <a href="{{ metric.source_url }}">Source: {{ metric.source_name }}</a>
+                </article>
+              {% endwith %}
+            {% endif %}
+            {% if country_profile.economic.price_level %}
+              {% with metric=country_profile.economic.price_level %}
+                <article class="qa-price-card">
+                  <p class="qa-price-card__label">{{ metric.label }}</p>
+                  <p class="qa-price-card__price">{{ metric.value_text }}</p>
+                  <p class="qa-price-card__equivalent">{{ metric.interpretation }}</p>
+                  <p class="qa-price-card__meta">{{ metric.period }} · {{ metric.status }} · {{ metric.source_dataset }}</p>
+                  <a href="{{ metric.source_url }}">Source: {{ metric.source_name }}</a>
+                </article>
+              {% endwith %}
+            {% endif %}
+          </div>
+          <p class="qa-context-disclaimer">
+            Macro indicators describe broad national conditions, not city prices,
+            merchant offers or an executable bank exchange rate.
+          </p>
+        </section>
+      {% endif %}
+      {% if country_profile.calendar %}
+        <section class="qa-saved-section"
+                 aria-labelledby="country-profile-calendar-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">National calendar</p>
+              <h2 id="country-profile-calendar-title">Public holidays to check</h2>
+              <p>
+                Published national holidays in the next {{ country_profile.calendar.window_days }}
+                days. Regional dates are not included.
+              </p>
+            </div>
+          </div>
+          <div class="qa-price-grid">
+            {% for holiday in country_profile.calendar.today %}
+              <article class="qa-price-card">
+                <p class="qa-price-card__label">National holiday today</p>
+                <p class="qa-price-card__price">{{ holiday.name }}</p>
+                <p class="qa-price-card__equivalent">{{ holiday.date }}</p>
+                <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+              </article>
+            {% endfor %}
+            {% for holiday in country_profile.calendar.upcoming %}
+              <article class="qa-price-card">
+                <p class="qa-price-card__label">Upcoming national holiday</p>
+                <p class="qa-price-card__price">{{ holiday.name }}</p>
+                <p class="qa-price-card__equivalent">{{ holiday.date }}</p>
+                <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+              </article>
+            {% endfor %}
+          </div>
+          <p class="qa-context-disclaimer">
+            Holidays may affect bank, shop and transport hours. The calendar does not verify
+            whether a particular business is open; confirm directly before relying on it.
+          </p>
+        </section>
+      {% endif %}
+      <section class="qa-saved-section" aria-labelledby="country-profile-next-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Continue planning</p>
+            <h2 id="country-profile-next-title">Turn context into a budget</h2>
+            <p>
+              Trusted FX conversion, trip budgets and comparisons remain in the canonical
+              tools; this read-only guide neither fetches a live rate nor saves your data.
+            </p>
+          </div>
+        </div>
+        <div class="qa-saved-row__actions">
+          <a class="qa-primary-button" href="{{ country_profile.budget_url }}">Plan this country</a>
+          <a class="qa-secondary-button" href="{% url 'explore' %}">Explore other places</a>
+        </div>
+      </section>
+    </div>
+  {% endif %}
+{% endblock %}

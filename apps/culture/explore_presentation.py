@@ -33,6 +33,10 @@ def _converter_url(*, country_code: str, currency_code: str, city_slug: str = ""
     return f"{reverse('converter')}?{urlencode(params)}"
 
 
+def _country_profile_url(*, country_code: str) -> str:
+    return reverse("country_money_profile", kwargs={"country_code": country_code})
+
+
 def _city_profile_url(*, country_code: str, city_slug: str) -> str:
     return reverse(
         "city_money_profile",
@@ -71,7 +75,7 @@ def build_explore_destination_cards(
                         city_slug=destination.city_slug,
                     )
                     if destination.city_slug
-                    else ""
+                    else _country_profile_url(country_code=destination.country_code)
                 ),
             }
         )
@@ -125,6 +129,7 @@ def build_explore_region_components(
                     "currency_code": country.currency_code,
                     "theme": country_theme_key(country.country_code),
                     "has_country_scope": country.has_country_scope,
+                    "profile_url": _country_profile_url(country_code=country.country_code),
                     "converter_url": (
                         _converter_url(
                             country_code=country.country_code,

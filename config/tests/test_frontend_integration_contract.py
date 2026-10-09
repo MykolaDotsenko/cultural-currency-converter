@@ -46,6 +46,18 @@ from django.urls import resolve, reverse
             ("explore_destinations", "explore_ai_form", "reviewed"),
         ),
         (
+            "country_money_profile",
+            {"country_code": "JP"},
+            "pages/country_money_profile.html",
+            (
+                "country_profile.payment",
+                "country_profile.prices",
+                "country_profile.economic.inflation",
+                "country_profile.calendar.upcoming",
+                "country_profile.converter_url",
+            ),
+        ),
+        (
             "city_money_profile",
             {"country_code": "JP", "city_slug": "tokyo"},
             "pages/city_money_profile.html",

@@ -15,6 +15,10 @@ from apps.accounts.ai_preferences import explanation_preferences
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
+from apps.culture.country_profile import (
+    build_country_money_profile,
+    build_country_money_profile_component,
+)
 from apps.culture.explore import build_explore_destinations
 from apps.culture.explore_ai import (
     ExploreExplanationError,
@@ -48,6 +52,43 @@ from apps.media.presentation import (
 )
 
 logger = logging.getLogger("cultural_currency.culture")
+
+
+@require_GET
+def country_money_profile(request: HttpRequest, country_code: str) -> HttpResponse:
+    """Read-only country money guide; no external FX, AI, or price-provider lookup."""
+    try:
+        profile = build_country_money_profile(country_code=country_code)
+    except DatabaseError as exc:
+        logger.warning(
+            "Country money profile composition failed",
+            extra={
+                "error_code": exc.__class__.__name__,
+                "culture.country": country_code.upper(),
+            },
+        )
+        return render(
+            request,
+            "pages/country_money_profile.html",
+            {
+                "country_profile": None,
+                "country_profile_error": {
+                    "title": "Country money guidance is temporarily unavailable.",
+                    "detail": "The converter and Explore remain available.",
+                },
+            },
+            status=503,
+        )
+    if profile is None:
+        raise Http404("Reviewed country money context is not available.")
+    return render(
+        request,
+        "pages/country_money_profile.html",
+        {
+            "country_profile": build_country_money_profile_component(profile),
+            "country_profile_error": None,
+        },
+    )
 
 
 @require_GET
