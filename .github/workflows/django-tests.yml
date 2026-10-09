@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - master
+      - feature/shopping-trip-spend-review-20261009
     paths:
       - "apps/**"
       - "integrations/**"
