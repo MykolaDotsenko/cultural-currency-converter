@@ -3171,8 +3171,12 @@ async function assertCountryMoneyGuideQuality(page) {
   // A labelled div does not imply a group role: inspect via its owned DOM anchor instead.
   const actions = page.locator('[aria-label="Country money next steps"]');
   assert((await actions.locator("a").count()) === 3, "country-guide: canonical actions missing");
-  const converterHref = await actions.getByRole("link", { name: "Convert money" }).getAttribute("href");
-  const budgetHref = await actions.getByRole("link", { name: "Plan a budget" }).getAttribute("href");
+  const converterHref = await actions
+    .getByRole("link", { name: "Convert money" })
+    .getAttribute("href");
+  const budgetHref = await actions
+    .getByRole("link", { name: "Plan a budget" })
+    .getAttribute("href");
   const compareHref = await actions
     .getByRole("link", { name: "Compare destinations" })
     .getAttribute("href");
