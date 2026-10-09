@@ -89,6 +89,25 @@ def test_bilateral_lens_is_omitted_without_published_source_prices(client, refer
 
 
 @pytest.mark.django_db
+def test_bilateral_lens_requires_both_country_scopes(client, bilateral_prices):
+    gateway = FakeGateway()
+    with (
+        patch("apps.exchange.views.build_latest_quote_gateway", return_value=gateway),
+        patch("apps.exchange.web.converter.build_destination_context") as source_builder,
+    ):
+        response = client.post(
+            reverse("converter"),
+            payload(destination_country=""),
+            HTTP_HX_REQUEST="true",
+        )
+
+    assert response.status_code == 200
+    assert b"data-bilateral-value-lens" not in response.content
+    source_builder.assert_not_called()
+    assert len(gateway.calls) == 1
+
+
+@pytest.mark.django_db
 def test_bilateral_lens_never_disguises_historical_fx_as_current_value(client, bilateral_prices):
     historical = FakeHistoricalGateway()
     with (

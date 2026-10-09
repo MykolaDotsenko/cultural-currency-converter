@@ -364,6 +364,7 @@ def converter_view(
             if (
                 not result.quote.historical
                 and source_country
+                and destination_country
                 and source_country != destination_country
                 and money_context is not None
             ):
