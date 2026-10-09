@@ -71,7 +71,7 @@ from apps.travel.trip_budget import (
     calculate_trip_budget_summary,
     resolve_trip_budget_reference,
 )
-from apps.travel.trip_readiness import build_trip_readiness
+from apps.travel.trip_readiness import build_trip_calendar_review, build_trip_readiness
 
 logger = logging.getLogger("cultural_currency.travel")
 
@@ -454,6 +454,22 @@ def _scenario_local_context(
             ),
         }
 
+    calendar_review = None
+    try:
+        calendar_review = build_trip_calendar_review(
+            country=scenario.destination_country,
+            as_of=as_of,
+            travel_start_date=scenario.travel_start_date,
+            travel_end_date=scenario.travel_end_date,
+        )
+    except (DatabaseError, ValueError) as exc:
+        # Calendar is optional; a failed look-up must not invalidate the
+        # previously reviewed context or mutate the stored FX observation.
+        logger.warning(
+            "saved_trip_calendar_review_unavailable",
+            extra={"error_code": exc.__class__.__name__},
+        )
+
     return {
         "state": "available",
         "component": build_destination_context_component(
@@ -467,6 +483,7 @@ def _scenario_local_context(
             as_of=as_of,
             travel_start_date=scenario.travel_start_date,
             travel_end_date=scenario.travel_end_date,
+            calendar_review=calendar_review,
         ),
         "amount": _format_currency_amount(
             observation.output_amount,

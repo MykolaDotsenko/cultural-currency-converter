@@ -583,7 +583,14 @@
                     {% endfor %}
                   </div>
                   <p class="qa-context-disclaimer">
-                    {% if readiness.has_calendar_evidence %}
+                    {% if readiness.trip_calendar_checked %}
+                      Reviewed national holiday observations were checked for your saved travel dates,
+                      {{ readiness.trip_calendar_window_start }}–{{ readiness.trip_calendar_window_end }}.
+                      {% if readiness.trip_calendar_truncated %}
+                        For longer trips, only the first 90 days were checked.
+                      {% endif %}
+                      A missing record does not establish that a day is not a holiday.
+                    {% elif readiness.has_calendar_evidence %}
                       National holiday evidence covers only its reviewed {{ readiness.calendar_window_days }}-day window.
                     {% else %}
                       No national holiday observations are available in the current reviewed context.

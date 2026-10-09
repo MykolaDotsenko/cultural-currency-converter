@@ -11,6 +11,7 @@ from django.urls import reverse
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.calendar import CalendarContext, PublicHolidayContextItem
+from apps.culture.models import PublicHolidayObservation
 from apps.culture.services import DestinationContext, PaymentContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
@@ -19,7 +20,7 @@ from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_t
 from apps.exchange.payment_estimate import estimate_payment_value
 from apps.exchange.providers.base import FxProviderUnavailable
 from apps.travel.models import SavedScenario, SavedScenarioBudgetBasis, SavedScenarioKind
-from apps.travel.trip_readiness import build_trip_readiness
+from apps.travel.trip_readiness import build_trip_calendar_review, build_trip_readiness
 
 User = get_user_model()
 
@@ -1030,3 +1031,111 @@ def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_r
     assert b"Source: Reviewed bank guide" in refreshed.content
     assert b"Absence of a listed holiday does not mean" in refreshed.content
     assert b"does not refresh the FX rate" in refreshed.content
+
+
+@pytest.mark.django_db
+def test_future_saved_trip_uses_reviewed_holidays_from_its_dates_without_provider_calls(
+    client, scenario_reference_data
+):
+    user = User.objects.create_user(username="future-calendar-owner", password="StrongPass-482!")
+    client.force_login(user)
+    japan = Country.objects.get(iso2="JP")
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 12, 6),
+        name="Future reviewed national holiday",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/jp-future-national",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 12, 7),
+        name="Unrelated regional-only holiday",
+        national_holiday=False,
+        subdivision_codes=["JP-01"],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/jp-regional",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Future Tokyo holiday",
+            "duration_days": "7",
+            "travelers": "1",
+            "travel_start_date": "2026-12-03",
+            "travel_end_date": "2026-12-09",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with (
+        patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            return_value=_readiness_destination(),
+        ) as context_builder,
+        patch("apps.exchange.providers.frankfurter.FrankfurterProvider") as provider,
+    ):
+        response = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert response.status_code == 200
+    assert b"Future reviewed national holiday" in response.content
+    assert b"Unrelated regional-only holiday" not in response.content
+    assert b"National holiday within trip" not in response.content
+    assert b"3 Dec 2026" in response.content
+    assert b"9 Dec 2026" in response.content
+    assert b"A missing record does not establish" in response.content
+    context_builder.assert_called_once()
+    provider.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_trip_calendar_review_is_bounded_to_first_90_days_and_excludes_past_dates(
+    scenario_reference_data,
+):
+    japan = Country.objects.get(iso2="JP")
+    with patch("apps.travel.trip_readiness.build_calendar_context") as builder:
+        builder.return_value = None
+        review = build_trip_calendar_review(
+            country=japan,
+            as_of=date(2026, 10, 9),
+            travel_start_date=date(2026, 11, 1),
+            travel_end_date=date(2027, 3, 1),
+        )
+    assert review is not None
+    assert review.window_start == date(2026, 11, 1)
+    assert review.window_end == date(2027, 1, 30)
+    assert review.truncated is True
+    builder.assert_called_once_with(
+        country=japan, as_of=date(2026, 11, 1), window_days=90, limit=6
+    )
+
+    assert (
+        build_trip_calendar_review(
+            country=japan,
+            as_of=date(2026, 10, 9),
+            travel_start_date=date(2026, 9, 1),
+            travel_end_date=date(2026, 9, 10),
+        )
+        is None
+    )
+    assert (
+        build_trip_calendar_review(
+            country=japan,
+            as_of=date(2026, 10, 9),
+            travel_start_date=None,
+            travel_end_date=None,
+        )
+        is None
+    )
