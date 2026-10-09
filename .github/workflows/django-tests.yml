@@ -106,8 +106,8 @@ jobs:
 
       - name: Django template lint
         run: |
-          djlint templates --reformat
-          git diff -- templates
+          djlint templates --reformat || true
+          git --no-pager diff -- templates
           exit 1
 
       - name: Django system check
