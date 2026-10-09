@@ -215,18 +215,14 @@ def test_country_city_navigation_never_links_free_text_or_national_price(reviewe
     assert profile is not None and profile.prices
     national_only = replace(
         profile,
-        prices=(
-            replace(profile.prices[0], city="", city_slug=""),
-        ),
+        prices=(replace(profile.prices[0], city="", city_slug=""),),
     )
     assert build_country_money_profile_component(national_only)["reviewed_cities"] == ()
 
     # Unresolved legacy city labels cannot manufacture a canonical route.
     unlinked_city = replace(
         profile,
-        prices=(
-            replace(profile.prices[0], city="Unreviewed city", city_slug=""),
-        ),
+        prices=(replace(profile.prices[0], city="Unreviewed city", city_slug=""),),
     )
     assert build_country_money_profile_component(unlinked_city)["reviewed_cities"] == ()
 
