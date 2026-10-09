@@ -148,7 +148,7 @@ jobs:
       CACHE_URL: redis://127.0.0.1:6379/0
     services:
       postgres:
-        image: postgres:18.6-alpine
+        image: public.ecr.aws/docker/library/postgres:18.6-alpine
         env:
           POSTGRES_DB: cultural_currency_test
           POSTGRES_USER: postgres
@@ -161,7 +161,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
       redis:
-        image: redis:8.2.2-alpine
+        image: public.ecr.aws/docker/library/redis:8.2.2-alpine
         ports:
           - 6379:6379
         options: >-
@@ -219,7 +219,7 @@ jobs:
             -e BACKUP_PATH=artifacts/recovery-ci/source.dump \
             -v "$PWD:/workspace" \
             -w /workspace \
-            postgres:18.6-alpine \
+            public.ecr.aws/docker/library/postgres:18.6-alpine \
             sh scripts/postgres_backup.sh
 
           if docker run --rm --network host \
@@ -229,7 +229,7 @@ jobs:
             -e BACKUP_PATH=artifacts/recovery-ci/source.dump \
             -v "$PWD:/workspace" \
             -w /workspace \
-            postgres:18.6-alpine \
+            public.ecr.aws/docker/library/postgres:18.6-alpine \
             sh scripts/postgres_backup.sh; then
             echo "Expected backup overwrite guard to reject the existing archive." >&2
             exit 1
@@ -237,7 +237,7 @@ jobs:
 
           docker run --rm --network host \
             -e PGPASSWORD=postgres \
-            postgres:18.6-alpine \
+            public.ecr.aws/docker/library/postgres:18.6-alpine \
             createdb --host=127.0.0.1 --username=postgres cultural_currency_restore
 
           docker run --rm --network host \
@@ -248,7 +248,7 @@ jobs:
             -e RESTORE_CONFIRM=restore-empty-database \
             -v "$PWD:/workspace" \
             -w /workspace \
-            postgres:18.6-alpine \
+            public.ecr.aws/docker/library/postgres:18.6-alpine \
             sh scripts/postgres_restore.sh
 
           if docker run --rm --network host \
@@ -259,7 +259,7 @@ jobs:
             -e RESTORE_CONFIRM=restore-empty-database \
             -v "$PWD:/workspace" \
             -w /workspace \
-            postgres:18.6-alpine \
+            public.ecr.aws/docker/library/postgres:18.6-alpine \
             sh scripts/postgres_restore.sh; then
             echo "Expected restore guard to reject the non-empty target database." >&2
             exit 1
