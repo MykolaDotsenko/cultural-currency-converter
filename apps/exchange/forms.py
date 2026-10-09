@@ -132,9 +132,7 @@ def _destination_reference_choices() -> tuple[
     return currency_by_code, destination_by_token, currency_choices, destination_choices
 
 
-def comparison_destination_handoff_supported(
-    country_code: str, city_slug: str = ""
-) -> bool:
+def comparison_destination_handoff_supported(country_code: str, city_slug: str = "") -> bool:
     """Share the exact canonical comparison destination registry and readiness rule."""
 
     _currencies, destinations, _currency_choices, _destination_choices = (
