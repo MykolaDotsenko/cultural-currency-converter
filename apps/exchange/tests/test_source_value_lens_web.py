@@ -1,6 +1,5 @@
 """Bilateral source/destination lens uses reviewed local context, not extra FX."""
 
-from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
