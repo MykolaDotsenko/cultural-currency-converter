@@ -99,7 +99,7 @@ def build_trip_readiness(
                 )
         holidays = holidays[:3]
 
-    if not tips and not holidays:
+    if not tips and not holidays and calendar_review is None:
         return None
 
     return {
