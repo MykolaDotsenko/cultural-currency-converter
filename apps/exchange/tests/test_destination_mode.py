@@ -219,7 +219,9 @@ def test_destination_mode_city_scope_reaches_money_context_engine(
 
 
 @pytest.mark.django_db
-def test_destination_mode_reopens_recorded_inputs_without_old_fx(client, destination_reference_data):
+def test_destination_mode_reopens_recorded_inputs_without_old_fx(
+    client, destination_reference_data
+):
     with patch("apps.exchange.views.build_latest_quote_gateway") as gateway:
         response = client.get(
             reverse("destination_mode"),

@@ -49,9 +49,7 @@ def destination_mode_view(request: HttpRequest) -> HttpResponse:
         source_code = str(request.GET.get("source_currency") or "").strip().upper()
         if form.active_source_currency(source_code) is not None:
             form.initial["source_currency"] = source_code
-        source = form.active_source_currency(
-            str(form.initial.get("source_currency") or "")
-        )
+        source = form.active_source_currency(str(form.initial.get("source_currency") or ""))
         candidate = str(request.GET.get("amount") or "").strip()
         if source is not None and 0 < len(candidate) <= 64:
             try:
