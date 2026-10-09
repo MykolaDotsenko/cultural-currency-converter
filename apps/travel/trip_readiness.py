@@ -38,7 +38,8 @@ def build_trip_calendar_review(
     end = travel_end_date if travel_end_date is not None else travel_start_date
     if end < start:
         return None
-    window_end = min(end, start + timedelta(days=90))
+    # The start date is inclusive: 90 calendar dates end at start + 89 days.
+    window_end = min(end, start + timedelta(days=89))
     window_days = max(1, (window_end - start).days)
     return TripCalendarReview(
         calendar=build_calendar_context(

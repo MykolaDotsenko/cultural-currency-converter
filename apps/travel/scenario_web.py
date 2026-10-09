@@ -19,7 +19,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.countries.models import City, Country, Currency
 from apps.culture.presentation import build_destination_context_component
-from apps.culture.services import build_destination_context
+from apps.culture.services import DestinationContext, build_destination_context
 from apps.exchange.budget import BudgetAssumptions
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
@@ -444,16 +444,6 @@ def _scenario_local_context(
             ),
         }
 
-    if context is None or not context.has_content:
-        return {
-            "state": "empty",
-            "component": None,
-            "message": (
-                "No current reviewed price or payment context is available for this saved "
-                "destination yet."
-            ),
-        }
-
     calendar_review = None
     try:
         calendar_review = build_trip_calendar_review(
@@ -470,16 +460,41 @@ def _scenario_local_context(
             extra={"error_code": exc.__class__.__name__},
         )
 
+    # A reviewed holiday in the actual trip window may be the only published
+    # destination evidence. Never discard it merely because today's Money
+    # Context has no price, payment or near-term calendar coverage.
+    has_current_context = context is not None and context.has_content
+    if not has_current_context and calendar_review is None:
+        return {
+            "state": "empty",
+            "component": None,
+            "message": (
+                "No current reviewed price or payment context is available for this saved "
+                "destination yet."
+            ),
+        }
+
+    readiness_context = context or DestinationContext(
+        country_code=scenario.destination_country.iso2,
+        country_name=scenario.destination_country.name,
+        as_of=as_of,
+        payment=None,
+        prices=(),
+    )
     return {
         "state": "available",
-        "component": build_destination_context_component(
-            context,
-            historical=False,
-            show_explore_nav=False,
+        "component": (
+            build_destination_context_component(
+                context,
+                historical=False,
+                show_explore_nav=False,
+            )
+            if has_current_context
+            else None
         ),
         "message": "",
         "trip_readiness": build_trip_readiness(
-            context,
+            readiness_context,
             as_of=as_of,
             travel_start_date=scenario.travel_start_date,
             travel_end_date=scenario.travel_end_date,

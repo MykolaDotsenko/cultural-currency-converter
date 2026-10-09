@@ -1140,9 +1140,9 @@ def test_trip_calendar_review_is_bounded_to_first_90_days_and_excludes_past_date
         )
     assert review is not None
     assert review.window_start == date(2026, 11, 1)
-    assert review.window_end == date(2027, 1, 30)
+    assert review.window_end == date(2027, 1, 29)
     assert review.truncated is True
-    builder.assert_called_once_with(country=japan, as_of=date(2026, 11, 1), window_days=90, limit=6)
+    builder.assert_called_once_with(country=japan, as_of=date(2026, 11, 1), window_days=89, limit=6)
 
     assert (
         build_trip_calendar_review(
@@ -1193,3 +1193,94 @@ def test_explicit_trip_calendar_check_reports_missing_evidence_without_inventing
     assert result["has_calendar_evidence"] is False
     assert result["trip_calendar_window_start"] == "3 Dec 2026"
     assert result["trip_calendar_window_end"] == "9 Dec 2026"
+
+
+@pytest.mark.django_db
+def test_saved_trip_holiday_evidence_is_not_hidden_by_empty_current_money_context(
+    client, scenario_reference_data
+):
+    user = User.objects.create_user(
+        username="holiday-only-owner", password="StrongPass-482!"
+    )
+    client.force_login(user)
+    country = Country.objects.get(iso2="JP")
+    PublicHolidayObservation.objects.create(
+        country=country,
+        date=date(2026, 12, 6),
+        name="Only reviewed trip-window holiday",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/only-trip-holiday",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Holiday-only Tokyo trip",
+            "duration_days": "7",
+            "travelers": "1",
+            "travel_start_date": "2026-12-03",
+            "travel_end_date": "2026-12-09",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with (
+        patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            return_value=None,
+        ) as context_builder,
+        patch("apps.exchange.providers.frankfurter.FrankfurterProvider") as provider,
+    ):
+        page = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert page.status_code == 200
+    assert page.context["local_context"]["state"] == "available"
+    assert page.context["local_context"]["component"] is None
+    assert b"Only reviewed trip-window holiday" in page.content
+    assert b"No current reviewed everyday-price" in page.content
+    assert b"3 Dec 2026" in page.content
+    assert b"9 Dec 2026" in page.content
+    assert b"does not change your saved financial figures" in page.content
+    context_builder.assert_called_once()
+    provider.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_saved_trip_without_current_context_or_trip_dates_stays_empty(
+    client, scenario_reference_data
+):
+    user = User.objects.create_user(
+        username="no-context-owner", password="StrongPass-482!"
+    )
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Unscheduled Tokyo trip",
+            "duration_days": "7",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with (
+        patch("apps.travel.scenario_web.build_destination_context", return_value=None),
+        patch("apps.travel.scenario_web.build_trip_calendar_review") as builder,
+    ):
+        page = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert page.status_code == 200
+    assert page.context["local_context"]["state"] == "empty"
+    assert b"Only reviewed trip-window holiday" not in page.content
+    builder.assert_called_once()
