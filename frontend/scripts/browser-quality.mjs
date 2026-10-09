@@ -1419,6 +1419,19 @@ async function assertSavedStateFlow(page) {
       !placeCompare.searchParams.has("right_destination"),
     `saved-state: saved Tokyo Compare handoff drifted: ${placeCompareHref}`,
   );
+  const savedPlacePlanHref = await savedPlaceRow
+    .getByRole("link", { name: "Plan destination: Tokyo, Japan", exact: true })
+    .getAttribute("href");
+  assert(savedPlacePlanHref, "saved-state: browser-only city is missing its Plan handoff");
+  const savedPlacePlan = new URL(savedPlacePlanHref, BASE_URL);
+  assert(
+    savedPlacePlan.pathname === "/destination/" &&
+      savedPlacePlan.searchParams.get("destination") === "JP:tokyo" &&
+      !savedPlacePlan.searchParams.has("amount") &&
+      !savedPlacePlan.searchParams.has("rate_mode"),
+    `saved-state: city planning must reuse identity only: ${savedPlacePlanHref}`,
+  );
+
   assert(
     await savedPlaceRow
       .getByRole("link", { name: "Convert for Tokyo, Japan", exact: true })
@@ -1491,6 +1504,24 @@ async function assertSavedStateFlow(page) {
       !recentCompare.searchParams.has("right_destination"),
     `saved-state: recent Compare handoff drifted: ${recentCompareHref}`,
   );
+  const recentPlanHref = await latestRecent
+    .getByRole("link", { name: "Plan destination from 100 EUR to Japan", exact: true })
+    .getAttribute("href");
+  assert(recentPlanHref, "saved-state: browser-only recent is missing Plan again");
+  const recentPlan = new URL(recentPlanHref, BASE_URL);
+  assert(
+    recentPlan.pathname === "/destination/" &&
+      recentPlan.searchParams.get("destination") === "JP" &&
+      recentPlan.searchParams.get("source_currency") === "EUR" &&
+      recentPlan.searchParams.get("amount") === "100" &&
+      recentPlan.searchParams.get("from_history") === "1" &&
+      !recentPlan.searchParams.has("convert") &&
+      !recentPlan.searchParams.has("rate_mode") &&
+      !recentPlan.searchParams.has("requested_date") &&
+      !recentPlan.searchParams.has("output_amount"),
+    `saved-state: planning leaked stored FX/history instead of safe inputs: ${recentPlanHref}`,
+  );
+
   assert(
     await latestRecent
       .getByRole("link", { name: "Repeat conversion: 100 EUR to JPY", exact: true })
@@ -1850,6 +1881,21 @@ async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
       !accountCompare.searchParams.has("right_destination"),
     `account-history: compare handoff drifted: ${accountCompareHref}`,
   );
+  const accountPlanHref = await accountRecentRow
+    .getByRole("link", { name: /^Plan a new destination conversion from/ })
+    .getAttribute("href");
+  assert(accountPlanHref, "account-history: account recent is missing Plan again");
+  const accountPlan = new URL(accountPlanHref, BASE_URL);
+  assert(
+    accountPlan.pathname === "/destination/" &&
+      accountPlan.searchParams.get("destination") === "FI" &&
+      accountPlan.searchParams.get("from_history") === "1" &&
+      !accountPlan.searchParams.has("rate_mode") &&
+      !accountPlan.searchParams.has("requested_date") &&
+      !accountPlan.searchParams.has("output_amount"),
+    `account-history: Plan again re-entry does not preserve input-only semantics: ${accountPlanHref}`,
+  );
+
   assert(
     (await accountRecentRow.getByRole("button", { name: /^Remove recent conversion:/ }).count()) ===
       1,

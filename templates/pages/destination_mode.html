@@ -24,6 +24,13 @@
   <section class="qa-destination-mode"
            aria-labelledby="destination-mode-form-title">
     <div class="qa-destination-mode__instrument">
+      {% if replanned_from_history %}
+        <p class="qa-context-freshness-note">
+          A new plan from recent history. Valid starting inputs and the selected destination
+          may have been prefilled. No historical output, observed FX rate or effective date
+          was copied. Check the source currency and amount before continuing.
+        </p>
+      {% endif %}
       <div class="qa-destination-mode__heading">
         <p class="qa-foundation-kicker">Plan a reference conversion</p>
         <h2 id="destination-mode-form-title">What does my money mean there?</h2>

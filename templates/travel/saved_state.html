@@ -32,6 +32,7 @@
        data-account-history-enabled="{% if account_recent_history_enabled %}true{% else %}false{% endif %}"
        data-converter-url="{% url 'converter' %}"
        data-comparison-url="{% url 'destination_comparison' %}"
+       data-destination-mode-url="{% url 'destination_mode' %}"
        data-explore-url="{% url 'explore' %}">
     <p class="qa-saved-state__storage-note"
        data-local-storage-status
@@ -627,6 +628,13 @@
                          href="{{ row.compare_url }}"
                          aria-label="Compare destination: {{ recent.destination_country.name }}">
                         Compare
+                      </a>
+                    {% endif %}
+                    {% if row.plan_url %}
+                      <a class="qa-secondary-button"
+                         href="{{ row.plan_url }}"
+                         aria-label="Plan a new destination conversion from {{ recent.input_amount }} {{ recent.source_currency.code }} to {{ recent.destination_country.name }}">
+                        Plan again
                       </a>
                     {% endif %}
                     <a class="qa-saved-row__text-action"

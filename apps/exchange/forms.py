@@ -174,6 +174,10 @@ class DestinationModeForm(forms.Form):
     def reference_data_ready(self) -> bool:
         return bool(self._currency_by_code and self._destination_by_token)
 
+    def active_source_currency(self, code: str) -> Currency | None:
+        """Resolve only currencies currently accepted by Destination Mode."""
+        return self._currency_by_code.get(code.strip().upper())
+
     def add_error(self, field, error):
         super().add_error(field, error)
         if field and field in self.fields:
