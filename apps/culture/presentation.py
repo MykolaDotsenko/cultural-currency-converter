@@ -28,7 +28,7 @@ def _equivalent_text(value: PurchaseEquivalent) -> str:
     return f"About {_whole_count(value.minimum_count)}–{_whole_count(value.maximum_count)}"
 
 
-def _economic_metric_component(metric) -> dict[str, object]:
+def economic_metric_component(metric) -> dict[str, object]:
     if metric.indicator == "inflation_yoy":
         value_text = f"{metric.value.quantize(Decimal('0.1'))}%"
         label = "Consumer-price inflation"
@@ -61,7 +61,7 @@ def _economic_metric_component(metric) -> dict[str, object]:
     }
 
 
-def _holiday_item_component(item, *, as_of) -> dict[str, object]:
+def holiday_item_component(item, *, as_of) -> dict[str, object]:
     return {
         "name": item.name,
         "date": date_format(item.date, "j M Y"),
@@ -109,12 +109,12 @@ def build_destination_context_component(
     economic = None
     if context.economic is not None:
         inflation = (
-            _economic_metric_component(context.economic.inflation)
+            economic_metric_component(context.economic.inflation)
             if context.economic.inflation is not None
             else None
         )
         price_level = (
-            _economic_metric_component(context.economic.price_level)
+            economic_metric_component(context.economic.price_level)
             if context.economic.price_level is not None
             else None
         )
@@ -128,11 +128,11 @@ def build_destination_context_component(
     if context.calendar is not None:
         calendar = {
             "today": [
-                _holiday_item_component(item, as_of=context.calendar.as_of)
+                holiday_item_component(item, as_of=context.calendar.as_of)
                 for item in context.calendar.today
             ],
             "upcoming": [
-                _holiday_item_component(item, as_of=context.calendar.as_of)
+                holiday_item_component(item, as_of=context.calendar.as_of)
                 for item in context.calendar.upcoming
             ],
             "window_days": context.calendar.window_days,

@@ -11,6 +11,9 @@ from django.utils.formats import date_format
 
 from apps.countries.models import City, CountryCurrency
 from apps.countries.theme_profiles import country_theme_key
+from apps.culture.calendar import CalendarContext
+from apps.culture.economic import EconomicContext
+from apps.culture.presentation import economic_metric_component, holiday_item_component
 from apps.culture.services import (
     PaymentContext,
     TypicalPriceContext,
@@ -33,6 +36,8 @@ class CityMoneyProfile:
     as_of: date
     prices: tuple[TypicalPriceContext, ...]
     payment: PaymentContext | None
+    economic: EconomicContext | None
+    calendar: CalendarContext | None
     direct_price_count: int
     national_fallback_count: int
     earliest_price_observed_at: date
@@ -110,6 +115,8 @@ def build_city_money_profile(
         as_of=selected_date,
         prices=context.prices,
         payment=context.payment,
+        economic=context.economic,
+        calendar=context.calendar,
         direct_price_count=len(direct_prices),
         national_fallback_count=len(fallback_prices),
         earliest_price_observed_at=min(observed_dates),
@@ -173,6 +180,34 @@ def build_city_money_profile_component(profile: CityMoneyProfile) -> dict[str, o
             "verified": date_format(profile.payment.verified_at, "j M Y"),
         }
 
+    economic = None
+    if profile.economic is not None:
+        inflation = (
+            economic_metric_component(profile.economic.inflation)
+            if profile.economic.inflation is not None
+            else None
+        )
+        price_level = (
+            economic_metric_component(profile.economic.price_level)
+            if profile.economic.price_level is not None
+            else None
+        )
+        economic = {"inflation": inflation, "price_level": price_level}
+
+    calendar = None
+    if profile.calendar is not None:
+        calendar = {
+            "today": tuple(
+                holiday_item_component(item, as_of=profile.calendar.as_of)
+                for item in profile.calendar.today
+            ),
+            "upcoming": tuple(
+                holiday_item_component(item, as_of=profile.calendar.as_of)
+                for item in profile.calendar.upcoming
+            ),
+            "window_days": profile.calendar.window_days,
+        }
+
     return {
         "scope_label": profile.scope_label,
         "country_code": profile.country_code,
@@ -185,6 +220,8 @@ def build_city_money_profile_component(profile: CityMoneyProfile) -> dict[str, o
         "currency_symbol": profile.currency_symbol,
         "prices": tuple(_profile_price_component(price) for price in profile.prices),
         "payment": payment,
+        "economic": economic,
+        "calendar": calendar,
         "direct_price_count": profile.direct_price_count,
         "national_fallback_count": profile.national_fallback_count,
         "has_national_fallback": profile.has_national_fallback,

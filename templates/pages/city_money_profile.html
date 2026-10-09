@@ -128,6 +128,74 @@
           </p>
         {% endif %}
       </div>
+      {% if city_profile.economic %}
+        <section class="qa-saved-section" aria-labelledby="city-profile-economic-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">Official country statistics</p>
+              <h2 id="city-profile-economic-title">Economic context for {{ city_profile.country_name }}</h2>
+              <p>Country-level indicators, not city prices or predictions of what your money buys.</p>
+            </div>
+          </div>
+          <div class="qa-price-grid">
+            {% if city_profile.economic.inflation %}
+              {% with metric=city_profile.economic.inflation %}
+                <article class="qa-price-card">
+                  <p class="qa-price-card__label">{{ metric.label }}</p>
+                  <p class="qa-price-card__price">{{ metric.value_text }}</p>
+                  <p class="qa-price-card__equivalent">{{ metric.interpretation }}</p>
+                  <p class="qa-price-card__meta">{{ metric.period }} · {{ metric.status }} · {{ metric.source_dataset }}</p>
+                  <a href="{{ metric.source_url }}">Source: {{ metric.source_name }}</a>
+                </article>
+              {% endwith %}
+            {% endif %}
+            {% if city_profile.economic.price_level %}
+              {% with metric=city_profile.economic.price_level %}
+                <article class="qa-price-card">
+                  <p class="qa-price-card__label">{{ metric.label }}</p>
+                  <p class="qa-price-card__price">{{ metric.value_text }}</p>
+                  <p class="qa-price-card__equivalent">{{ metric.interpretation }}</p>
+                  <p class="qa-price-card__meta">{{ metric.period }} · {{ metric.status }} · {{ metric.source_dataset }}</p>
+                  <a href="{{ metric.source_url }}">Source: {{ metric.source_name }}</a>
+                </article>
+              {% endwith %}
+            {% endif %}
+          </div>
+          <p class="qa-context-disclaimer">Published inflation and price-level statistics are broad national context, not a live merchant price, local cost-of-living ranking or card exchange quote.</p>
+        </section>
+      {% endif %}
+      {% if city_profile.calendar %}
+        <section class="qa-saved-section" aria-labelledby="city-profile-calendar-title">
+          <div class="qa-saved-section__heading">
+            <div>
+              <p class="qa-foundation-kicker">National calendar</p>
+              <h2 id="city-profile-calendar-title">Public holidays in {{ city_profile.country_name }}</h2>
+              <p>Published national holidays within the next {{ city_profile.calendar.window_days }} days; regional holidays are not included.</p>
+            </div>
+          </div>
+          <div class="qa-price-grid">
+            {% for holiday in city_profile.calendar.today %}
+              <article class="qa-price-card">
+                <p class="qa-price-card__label">National holiday today</p>
+                <p class="qa-price-card__price">{{ holiday.name }}</p>
+                <p class="qa-price-card__equivalent">{{ holiday.date }}</p>
+                {% if holiday.types %}<p class="qa-price-card__meta">{{ holiday.types }}</p>{% endif %}
+                <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+              </article>
+            {% endfor %}
+            {% for holiday in city_profile.calendar.upcoming %}
+              <article class="qa-price-card">
+                <p class="qa-price-card__label">Upcoming national holiday</p>
+                <p class="qa-price-card__price">{{ holiday.name }}</p>
+                <p class="qa-price-card__equivalent">{{ holiday.date }}</p>
+                {% if holiday.types %}<p class="qa-price-card__meta">{{ holiday.types }}</p>{% endif %}
+                <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+              </article>
+            {% endfor %}
+          </div>
+          <p class="qa-context-disclaimer">Holidays may change opening hours, but this calendar does not verify any specific bank, shop, ATM or transport service. Check the place directly.</p>
+        </section>
+      {% endif %}
       <div class="qa-saved-section" aria-labelledby="city-profile-next-title">
         <div class="qa-saved-section__heading">
           <div>

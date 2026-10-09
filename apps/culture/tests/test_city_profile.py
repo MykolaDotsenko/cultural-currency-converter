@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from io import StringIO
 from types import SimpleNamespace
@@ -16,6 +16,8 @@ from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import City, Country
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.models import (
+    EconomicObservation,
+    PublicHolidayObservation,
     TypicalPrice,
     TypicalPriceCategory,
     TypicalPriceConfidence,
@@ -228,3 +230,112 @@ def test_city_profile_budget_and_compare_handoffs_prefill_city(client, seeded_ci
     )
     assert comparison.status_code == 200
     assert b'<option value="JP:tokyo" selected>' in comparison.content
+
+
+@pytest.mark.django_db
+def test_city_profile_exposes_reviewed_national_economy_and_holidays_without_fx(
+    client, seeded_city_context
+):
+    japan = Country.objects.get(iso2="JP")
+    EconomicObservation.objects.create(
+        country=japan,
+        source="world_bank",
+        indicator="inflation_yoy",
+        category="all_items",
+        value=Decimal("2.5"),
+        unit="percent",
+        period_start=date(2026, 1, 1),
+        frequency="annual",
+        observation_status="unknown",
+        source_dataset="FP.CPI.TOTL.ZG",
+        source_name="World Bank",
+        source_url="https://example.org/japan-inflation",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 10, 15),
+        name="Reviewed national holiday",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.org/japan-calendar",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+
+    profile = build_city_money_profile(
+        country_code="JP", city_slug="tokyo", as_of=date(2026, 10, 8)
+    )
+    assert profile is not None
+    assert profile.economic is not None
+    assert profile.calendar is not None
+    component = build_city_money_profile_component(profile)
+    assert component["economic"]["inflation"]["value_text"] == "2.5%"
+    assert component["calendar"]["upcoming"][0]["name"] == "Reviewed national holiday"
+
+    with (
+        patch("apps.culture.city_profile.timezone.localdate", return_value=date(2026, 10, 8)),
+        patch("apps.exchange.providers.frankfurter.FrankfurterProvider") as fx_provider,
+    ):
+        response = client.get(reverse("city_money_profile", args=("JP", "tokyo")))
+
+    assert response.status_code == 200
+    assert b"Country-level indicators, not city prices" in response.content
+    assert b"Consumer-price inflation" in response.content
+    assert b"2.5%" in response.content
+    assert b"Reviewed national holiday" in response.content
+    assert b"regional holidays are not included" in response.content
+    assert b"Source: World Bank" in response.content
+    assert b"Source: Nager.Date" in response.content
+    fx_provider.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_city_profile_does_not_show_stale_macro_or_regional_holidays(
+    client, seeded_city_context
+):
+    japan = Country.objects.get(iso2="JP")
+    EconomicObservation.objects.create(
+        country=japan,
+        source="world_bank",
+        indicator="inflation_yoy",
+        category="all_items",
+        value=Decimal("9.9"),
+        unit="percent",
+        period_start=date(2020, 1, 1),
+        frequency="annual",
+        observation_status="unknown",
+        source_dataset="stale",
+        source_name="World Bank",
+        source_url="https://example.org/old-economy",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 10, 15),
+        name="Regional only",
+        national_holiday=False,
+        subdivision_codes=["JP-01"],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.org/regional",
+        source_retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+        is_published=True,
+    )
+    profile = build_city_money_profile(
+        country_code="JP", city_slug="tokyo", as_of=date(2026, 10, 8)
+    )
+    assert profile is not None
+    assert profile.economic is None
+    assert profile.calendar is None
+    with patch("apps.culture.city_profile.timezone.localdate", return_value=date(2026, 10, 8)):
+        response = client.get(reverse("city_money_profile", args=("JP", "tokyo")))
+    assert response.status_code == 200
+    assert b"Regional only" not in response.content
+    assert b"9.9%" not in response.content
+    assert b"city-profile-calendar-title" not in response.content
+    assert b"city-profile-economic-title" not in response.content
