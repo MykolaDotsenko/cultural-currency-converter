@@ -430,3 +430,5 @@ that checks the most important named routes, Django templates and evidence hooks
 It cannot replace rendered integration tests, browser testing or production provider
 availability checks. Stronger behavioural assertions stay in the existing
 `apps/culture/tests/`, `apps/exchange/tests/`, `apps/travel/tests/` and browser suites.
+
+Shopping's explicit Open Prices evidence view now summarizes only the bounded observed sample (count, reported places, country codes, first/last observation dates), with a cross-currency warning when applicable. It does not infer market averages, normalise foreign currencies, claim venue prices are current or pre-populate a calculator input.

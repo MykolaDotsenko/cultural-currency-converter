@@ -55,6 +55,27 @@ def _product_component(identity: ProductIdentity) -> dict[str, object]:
     }
 
 
+def _public_price_sample_summary(
+    observations: tuple[PublicPriceObservation, ...],
+) -> dict[str, object] | None:
+    """Bounded evidence summary, without averages or currency normalization."""
+    if not observations:
+        return None
+
+    dates = tuple(item.observed_at for item in observations)
+    places = {(item.country_code, item.location_label) for item in observations}
+    countries = sorted({item.country_code for item in observations})
+    currencies = {item.currency for item in observations}
+    return {
+        "count": len(observations),
+        "place_count": len(places),
+        "countries": ", ".join(countries),
+        "first_observed": date_format(min(dates), "j M Y"),
+        "last_observed": date_format(max(dates), "j M Y"),
+        "mixed_currencies": len(currencies) > 1,
+    }
+
+
 def _public_price_component(item: PublicPriceObservation) -> dict[str, object]:
     return {
         "amount": format(item.amount, "f"),
@@ -293,6 +314,7 @@ def shopping_calculation_view(
             "product_context_token": product_token,
             "product_lookup_message": product_lookup_message,
             "public_prices": tuple(_public_price_component(x) for x in public_prices),
+            "public_price_sample": _public_price_sample_summary(public_prices),
             "public_prices_checked": public_prices_checked,
             "public_prices_message": public_prices_message,
         },

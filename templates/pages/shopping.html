@@ -130,6 +130,23 @@
             {% if public_prices_message %}
               <p class="qa-field__message" role="status">{{ public_prices_message }}</p>
             {% elif public_prices %}
+              {% if public_price_sample %}
+                <div class="qa-context-freshness-note" role="note" data-public-price-sample>
+                  <p>
+                    Bounded evidence sample: {{ public_price_sample.count }} dated observation{{ public_price_sample.count|pluralize }},
+                    {{ public_price_sample.place_count }} reported place{{ public_price_sample.place_count|pluralize }}
+                    in {{ public_price_sample.countries }}.
+                    Observed {{ public_price_sample.first_observed }}–{{ public_price_sample.last_observed }}.
+                  </p>
+                  <p>
+                    This is not a market average or a complete price survey.
+                    {% if public_price_sample.mixed_currencies %}
+                      Observations use different currencies and must not be compared numerically.
+                    {% endif %}
+                    Place labels come from community records; check each source and its date.
+                  </p>
+                </div>
+              {% endif %}
               {% for item in public_prices %}
                 <article class="qa-price-card">
                   <p class="qa-price-card__label">Observed {{ item.observed_at }}</p>
