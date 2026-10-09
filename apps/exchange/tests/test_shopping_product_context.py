@@ -256,3 +256,24 @@ def test_mobile_product_identity_cache_outage_returns_safe_503(client):
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "product_source_unavailable"
     assert "private" not in response.content.decode()
+
+@pytest.mark.django_db
+def test_manual_shopping_barcode_lookup_remains_available_without_camera_or_js(
+    client, shopping_reference_data
+):
+    with (
+        patch("apps.exchange.web.shopping.lookup_product_identity_cached") as lookup,
+        patch("apps.exchange.views.build_latest_quote_gateway") as fx,
+    ):
+        response = client.get(reverse("shopping_calculation"))
+    assert response.status_code == 200
+    body = response.content.decode()
+    assert 'name="barcode"' in body
+    assert 'type="submit">Look up product</button>' in body
+    assert "data-shopping-scan-start" in body
+    assert "data-shopping-scan-panel" in body
+    assert "Camera scanning is optional" in body
+    assert "Camera frames stay on your device" in body
+    assert "Review the detected code before looking up a product" in body
+    lookup.assert_not_called()
+    fx.assert_not_called()

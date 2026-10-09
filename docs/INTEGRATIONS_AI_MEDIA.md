@@ -432,3 +432,5 @@ availability checks. Stronger behavioural assertions stay in the existing
 `apps/culture/tests/`, `apps/exchange/tests/`, `apps/travel/tests/` and browser suites.
 
 Shopping's explicit Open Prices evidence view now summarizes only the bounded observed sample (count, reported places, country codes, first/last observation dates), with a cross-currency warning when applicable. It does not infer market averages, normalise foreign currencies, claim venue prices are current or pre-populate a calculator input.
+
+Shopping barcode identification now offers an optional, progressively enhanced BarcodeDetector camera scanner on secure supported browsers. Permission is requested only on a click; frames are never uploaded or persisted. The scanner stops the stream after detection, cancellation, page hide or HTMX cleanup and only populates the manually reviewable barcode input. The user must submit the existing explicit GET lookup. Unsupported/denied cameras preserve the manual path. Browser CI simulates opt-in scan and verifies no auto-submit, one permission request and track cleanup.

@@ -63,7 +63,8 @@
         </div>
         <form method="get"
               action="{% url 'shopping_calculation' %}"
-              class="qa-inline-form">
+              class="qa-inline-form"
+              data-shopping-barcode-scanner>
           <label class="qa-field__label" for="shopping-barcode">Barcode</label>
           <input class="qa-text-input"
                  id="shopping-barcode"
@@ -74,6 +75,35 @@
                  value="{% if product_context %}{{ product_context.barcode }}{% endif %}"
                  placeholder="EAN / UPC / GTIN">
           <button class="qa-secondary-button" type="submit">Look up product</button>
+          <button class="qa-secondary-button"
+                  type="button"
+                  data-shopping-scan-start
+                  aria-controls="shopping-barcode-scanner-panel"
+                  aria-describedby="shopping-barcode-scan-help"
+                  hidden>Scan with camera</button>
+          <p class="qa-field__message"
+             id="shopping-barcode-scan-help">
+            Camera scanning is optional and available only in supported secure browsers.
+            Camera frames stay on your device. Review the detected code before looking up a product.
+          </p>
+          <div class="qa-barcode-scanner"
+               id="shopping-barcode-scanner-panel"
+               data-shopping-scan-panel
+               hidden>
+            <video class="qa-barcode-scanner__preview"
+                   data-shopping-scan-video
+                   autoplay
+                   muted
+                   playsinline
+                   aria-label="Live barcode camera preview"></video>
+            <button class="qa-secondary-button"
+                    type="button"
+                    data-shopping-scan-stop>Stop camera</button>
+          </div>
+          <p class="qa-field__message"
+             role="status"
+             aria-live="polite"
+             data-shopping-scan-status></p>
         </form>
         {% if product_lookup_message %}
           <div class="qa-inline-alert{% if product_lookup_message.tone == 'error' %} qa-inline-alert--error{% endif %}"

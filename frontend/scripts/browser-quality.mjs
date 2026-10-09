@@ -50,6 +50,72 @@ function assertBrowserConfiguration() {
   }
 }
 
+async function assertShoppingBarcodeScanner(browser) {
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    const state = { requests: 0, stops: 0 };
+    window.__shoppingScannerEvidence = state;
+
+    Object.defineProperty(window, "BarcodeDetector", {
+      configurable: true,
+      value: class {
+        async detect() {
+          return [{ rawValue: "3017624010701" }];
+        }
+      },
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        async getUserMedia() {
+          state.requests += 1;
+          const media = new MediaStream();
+          Object.defineProperty(media, "getTracks", {
+            value: () => [{ stop: () => { state.stops += 1; } }],
+          });
+          return media;
+        },
+      },
+    });
+    HTMLMediaElement.prototype.play = async function () {};
+  });
+
+  const page = await context.newPage();
+  await page.goto(`${BASE_URL}/shopping/`, { waitUntil: "networkidle" });
+  const input = page.locator("#shopping-barcode");
+  const start = page.locator("[data-shopping-scan-start]");
+  await start.waitFor({ state: "visible" });
+  assert(await input.isEditable(), "shopping scanner: manual input was not editable");
+
+  const before = await page.evaluate(() => window.__shoppingScannerEvidence.requests);
+  assert(before === 0, "shopping scanner: requested camera permission before user interaction");
+
+  await start.click();
+  await page.waitForFunction(() => {
+    return document.querySelector("#shopping-barcode")?.value === "3017624010701";
+  });
+
+  const state = await page.evaluate(() => window.__shoppingScannerEvidence);
+  assert(state.requests === 1, "shopping scanner: expected one explicitly requested camera session");
+  assert(state.stops === 1, "shopping scanner: camera was not stopped on capture");
+  assert(
+    await page.locator("[data-shopping-scan-panel]").isHidden(),
+    "shopping scanner: preview remained visible after capture",
+  );
+  assert(
+    (await page.locator("[data-shopping-scan-status]").textContent())?.includes(
+      "Review the digits",
+    ),
+    "shopping scanner: requires explicit user confirmation",
+  );
+  assert(
+    new URL(page.url()).pathname === "/shopping/",
+    "shopping scanner: barcode capture submitted a lookup without confirmation",
+  );
+  await assertAxe(page, "shopping-scanner/captured");
+  await context.close();
+}
+
 async function assertContentSecurityPolicyHeader(response, label) {
   const headers = await response.headers();
   const policy = headers["content-security-policy"] ?? "";
@@ -3926,6 +3992,7 @@ try {
   }
 
   if (BROWSER_SCOPE === "full") {
+    await assertShoppingBarcodeScanner(browser);
     evidence.csp = await assertCspEnforcement(browser);
     evidence.noJavaScript = await assertNoJavaScriptSavedStateFallback(browser);
     evidence.noJavaScriptExplore = await assertNoJavaScriptExplore(browser);
