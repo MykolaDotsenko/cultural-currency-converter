@@ -257,6 +257,7 @@ def test_mobile_product_identity_cache_outage_returns_safe_503(client):
     assert response.json()["error"]["code"] == "product_source_unavailable"
     assert "private" not in response.content.decode()
 
+
 @pytest.mark.django_db
 def test_manual_shopping_barcode_lookup_remains_available_without_camera_or_js(
     client, shopping_reference_data
