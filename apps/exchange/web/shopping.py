@@ -3,7 +3,10 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 
+from django.db import DatabaseError
 from django.http import HttpRequest, HttpResponse
+from django.urls import reverse
+from django.utils.cache import patch_cache_control, patch_vary_headers
 from django.shortcuts import render
 from django.utils.formats import date_format
 from django.views.decorators.http import require_http_methods
@@ -23,6 +26,7 @@ from apps.exchange.providers.base import FxProviderError
 from apps.exchange.services import quote_conversion
 from apps.exchange.shopping import ShoppingCalculationError, calculate_shopping_estimate
 from apps.exchange.shopping_snapshot import build_shopping_context_snapshot_token
+from apps.travel.models import SavedScenario, SavedScenarioKind
 from integrations.price_data import (
     OpenPricesRateLimited,
     OpenPricesSourceError,
@@ -118,6 +122,7 @@ def shopping_calculation_view(
         initial=initial,
     )
     component = None
+    matching_saved_trips: tuple[dict[str, object], ...] = ()
     error = None
     status = 200
     product_identity = None
@@ -297,15 +302,41 @@ def shopping_calculation_view(
                 ),
             }
 
+            # Optional opt-in review: no expense is written by the Shopping result.
+            # This query is owner-scoped and never runs for idle/anonymous requests.
+            if request.user.is_authenticated and purchase_country is not None:
+                try:
+                    matches = SavedScenario.objects.filter(
+                        user=request.user,
+                        kind=SavedScenarioKind.BUDGET,
+                        destination_currency=purchase_currency,
+                        destination_country=purchase_country,
+                    ).order_by("-updated_at", "-id")[:3]
+                    matching_saved_trips = tuple(
+                        {
+                            "title": item.title or f"{purchase_country.name} saved budget",
+                            "review_url": reverse(
+                                "review_shopping_spend", args=(item.pk,)
+                            ),
+                        }
+                        for item in matches
+                    )
+                except DatabaseError as exc:
+                    logger.warning(
+                        "shopping_trip_handoff_lookup_unavailable",
+                        extra={"error_code": exc.__class__.__name__},
+                    )
+
     elif request.method == "POST":
         status = 422
 
-    return render(
+    response = render(
         request,
         "pages/shopping.html",
         {
             "form": form,
             "shopping": component,
+            "matching_saved_trips": matching_saved_trips,
             "shopping_error": error,
             "reference_data_ready": form.reference_data_ready,
             "product_context": (
@@ -320,3 +351,8 @@ def shopping_calculation_view(
         },
         status=status,
     )
+    if request.user.is_authenticated and component is not None:
+        # Authenticated trip names/ids must never enter a shared cache.
+        patch_cache_control(response, private=True, no_store=True)
+        patch_vary_headers(response, ("Cookie",))
+    return response

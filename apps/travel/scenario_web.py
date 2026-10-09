@@ -6,6 +6,7 @@ from decimal import ROUND_HALF_EVEN, Decimal, DecimalException, InvalidOperation
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,6 +22,7 @@ from apps.countries.models import City, Country, Currency
 from apps.culture.presentation import build_destination_context_component
 from apps.culture.services import DestinationContext, build_destination_context
 from apps.exchange.budget import BudgetAssumptions
+from apps.exchange.forms import parse_amount_text
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
     load_budget_context_snapshot_token,
@@ -1018,6 +1020,71 @@ def save_shopping_scenario(request: HttpRequest) -> HttpResponse:
 
     messages.success(request, "Shopping estimate saved to your account.")
     return redirect("saved_scenario_detail", scenario_id=scenario.pk)
+
+
+@login_required
+@never_cache
+@require_POST
+def review_shopping_spend(request: HttpRequest, scenario_id: int) -> HttpResponse:
+    """Show an explicit spend review; never persist an estimate as a purchase."""
+
+    scenario = _owned_scenario_for_detail(request, scenario_id)
+    if (
+        scenario.kind != SavedScenarioKind.BUDGET
+        or scenario.destination_country is None
+    ):
+        raise Http404("Shopping spend review is available only for country-scoped budgets.")
+
+    token = str(request.POST.get("shopping_context_token") or "")
+    try:
+        snapshot = load_shopping_context_snapshot_token(token)
+    except ShoppingContextTokenError:
+        return HttpResponse(
+            "This Shopping estimate has expired or is invalid. Recalculate before reviewing.",
+            status=422,
+            content_type="text/plain",
+        )
+
+    if (
+        snapshot.purchase_country_code != scenario.destination_country.iso2
+        or snapshot.conversion.quote.base_currency != scenario.destination_currency.code
+    ):
+        return HttpResponse(
+            "The purchase country and currency must match this saved trip.",
+            status=422,
+            content_type="text/plain",
+        )
+
+    try:
+        amount = parse_amount_text(
+            format(snapshot.assumptions.purchase_total, "f"),
+            minor_units=scenario.destination_currency.minor_units,
+        )
+    except ValidationError:
+        return HttpResponse(
+            "The proposed spend does not match this trip currency's precision.",
+            status=422,
+            content_type="text/plain",
+        )
+    if amount <= 0:
+        return HttpResponse(
+            "Only positive, user-confirmed amounts can be recorded.",
+            status=422,
+            content_type="text/plain",
+        )
+
+    proposed_amount = _decimal_input_text(amount)
+    form = SavedScenarioSpendForm(
+        destination_currency_code=scenario.destination_currency.code,
+        destination_minor_units=scenario.destination_currency.minor_units,
+        initial={"amount": proposed_amount},
+    )
+    context = _scenario_detail_context(scenario, spend_form=form)
+    context["shopping_spend_review"] = {
+        "amount": proposed_amount,
+        "currency": scenario.destination_currency.code,
+    }
+    return render(request, "travel/saved_scenario_detail.html", context)
 
 
 @login_required

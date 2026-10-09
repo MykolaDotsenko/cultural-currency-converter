@@ -1,0 +1,90 @@
+/* Opt-in shopping-to-trip continuity, no automatic writes or hidden prices. */
+.qa-shopping-trip-handoff {
+  margin-block: var(--qa-space-8);
+  padding-block: var(--qa-space-7);
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-shopping-trip-handoff__intro {
+  max-width: 48rem;
+  margin-block-end: var(--qa-space-5);
+}
+
+.qa-shopping-trip-handoff__intro h3 {
+  margin-block: var(--qa-space-3);
+  font-size: clamp(1.5rem, 3.6vw, 2.4rem);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  font-weight: 520;
+}
+
+.qa-shopping-trip-handoff__intro p:last-child {
+  max-width: 69ch;
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.65;
+}
+
+.qa-shopping-trip-handoff__destinations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--qa-space-3);
+}
+
+.qa-shopping-trip-handoff__destinations form {
+  min-width: 0;
+  display: flex;
+}
+
+.qa-shopping-trip-handoff__trip {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--qa-space-3);
+  padding: var(--qa-space-5);
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow-wrap: anywhere;
+}
+
+.qa-shopping-trip-handoff__trip > strong {
+  font-size: var(--text-heading-3);
+  line-height: 1.25;
+}
+
+.qa-shopping-trip-handoff__amount {
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.55;
+}
+
+.qa-shopping-trip-handoff__trip button {
+  margin-block-start: auto;
+  min-height: 44px;
+}
+
+.qa-shopping-trip-handoff__disclaimer {
+  max-width: 74ch;
+  margin-block: var(--qa-space-5) 0;
+  color: var(--color-muted);
+  font-size: var(--text-meta);
+  line-height: 1.6;
+}
+
+@media (max-width: 55rem) {
+  .qa-shopping-trip-handoff__destinations {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-shopping-trip-handoff,
+  .qa-shopping-trip-handoff__trip {
+    border-color: CanvasText;
+    color: CanvasText;
+    background: Canvas;
+  }
+}
