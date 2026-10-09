@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import patch
@@ -8,6 +9,7 @@ import pytest
 from django.urls import reverse
 
 from apps.countries.models import Country, CountryCurrency, Currency
+from apps.exchange.web.shopping import _public_price_sample_summary
 from integrations.price_data import OpenPricesSourceError, PublicPriceObservation
 from integrations.product_data.base import ProductIdentity
 
@@ -150,3 +152,72 @@ def test_empty_qualified_sample_has_explicit_non_live_state(client, identity):
     assert response.status_code == 200
     assert b"No qualifying, dated, proof-linked unit-price observations" in response.content
     assert b"not live" in response.content
+
+
+def test_public_price_sample_summary_is_bounded_and_does_not_average_currencies(observation):
+    other = replace(
+        observation,
+        observed_at=date(2026, 10, 2),
+        country_code="US",
+        currency="USD",
+        location_label="Example Market Boston",
+        proof_id=5,
+    )
+    summary = _public_price_sample_summary((observation, other))
+
+    assert summary is not None
+    assert summary["count"] == 2
+    assert summary["place_count"] == 2
+    assert summary["countries"] == "FI, US"
+    assert summary["first_observed"] == "15 Sep 2026"
+    assert summary["last_observed"] == "2 Oct 2026"
+    assert summary["mixed_currencies"] is True
+    assert "average" not in summary
+    assert _public_price_sample_summary(()) is None
+
+
+@pytest.mark.django_db
+def test_shopping_open_prices_sample_preserves_currency_and_source_boundaries(
+    client, identity, observation
+):
+    other = replace(
+        observation,
+        observed_at=date(2026, 10, 2),
+        country_code="US",
+        currency="USD",
+        location_label="Example Market Boston",
+        proof_id=5,
+        source_url="https://prices.openfoodfacts.org/api/v1/prices/19",
+    )
+    with (
+        patch(
+            "apps.exchange.web.shopping.lookup_product_identity_cached",
+            return_value=identity,
+        ),
+        patch(
+            "apps.exchange.web.shopping.lookup_public_price_observations",
+            return_value=(observation, other),
+        ) as price_lookup,
+        patch("apps.exchange.views.build_latest_quote_gateway") as fx,
+    ):
+        response = client.get(
+            reverse("shopping_calculation"),
+            {"barcode": identity.barcode, "show_prices": "1"},
+        )
+    body = response.content.decode()
+
+    assert response.status_code == 200
+    assert "data-public-price-sample" in body
+    assert "2 dated observations" in body
+    assert "2 reported places" in body
+    assert "FI, US" in body
+    assert "Observed 15 Sep 2026–2 Oct 2026" in body
+    assert "Observations use different currencies" in body
+    assert "This is not a market average" in body
+    assert "Example Market Helsinki" in body
+    assert "Example Market Boston" in body
+    assert "3.95 EUR per unit" in body
+    assert "3.95 USD per unit" in body
+    assert 'value="3.95"' not in body
+    price_lookup.assert_called_once_with(identity.barcode)
+    fx.assert_not_called()
