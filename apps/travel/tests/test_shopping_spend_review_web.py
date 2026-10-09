@@ -100,7 +100,21 @@ def test_shopping_review_needs_separate_spend_confirmation(client, matching_shop
     assert review.status_code == 200
     assert b"data-shopping-spend-review" in review.content
     assert b"Nothing has been recorded yet" in review.content
+    assert b'data-shopping-review-jump' in review.content
+    assert b'href="#shopping-spend-review"' in review.content
+    assert b'id="shopping-spend-review"' in review.content
+    assert b"Item price" in review.content
+    assert b"100 USD" in review.content
+    assert b"Shipping entered" in review.content
+    assert b"20 USD" in review.content
+    assert b"Known fees entered" in review.content
+    assert b"10 USD" in review.content
+    assert b"Proposed purchase total" in review.content
+    assert b"130 USD" in review.content
+    assert b"2.5% home-currency FX markup" in review.content
+    assert b"not part of this purchase-currency trip spend" in review.content
     assert b'value="130"' in review.content
+    assert gateway.calls == [("USD", "EUR")]
     assert scenario.spend_entries.count() == 0
     assert scenario.observations.count() == 1
 
@@ -181,3 +195,16 @@ def test_anonymous_shopping_does_not_expose_private_trips(client, matching_shopp
     assert b"USA autumn trip" not in response.content
     assert b"data-shopping-trip-handoff" not in response.content
     assert b"Review in this trip" not in response.content
+
+
+@pytest.mark.django_db
+def test_normal_saved_trip_detail_has_no_pending_shopping_breakdown(
+    client, matching_shopping_trip
+):
+    owner, scenario = matching_shopping_trip
+    client.force_login(owner)
+    response = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    assert response.status_code == 200
+    assert b"data-shopping-review-jump" not in response.content
+    assert b"data-shopping-spend-review" not in response.content
+    assert b"Proposed purchase total" not in response.content
