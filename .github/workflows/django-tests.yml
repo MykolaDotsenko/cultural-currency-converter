@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - master
+      - feature/evidence-guide-map-20261010
     paths:
       - "apps/**"
       - "integrations/**"
