@@ -180,7 +180,6 @@ def build_rate_series_component(
         }
         historical_replay_url = f"{reverse('converter')}?{urlencode(replay_params)}"
 
-
     period_links = []
     for key, label in (("1y", "1Y"), ("5y", "5Y"), ("10y", "10Y")):
         period_links.append(
