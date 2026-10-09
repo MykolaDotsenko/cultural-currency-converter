@@ -48,12 +48,11 @@
   min-width: 0;
   border: 1px solid var(--qa-hairline);
   border-radius: var(--radius-lg);
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--qa-context-soft) 32%, var(--color-surface)),
-      var(--color-surface) 65%
-    );
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--qa-context-soft) 32%, var(--color-surface)),
+    var(--color-surface) 65%
+  );
   padding: clamp(1.125rem, 3vw, 2rem);
 }
 
