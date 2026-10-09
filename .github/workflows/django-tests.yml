@@ -16,6 +16,7 @@ on:
   push:
     branches:
       - master
+      - ci/public-ecr-postgres18-redis8-20261010
     paths:
       - "apps/**"
       - "integrations/**"
@@ -136,7 +137,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:18.6-alpine
+        image: public.ecr.aws/docker/library/postgres:18.6-alpine
         env:
           POSTGRES_DB: cultural_currency_test
           POSTGRES_USER: postgres
@@ -149,7 +150,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
       redis:
-        image: redis:8.2.2-alpine
+        image: public.ecr.aws/docker/library/redis:8.2.2-alpine
         ports:
           - 6379:6379
         options: >-
