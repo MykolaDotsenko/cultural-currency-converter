@@ -253,9 +253,7 @@ def test_country_guide_does_not_link_deactivated_city_price_history(reviewed_cou
 
 
 @pytest.mark.django_db
-def test_country_guide_evidence_map_has_only_real_targets_without_fx(
-    client, reviewed_country_data
-):
+def test_country_guide_evidence_map_has_only_real_targets_without_fx(client, reviewed_country_data):
     from html.parser import HTMLParser
 
     class GuideMapParser(HTMLParser):
