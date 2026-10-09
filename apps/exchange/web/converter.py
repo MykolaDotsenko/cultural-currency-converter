@@ -523,6 +523,10 @@ def converter_view(
                 extra={"error_code": exc.__class__.__name__},
             )
     context["returning_trip_home"] = returning_trip_home
+    # No provider calls are added on the initial home. Keep converter results primary.
+    context["money_studio_visible"] = (
+        request.method == "GET" and not convert_requested and not load_pair_requested
+    )
 
     fragment = is_htmx(request) and not is_history_restore(request)
     template = "components/converter/current_panel.html" if fragment else "pages/converter.html"

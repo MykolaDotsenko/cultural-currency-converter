@@ -1,0 +1,63 @@
+<section class="qa-money-studio"
+         data-money-studio
+         aria-labelledby="money-studio-title">
+  <div class="qa-money-studio__heading">
+    <div>
+      <p class="qa-foundation-kicker">Beyond the conversion</p>
+      <h2 id="money-studio-title">Go further with your money.</h2>
+      <p>
+        Turn a reference conversion into a clearer decision with the tools you need for travel,
+        destinations, and purchases.
+      </p>
+    </div>
+    <a class="qa-money-studio__saved" href="{% url 'saved_state' %}">
+      Return to saved decisions <span aria-hidden="true">↗</span>
+    </a>
+  </div>
+  <nav class="qa-money-studio__routes" aria-label="Travel money tools">
+    <a class="qa-money-studio__route qa-money-studio__route--featured"
+       data-money-studio-action="destination"
+       href="{% url 'destination_mode' %}">
+      <span class="qa-money-studio__number">01 · Before you go</span>
+      <span class="qa-money-studio__title">Plan a destination</span>
+      <span class="qa-money-studio__description">
+        Choose a country or canonical city. Bring its local currency into your next conversion.
+      </span>
+      <span class="qa-money-studio__arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="qa-money-studio__route"
+       data-money-studio-action="compare"
+       href="{% url 'destination_comparison' %}">
+      <span class="qa-money-studio__number">02 · Make a choice</span>
+      <span class="qa-money-studio__title">Compare places</span>
+      <span class="qa-money-studio__description">
+        Explore two destinations with one editable basket and separately sourced results.
+      </span>
+      <span class="qa-money-studio__arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="qa-money-studio__route"
+       data-money-studio-action="shopping"
+       href="{% url 'shopping_calculation' %}">
+      <span class="qa-money-studio__number">03 · Before you buy</span>
+      <span class="qa-money-studio__title">Shop across borders</span>
+      <span class="qa-money-studio__description">
+        Estimate a foreign purchase with your own item price, shipping and fee assumptions.
+      </span>
+      <span class="qa-money-studio__arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="qa-money-studio__route"
+       data-money-studio-action="explore"
+       href="{% url 'explore' %}">
+      <span class="qa-money-studio__number">04 · Understand the place</span>
+      <span class="qa-money-studio__title">Explore local value</span>
+      <span class="qa-money-studio__description">
+        Discover reviewed everyday prices, payment habits and local money context.
+      </span>
+      <span class="qa-money-studio__arrow" aria-hidden="true">↗</span>
+    </a>
+  </nav>
+  <p class="qa-money-studio__note">
+    Reference rates, typical prices and user-entered purchase assumptions remain separate.
+    Each tool requests its own information only when you open or use it.
+  </p>
+</section>

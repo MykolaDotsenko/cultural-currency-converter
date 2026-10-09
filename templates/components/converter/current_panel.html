@@ -523,4 +523,7 @@
   {% endif %}
   {% include "components/converter/picker_dialog.html" with side="source" role_label="source" %}
   {% include "components/converter/picker_dialog.html" with side="destination" role_label="destination" %}
+  {% if money_studio_visible %}
+    {% include "components/converter/money_studio.html" %}
+  {% endif %}
 </section>

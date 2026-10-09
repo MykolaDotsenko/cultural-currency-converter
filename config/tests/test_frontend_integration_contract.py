@@ -40,6 +40,23 @@ from django.urls import resolve, reverse
             ("source_value_lens.prices", "destination_context_component.prices"),
         ),
         (
+            "converter",
+            {},
+            "components/converter/money_studio.html",
+            (
+                "'destination_mode'",
+                "'destination_comparison'",
+                "'shopping_calculation'",
+                "'explore'",
+            ),
+        ),
+        (
+            "converter",
+            {},
+            "components/converter/current_panel.html",
+            ("money_studio_visible", "components/converter/money_studio.html"),
+        ),
+        (
             "shopping_calculation",
             {},
             "pages/shopping.html",
