@@ -53,6 +53,63 @@ def _selection_context(form: CurrentConversionForm, side: str) -> dict[str, str]
     }
 
 
+def _current_result_next_steps(
+    result: ConversionResult,
+    *,
+    destination_country_code: str,
+    destination_city_slug: str,
+    payment_available: bool,
+    budget_available: bool,
+) -> tuple[dict[str, str], ...]:
+    """Route verified current-result inputs to existing actions, never rates or fees."""
+
+    if result.quote.historical:
+        return ()
+
+    steps: list[dict[str, str]] = []
+    if payment_available:
+        steps.append(
+            {
+                "kind": "payment",
+                "label": "Estimate a payment",
+                "detail": "Test explicit card or bank fees against this reference rate.",
+                "href": "#payment-estimate-region",
+                "cta": "Adjust fees",
+            }
+        )
+    if budget_available:
+        steps.append(
+            {
+                "kind": "budget",
+                "label": "Build a trip budget",
+                "detail": "Use reviewed local prices, then save a scenario if you choose.",
+                "href": "#budget-interpretation-region",
+                "cta": "Plan the budget",
+            }
+        )
+    if destination_country_code:
+        destination_token = (
+            f"{destination_country_code}:{destination_city_slug}"
+            if destination_city_slug
+            else destination_country_code
+        )
+        params = {
+            "amount": format(result.input_amount, "f"),
+            "source_currency": result.quote.base_currency,
+            "left_destination": destination_token,
+        }
+        steps.append(
+            {
+                "kind": "compare",
+                "label": "Compare another place",
+                "detail": "Carry only your starting amount and chosen place into a new comparison.",
+                "href": f"{reverse('destination_comparison')}?{urlencode(params)}",
+                "cta": "Choose a second place",
+            }
+        )
+    return tuple(steps)
+
+
 def build_result_component(
     result: ConversionResult,
     *,
@@ -176,6 +233,13 @@ def build_result_component(
         and bool(money_context.destination_country_code)
         else None
     )
+    next_steps = _current_result_next_steps(
+        result,
+        destination_country_code=destination_country_code,
+        destination_city_slug=str(form.cleaned_data.get("destination_city_slug") or ""),
+        payment_available=payment_estimate_form is not None,
+        budget_available=budget_interpretation is not None,
+    )
     smart_summary = build_smart_result_summary(result, money_context=money_context)
     supporting_insights = build_supporting_money_insights(
         result,
@@ -194,6 +258,7 @@ def build_result_component(
         "historical": historical,
         "smart_summary": smart_summary,
         "supporting_insights": supporting_insights,
+        "next_steps": next_steps,
         "local_state": {
             "input_amount": format(result.input_amount, "f"),
             "output_amount": format(result.output_amount, "f"),
