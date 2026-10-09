@@ -1121,9 +1121,7 @@ def test_trip_calendar_review_is_bounded_to_first_90_days_and_excludes_past_date
     assert review.window_start == date(2026, 11, 1)
     assert review.window_end == date(2027, 1, 30)
     assert review.truncated is True
-    builder.assert_called_once_with(
-        country=japan, as_of=date(2026, 11, 1), window_days=90, limit=6
-    )
+    builder.assert_called_once_with(country=japan, as_of=date(2026, 11, 1), window_days=90, limit=6)
 
     assert (
         build_trip_calendar_review(
