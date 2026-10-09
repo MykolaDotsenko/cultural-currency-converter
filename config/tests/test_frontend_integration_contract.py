@@ -127,3 +127,12 @@ def test_critical_integration_capability_has_route_template_and_evidence_hook(
     source = (Path(settings.BASE_DIR) / "templates" / template).read_text(encoding="utf-8")
     for hook in evidence_hooks:
         assert hook in source, f"{route} lost frontend evidence hook {hook!r}"
+
+
+def test_historical_trend_htmx_and_fallback_links_preserve_original_amount() -> None:
+    template = Path(settings.BASE_DIR) / "templates/components/converter/current_panel.html"
+    source = template.read_text(encoding="utf-8")
+    # Both navigation modes must retain the explicit input amount. Otherwise the
+    # historical-series endpoint has no amount and cannot offer a safe replay.
+    assert source.count("&amount={{ trend.amount }}&period=1y") == 2
+    assert source.count("hx-get=\"{% url 'historical_series' %}?") == 1
