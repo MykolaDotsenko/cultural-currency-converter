@@ -207,7 +207,7 @@ def test_shopping_open_prices_sample_preserves_currency_and_source_boundaries(
     body = response.content.decode()
 
     assert response.status_code == 200
-    assert 'data-public-price-sample' in body
+    assert "data-public-price-sample" in body
     assert "2 dated observations" in body
     assert "2 reported places" in body
     assert "FI, US" in body
