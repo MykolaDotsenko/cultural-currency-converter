@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from decimal import DecimalException
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -16,6 +17,7 @@ from apps.accounts.preferences import home_currency_code
 from apps.countries.models import City, CountryCurrency, Currency
 from apps.culture.media import select_destination_media
 from apps.culture.presentation import build_destination_context_component
+from apps.culture.services import build_destination_context
 from apps.exchange.application import ConverterSubmissionCommand, run_converter_submission
 from apps.exchange.budget_presets import budget_presets_for_categories
 from apps.exchange.cache import HistoricalQuoteGateway, LatestQuoteGateway
@@ -297,6 +299,7 @@ def converter_view(
     error = None
     historical_suggestions = []
     destination_context_component = None
+    source_value_lens = None
     money_context = None
     response_status = 200
     form_valid = form.is_valid() if convert_requested else False
@@ -353,6 +356,40 @@ def converter_view(
                     payment_culture_image=destination_media.payment_culture,
                     local_detail_image=destination_media.local_detail,
                 )
+
+            # Bilateral value is optional, reviewed local evidence, not another FX engine.
+            # Never backdate today's typical prices to a historical exchange rate.
+            source_country = str(form.cleaned_data.get("source_country") or "")
+            destination_country = str(form.cleaned_data.get("destination_country") or "")
+            if (
+                not result.quote.historical
+                and source_country
+                and destination_country
+                and source_country != destination_country
+                and money_context is not None
+            ):
+                try:
+                    source_context = build_destination_context(
+                        country_code=source_country,
+                        converted_amount=result.input_amount,
+                        quote_currency=result.quote.base_currency,
+                        as_of=money_context.as_of,
+                        price_limit=2,
+                    )
+                    if source_context is not None and source_context.prices:
+                        source_value_lens = build_destination_context_component(
+                            source_context,
+                            historical=False,
+                            show_explore_nav=False,
+                        )
+                except (DatabaseError, DecimalException, ValueError) as exc:
+                    logger.warning(
+                        "converter_source_value_lens_unavailable",
+                        extra={
+                            "source_country": source_country,
+                            "error_code": exc.__class__.__name__,
+                        },
+                    )
 
     if convert_requested and not form_valid and request.method == "POST":
         response_status = 422
@@ -417,6 +454,7 @@ def converter_view(
         destination_context_component=destination_context_component,
         money_context=money_context,
     )
+    context["source_value_lens"] = source_value_lens
     context["account_favourite_saved"] = account_favourite_saved
     context["account_recent_history_recorded"] = account_recent_history_recorded
 

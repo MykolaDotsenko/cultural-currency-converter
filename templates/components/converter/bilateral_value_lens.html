@@ -1,0 +1,78 @@
+<section class="qa-bilateral-value-lens"
+         data-bilateral-value-lens
+         aria-labelledby="bilateral-value-lens-title">
+  <div class="qa-bilateral-value-lens__heading">
+    <div>
+      <p class="qa-foundation-kicker">The value behind the rate</p>
+      <h3 id="bilateral-value-lens-title">Two places. Two everyday perspectives.</h3>
+      <p>
+        Reviewed local examples for the amounts shown above. Each place has its
+        own price evidence and observation date.
+      </p>
+    </div>
+    <span class="qa-bilateral-value-lens__eyebrow">Source → destination</span>
+  </div>
+  <div class="qa-bilateral-value-lens__grid">
+    <section class="qa-bilateral-value-lens__side"
+             {% if source.theme %}data-country-theme="{{ source.theme }}"{% endif %}
+             aria-labelledby="bilateral-value-source-title">
+      <p class="qa-bilateral-value-lens__role">01 · Money where you start</p>
+      <h4 id="bilateral-value-source-title">{{ source.country_name }}</h4>
+      <p class="qa-bilateral-value-lens__amount">
+        {{ result_component.input_amount }} {{ result_component.input_currency }}
+      </p>
+      <div class="qa-bilateral-value-lens__observations">
+        {% for price in source_value_lens.prices %}
+          <article class="qa-bilateral-value-lens__item" data-value-side="source">
+            <div>
+              <h5>{{ price.label }}</h5>
+              <p class="qa-bilateral-value-lens__equivalent">{{ price.equivalent_text }}</p>
+              <p class="qa-bilateral-value-lens__price">{{ price.price_text }} typical · {{ price.scope }}</p>
+            </div>
+            <p class="qa-bilateral-value-lens__evidence">
+              {{ price.observed }} · {{ price.confidence }} confidence
+              · <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+            </p>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="qa-bilateral-value-lens__side"
+             {% if destination.theme %}data-country-theme="{{ destination.theme }}"{% endif %}
+             aria-labelledby="bilateral-value-destination-title">
+      <p class="qa-bilateral-value-lens__role">02 · Money when you arrive</p>
+      <h4 id="bilateral-value-destination-title">{{ destination.country_name }}</h4>
+      <p class="qa-bilateral-value-lens__amount">
+        {{ result_component.output_amount }} {{ result_component.output_currency }}
+      </p>
+      {% if destination_context_component.prices %}
+        <div class="qa-bilateral-value-lens__observations">
+          {% for price in destination_context_component.prices|slice:":2" %}
+            <article class="qa-bilateral-value-lens__item" data-value-side="destination">
+              <div>
+                <h5>{{ price.label }}</h5>
+                <p class="qa-bilateral-value-lens__equivalent">{{ price.equivalent_text }}</p>
+                <p class="qa-bilateral-value-lens__price">{{ price.price_text }} typical · {{ price.scope }}</p>
+              </div>
+              <p class="qa-bilateral-value-lens__evidence">
+                {{ price.observed }} · {{ price.confidence }} confidence
+                · <a href="{{ price.source_url }}">Source: {{ price.source_name }}</a>
+              </p>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="qa-bilateral-value-lens__empty">
+          No recent reviewed price examples for this destination scope.
+          Its payment and other local context remain available below where sourced.
+        </p>
+      {% endif %}
+    </section>
+  </div>
+  <p class="qa-bilateral-value-lens__note">
+    These are separate observed price examples, not a like-for-like price index,
+    guaranteed purchase, exchange offer or destination ranking. Location, scope and
+    observation date can differ. Currency conversion remains based on the reference
+    rate above.
+  </p>
+</section>

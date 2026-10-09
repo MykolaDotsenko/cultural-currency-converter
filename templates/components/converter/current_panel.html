@@ -294,6 +294,9 @@
         {% with component=result_component %}
           {% include "components/converter/primitives.html#conversion-result" %}
         {% endwith %}
+        {% if source_value_lens %}
+          {% include "components/converter/bilateral_value_lens.html" %}
+        {% endif %}
         {% if result_component.supporting_insights %}
           <section class="qa-context-section"
                    aria-labelledby="conversion-supporting-insights-title">
