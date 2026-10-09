@@ -105,7 +105,10 @@ jobs:
           integrations/gemini/client.py
 
       - name: Django template lint
-        run: djlint templates --check
+        run: |
+          djlint templates --reformat
+          git diff -- templates
+          exit 1
 
       - name: Django system check
         run: python manage.py check
