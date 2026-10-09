@@ -14,6 +14,12 @@ from apps.exchange.tests.test_web import FakeGateway, FakeHistoricalGateway, pay
 from apps.exchange.tests.test_web import reference_data as reference_data
 
 
+@pytest.fixture(autouse=True)
+def use_vite_dev_mode(settings):
+    # Full-page converter responses must not require a production Vite manifest in CI.
+    settings.VITE_DEV_SERVER_ENABLED = True
+
+
 @pytest.fixture
 def bilateral_prices(reference_data):
     fi, jp, eur, jpy, _fim = reference_data
