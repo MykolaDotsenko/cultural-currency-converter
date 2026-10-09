@@ -1,7 +1,7 @@
 """Trusted converter results lead to genuine current-only destination decisions."""
 
-from urllib.parse import parse_qs, urlparse
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.urls import reverse
