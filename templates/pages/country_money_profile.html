@@ -105,6 +105,19 @@
         {% else %}
           <p class="qa-saved-empty">No current verified everyday-price examples are available.</p>
         {% endif %}
+        {% if country_profile.reviewed_cities %}
+          <nav class="qa-city-profile__next-actions"
+               aria-label="Reviewed city money guides">
+            {% for city in country_profile.reviewed_cities %}
+              <a class="qa-saved-row__text-action"
+                 href="{{ city.profile_url }}">Explore {{ city.name }} city money profile</a>
+            {% endfor %}
+          </nav>
+          <p class="qa-context-freshness-note">
+            City profiles open the reviewed evidence for that specific place. A city price
+            example must not be read as a national average.
+          </p>
+        {% endif %}
         <p class="qa-context-disclaimer">
           These are bounded sourced examples, not live shelf prices, a national price average,
           a cost-of-living ranking or a purchasing-power calculation.

@@ -75,6 +75,7 @@ def build_country_money_profile(
 def build_country_money_profile_component(profile: CountryMoneyProfile) -> dict[str, object]:
     """Read-only presentation composed exclusively from source-labelled data."""
     prices = []
+    city_examples: dict[str, dict[str, str]] = {}
     for price in profile.prices:
         low = f"{price.amount_low:.{price.currency_minor_units}f}"
         high = (
@@ -83,6 +84,23 @@ def build_country_money_profile_component(profile: CountryMoneyProfile) -> dict[
             else ""
         )
         is_national = not (price.city or price.city_slug)
+        # Only canonical city references backed by an already-selected, reviewed
+        # city price earn a city guide link. Legacy free-text city names do not.
+        if price.city_slug and price.city:
+            city_examples.setdefault(
+                price.city_slug,
+                {
+                    "name": price.city,
+                    "scope": price.scope_label,
+                    "profile_url": reverse(
+                        "city_money_profile",
+                        kwargs={
+                            "country_code": profile.country_code,
+                            "city_slug": price.city_slug,
+                        },
+                    ),
+                },
+            )
         prices.append(
             {
                 "label": price.label,
@@ -164,6 +182,7 @@ def build_country_money_profile_component(profile: CountryMoneyProfile) -> dict[
         "prices": tuple(prices),
         "national_price_count": sum(int(row["is_national"]) for row in prices),
         "city_example_count": sum(int(not row["is_national"]) for row in prices),
+        "reviewed_cities": tuple(city_examples.values()),
         "payment": payment,
         "economic": economic,
         "calendar": calendar,
