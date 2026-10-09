@@ -946,9 +946,7 @@ def test_readiness_uses_reviewed_data_and_filters_holidays_to_saved_trip_window(
     )
 
     assert result is not None
-    assert [item["name"] for item in result["holidays"]] == [
-        "National holiday within trip"
-    ]
+    assert [item["name"] for item in result["holidays"]] == ["National holiday within trip"]
     assert result["tips"][0]["text"] == "Choose the local currency, not DCC."
     assert result["payment_source_url"] == "https://example.test/payment-guide"
     assert result["calendar_window_days"] == 30
