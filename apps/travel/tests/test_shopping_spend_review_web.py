@@ -13,7 +13,7 @@ from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQu
 from apps.exchange.tests.test_shopping_web import (
     ShoppingGateway,
     _payload,
-    shopping_reference_data,
+    shopping_reference_data as shopping_reference_data,
 )
 from apps.travel.models import SavedScenario, SavedScenarioKind
 from apps.travel.scenarios import SavedScenarioSpec, create_saved_scenario
