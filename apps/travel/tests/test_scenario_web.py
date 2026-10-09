@@ -11,6 +11,7 @@ from django.urls import reverse
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.calendar import CalendarContext, PublicHolidayContextItem
+from apps.culture.models import PublicHolidayObservation
 from apps.culture.services import DestinationContext, PaymentContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
@@ -19,7 +20,11 @@ from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_t
 from apps.exchange.payment_estimate import estimate_payment_value
 from apps.exchange.providers.base import FxProviderUnavailable
 from apps.travel.models import SavedScenario, SavedScenarioBudgetBasis, SavedScenarioKind
-from apps.travel.trip_readiness import build_trip_readiness
+from apps.travel.trip_readiness import (
+    TripCalendarReview,
+    build_trip_calendar_review,
+    build_trip_readiness,
+)
 
 User = get_user_model()
 
@@ -994,6 +999,19 @@ def test_readiness_does_not_invent_guidance_when_no_reviewed_evidence():
 def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_reference_data):
     user = User.objects.create_user(username="readiness-owner", password="StrongPass-482!")
     client.force_login(user)
+    japan = Country.objects.get(iso2="JP")
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 10, 15),
+        name="National holiday within trip",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/national-holiday",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
     client.post(
         reverse("save_budget_scenario"),
         {
@@ -1013,9 +1031,12 @@ def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_r
     builder.assert_not_called()
     assert b"data-trip-readiness-evidence" not in idle.content
 
-    with patch(
-        "apps.travel.scenario_web.build_destination_context",
-        return_value=_readiness_destination(),
+    with (
+        patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            return_value=_readiness_destination(),
+        ),
     ):
         refreshed = client.get(
             reverse("saved_scenario_detail", args=(scenario.pk,)),
@@ -1030,3 +1051,232 @@ def test_trip_readiness_is_opt_in_and_visible_with_provenance(client, scenario_r
     assert b"Source: Reviewed bank guide" in refreshed.content
     assert b"Absence of a listed holiday does not mean" in refreshed.content
     assert b"does not refresh the FX rate" in refreshed.content
+
+
+@pytest.mark.django_db
+def test_future_saved_trip_uses_reviewed_holidays_from_its_dates_without_provider_calls(
+    client, scenario_reference_data
+):
+    user = User.objects.create_user(username="future-calendar-owner", password="StrongPass-482!")
+    client.force_login(user)
+    japan = Country.objects.get(iso2="JP")
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 12, 6),
+        name="Future reviewed national holiday",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/jp-future-national",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
+    PublicHolidayObservation.objects.create(
+        country=japan,
+        date=date(2026, 12, 7),
+        name="Unrelated regional-only holiday",
+        national_holiday=False,
+        subdivision_codes=["JP-01"],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/jp-regional",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Future Tokyo holiday",
+            "duration_days": "7",
+            "travelers": "1",
+            "travel_start_date": "2026-12-03",
+            "travel_end_date": "2026-12-09",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with (
+        patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            return_value=_readiness_destination(),
+        ) as context_builder,
+        patch("apps.exchange.providers.frankfurter.FrankfurterProvider") as provider,
+    ):
+        response = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert response.status_code == 200
+    assert b"Future reviewed national holiday" in response.content
+    assert b"Unrelated regional-only holiday" not in response.content
+    # The refreshed Money Context Lens may separately include today's
+    # 30-day calendar. Only the trip-readiness section must use trip dates.
+    readiness = response.context["local_context"]["trip_readiness"]
+    assert [holiday["name"] for holiday in readiness["holidays"]] == [
+        "Future reviewed national holiday"
+    ]
+    assert b"3 Dec 2026" in response.content
+    assert b"9 Dec 2026" in response.content
+    assert b"A missing record does not establish" in response.content
+    context_builder.assert_called_once()
+    provider.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_trip_calendar_review_is_bounded_to_first_90_days_and_excludes_past_dates(
+    scenario_reference_data,
+):
+    japan = Country.objects.get(iso2="JP")
+    with patch("apps.travel.trip_readiness.build_calendar_context") as builder:
+        builder.return_value = None
+        review = build_trip_calendar_review(
+            country=japan,
+            as_of=date(2026, 10, 9),
+            travel_start_date=date(2026, 11, 1),
+            travel_end_date=date(2027, 3, 1),
+        )
+    assert review is not None
+    assert review.window_start == date(2026, 11, 1)
+    assert review.window_end == date(2027, 1, 29)
+    assert review.truncated is True
+    builder.assert_called_once_with(country=japan, as_of=date(2026, 11, 1), window_days=89, limit=6)
+
+    assert (
+        build_trip_calendar_review(
+            country=japan,
+            as_of=date(2026, 10, 9),
+            travel_start_date=date(2026, 9, 1),
+            travel_end_date=date(2026, 9, 10),
+        )
+        is None
+    )
+    assert (
+        build_trip_calendar_review(
+            country=japan,
+            as_of=date(2026, 10, 9),
+            travel_start_date=None,
+            travel_end_date=None,
+        )
+        is None
+    )
+
+
+def test_explicit_trip_calendar_check_reports_missing_evidence_without_inventing_a_holiday():
+    destination = DestinationContext(
+        country_code="JP",
+        country_name="Japan",
+        as_of=date(2026, 10, 9),
+        payment=None,
+        prices=(),
+        calendar=None,
+    )
+    reviewed = TripCalendarReview(
+        calendar=None,
+        window_start=date(2026, 12, 3),
+        window_end=date(2026, 12, 9),
+        truncated=False,
+    )
+    result = build_trip_readiness(
+        destination,
+        as_of=date(2026, 10, 9),
+        travel_start_date=date(2026, 12, 3),
+        travel_end_date=date(2026, 12, 9),
+        calendar_review=reviewed,
+    )
+    assert result is not None
+    assert result["holidays"] == ()
+    assert result["tips"] == ()
+    assert result["trip_calendar_checked"] is True
+    assert result["has_calendar_evidence"] is False
+    assert result["trip_calendar_window_start"] == "3 Dec 2026"
+    assert result["trip_calendar_window_end"] == "9 Dec 2026"
+
+
+@pytest.mark.django_db
+def test_saved_trip_holiday_evidence_is_not_hidden_by_empty_current_money_context(
+    client, scenario_reference_data
+):
+    user = User.objects.create_user(username="holiday-only-owner", password="StrongPass-482!")
+    client.force_login(user)
+    country = Country.objects.get(iso2="JP")
+    PublicHolidayObservation.objects.create(
+        country=country,
+        date=date(2026, 12, 6),
+        name="Only reviewed trip-window holiday",
+        national_holiday=True,
+        subdivision_codes=[],
+        holiday_types=["Public"],
+        source_name="Nager.Date",
+        source_url="https://example.test/only-trip-holiday",
+        source_retrieved_at=datetime(2026, 10, 9, tzinfo=UTC),
+        is_published=True,
+    )
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Holiday-only Tokyo trip",
+            "duration_days": "7",
+            "travelers": "1",
+            "travel_start_date": "2026-12-03",
+            "travel_end_date": "2026-12-09",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with (
+        patch("apps.travel.scenario_web.timezone.localdate", return_value=date(2026, 10, 9)),
+        patch(
+            "apps.travel.scenario_web.build_destination_context",
+            return_value=None,
+        ) as context_builder,
+        patch("apps.exchange.providers.frankfurter.FrankfurterProvider") as provider,
+    ):
+        page = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert page.status_code == 200
+    assert page.context["local_context"]["state"] == "available"
+    assert page.context["local_context"]["component"] is None
+    assert b"Only reviewed trip-window holiday" in page.content
+    assert b"No current reviewed everyday-price" in page.content
+    assert b"3 Dec 2026" in page.content
+    assert b"9 Dec 2026" in page.content
+    assert b"does not change your saved financial figures" in page.content
+    context_builder.assert_called_once()
+    provider.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_saved_trip_without_current_context_or_trip_dates_stays_empty(
+    client, scenario_reference_data
+):
+    user = User.objects.create_user(username="no-context-owner", password="StrongPass-482!")
+    client.force_login(user)
+    client.post(
+        reverse("save_budget_scenario"),
+        {
+            "budget_context_token": _budget_token(),
+            "title": "Unscheduled Tokyo trip",
+            "duration_days": "7",
+            "travelers": "1",
+            "units_coffee": "1",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    with (
+        patch("apps.travel.scenario_web.build_destination_context", return_value=None),
+        patch("apps.travel.scenario_web.build_trip_calendar_review", return_value=None) as builder,
+    ):
+        page = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+    assert page.status_code == 200
+    assert page.context["local_context"]["state"] == "empty"
+    assert b"Only reviewed trip-window holiday" not in page.content
+    builder.assert_called_once()

@@ -539,13 +539,21 @@
         </div>
         {% if local_context_requested %}
           {% if local_context.state == "available" %}
-            <p class="qa-context-freshness-note" role="note">
-              Purchase examples below use the latest stored FX output —
-              {{ local_context.amount }} {{ local_context.currency }},
-              effective {{ local_context.observation_effective_date|date:"j M Y" }} —
-              only as an amount anchor. Price and payment evidence is current reviewed context
-              assembled {{ local_context.as_of|date:"j M Y" }}.
-            </p>
+            {% if local_context.component %}
+              <p class="qa-context-freshness-note" role="note">
+                Any purchase examples use the latest stored FX output —
+                {{ local_context.amount }} {{ local_context.currency }},
+                effective {{ local_context.observation_effective_date|date:"j M Y" }} —
+                only as an amount anchor. Reviewed local context was assembled
+                {{ local_context.as_of|date:"j M Y" }}.
+              </p>
+            {% else %}
+              <p class="qa-context-freshness-note" role="note">
+                No current reviewed everyday-price, payment or economic guide is available.
+                The saved travel-date holiday check below is independent of the original
+                FX observation and does not change your saved financial figures.
+              </p>
+            {% endif %}
             {% if local_context.trip_readiness %}
               {% with readiness=local_context.trip_readiness %}
                 <section class="qa-context-section"
@@ -583,7 +591,14 @@
                     {% endfor %}
                   </div>
                   <p class="qa-context-disclaimer">
-                    {% if readiness.has_calendar_evidence %}
+                    {% if readiness.trip_calendar_checked %}
+                      Reviewed national holiday observations were checked for your saved travel dates,
+                      {{ readiness.trip_calendar_window_start }}–{{ readiness.trip_calendar_window_end }}.
+                      {% if readiness.trip_calendar_truncated %}
+                        For longer trips, only the first 90 days were checked.
+                      {% endif %}
+                      A missing record does not establish that a day is not a holiday.
+                    {% elif readiness.has_calendar_evidence %}
                       National holiday evidence covers only its reviewed {{ readiness.calendar_window_days }}-day window.
                     {% else %}
                       No national holiday observations are available in the current reviewed context.
@@ -597,7 +612,9 @@
                 </section>
               {% endwith %}
             {% endif %}
-            {% include "components/culture/destination_context.html" with component=local_context.component %}
+            {% if local_context.component %}
+              {% include "components/culture/destination_context.html" with component=local_context.component %}
+            {% endif %}
           {% elif local_context.state == "degraded" %}
             {% include "components/product_state.html" with state="unavailable" label="Local guide unavailable" title="Local money guide is temporarily unavailable." detail=local_context.message %}
           {% else %}
