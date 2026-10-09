@@ -43,6 +43,51 @@
            href="{{ country_profile.compare_url }}">Compare destinations</a>
       </div>
     </section>
+    <nav class="qa-guide-map"
+         data-guide-evidence-map="country"
+         aria-labelledby="country-guide-map-title">
+      <div class="qa-guide-map__heading">
+        <p class="qa-foundation-kicker">Your guide at a glance</p>
+        <h2 id="country-guide-map-title">Find the evidence you need.</h2>
+        <p>Jump to the original sourced section. Missing information stays visibly missing.</p>
+      </div>
+      <div class="qa-guide-map__links">
+        <a class="qa-guide-map__link" href="#country-profile-prices-title">
+          <span class="qa-guide-map__index" aria-hidden="true">01</span>
+          <span class="qa-guide-map__link-title">Everyday prices</span>
+          <span class="qa-guide-map__status">{{ country_profile.national_price_count }} national · {{ country_profile.city_example_count }} city examples</span>
+          <span class="qa-guide-map__arrow" aria-hidden="true">↘</span>
+        </a>
+        <a class="qa-guide-map__link" href="#country-profile-payment-title">
+          <span class="qa-guide-map__index" aria-hidden="true">02</span>
+          <span class="qa-guide-map__link-title">Paying locally</span>
+          <span class="qa-guide-map__status">{% if country_profile.payment %}Reviewed guidance{% else %}No reviewed guidance{% endif %}</span>
+          <span class="qa-guide-map__arrow" aria-hidden="true">↘</span>
+        </a>
+        {% if country_profile.economic %}
+        <a class="qa-guide-map__link" href="#country-profile-economy-title">
+          <span class="qa-guide-map__index" aria-hidden="true">03</span>
+          <span class="qa-guide-map__link-title">Economic context</span>
+          <span class="qa-guide-map__status">National statistics</span>
+          <span class="qa-guide-map__arrow" aria-hidden="true">↘</span>
+        </a>
+        {% endif %}
+        {% if country_profile.calendar %}
+        <a class="qa-guide-map__link" href="#country-profile-calendar-title">
+          <span class="qa-guide-map__index" aria-hidden="true">04</span>
+          <span class="qa-guide-map__link-title">Public holidays</span>
+          <span class="qa-guide-map__status">National calendar</span>
+          <span class="qa-guide-map__arrow" aria-hidden="true">↘</span>
+        </a>
+        {% endif %}
+        <a class="qa-guide-map__link" href="#country-profile-next-title">
+          <span class="qa-guide-map__index" aria-hidden="true">05</span>
+          <span class="qa-guide-map__link-title">Continue planning</span>
+          <span class="qa-guide-map__status">Use trusted tools</span>
+          <span class="qa-guide-map__arrow" aria-hidden="true">↘</span>
+        </a>
+      </div>
+    </nav>
     <div class="qa-saved-state">
       <section class="qa-saved-section"
                aria-labelledby="country-profile-payment-title">

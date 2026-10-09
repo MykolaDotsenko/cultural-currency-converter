@@ -1,0 +1,134 @@
+/* Compact, evidence-first table of contents for long reviewed place guides.
+   Links target existing visible headings; no new data/model/provider work. */
+.qa-guide-map {
+  margin-block: clamp(1.75rem, 4vw, 3rem);
+  padding-block: var(--qa-space-6);
+  border-block: 1px solid var(--qa-hairline);
+}
+
+.qa-guide-map__heading {
+  max-width: 60ch;
+  margin-block-end: var(--qa-space-6);
+}
+
+.qa-guide-map__heading h2 {
+  margin-block: var(--qa-space-2);
+  font-size: clamp(1.3rem, 2.5vw, 1.85rem);
+  font-weight: 520;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.qa-guide-map__heading > p:last-child {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+}
+
+.qa-guide-map__links {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--qa-space-3);
+}
+
+.qa-guide-map__link {
+  min-width: 0;
+  min-height: 8.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--qa-space-2);
+  padding: var(--qa-space-4);
+  border: 1px solid var(--qa-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.qa-guide-map__index {
+  color: var(--color-tertiary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.qa-guide-map__link-title {
+  font-size: var(--text-body-sm);
+  font-weight: 730;
+  line-height: 1.4;
+}
+
+.qa-guide-map__status {
+  color: var(--color-muted);
+  font-size: var(--text-meta);
+  line-height: 1.45;
+}
+
+.qa-guide-map__arrow {
+  margin-block-start: auto;
+  color: var(--color-brand);
+  line-height: 1;
+}
+
+.qa-guide-map__link:hover {
+  border-color: var(--color-brand);
+  box-shadow: var(--qa-shadow-premium);
+}
+
+.qa-guide-map__link:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.qa-saved-section [id^="country-profile-"],
+.qa-saved-section [id^="city-profile-"] {
+  scroll-margin-block-start: var(--qa-space-6);
+}
+
+@media (max-width: 75rem) {
+  .qa-guide-map__links {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 46rem) {
+  .qa-guide-map__links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 26rem) {
+  .qa-guide-map__links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qa-guide-map__link {
+    min-height: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .qa-guide-map,
+  .qa-guide-map__link {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .qa-guide-map__index,
+  .qa-guide-map__status {
+    color: CanvasText;
+  }
+
+  .qa-guide-map__arrow {
+    color: LinkText;
+  }
+
+  .qa-guide-map__link:focus-visible {
+    outline-color: Highlight;
+  }
+}

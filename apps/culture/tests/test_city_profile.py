@@ -337,3 +337,37 @@ def test_city_profile_does_not_show_stale_macro_or_regional_holidays(client, see
     assert b"9.9%" not in response.content
     assert b"city-profile-calendar-title" not in response.content
     assert b"city-profile-economic-title" not in response.content
+
+
+@pytest.mark.django_db
+def test_city_guide_evidence_map_only_links_to_rendered_headings_without_fx(
+    client, seeded_city_context
+):
+    from html.parser import HTMLParser
+
+    class GuideMapParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.ids = set()
+            self.links = []
+
+        def handle_starttag(self, tag, attrs):
+            data = dict(attrs)
+            if "id" in data:
+                self.ids.add(data["id"])
+            if tag == "a" and data.get("class") == "qa-guide-map__link":
+                self.links.append(data.get("href", ""))
+
+    with patch("apps.exchange.views.build_latest_quote_gateway") as gateway_factory:
+        response = client.get(reverse("city_money_profile", args=("JP", "tokyo")))
+
+    assert response.status_code == 200
+    page = response.content.decode()
+    assert 'data-guide-evidence-map="city"' in page
+    parser = GuideMapParser()
+    parser.feed(page)
+    assert "#city-profile-evidence-title" in parser.links
+    assert "#city-profile-payment-title" in parser.links
+    assert "#city-profile-next-title" in parser.links
+    assert all(link.startswith("#") and link[1:] in parser.ids for link in parser.links)
+    gateway_factory.assert_not_called()
