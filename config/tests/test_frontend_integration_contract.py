@@ -55,6 +55,7 @@ from django.urls import resolve, reverse
                 "country_profile.economic.inflation",
                 "country_profile.calendar.upcoming",
                 "country_profile.converter_url",
+                "country_profile.reviewed_cities",
             ),
         ),
         (
