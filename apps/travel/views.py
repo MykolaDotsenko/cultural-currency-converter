@@ -316,9 +316,7 @@ def _saved_place_rows(user) -> list[dict[str, object]]:
                             "city_slug": place.city.slug,
                         },
                     )
-                    if available
-                    and place.city is not None
-                    and place.city_id in reviewed_city_ids
+                    if available and place.city is not None and place.city_id in reviewed_city_ids
                     else ""
                 ),
             }
