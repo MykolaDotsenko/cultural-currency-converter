@@ -1027,10 +1027,7 @@ def review_shopping_spend(request: HttpRequest, scenario_id: int) -> HttpRespons
     """Show an explicit spend review; never persist an estimate as a purchase."""
 
     scenario = _owned_scenario_for_detail(request, scenario_id)
-    if (
-        scenario.kind != SavedScenarioKind.BUDGET
-        or scenario.destination_country is None
-    ):
+    if scenario.kind != SavedScenarioKind.BUDGET or scenario.destination_country is None:
         raise Http404("Shopping spend review is available only for country-scoped budgets.")
 
     token = str(request.POST.get("shopping_context_token") or "")

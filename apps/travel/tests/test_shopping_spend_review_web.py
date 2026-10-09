@@ -29,9 +29,7 @@ def use_vite_dev_mode(settings):
 @pytest.fixture
 def matching_shopping_trip(db, shopping_reference_data):
     us, fi, usd, eur = shopping_reference_data
-    owner = User.objects.create_user(
-        username="shopping-trip-owner", password="StrongPass-482!"
-    )
+    owner = User.objects.create_user(username="shopping-trip-owner", password="StrongPass-482!")
     conversion = ConversionResult(
         input_amount=Decimal("300"),
         output_amount=Decimal("360"),
@@ -69,7 +67,7 @@ def matching_shopping_trip(db, shopping_reference_data):
 def _trip_token(response) -> str:
     body = response.content.decode()
     match = re.search(
-        r'<form[^>]*data-shopping-trip-form[^>]*>.*?'
+        r"<form[^>]*data-shopping-trip-form[^>]*>.*?"
         r'name="shopping_context_token"\s+value="([^"]+)"',
         body,
         re.S,
@@ -119,15 +117,11 @@ def test_shopping_review_needs_separate_spend_confirmation(client, matching_shop
 
 
 @pytest.mark.django_db
-def test_review_is_owner_scoped_even_with_signed_shopping_token(
-    client, matching_shopping_trip
-):
+def test_review_is_owner_scoped_even_with_signed_shopping_token(client, matching_shopping_trip):
     owner, scenario = matching_shopping_trip
     other = User.objects.create_user(username="another-shopper", password="StrongPass-482!")
     client.force_login(owner)
-    with patch(
-        "apps.exchange.views.build_latest_quote_gateway", return_value=ShoppingGateway()
-    ):
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=ShoppingGateway()):
         shopping = client.post(reverse("shopping_calculation"), _payload())
     token = _trip_token(shopping)
 
@@ -158,9 +152,7 @@ def test_bad_shopping_token_cannot_change_saved_budget(client, matching_shopping
 def test_review_rejects_wrong_currency_or_country(client, matching_shopping_trip):
     owner, scenario = matching_shopping_trip
     client.force_login(owner)
-    with patch(
-        "apps.exchange.views.build_latest_quote_gateway", return_value=ShoppingGateway()
-    ):
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=ShoppingGateway()):
         shopping = client.post(reverse("shopping_calculation"), _payload())
     token = _trip_token(shopping)
 
@@ -184,9 +176,7 @@ def test_review_rejects_wrong_currency_or_country(client, matching_shopping_trip
 
 @pytest.mark.django_db
 def test_anonymous_shopping_does_not_expose_private_trips(client, matching_shopping_trip):
-    with patch(
-        "apps.exchange.views.build_latest_quote_gateway", return_value=ShoppingGateway()
-    ):
+    with patch("apps.exchange.views.build_latest_quote_gateway", return_value=ShoppingGateway()):
         response = client.post(reverse("shopping_calculation"), _payload())
     assert response.status_code == 200
     assert b"USA autumn trip" not in response.content

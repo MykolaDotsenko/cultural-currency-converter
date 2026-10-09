@@ -315,9 +315,7 @@ def shopping_calculation_view(
                     matching_saved_trips = tuple(
                         {
                             "title": item.title or f"{purchase_country.name} saved budget",
-                            "review_url": reverse(
-                                "review_shopping_spend", args=(item.pk,)
-                            ),
+                            "review_url": reverse("review_shopping_spend", args=(item.pk,)),
                         }
                         for item in matches
                     )
