@@ -443,5 +443,52 @@
         {% endif %}
       </div>
     </section>
+    {% if user.is_authenticated %}
+      <section class="qa-shopping-trip-handoff"
+               data-shopping-trip-handoff
+               aria-labelledby="shopping-trip-handoff-title">
+        <div class="qa-shopping-trip-handoff__intro">
+          <p class="qa-foundation-kicker">Your saved trip</p>
+          <h3 id="shopping-trip-handoff-title">Make this estimate useful on your journey.</h3>
+          <p>
+            {% if matching_saved_trips %}
+              This purchase is in {{ shopping.purchase_currency }}. You can review
+              its explicit item, shipping and known-fee total against a matching
+              saved trip. It will <strong>not</strong> count as spend until you confirm it.
+            {% else %}
+              No saved country-and-currency-matched budget is available for this purchase.
+              Create a trip budget for this destination to review spending there.
+            {% endif %}
+          </p>
+        </div>
+        {% if matching_saved_trips %}
+          <div class="qa-shopping-trip-handoff__destinations">
+            {% for trip in matching_saved_trips %}
+              <form method="post" action="{{ trip.review_url }}" data-shopping-trip-form>
+                {% csrf_token %}
+                <input type="hidden"
+                       name="shopping_context_token"
+                       value="{{ shopping.save_token }}">
+                <div class="qa-shopping-trip-handoff__trip">
+                  <span class="qa-foundation-kicker">Saved budget</span>
+                  <strong>{{ trip.title }}</strong>
+                  <span class="qa-shopping-trip-handoff__amount">
+                    {{ shopping.purchase_total }} {{ shopping.purchase_currency }} · candidate, not confirmed
+                  </span>
+                  <button class="qa-secondary-button"
+                          type="submit">Review in this trip <span aria-hidden="true">↗</span></button>
+                </div>
+              </form>
+            {% endfor %}
+          </div>
+        {% else %}
+          <a class="qa-secondary-button" href="{% url 'saved_state' %}">Explore saved trips</a>
+        {% endif %}
+        <p class="qa-shopping-trip-handoff__disclaimer">
+          Only amounts actually paid should be added to confirmed spend.
+          Unpaid shipping, fees or estimated costs should not be recorded automatically.
+        </p>
+      </section>
+    {% endif %}
   {% endif %}
 {% endblock %}

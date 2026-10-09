@@ -432,6 +432,16 @@
           {{ spend_form.submission_key }}
           <div class="qa-saved-row__copy">
             <h3>Add confirmed spend</h3>
+            {% if shopping_spend_review %}
+              <aside class="qa-continuity-note" role="note" data-shopping-spend-review>
+                <strong>Review Shopping estimate · {{ shopping_spend_review.amount }} {{ shopping_spend_review.currency }}</strong>
+                <span>
+                  We prefilled the explicit purchase total, including any shipping and known fees you entered.
+                  Only confirm what you have actually paid. Edit the amount before pressing Add spend.
+                  Nothing has been recorded yet.
+                </span>
+              </aside>
+            {% endif %}
             <div class="qa-field{% if spend_form.amount.errors %} qa-field--error{% endif %}">
               <label class="qa-field__label"
                      for="{{ spend_form.amount.id_for_label }}">{{ spend_form.amount.label }}</label>

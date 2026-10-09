@@ -55,6 +55,7 @@ from apps.travel.scenario_web import (
     delete_saved_scenario,
     delete_saved_scenario_spend,
     recheck_saved_scenario,
+    review_shopping_spend,
     save_budget_scenario,
     save_shopping_scenario,
     saved_scenario_detail,
@@ -200,6 +201,11 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/camera/spend/add/",
         add_confirmed_camera_spend,
         name="add_confirmed_camera_spend",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/shopping/spend/review/",
+        review_shopping_spend,
+        name="review_shopping_spend",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/spend/add/",
