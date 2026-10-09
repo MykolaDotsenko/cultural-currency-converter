@@ -294,6 +294,29 @@
         {% with component=result_component %}
           {% include "components/converter/primitives.html#conversion-result" %}
         {% endwith %}
+        {% if result_component.supporting_insights %}
+          <section class="qa-context-section"
+                   aria-labelledby="conversion-supporting-insights-title">
+            <div>
+              <p class="qa-foundation-kicker">More than a rate</p>
+              <h3 id="conversion-supporting-insights-title">Useful right now</h3>
+              <p>Extra reviewed context, not a live price, guaranteed bank quote or recommendation.</p>
+            </div>
+            <div class="qa-price-grid">
+              {% for insight in result_component.supporting_insights %}
+                <article class="qa-price-card" data-insight-kind="{{ insight.kind }}">
+                  <p class="qa-price-card__label">{{ insight.title }}</p>
+                  <p>{{ insight.text }}</p>
+                  <p class="qa-price-card__meta">{{ insight.evidence_label }}</p>
+                  <p class="qa-context-source">
+                    <a href="{{ insight.detail_href }}">{{ insight.detail_label }}</a>
+                    · <a href="{{ insight.evidence_url }}">Evidence source</a>
+                  </p>
+                </article>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
         {% if not result_component.historical %}
           {% if destination_context_component %}
             {% include "components/culture/destination_context.html" with component=destination_context_component %}

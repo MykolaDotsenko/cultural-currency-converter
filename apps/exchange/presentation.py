@@ -14,7 +14,10 @@ from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import CurrentConversionForm, PaymentEstimateForm
 from apps.exchange.money_context import MoneyContext
-from apps.exchange.result_summary import build_smart_result_summary
+from apps.exchange.result_summary import (
+    build_smart_result_summary,
+    build_supporting_money_insights,
+)
 from apps.exchange.share_snapshot import build_conversion_share_token
 from apps.exchange.trusted_snapshot import build_trusted_conversion_snapshot_token
 
@@ -174,6 +177,11 @@ def build_result_component(
         else None
     )
     smart_summary = build_smart_result_summary(result, money_context=money_context)
+    supporting_insights = build_supporting_money_insights(
+        result,
+        money_context=money_context,
+        primary_kind=smart_summary.kind,
+    )
 
     return {
         "id": "current-conversion-result",
@@ -185,6 +193,7 @@ def build_result_component(
         "stale": result.stale,
         "historical": historical,
         "smart_summary": smart_summary,
+        "supporting_insights": supporting_insights,
         "local_state": {
             "input_amount": format(result.input_amount, "f"),
             "output_amount": format(result.output_amount, "f"),

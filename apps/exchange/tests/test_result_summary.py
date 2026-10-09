@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
+from apps.culture.calendar import CalendarContext, PublicHolidayContextItem
 from apps.culture.services import (
     DestinationContext,
     PaymentContext,
@@ -14,6 +16,7 @@ from apps.exchange.money_context import MoneyContext, MoneyContextState
 from apps.exchange.result_summary import (
     SmartResultSummaryKind,
     build_smart_result_summary,
+    build_supporting_money_insights,
 )
 
 
@@ -91,6 +94,7 @@ def _context(
     *,
     prices: tuple[TypicalPriceContext, ...] = (),
     payment: PaymentContext | None = None,
+    calendar: CalendarContext | None = None,
 ) -> MoneyContext:
     destination = DestinationContext(
         country_code="JP",
@@ -98,6 +102,7 @@ def _context(
         as_of=date(2026, 10, 1),
         payment=payment,
         prices=prices,
+        calendar=calendar,
         city_slug="tokyo",
         city_name="Tokyo",
     )
@@ -225,3 +230,97 @@ def test_historical_identity_keeps_purchasing_power_boundary():
     assert summary.kind is SmartResultSummaryKind.HISTORICAL
     assert "exact 1:1 historical identity conversion" in summary.text
     assert "does not describe historical purchasing power" in summary.text
+
+
+def _holiday_calendar() -> CalendarContext:
+    return CalendarContext(
+        as_of=date(2026, 10, 1),
+        today=(),
+        upcoming=(
+            PublicHolidayContextItem(
+                date=date(2026, 10, 3),
+                name="Reviewed national holiday",
+                holiday_types=("Public",),
+                source_name="Nager.Date",
+                source_url="https://example.org/holiday",
+            ),
+        ),
+        window_days=30,
+    )
+
+
+def test_supporting_insights_reuse_distinct_reviewed_payment_holiday_and_price_facts():
+    conversion = _conversion()
+    secondary_price = replace(
+        _price(),
+        label="Transit single ticket",
+        category="transit",
+        source_name="Official transit source",
+        source_url="https://example.org/transit",
+    )
+    context = _context(
+        conversion,
+        prices=(_price(), secondary_price),
+        payment=_payment(),
+        calendar=_holiday_calendar(),
+    )
+
+    insights = build_supporting_money_insights(
+        conversion,
+        money_context=context,
+        primary_kind=SmartResultSummaryKind.LOCAL_VALUE,
+    )
+
+    assert [insight.kind for insight in insights] == ["payment", "holiday", "local_value"]
+    assert insights[0].detail_href == "#payment-context"
+    assert "Prefer the local currency" in insights[0].text
+    assert insights[0].evidence_url == "https://example.org/payment"
+    assert "Reviewed national holiday on 2026-10-03" in insights[1].text
+    assert "Confirm hours" in insights[1].text
+    assert insights[1].evidence_url == "https://example.org/holiday"
+    assert insights[2].title == "Everyday value · Transit single ticket"
+    assert "about 29–34 typical purchases" in insights[2].text
+    assert insights[2].evidence_url == "https://example.org/transit"
+
+
+def test_supporting_insights_fail_closed_on_stale_historical_exact_or_mismatched_context():
+    conversion = _conversion()
+    context = _context(
+        conversion,
+        prices=(_price(),),
+        payment=_payment(),
+        calendar=_holiday_calendar(),
+    )
+    variants = (
+        (_conversion(stale=True), context),
+        (_conversion(historical=True), context),
+        (_conversion(base="EUR", quote="EUR", output=Decimal("100")), context),
+        (_conversion(output=Decimal("34900")), context),
+    )
+    for result, attached_context in variants:
+        assert build_supporting_money_insights(
+            result,
+            money_context=attached_context,
+            primary_kind=SmartResultSummaryKind.REFERENCE,
+        ) == ()
+    assert build_supporting_money_insights(
+        conversion,
+        money_context=None,
+        primary_kind=SmartResultSummaryKind.REFERENCE,
+    ) == ()
+
+
+def test_supporting_insights_do_not_repeat_primary_payment_or_price_message():
+    conversion = _conversion()
+    assert build_supporting_money_insights(
+        conversion,
+        money_context=_context(conversion, payment=_payment()),
+        primary_kind=SmartResultSummaryKind.PAYMENT,
+    ) == ()
+
+    insights = build_supporting_money_insights(
+        conversion,
+        money_context=_context(conversion, prices=(_price(),)),
+        primary_kind=SmartResultSummaryKind.LOCAL_VALUE,
+    )
+    assert insights == ()
