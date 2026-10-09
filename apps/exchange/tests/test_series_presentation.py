@@ -1,5 +1,8 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from urllib.parse import parse_qs, urlparse
+
+from django.urls import reverse
 
 import pytest
 
@@ -184,6 +187,17 @@ def test_rate_series_component_exposes_chart_state_and_optional_query_context():
     )
 
     assert component["point_count"] == 3
+    replay = urlparse(component["historical_replay_url"])
+    assert replay.path == reverse("converter")
+    assert parse_qs(replay.query) == {
+        "convert": ["1"],
+        "rate_mode": ["historical"],
+        "requested_date": ["2025-01-01"],
+        "source_currency": ["EUR"],
+        "destination_currency": ["JPY"],
+        "amount": ["12.50"],
+    }
+    assert "rate" not in parse_qs(replay.query)
     assert [item["label"] for item in component["timeline_landmarks"]] == [
         "Range start",
         "Selected observation",
@@ -232,6 +246,7 @@ def test_rate_series_component_handles_empty_series_without_inventing_values():
     )
 
     assert component["point_count"] == 0
+    assert component["historical_replay_url"] is None
     assert component["timeline_landmarks"] == []
     assert component["selected_point"] is None
     assert component["last_point"] is None
@@ -377,3 +392,31 @@ def test_then_now_domain_validates_compatible_comparisons():
 def test_series_grouping_rejects_reversed_range():
     with pytest.raises(RateSeriesRangeError):
         select_rate_series_grouping(date(2026, 1, 2), date(2026, 1, 1))
+
+
+def test_historical_replay_requires_explicit_amount_and_exact_selected_point():
+    selected = date(2025, 1, 1)
+    series = RateSeries(
+        base_currency="EUR",
+        quote_currency="JPY",
+        start_date=date(2024, 1, 1),
+        end_date=date(2026, 1, 1),
+        grouping=RateSeriesGrouping.WEEK,
+        points=(RateSeriesPoint(date(2024, 1, 1), Decimal("150"), ("ecb",)),),
+        fetched_at=NOW,
+        provider_policy=DEFAULT_SOURCE_POLICY,
+    )
+    result = RateSeriesResult(series=series, stale=False)
+    without_selected_point = build_rate_series_component(
+        result,
+        selected_date=selected,
+        period="5y",
+        amount=Decimal("250"),
+    )
+    without_amount = build_rate_series_component(
+        result,
+        selected_date=date(2024, 1, 1),
+        period="5y",
+    )
+    assert without_selected_point["historical_replay_url"] is None
+    assert without_amount["historical_replay_url"] is None
