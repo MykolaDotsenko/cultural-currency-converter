@@ -294,9 +294,7 @@ def test_city_profile_exposes_reviewed_national_economy_and_holidays_without_fx(
 
 
 @pytest.mark.django_db
-def test_city_profile_does_not_show_stale_macro_or_regional_holidays(
-    client, seeded_city_context
-):
+def test_city_profile_does_not_show_stale_macro_or_regional_holidays(client, seeded_city_context):
     japan = Country.objects.get(iso2="JP")
     EconomicObservation.objects.create(
         country=japan,
