@@ -546,6 +546,57 @@
               only as an amount anchor. Price and payment evidence is current reviewed context
               assembled {{ local_context.as_of|date:"j M Y" }}.
             </p>
+            {% if local_context.trip_readiness %}
+              {% with readiness=local_context.trip_readiness %}
+                <section class="qa-context-section"
+                         aria-labelledby="saved-trip-readiness-evidence-title"
+                         data-trip-readiness-evidence>
+                  <div>
+                    <p class="qa-foundation-kicker">Before you go · reviewed evidence</p>
+                    <h3 id="saved-trip-readiness-evidence-title">Useful checks for {{ readiness.country_name }}</h3>
+                    <p>
+                      Context assembled {{ readiness.as_of }} from previously reviewed country records.
+                      These details are informational and do not predict exchange rates,
+                      prices or whether a particular business will be open.
+                    </p>
+                  </div>
+                  <div class="qa-price-grid">
+                    {% for tip in readiness.tips %}
+                      <article class="qa-price-card">
+                        <p class="qa-price-card__label">{{ tip.label }}</p>
+                        <p>{{ tip.text }}</p>
+                        <p class="qa-price-card__meta">
+                          Reviewed {{ readiness.payment_verified }} ·
+                          <a href="{{ readiness.payment_source_url }}">Source: {{ readiness.payment_source }}</a>
+                        </p>
+                      </article>
+                    {% endfor %}
+                    {% for holiday in readiness.holidays %}
+                      <article class="qa-price-card">
+                        <p class="qa-price-card__label">National holiday during saved travel dates</p>
+                        <h4>{{ holiday.name }}</h4>
+                        <p>{{ holiday.date }}</p>
+                        <p class="qa-price-card__meta">
+                          <a href="{{ holiday.source_url }}">Source: {{ holiday.source_name }}</a>
+                        </p>
+                      </article>
+                    {% endfor %}
+                  </div>
+                  <p class="qa-context-disclaimer">
+                    {% if readiness.has_calendar_evidence %}
+                      National holiday evidence covers only its reviewed {{ readiness.calendar_window_days }}-day window.
+                    {% else %}
+                      No national holiday observations are available in the current reviewed context.
+                    {% endif %}
+                    {% if not readiness.has_trip_dates %}
+                      Add explicit travel dates to identify holidays during your trip.
+                    {% endif %}
+                    Absence of a listed holiday does not mean a date or business is unaffected.
+                    Confirm opening hours directly before visiting.
+                  </p>
+                </section>
+              {% endwith %}
+            {% endif %}
             {% include "components/culture/destination_context.html" with component=local_context.component %}
           {% elif local_context.state == "degraded" %}
             {% include "components/product_state.html" with state="unavailable" label="Local guide unavailable" title="Local money guide is temporarily unavailable." detail=local_context.message %}
