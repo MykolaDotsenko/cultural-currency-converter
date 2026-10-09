@@ -427,7 +427,7 @@
               </div>
               <a class="qa-secondary-button"
                  href="{% url 'historical_series' %}?base={{ trend.base_currency }}&quote={{ trend.quote_currency }}&selected_date={{ trend.selected_date_iso }}&requested_date={{ trend.requested_date_iso }}&amount={{ trend.amount }}&period=1y"
-                 hx-get="{% url 'historical_series' %}?base={{ trend.base_currency }}&quote={{ trend.quote_currency }}&selected_date={{ trend.selected_date_iso }}&requested_date={{ trend.requested_date_iso }}&period=1y"
+                 hx-get="{% url 'historical_series' %}?base={{ trend.base_currency }}&quote={{ trend.quote_currency }}&selected_date={{ trend.selected_date_iso }}&requested_date={{ trend.requested_date_iso }}&amount={{ trend.amount }}&period=1y"
                  hx-target="#historical-trend-slot"
                  hx-swap="innerHTML"
                  hx-sync="#historical-trend-slot:replace">View historical trend</a>
