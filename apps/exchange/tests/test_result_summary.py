@@ -333,3 +333,26 @@ def test_supporting_insights_do_not_repeat_primary_payment_or_price_message():
         primary_kind=SmartResultSummaryKind.LOCAL_VALUE,
     )
     assert insights == ()
+
+
+def test_supporting_insights_skip_first_usable_anchor_not_first_unusable_row():
+    conversion = _conversion()
+    unusable = _price(
+        status="zero",
+        minimum_count=Decimal("0"),
+        maximum_count=Decimal("0"),
+    )
+    usable = replace(_price(), label="Transit ticket", category="transit")
+    context = _context(conversion, prices=(unusable, usable))
+    primary = build_smart_result_summary(conversion, money_context=context)
+
+    assert primary.kind is SmartResultSummaryKind.LOCAL_VALUE
+    assert "Transit ticket" in primary.text
+    assert (
+        build_supporting_money_insights(
+            conversion,
+            money_context=context,
+            primary_kind=primary.kind,
+        )
+        == ()
+    )
