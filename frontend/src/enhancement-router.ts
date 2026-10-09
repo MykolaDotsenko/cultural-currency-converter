@@ -6,6 +6,8 @@ let converterEnhancementsModule: Promise<
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
 let offlineTripModule: Promise<typeof import("./behaviors/offline-trip")> | null = null;
 let rateChartModule: Promise<typeof import("./behaviors/rate-chart")> | null = null;
+let barcodeScannerModule: Promise<typeof import("./behaviors/shopping-barcode-scanner")> | null =
+  null;
 let shareCardModule: Promise<typeof import("./behaviors/share-card")> | null = null;
 
 function contains(root: EnhancementRoot, selector: string): boolean {
@@ -50,6 +52,15 @@ function loadOfflineTrip(root: EnhancementRoot): void {
     .catch((error: unknown) => reportEnhancementFailure("Offline trip", error));
 }
 
+function loadShoppingBarcodeScanner(root: EnhancementRoot): void {
+  if (!contains(root, "[data-shopping-barcode-scanner]")) return;
+
+  barcodeScannerModule ??= import("./behaviors/shopping-barcode-scanner");
+  void barcodeScannerModule
+    .then((module) => module.enhanceShoppingBarcodeScanner())
+    .catch((error: unknown) => reportEnhancementFailure("Shopping barcode scanner", error));
+}
+
 function loadShareCards(root: EnhancementRoot): void {
   if (!contains(root, "[data-share-card]")) return;
 
@@ -74,6 +85,7 @@ export function loadEnhancements(root: EnhancementRoot = document): void {
   loadOfflineTrip(root);
   loadShareCards(root);
   loadRateCharts(root);
+  loadShoppingBarcodeScanner(root);
 }
 
 loadEnhancements();
