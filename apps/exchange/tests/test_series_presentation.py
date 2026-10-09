@@ -2,9 +2,8 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
 
-from django.urls import reverse
-
 import pytest
+from django.urls import reverse
 
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.exchange.domain import (
