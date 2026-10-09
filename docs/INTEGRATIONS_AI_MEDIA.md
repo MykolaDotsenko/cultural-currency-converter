@@ -385,3 +385,48 @@ claim that its actual contents have been independently authenticated.
 All responses are private, no-store. Per-peer API quota protects cache reads,
 while the separate global upstream budget still applies. Never auto-fill
 Shopping itemPrice from community records or reinterpret them as live offers.
+
+
+## Backend → frontend capability coverage contract
+
+The user-facing Django web application uses the same application/domain services as
+`/api/v1/`. The public API is primarily a stateless external-client boundary:
+**do not make the Django frontend call its own public HTTP API** to add a card.
+Use the canonical application services and existing view models instead.
+
+| Trusted capability / source | Current browser surface | Remaining opportunity and boundary |
+| --- | --- | --- |
+| Frankfurter reference FX | Convert, historical series, side-by-side Compare, Shopping, Budget | Emphasize effective/fetched/stale/source semantics in every context handoff; never label a reference rate as an executable bank quote |
+| REST Countries reference metadata | Country/currency picker, Destination Mode, Explore | More useful country money profiles; imported metadata cannot independently prove current payment/cultural behaviour |
+| Reviewed CountryCurrency / City identity | Destination Mode, City Profile, Explore, My Places | Reuse canonical country/city identity and current currency when constructing a new trip; never infer city prices from national prices |
+| Reviewed TypicalPrice + Money Context | Convert, Budget, City Profile, Compare, Saved Trip refresh | Make useful local-value facts more accessible at the decision point without new conversion arithmetic or false affordability claims |
+| World Bank / Eurostat / OECD ingested observations | Current Money Context Lens, public conversion API v1 | Better profile/saved-trip exposure of country-scoped macro evidence, including dataset/benchmark/period; not a merchant price or a city inflation estimate |
+| Nager.Date ingested public holidays | Current Money Context Lens, conversion API v1 | Reuse national-only dates for trip readiness; never imply an individual business is open or closed |
+| Reviewed card/cash/ATM/tipping/DCC guidance | Convert context, City Profile, saved-scenario explicit context refresh | Put the relevant *reviewed* tip next to a payment decision; dates and country scope must remain visible |
+| Open Food Facts | Shopping optional barcode lookup and product identity; read-only API v1 | Optional scanner and clearer identity-first UI; not a source of shelf prices |
+| Open Prices | Explicit opt-in Shopping historical evidence and read-only API v1 | Make proof/location/date/discount evidence easier to interpret; never auto-fill Shopping's current item price |
+| Gemini structured text and Camera | Optional Convert/Explore/Budget/Compare explanations; opt-in saved-trip Camera | Use bounded, signed, verified fact packets for insight placement; no AI-authored rate/price/fee or automatic spend |
+| Wikimedia Commons / Europeana / reviewed media | Approved and published destination/historical imagery | Expand editorial coverage only with source, licence, crop and publication review; absent media is valid |
+| In-app scenario notifications | Account-owned saved scenario preferences and inbox | Operational scheduler and measured delivery; a created preference is not itself a delivered message |
+| Explicit offline/PWA snapshot | Saved Trip offline options and generic offline app shell | Keep exact stored-as-of/stale semantics; never cache private navigation HTML automatically |
+
+### Review and regression rules
+
+For every new integration-backed frontend feature:
+
+1. identify the canonical provider/ingestion boundary, trusted domain data, view model,
+   template, source attribution and tested happy/empty/invalid/degraded states;
+2. prove useful information is actually visible in a rendered web response, not merely
+   available through a model, public JSON endpoint or documentation;
+3. show provenance, observation/verification date, geographic scope and uncertainty
+   alongside any actionable information; no city/national scope substitution;
+4. verify no extra FX or costly provider lookup occurs during provider-free GETs, and
+   one optional-source failure cannot break conversion truth;
+5. exercise keyboard, screen-reader naming, no-JavaScript where applicable,
+   narrow reflow and at least the relevant Chromium/Firefox/WebKit smoke flows.
+
+`config/tests/test_frontend_integration_contract.py` is a **structural wiring guard**
+that checks the most important named routes, Django templates and evidence hooks.
+It cannot replace rendered integration tests, browser testing or production provider
+availability checks. Stronger behavioural assertions stay in the existing
+`apps/culture/tests/`, `apps/exchange/tests/`, `apps/travel/tests/` and browser suites.
