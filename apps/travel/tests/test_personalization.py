@@ -15,6 +15,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
+from apps.culture.models import TypicalPrice
 from apps.exchange.budget import BudgetAssumptions, BudgetBasis, BudgetCategoryAssumption
 from apps.exchange.comparison_snapshot import (
     build_saved_comparison_token,
@@ -512,3 +513,86 @@ class DurablePersonalizationConcurrencyTests(TransactionTestCase):
         comparison = SavedComparison.objects.get(user=self.user)
         self.assertEqual(SavedComparison.objects.filter(user=self.user).count(), 1)
         self.assertEqual(comparison.budget_items.count(), 3)
+
+
+@pytest.mark.django_db
+def test_account_saved_city_profile_link_requires_current_sourced_city_evidence(
+    client, personalization_reference_data
+):
+    user = User.objects.create_user(username="city-guide-owner", password="StrongPass-482!")
+    city = personalization_reference_data["tokyo"]
+    SavedPlace.objects.create(user=user, country=city.country, city=city)
+    client.force_login(user)
+
+    missing = client.get(reverse("saved_state"))
+    assert missing.status_code == 200
+    assert b"City profile" not in missing.content
+    assert b"Explore" in missing.content
+
+    TypicalPrice.objects.create(
+        country=city.country,
+        city_ref=city,
+        city="",
+        category="coffee",
+        unit="serving",
+        label="Tokyo coffee evidence",
+        amount_low=Decimal("500"),
+        currency=personalization_reference_data["jpy"],
+        source_name="Reviewed coffee source",
+        source_url="https://example.org/tokyo-coffee",
+        observed_at=timezone.localdate(),
+        verified_at=timezone.now(),
+        is_published=True,
+    )
+    published = client.get(reverse("saved_state"))
+    href = reverse("city_money_profile", args=("JP", "tokyo"))
+    assert published.status_code == 200
+    assert href.encode() in published.content
+    assert b"City profile" in published.content
+
+
+@pytest.mark.django_db
+def test_account_place_ignores_stale_invalid_or_wrong_currency_price_evidence(
+    client, personalization_reference_data
+):
+    user = User.objects.create_user(username="source-safe-owner", password="StrongPass-482!")
+    city = personalization_reference_data["helsinki"]
+    SavedPlace.objects.create(user=user, country=city.country, city=city)
+    base = {
+        "country": city.country,
+        "city_ref": city,
+        "city": "",
+        "category": "coffee",
+        "unit": "serving",
+        "label": "Possible coffee evidence",
+        "amount_low": Decimal("5"),
+        "currency": personalization_reference_data["eur"],
+        "source_name": "Reviewed provider",
+        "source_url": "https://example.org/fi-coffee",
+        "observed_at": timezone.localdate(),
+        "verified_at": timezone.now(),
+        "is_published": True,
+    }
+    TypicalPrice.objects.create(
+        **{**base, "observed_at": timezone.localdate() - timedelta(days=800)}
+    )
+    TypicalPrice.objects.create(
+        **{**base, "category": "transit", "unit": "ride", "source_url": "http://invalid.test"}
+    )
+    TypicalPrice.objects.create(
+        **{
+            **base,
+            "category": "groceries",
+            "unit": "basket",
+            "currency": personalization_reference_data["jpy"],
+        }
+    )
+    client.force_login(user)
+    response = client.get(reverse("saved_state"))
+    assert response.status_code == 200
+    assert reverse("city_money_profile", args=("FI", "helsinki")).encode() not in response.content
+
+    # A still-active reviewed price in the current currency makes the link safe.
+    TypicalPrice.objects.create(**{**base, "category": "casual_meal", "unit": "meal"})
+    valid = client.get(reverse("saved_state"))
+    assert reverse("city_money_profile", args=("FI", "helsinki")).encode() in valid.content
