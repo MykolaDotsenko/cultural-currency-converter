@@ -216,3 +216,56 @@ def test_destination_mode_city_scope_reaches_money_context_engine(
     assert call["quote_currency"] == "JPY"
     assert call["city_slug"] == "tokyo"
     assert call["converted_amount"] == Decimal("17450")
+
+
+@pytest.mark.django_db
+def test_destination_mode_reopens_recorded_inputs_without_old_fx(client, destination_reference_data):
+    with patch("apps.exchange.views.build_latest_quote_gateway") as gateway:
+        response = client.get(
+            reverse("destination_mode"),
+            {
+                "destination": "JP:tokyo",
+                "source_currency": "EUR",
+                "amount": "150.50",
+                "from_history": "1",
+                "rate_mode": "historical",
+                "requested_date": "1999-01-01",
+                "output_amount": "9999",
+            },
+        )
+    assert response.status_code == 200
+    assert response.context["form"].initial["destination"] == "JP:tokyo"
+    assert response.context["form"].initial["amount"] == "150.50"
+    assert response.context["form"].initial["source_currency"] == "EUR"
+    assert b"No historical output, observed FX rate" in response.content
+    gateway.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_destination_mode_ignores_unsupported_or_invalid_input_prefill(
+    client, destination_reference_data
+):
+    Currency.objects.create(code="FIM", name="Finnish markka", is_active=False)
+    for amount in ("-10", "1.234", "9999999999", "5" * 65):
+        response = client.get(
+            reverse("destination_mode"),
+            {"source_currency": "FIM", "amount": amount, "destination": "JP"},
+        )
+        assert response.status_code == 200
+        assert response.context["form"].initial["amount"] == "100"
+        assert response.context["form"].initial["source_currency"] == "EUR"
+        assert response.context["form"].initial["destination"] == "JP"
+        assert b"Finnish markka" not in response.content
+
+
+@pytest.mark.django_db
+def test_destination_mode_explicit_source_overrides_default_without_provider(
+    client, destination_reference_data
+):
+    response = client.get(
+        reverse("destination_mode"),
+        {"destination": "NO", "source_currency": "JPY", "amount": "5000"},
+    )
+    assert response.status_code == 200
+    assert response.context["form"].initial["source_currency"] == "JPY"
+    assert response.context["form"].initial["amount"] == "5000"

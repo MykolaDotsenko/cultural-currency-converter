@@ -116,7 +116,7 @@ def _favourite_rows(user) -> list[dict[str, object]]:
 
 
 def _recent_rows(user) -> list[dict[str, object]]:
-    recents = (
+    recents = tuple(
         RecentConversion.objects.filter(user=user)
         .select_related(
             "source_currency",
@@ -126,12 +126,37 @@ def _recent_rows(user) -> list[dict[str, object]]:
         )
         .order_by("-converted_at", "-id")
     )
+    # One current-currency lookup for all history rows. Do not presume that
+    # a historical destination or an archived source currency is still usable.
+    current_destinations = set(
+        CountryCurrency.objects.current(timezone.localdate())
+        .primary()
+        .filter(
+            country_id__in={
+                row.destination_country_id for row in recents if row.destination_country_id
+            },
+            country__is_active=True,
+            currency__is_active=True,
+        )
+        .values_list("country_id", flat=True)
+    )
+
+    def plan_url(row: RecentConversion) -> str:
+        if row.destination_country_id not in current_destinations:
+            return ""
+        params = {"destination": row.destination_country.iso2, "from_history": "1"}
+        if row.source_currency.is_active:
+            params["source_currency"] = row.source_currency.code
+            params["amount"] = row.input_amount
+        return f"{reverse('destination_mode')}?{urlencode(params)}"
+
     return [
         {
             "recent": recent,
             "repeat_url": _recent_url(recent),
             "swap_url": _recent_url(recent, swap=True),
             "compare_url": _comparison_url(recent.destination_country),
+            "plan_url": plan_url(recent),
         }
         for recent in recents
     ]

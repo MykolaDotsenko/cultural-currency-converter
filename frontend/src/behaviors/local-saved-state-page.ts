@@ -361,6 +361,17 @@ function destinationComparisonUrl(baseUrl: string, token: string): string {
   return `${url.pathname}${url.search}`;
 }
 
+function destinationPlanUrl(baseUrl: string, token: string, recent?: RecentConversion): string {
+  const url = new URL(baseUrl, window.location.origin);
+  url.searchParams.set("destination", token);
+  if (recent) {
+    url.searchParams.set("from_history", "1");
+    url.searchParams.set("source_currency", recent.sourceCurrency);
+    url.searchParams.set("amount", recent.amount);
+  }
+  return `${url.pathname}${url.search}`;
+}
+
 function renderPlaces(
   page: HTMLElement,
   state: LocalPreferencesV1,
@@ -413,6 +424,11 @@ function renderPlaces(
         "Compare",
         destinationComparisonUrl(comparisonUrl, place.token),
         `Compare destination: ${placeLabel(place)}`,
+      ),
+      actionLink(
+        "Plan",
+        destinationPlanUrl(page.dataset.destinationModeUrl ?? "/destination/", place.token),
+        `Plan destination: ${placeLabel(place)}`,
       ),
     );
     if (place.citySlug) {
@@ -519,6 +535,18 @@ function renderRecents(page: HTMLElement, state: LocalPreferencesV1, converterUr
                 recent.destinationCountry,
               ),
               `Compare destination: ${countryLabel(
+                recent.destinationCountry,
+                recent.destinationCountryName,
+              )}`,
+            ),
+            actionLink(
+              "Plan again",
+              destinationPlanUrl(
+                page.dataset.destinationModeUrl ?? "/destination/",
+                recent.destinationCountry,
+                recent,
+              ),
+              `Plan destination from ${recent.amount} ${recent.sourceCurrency} to ${countryLabel(
                 recent.destinationCountry,
                 recent.destinationCountryName,
               )}`,
