@@ -13,7 +13,7 @@ import pytest
 from django.core.management import call_command
 from django.urls import reverse
 
-from apps.countries.models import Country, CountryCurrency, Currency
+from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.country_profile import (
     build_country_money_profile,
     build_country_money_profile_component,
@@ -236,3 +236,17 @@ def test_country_city_navigation_deduplicates_reviewed_city_links(reviewed_count
     cities = build_country_money_profile_component(repeated)["reviewed_cities"]
     assert len(cities) == 1
     assert cities[0]["profile_url"] == reverse("city_money_profile", args=("JP", "tokyo"))
+
+
+@pytest.mark.django_db
+def test_country_guide_does_not_link_deactivated_city_price_history(reviewed_country_data):
+    city = City.objects.get(country__iso2="JP", slug="tokyo")
+    city.is_active = False
+    city.save(update_fields=("is_active",))
+
+    profile = build_country_money_profile(country_code="JP", as_of=date(2026, 10, 9))
+    assert profile is not None
+    assert any(price.city_slug == "tokyo" for price in profile.prices)
+    assert profile.active_city_slugs == frozenset()
+    component = build_country_money_profile_component(profile)
+    assert component["reviewed_cities"] == ()

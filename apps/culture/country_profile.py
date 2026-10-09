@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
-from apps.countries.models import CountryCurrency
+from apps.countries.models import City, CountryCurrency
 from apps.countries.theme_profiles import country_theme_key
 from apps.culture.calendar import CalendarContext
 from apps.culture.economic import EconomicContext
@@ -30,6 +30,7 @@ class CountryMoneyProfile:
     payment: PaymentContext | None
     economic: EconomicContext | None
     calendar: CalendarContext | None
+    active_city_slugs: frozenset[str]
 
 
 def build_country_money_profile(
@@ -59,6 +60,21 @@ def build_country_money_profile(
     )
     if context is None or not context.has_content:
         return None
+
+    # Country guides must not suggest a route to a deactivated city. Resolve all
+    # selected canonical city references with one database query, not per price.
+    candidate_slugs = {price.city_slug for price in context.prices if price.city_slug}
+    active_city_slugs = (
+        frozenset(
+            City.objects.filter(
+                country=link.country,
+                slug__in=candidate_slugs,
+                is_active=True,
+            ).values_list("slug", flat=True)
+        )
+        if candidate_slugs
+        else frozenset()
+    )
     return CountryMoneyProfile(
         country_code=link.country.iso2,
         country_name=link.country.name,
@@ -69,6 +85,7 @@ def build_country_money_profile(
         payment=context.payment,
         economic=context.economic,
         calendar=context.calendar,
+        active_city_slugs=active_city_slugs,
     )
 
 
@@ -86,7 +103,7 @@ def build_country_money_profile_component(profile: CountryMoneyProfile) -> dict[
         is_national = not (price.city or price.city_slug)
         # Only canonical city references backed by an already-selected, reviewed
         # city price earn a city guide link. Legacy free-text city names do not.
-        if price.city_slug and price.city:
+        if price.city_slug in profile.active_city_slugs and price.city:
             city_examples.setdefault(
                 price.city_slug,
                 {
