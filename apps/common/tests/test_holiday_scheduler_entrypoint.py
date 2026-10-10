@@ -54,9 +54,16 @@ def test_unapproved_holiday_job_has_no_side_effects(tmp_path, approved):
     assert calls == []
 
 
-@pytest.mark.parametrize("country,years", [
-    (None, "1"), ("fi", "1"), ("FI;rm", "1"), ("FI", "6"), ("FI", "1;rm"),
-])
+@pytest.mark.parametrize(
+    "country,years",
+    [
+        (None, "1"),
+        ("fi", "1"),
+        ("FI;rm", "1"),
+        ("FI", "6"),
+        ("FI", "1;rm"),
+    ],
+)
 def test_unapproved_scope_never_calls_django(tmp_path, country, years):
     code, calls = _run(tmp_path, approved="true", country=country, years=years)
     assert code == 64
