@@ -305,6 +305,29 @@ the semantic table rows, adding explicit Date/Rate/Source labels without
 discarding observations. Wide layouts keep their tabular presentation.
 This is independent of price seeding; verify it in the full browser matrix.
 
+## Read-only strict city coverage gate (PR-16)
+
+The existing `report_city_coverage` remains a read-only maintenance report,
+not an affordability score. Operators can now explicitly require direct,
+fresh core-category evidence without allowing a national fallback to count as
+a city-specific observation:
+
+```bash
+python manage.py report_city_coverage --strict
+python manage.py report_city_coverage --country CH --city zurich \
+  --strict --min-direct-core 1 --json
+```
+
+`--strict` requires **4/4 fresh direct core categories by default**, and
+fails with a nonzero exit code for any scoped city below that threshold or
+with a provenance gap. `--min-direct-core` permits an explicitly weaker
+operator threshold (1–4), for example reviewing the intentionally partial
+Zürich/Warsaw transport anchors. The default existing report and JSON format
+are unchanged. This cannot validate whether source tariffs change tomorrow,
+and is not a deployment/startup prerequisite until city coverage targets and
+freshness ownership are agreed. An unreviewed missing source must not be
+invented to satisfy the gate.
+
 ## Reviewed partial city anchor wave (PR-15)
 
 Following the reviewed GBP/CHF/AUD/PLN currency-reference wave, a third
