@@ -196,6 +196,27 @@ records. If the storage is ephemeral, pause user-data writes or restrict the
 demo while planning a reviewed backup, migration, rollback and data-preservation
 procedure. Never infer a safe cutover from the diagnostic alone.
 
+## Read-only FX metadata coverage preflight (PR-14)
+
+After a separately reviewed `sync_fx_currency_coverage` run, inspect active
+catalog currencies via:
+
+```bash
+python manage.py report_fx_reference_coverage --json
+python manage.py report_fx_reference_coverage --strict
+```
+
+This is **stored provider metadata only**, not a live rate request, not a
+guarantee for any particular currency pair, and not a profitability/ranking
+score. A currency is only `metadata_recent` when its Frankfurter v2 coverage
+record is nonterminal and within the chosen 1–90-day freshness threshold
+(default 21 days). Other states are `metadata_missing`,
+`metadata_stale` or `provider_coverage_terminal`. The strict mode fails
+if any active currency lacks recent provider evidence; it is intended for
+review, not as an automatic startup gate while the demo may lack the
+provider snapshot. Always verify the **actual requested pair** through
+the canonical FX gateway before claiming conversion availability.
+
 ## Reviewed international reference wave (PR-13)
 
 The deterministic reference seed also contains a small reviewed extension:
