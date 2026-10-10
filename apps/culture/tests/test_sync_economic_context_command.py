@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
@@ -141,23 +142,22 @@ def test_manual_economic_sync_can_explicitly_inspect_empty_coverage(monkeypatch,
 
 
 @pytest.mark.django_db
-def test_economic_dry_run_emits_only_aggregate_rolled_back_counts(
-    monkeypatch, finland, caplog
-):
+def test_economic_dry_run_emits_only_aggregate_rolled_back_counts(monkeypatch, finland):
     monkeypatch.setattr(
         "apps.culture.management.commands.sync_economic_context."
         "WorldBankEconomicClient.fetch_country",
         lambda self, country_iso3: (_world_bank_observation(country_iso3),),
     )
-    with caplog.at_level("INFO", logger="cultural_currency.jobs"):
+    with patch("apps.common.job_observability.logger.info") as emit:
         call_command("sync_economic_context", source="world_bank", country=["FI"], dry_run=True)
 
-    events = [r for r in caplog.records if r.getMessage() == "background_job_result"]
-    assert len(events) == 1
-    assert events[0].job == "economic_context"
-    assert events[0].outcome == "success"
-    assert events[0].dry_run is True
-    assert events[0].records_processed == 1
-    assert events[0].records_created == 1
-    assert events[0].records_updated == 0
+    emit.assert_called_once()
+    assert emit.call_args.args == ("background_job_result",)
+    observed = emit.call_args.kwargs["extra"]
+    assert observed["job"] == "economic_context"
+    assert observed["outcome"] == "success"
+    assert observed["dry_run"] is True
+    assert observed["records_processed"] == 1
+    assert observed["records_created"] == 1
+    assert observed["records_updated"] == 0
     assert not EconomicObservation.objects.exists()
