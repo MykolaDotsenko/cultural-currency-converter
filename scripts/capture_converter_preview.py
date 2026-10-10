@@ -103,20 +103,33 @@ def _assert_preview_integrity(page: Page, *, viewport_width: int) -> None:
     if "qa-skip-link" not in first_focus:
         raise RuntimeError(f"Skip link is not first in keyboard order: {first_focus!r}")
 
-    page.keyboard.press("Tab")
-    second_focus = page.evaluate(
-        """() => ({
-            tagName: document.activeElement?.tagName ?? "",
-            text: document.activeElement?.textContent?.trim() ?? "",
-        })"""
-    )
-    if second_focus != {"tagName": "A", "text": "Sign in"}:
-        raise RuntimeError(f"Sign-in link is not second in keyboard order: {second_focus!r}")
+    # Shared header contract: brand, five primary routes, then account action.
+    # Keep each keyboard stop explicit so navigation regressions remain visible.
+    for expected_text in (
+        "Cultural Currency",
+        "Convert",
+        "Plan",
+        "Compare",
+        "Explore",
+        "Saved",
+        "Sign in",
+    ):
+        page.keyboard.press("Tab")
+        focused = page.evaluate(
+            """() => ({
+                tagName: document.activeElement?.tagName ?? "",
+                text: document.activeElement?.textContent?.trim() ?? "",
+            })"""
+        )
+        if focused != {"tagName": "A", "text": expected_text}:
+            raise RuntimeError(
+                f"Expected header focus {expected_text!r}, got {focused!r}"
+            )
 
     page.keyboard.press("Tab")
     active_id = page.evaluate("document.activeElement?.id ?? ''")
     if active_id != "workspace-amount":
-        raise RuntimeError(f"Amount input is not third keyboard target: {active_id!r}")
+        raise RuntimeError(f"Amount input must follow global navigation: {active_id!r}")
 
     focus_shadow = page.locator(".qa-amount-control").first.evaluate(
         "element => getComputedStyle(element).boxShadow",
