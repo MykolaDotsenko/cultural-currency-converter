@@ -196,6 +196,8 @@ PostgreSQL is the configured database backend in all deployed environments (`dem
 
 Use database constraints for durable invariants such as uniqueness/ownership where appropriate.
 
+A deployed web-process start validates the presence of baseline country/currency relationships but does not seed them. Reference data is initialized **once, explicitly** on a proven empty product database; repeating automatic seed writes at every web restart can mask an unexpectedly fresh data store. The guard checks all managed product tables, so it also refuses to seed into a database already holding user-owned data.
+
 Keep transactions short. External network calls should not be intentionally performed while holding database row locks or a transaction that does not need to remain open.
 
 Database recovery is based on native PostgreSQL logical archives. Recovery targets a fresh empty database, validates archive integrity before restore, restores atomically in one transaction and verifies the recovered schema/data before application cutover. The recovery path deliberately does not make destructive in-place restore the default.

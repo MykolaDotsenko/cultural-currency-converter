@@ -171,6 +171,37 @@ records. If the storage is ephemeral, pause user-data writes or restrict the
 demo while planning a reviewed backup, migration, rollback and data-preservation
 procedure. Never infer a safe cutover from the diagnostic alone.
 
+## Reference data initial bootstrap and startup gate (PR-03)
+
+The Render web start command runs migrations and a **read-only reference-catalog
+check**; it no longer seeds the database on every restart. A new empty database
+therefore **fails closed** after schema creation instead of being silently
+populated and hiding data-loss incidents. Lack of reference data is not proof
+of data loss, but must be investigated before activating account writes.
+
+Only after an operator verifies a **new isolated database with no existing
+user or application records**, and has documented a backup/recovery and cutover
+plan, run the following once with web traffic stopped:
+
+```bash
+bash scripts/render-initial-bootstrap.sh
+```
+
+The script migrates, verifies that there are **no existing auth users** and that
+*all managed product-owned model tables* are empty (without misclassifying built-in
+Django permissions as user data), runs the explicit seed commands and verifies baseline
+country/currency relationships. It refuses initial seeding when any app record
+already exists; it neither deletes records nor bypasses an incomplete catalog.
+A partially populated target must be reviewed or restored, never automatically
+reseeded. Run ingestion/update commands on their own reviewed schedule later;
+they are not an application process startup concern.
+
+The ordinary deployed startup still applies schema migrations because the
+current Render free service does not use a separately verified release-phase
+migration job. Move migrations to an approved single-writer release step when
+the hosting setup supports it; do not confuse the absence of repeated seeds
+with a proof of data durability.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:

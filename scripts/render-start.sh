@@ -2,9 +2,8 @@
 set -euo pipefail
 
 python manage.py migrate --noinput
-python manage.py seed_reference_data
-python manage.py seed_story_data
-python manage.py seed_destination_context
+# Never silently seed an empty database: it could be a lost/ephemeral store.
+python manage.py check_reference_catalog
 
 exec gunicorn config.wsgi:application \
   --bind "0.0.0.0:${PORT:-10000}" \
