@@ -574,6 +574,34 @@ For the actual production deployment, record:
 
 Only measured values from the real deployment can support an RPO/RTO claim.
 
+## Release evidence completeness contract (PR-12)
+
+`scripts/validate_release_manifest.py` performs an **offline shape and
+internal-consistency check** on operator-supplied evidence for one pinned,
+40-character release SHA. The evidence object must include the candidate and
+actual live SHA, 7 applicable CI lanes and 10 operational gates (enforced
+branch protection, zero open P0/P1, durable restart and independent redeploy,
+clean database recovery, real media recovery, live identity, full user
+journey, provider degradation and offline privacy). Every gate requires its
+exact candidate SHA, `status=passed`, and a clean HTTPS evidence URL.
+
+Example:
+
+```bash
+python scripts/validate_release_manifest.py \
+  --manifest /secure/release-evidence.json \
+  --expected-sha <EXACT_FULL_RELEASE_SHA>
+```
+
+A successful command reports `evidence_manifest_complete` plus
+`production_certification=requires_independent_verification`. It does
+**not** authenticate links, access connected services, conduct the checks,
+prove retention, or issue certification. Fabricated/obsolete self-attested
+evidence must never be treated as a real passed gate. Review the referenced
+logs and operator signatures separately. Never commit real private evidence
+or credentials to the repository. Any missing or failing gate remains a
+release blocker regardless of an otherwise green CI matrix.
+
 ## Release evidence record
 
 For every certified release, retain at minimum:
