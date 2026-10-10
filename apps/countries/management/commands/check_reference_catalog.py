@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.apps import apps
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError
 
@@ -27,6 +28,11 @@ _PRODUCT_APP_LABELS = frozenset({"accounts", "countries", "culture", "exchange",
 
 def _product_tables_are_empty() -> bool:
     """Inspect every product-owned managed model, including hidden records."""
+
+    # Django's default User model belongs to the auth app, not accounts.
+    # Do not treat built-in auth Permission/ContentType rows as user data.
+    if get_user_model()._base_manager.exists():
+        return False
 
     for model in apps.get_models():
         if (

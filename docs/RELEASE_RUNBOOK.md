@@ -187,8 +187,9 @@ plan, run the following once with web traffic stopped:
 bash scripts/render-initial-bootstrap.sh
 ```
 
-The script migrates, checks that *all product-owned managed model tables* are
-empty, runs the existing explicit seed commands and verifies baseline
+The script migrates, verifies that there are **no existing auth users** and that
+*all managed product-owned model tables* are empty (without misclassifying built-in
+Django permissions as user data), runs the explicit seed commands and verifies baseline
 country/currency relationships. It refuses initial seeding when any app record
 already exists; it neither deletes records nor bypasses an incomplete catalog.
 A partially populated target must be reviewed or restored, never automatically
