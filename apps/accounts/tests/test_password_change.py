@@ -78,6 +78,27 @@ class PasswordChangeWebTests(TestCase):
         self.assertTrue(self.user.check_password(NEW_PASSWORD))
         self.assertEqual(self.client.get(reverse("profile")).status_code, 200)
 
+    def test_password_change_invalidates_another_signed_in_session(self):
+        second_browser = Client()
+        self.client.force_login(self.user)
+        second_browser.force_login(self.user)
+        self.assertEqual(second_browser.get(reverse("profile")).status_code, 200)
+
+        changed = self.client.post(
+            reverse("password_change"),
+            {
+                "old_password": OLD_PASSWORD,
+                "new_password1": NEW_PASSWORD,
+                "new_password2": NEW_PASSWORD,
+            },
+        )
+        self.assertRedirects(changed, reverse("password_change_done"))
+        self.assertEqual(self.client.get(reverse("profile")).status_code, 200)
+
+        other_session = second_browser.get(reverse("profile"))
+        self.assertEqual(other_session.status_code, 302)
+        self.assertIn(reverse("login"), other_session["Location"])
+
     def test_post_requires_csrf_token(self):
         secure_client = Client(enforce_csrf_checks=True)
         secure_client.force_login(self.user)
