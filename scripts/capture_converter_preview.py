@@ -122,9 +122,7 @@ def _assert_preview_integrity(page: Page, *, viewport_width: int) -> None:
             })"""
         )
         if focused != {"tagName": "A", "text": expected_text}:
-            raise RuntimeError(
-                f"Expected header focus {expected_text!r}, got {focused!r}"
-            )
+            raise RuntimeError(f"Expected header focus {expected_text!r}, got {focused!r}")
 
     page.keyboard.press("Tab")
     active_id = page.evaluate("document.activeElement?.id ?? ''")
