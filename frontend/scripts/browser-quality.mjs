@@ -283,30 +283,16 @@ async function assertKeyboardFocus(page, surfaceName) {
     `${surfaceName}: skip link is not the first keyboard target: ${JSON.stringify(first)}`,
   );
 
-  if (surfaceName === "converter") {
-    await page.keyboard.press("Tab");
-    const second = await page.evaluate(() => ({
-      tagName: document.activeElement?.tagName ?? "",
-      text: document.activeElement?.textContent?.trim() ?? "",
-    }));
-    assert(
-      second.tagName === "A" && second.text === "Sign in",
-      `converter: expected Sign in as second focus target, got ${JSON.stringify(second)}`,
-    );
-    await page.keyboard.press("Tab");
-    const activeId = await page.evaluate(() => document.activeElement?.id ?? "");
-    assert(
-      activeId === "workspace-amount",
-      `converter: unexpected amount focus target ${activeId}`,
-    );
-  }
-
-  if (surfaceName === "current-converter") {
+  if (surfaceName === "converter" || surfaceName === "current-converter") {
+    // One native keyboard order for every Quiet Atlas shell, independent of
+    // the visual mobile reflow. The wordmark is an accessible home link.
     for (const expectedText of [
-      "Plan by destination",
-      "Compare destinations",
+      "Cultural Currency",
+      "Convert",
+      "Plan",
+      "Compare",
       "Explore",
-      "Saved & recent",
+      "Saved",
       "Sign in",
     ]) {
       await page.keyboard.press("Tab");
@@ -316,14 +302,20 @@ async function assertKeyboardFocus(page, surfaceName) {
       }));
       assert(
         focused.tagName === "A" && focused.text === expectedText,
-        `current-converter: expected ${expectedText} header focus, got ${JSON.stringify(focused)}`,
+        `${surfaceName}: expected ${expectedText} header focus, got ${JSON.stringify(focused)}`,
       );
     }
 
     await page.keyboard.press("Tab");
     const amountId = await page.evaluate(() => document.activeElement?.id ?? "");
-    assert(amountId === "id_amount", `current-converter: expected amount focus, got ${amountId}`);
+    const expectedAmountId = surfaceName === "converter" ? "workspace-amount" : "id_amount";
+    assert(
+      amountId === expectedAmountId,
+      `${surfaceName}: expected amount focus ${expectedAmountId}, got ${amountId}`,
+    );
+  }
 
+  if (surfaceName === "current-converter") {
     for (const expectedId of [
       "source-picker-trigger",
       "swap-contexts",
