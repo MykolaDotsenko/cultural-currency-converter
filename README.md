@@ -6,6 +6,8 @@ A Django travel-money application that combines currency conversion with practic
 
 **Live demo:** https://cultural-currency-converter-mykola.onrender.com
 
+**Bootstrap safety:** the new startup no longer recreates reference data on every restart. A new isolated database must first be provisioned and explicitly initialized using `bash scripts/render-initial-bootstrap.sh` after an empty-database check. Never run initial bootstrap against an existing user database.
+
 **Hosted demo caution:** earlier Render deploys repeatedly applied initial migrations, so durable user-data persistence has **not yet been certified**. The current demo may still be on an ephemeral database until its separately approved PostgreSQL cutover. New deployment-policy code requires PostgreSQL for `demo`, `preview` and `production`; do not treat that requirement alone as proof that the **currently running** service has migrated.
 
 <p align="center">
