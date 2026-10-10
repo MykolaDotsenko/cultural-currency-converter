@@ -104,15 +104,17 @@ def test_international_reference_wave_is_idempotent():
     call_command("seed_reference_data")
     before = {
         (row.country.iso2, row.currency.code, row.source)
-        for row in CountryCurrency.objects.filter(country__iso2__in={"GB", "CH", "AU", "PL"})
-        .select_related("country", "currency")
+        for row in CountryCurrency.objects.filter(
+            country__iso2__in={"GB", "CH", "AU", "PL"}
+        ).select_related("country", "currency")
     }
     assert len(before) == 4
     call_command("seed_reference_data")
     after = {
         (row.country.iso2, row.currency.code, row.source)
-        for row in CountryCurrency.objects.filter(country__iso2__in={"GB", "CH", "AU", "PL"})
-        .select_related("country", "currency")
+        for row in CountryCurrency.objects.filter(
+            country__iso2__in={"GB", "CH", "AU", "PL"}
+        ).select_related("country", "currency")
     }
     assert after == before
     assert Currency.objects.filter(code__in={"GBP", "CHF", "AUD", "PLN"}).count() == 4
