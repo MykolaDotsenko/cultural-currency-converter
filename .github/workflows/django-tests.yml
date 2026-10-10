@@ -226,6 +226,7 @@ jobs:
           mkdir -p artifacts/recovery-ci
 
           python manage.py seed_reference_data
+          python manage.py verify_recovery_fixture --phase prepare --confirm-ci-only
 
           docker run --rm --network host \
             --user "$(id -u):$(id -g)" \
@@ -282,4 +283,5 @@ jobs:
 
           DATABASE_URL="$RECOVERY_TARGET_URL" python manage.py check --database default
           DATABASE_URL="$RECOVERY_TARGET_URL" python manage.py migrate --check
+          DATABASE_URL="$RECOVERY_TARGET_URL" python manage.py verify_recovery_fixture --phase verify --confirm-ci-only
           DATABASE_URL="$RECOVERY_TARGET_URL" python manage.py shell -c "from apps.countries.models import Country, CountryCurrency, Currency; fi = Country.objects.get(iso2='FI'); eur = Currency.objects.get(code='EUR'); assert fi.name == 'Finland'; assert CountryCurrency.objects.filter(country=fi, currency=eur, is_primary=True, valid_to__isnull=True).exists()"

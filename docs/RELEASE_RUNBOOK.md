@@ -374,6 +374,21 @@ Run application smoke checks before cutover. Keep the old database available unt
 
 Do not blindly roll database schema backward after production traffic has used a migration. Prefer roll-forward when safe.
 
+### Disposable relational recovery probe (PR-10)
+
+The PostgreSQL 18.6 integration workflow now creates a **synthetic test-only**
+owner with an unusable password, a saved budget, its immutable initial
+FX observation and confirmed spending before the custom-format backup.
+After restoring into a separate empty target database, it re-runs a
+read-only integrity check of ownership, currencies, amounts and relations.
+
+`verify_recovery_fixture` requires `APP_ENV=test` and the explicit
+`--confirm-ci-only` flag; an existing fixture is never overwritten.
+The synthetic observation represents no real FX provider or customer.
+This exercise **does not certify production** storage retention, backup
+recency, object recovery, RPO/RTO or actual Render restart/redeploy. Record
+those in a separate operator-approved real-environment drill.
+
 ## Managed-media recovery
 
 PostgreSQL recovery restores media metadata, not object bytes.
