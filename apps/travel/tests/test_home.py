@@ -384,7 +384,7 @@ def test_mobile_trip_actions_only_for_active_owned_trip_and_available_camera(
     detail_url = reverse("saved_scenario_detail", args=(scenario.pk,))
     assert f'href="{detail_url}#trip-money-pass-title"' in html
     assert f'href="{detail_url}"' in html
-    assert reverse("camera_scan_saved_scenario", args=(scenario.pk)) in html
+    assert reverse("camera_scan_saved_scenario", args=(scenario.pk,)) in html
     assert scenario.spend_entries.count() == 0
     assert scenario.observations.count() == 1
     factory.assert_not_called()
@@ -415,4 +415,4 @@ def test_mobile_trip_actions_do_not_claim_unavailable_camera_or_upcoming_trip(
         upcoming = client.get("/")
     assert upcoming.status_code == 200
     assert b"data-mobile-trip-actions" not in upcoming.content
-    assert reverse("saved_scenario_detail", args=(scenario.pk)).encode() in upcoming.content
+    assert reverse("saved_scenario_detail", args=(scenario.pk,)).encode() in upcoming.content
