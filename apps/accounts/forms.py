@@ -29,6 +29,8 @@ class QuietPasswordChangeForm(PasswordChangeForm):
         super().__init__(user, *args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "qa-text-input"
+        self.fields["old_password"].label = "Current password"
+        self.fields["old_password"].widget.attrs.pop("autofocus", None)
         self.fields["old_password"].widget.attrs["autocomplete"] = "current-password"
         self.fields["new_password1"].widget.attrs["autocomplete"] = "new-password"
         self.fields["new_password2"].widget.attrs["autocomplete"] = "new-password"
