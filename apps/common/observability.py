@@ -27,6 +27,12 @@ _NAMED_SECRET_RE = re.compile(
 )
 
 _LOG_FIELDS = (
+    "job",
+    "records_processed",
+    "records_created",
+    "records_updated",
+    "records_retired",
+    "dry_run",
     "method",
     "path",
     "route",

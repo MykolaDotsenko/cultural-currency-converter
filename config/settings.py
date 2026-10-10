@@ -206,6 +206,11 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "cultural_currency.jobs": {
+            "handlers": ["console_json"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "cultural_currency.security": {
             "handlers": ["console_json"],
             "level": "WARNING",
