@@ -133,3 +133,26 @@ def test_scheduled_holiday_refresh_rejects_any_empty_year_atomically(monkeypatch
         )
 
     assert not PublicHolidayObservation.objects.exists()
+
+
+@pytest.mark.django_db
+def test_holiday_dry_run_reports_country_year_aggregates_without_persisting(
+    monkeypatch, finland, caplog
+):
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
+        lambda self, country_iso2, year, today=None: (_holiday(year),),
+    )
+    with caplog.at_level("INFO", logger="cultural_currency.jobs"):
+        call_command("sync_public_holidays", country=["FI"], years_ahead=0, dry_run=True)
+
+    events = [r for r in caplog.records if r.getMessage() == "background_job_result"]
+    assert len(events) == 1
+    assert events[0].job == "public_holidays"
+    assert events[0].outcome == "success"
+    assert events[0].dry_run is True
+    assert events[0].records_processed == 1
+    assert events[0].records_created == 1
+    assert events[0].records_updated == 0
+    assert events[0].records_retired == 0
+    assert not PublicHolidayObservation.objects.exists()
