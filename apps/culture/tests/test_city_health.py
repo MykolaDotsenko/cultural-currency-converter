@@ -316,3 +316,96 @@ def test_unknown_city_scope_fails_explicitly(city_health_data):
 def test_invalid_as_of_date_fails_explicitly(city_health_data):
     with pytest.raises(CommandError, match="--as-of must be YYYY-MM-DD"):
         call_command("report_city_coverage", country="JP", as_of="01-10-2026")
+
+
+@pytest.mark.django_db
+def test_city_coverage_strict_requires_four_direct_categories_by_default(city_health_data):
+    japan, jpy, _eur, tokyo, _osaka = city_health_data
+    _price(
+        country=japan,
+        currency=jpy,
+        category=TypicalPriceCategory.TRANSIT,
+        label="Tokyo reviewed transit",
+        observed_at=date(2026, 10, 1),
+        city=tokyo,
+    )
+
+    with pytest.raises(CommandError, match="strict direct-evidence threshold"):
+        call_command(
+            "report_city_coverage",
+            country="JP",
+            city="tokyo",
+            as_of="2026-10-01",
+            strict=True,
+            stdout=StringIO(),
+        )
+
+
+@pytest.mark.django_db
+def test_city_coverage_strict_can_allow_explicit_transit_only_scope(city_health_data):
+    japan, jpy, _eur, tokyo, _osaka = city_health_data
+    _price(
+        country=japan,
+        currency=jpy,
+        category=TypicalPriceCategory.TRANSIT,
+        label="Tokyo reviewed transit",
+        observed_at=date(2026, 10, 1),
+        city=tokyo,
+    )
+    output = StringIO()
+    call_command(
+        "report_city_coverage",
+        country="JP",
+        city="tokyo",
+        as_of="2026-10-01",
+        strict=True,
+        min_direct_core=1,
+        as_json=True,
+        stdout=output,
+    )
+    data = json.loads(output.getvalue())
+    assert data[0]["coverage_score"] == 25
+    assert data[0]["fresh_categories"] == ["transit"]
+
+
+@pytest.mark.django_db
+def test_city_coverage_strict_rejects_provenance_gaps_even_at_lower_threshold(
+    city_health_data,
+):
+    japan, jpy, _eur, tokyo, _osaka = city_health_data
+    for label, category, url in (
+        ("Transit verified", TypicalPriceCategory.TRANSIT, "https://example.org/transit"),
+        ("Untrusted coffee", TypicalPriceCategory.COFFEE, "https://user:secret@example.org"),
+    ):
+        _price(
+            country=japan,
+            currency=jpy,
+            category=category,
+            label=label,
+            observed_at=date(2026, 10, 1),
+            city=tokyo,
+            source_url=url,
+        )
+    with pytest.raises(CommandError, match="strict direct-evidence threshold"):
+        call_command(
+            "report_city_coverage",
+            country="JP",
+            city="tokyo",
+            as_of="2026-10-01",
+            strict=True,
+            min_direct_core=1,
+            stdout=StringIO(),
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("invalid", [0, 5, -1])
+def test_city_coverage_rejects_invalid_direct_core_threshold(invalid, city_health_data):
+    with pytest.raises(CommandError, match="between 1 and 4"):
+        call_command("report_city_coverage", strict=True, min_direct_core=invalid)
+
+
+@pytest.mark.django_db
+def test_city_coverage_rejects_ignored_threshold_without_strict(city_health_data):
+    with pytest.raises(CommandError, match="requires --strict"):
+        call_command("report_city_coverage", min_direct_core=1)
