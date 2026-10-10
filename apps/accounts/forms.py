@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
 
 from apps.accounts.models import AnswerDetail, PreferredLanguage, TravelStyle
 from apps.countries.models import Currency
@@ -20,6 +20,18 @@ class QuietAuthenticationForm(AuthenticationForm):
         self.fields["password"].widget.attrs.update(
             {"class": "qa-text-input", "autocomplete": "current-password"}
         )
+
+
+class QuietPasswordChangeForm(PasswordChangeForm):
+    """Authenticated password rotation using Django's standard validators."""
+
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(user, *args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "qa-text-input"
+        self.fields["old_password"].widget.attrs["autocomplete"] = "current-password"
+        self.fields["new_password1"].widget.attrs["autocomplete"] = "new-password"
+        self.fields["new_password2"].widget.attrs["autocomplete"] = "new-password"
 
 
 class SignUpForm(UserCreationForm):

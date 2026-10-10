@@ -190,6 +190,12 @@
         </form>
       {% endif %}
     </section>
+    <section class="qa-account-section" aria-labelledby="account-security-title">
+      <p class="qa-foundation-kicker">Account security</p>
+      <h2 id="account-security-title">Change password</h2>
+      <p>Use your current password to choose a new one. Your saved trips, settings and current signed-in session remain available.</p>
+      <a class="qa-secondary-button" href="{% url 'password_change' %}">Change password</a>
+    </section>
     <section class="qa-account-danger" aria-labelledby="account-privacy-title">
       <h2 id="account-privacy-title">Delete account</h2>
       <p>
