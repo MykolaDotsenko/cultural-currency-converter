@@ -5,10 +5,9 @@
   <meta name="description"
         content="Ephemerally extract and confirm a travel-money amount from a user-selected image.">
 {% endblock %}
-{% block header_actions %}
+{% block header_context_actions %}
   <a class="qa-header-link"
-     href="{% url 'saved_scenario_detail' scenario.pk %}">Saved trip</a>
-  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
+     href="{% url 'saved_scenario_detail' scenario.pk %}">Back to trip</a>
 {% endblock %}
 {% block content %}
   <section class="qa-foundation-intro" aria-labelledby="camera-scan-title">
