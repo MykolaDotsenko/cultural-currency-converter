@@ -64,7 +64,7 @@ def test_active_trip_detail_exposes_owner_scoped_mobile_shortcuts(
 
     assert response.status_code == 200
     html = response.content.decode()
-    assert html.count('data-mobile-trip-actions') == 1
+    assert html.count("data-mobile-trip-actions") == 1
     for action in ("convert", "scan", "budget", "trip"):
         assert f'data-trip-quick-action="{action}"' in html
     assert 'href="#trip-money-pass-title"' in html
