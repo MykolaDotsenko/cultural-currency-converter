@@ -10,7 +10,9 @@ from apps.culture.city_seed import (
 from apps.culture.seed import seed_demo_destination_context
 
 _REQUIRED_COUNTRIES = frozenset({"JP", "FI", "SE", "DK", "NO", "DE", "SG", "CA", "NZ", "CH", "PL"})
-_REQUIRED_CURRENCIES = frozenset({"JPY", "EUR", "SEK", "DKK", "NOK", "SGD", "CAD", "NZD", "CHF", "PLN"})
+_REQUIRED_CURRENCIES = frozenset(
+    {"JPY", "EUR", "SEK", "DKK", "NOK", "SGD", "CAD", "NZD", "CHF", "PLN"}
+)
 
 
 class Command(BaseCommand):

@@ -433,11 +433,14 @@ def test_wave_three_is_idempotent_and_does_not_invent_other_prices():
 
     assert "wave 3 (official transit only) is ready: created=2, existing=0." in first.getvalue()
     assert "wave 3 (official transit only) is ready: created=0, existing=2." in second.getvalue()
-    assert TypicalPrice.objects.filter(
-        city_ref__country__iso2__in={"CH", "PL"},
-        city_ref__slug__in={"zurich", "warsaw"},
-        is_published=True,
-    ).count() == 2
+    assert (
+        TypicalPrice.objects.filter(
+            city_ref__country__iso2__in={"CH", "PL"},
+            city_ref__slug__in={"zurich", "warsaw"},
+            is_published=True,
+        ).count()
+        == 2
+    )
 
     for country, city in (("CH", "zurich"), ("PL", "warsaw")):
         context = build_destination_context(

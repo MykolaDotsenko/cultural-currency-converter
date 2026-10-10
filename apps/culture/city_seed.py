@@ -436,8 +436,7 @@ _WAVE_THREE_CITIES: tuple[_CitySpec, ...] = (
                 high=None,
                 source_name="Zürcher Verkehrsverbund (ZVV)",
                 source_url=(
-                    "https://www.zvv.ch/en/travelcards-and-tickets/"
-                    "tickets/single-tickets.html"
+                    "https://www.zvv.ch/en/travelcards-and-tickets/tickets/single-tickets.html"
                 ),
                 notes=(
                     "Official ZVV adult second-class 1–2-zone, one-hour single ticket; "
@@ -459,8 +458,7 @@ _WAVE_THREE_CITIES: tuple[_CitySpec, ...] = (
                 high=None,
                 source_name="City of Warsaw — Warszawa 19115",
                 source_url=(
-                    "https://warszawa19115.pl/-/"
-                    "bilety-kr%C3%B3tkookresowe-w-komunikacji-miejskiej"
+                    "https://warszawa19115.pl/-/bilety-kr%C3%B3tkookresowe-w-komunikacji-miejskiej"
                 ),
                 notes=(
                     "Standard adult 75-minute ticket for Zone 1, not Zones 1+2; "
