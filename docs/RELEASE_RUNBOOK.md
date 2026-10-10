@@ -136,6 +136,35 @@ new deploy is live, independently perform the pinned release-SHA check above
 and the full smoke/recovery certification gates below; a scheduled green
 check does **not** grant 100/100 release certification.
 
+### Read-only database persistence preflight (PR-01)
+
+Before changing any database, schema or Render environment variable, run the
+operator-only diagnostic inside the application runtime:
+
+```bash
+python manage.py audit_persistence
+# Gate for a deployment intended to use durable PostgreSQL:
+python manage.py audit_persistence --require-postgresql
+```
+
+The command performs one read-only `SELECT 1` and Django migration-plan
+inspection. It emits **only** the allow-listed environment/engine family,
+connection state, migration state, a deployed-SQLite risk flag and
+`"durability": "unverified"`. It does not print connection URLs, hosts, paths,
+user data or exception details; it has no HTTP endpoint and never writes a probe
+record. The optional flag exits nonzero if PostgreSQL is not reachable or
+migrations are not current.
+
+**Important:** PostgreSQL preflight success is *not* proof of persistence,
+backups, retained media, data ownership, or actual recovery. A deployed SQLite
+risk indicates a potentially ephemeral runtime, **not** proven data loss.
+Record only the sanitized output and release SHA. For issue #302, an explicitly
+approved, disposable test-user/test-scenario drill must still demonstrate
+survival of **restart and a separate deploy**, without touching real users'
+records. If the storage is ephemeral, pause user-data writes or restrict the
+demo while planning a reviewed backup, migration, rollback and data-preservation
+procedure. Never infer a safe cutover from the diagnostic alone.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:
