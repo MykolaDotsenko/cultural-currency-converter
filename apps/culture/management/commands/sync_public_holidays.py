@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.common.job_observability import ObservableJobCommand
 from apps.countries.models import Country
 from apps.culture.calendar import reconcile_public_holiday_year
 from integrations.holidays import HolidayDataSourceError, NagerDateHolidayClient
 
 
-class Command(BaseCommand):
+class Command(ObservableJobCommand):
+    job_name = "public_holidays"
     help = (
         "Fetch Nager.Date Community v4 public holidays and atomically reconcile "
         "country/year holiday evidence."
@@ -99,6 +101,12 @@ class Command(BaseCommand):
             if options["dry_run"]:
                 transaction.set_rollback(True)
 
+        self.set_job_counts(
+            records_processed=len(fetched),
+            records_created=created_count,
+            records_updated=updated_count,
+            records_retired=retired_count,
+        )
         suffix = " (dry run; rolled back)" if options["dry_run"] else ""
         self.stdout.write(
             self.style.SUCCESS(

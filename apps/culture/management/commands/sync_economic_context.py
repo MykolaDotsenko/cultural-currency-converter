@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
 from django.db import transaction
 
+from apps.common.job_observability import ObservableJobCommand
 from apps.countries.models import Country
 from apps.culture.economic import persist_economic_observation
 from integrations.economic_data import (
@@ -17,7 +18,8 @@ from integrations.economic_data import (
 _SOURCE_CHOICES = ("all", "world_bank", "eurostat", "oecd")
 
 
-class Command(BaseCommand):
+class Command(ObservableJobCommand):
+    job_name = "economic_context"
     help = (
         "Fetch authoritative macro observations from World Bank, Eurostat and OECD, "
         "then atomically publish validated EconomicObservation rows."
@@ -78,6 +80,11 @@ class Command(BaseCommand):
             if options["dry_run"]:
                 transaction.set_rollback(True)
 
+        self.set_job_counts(
+            records_processed=len(observations),
+            records_created=created_count,
+            records_updated=updated_count,
+        )
         suffix = " (dry run; rolled back)" if options["dry_run"] else ""
         self.stdout.write(
             self.style.SUCCESS(

@@ -314,6 +314,31 @@ of supported country/year scopes and test retries, no-data failures,
 freshness, national-only presentation and actual scheduler execution.
 A strict rejection should be reviewed, not bypassed automatically.
 
+## Background job completion telemetry (PR-09)
+
+The three approved *Django management commands* now produce a single structured
+`background_job_result` event per completed execution under the
+`cultural_currency.jobs` logger. The payload is intentionally limited to:
+`job` (`scenario_notifications`, `economic_context`, or `public_holidays`),
+`outcome`, `duration_ms`, `dry_run`, optional aggregate
+`records_processed/created/updated/retired`, and fixed `error_code=job_failed`
+on failure. No owner IDs, scenario details, input amounts, URL/credentials,
+provider error text, raw observations or exception tracebacks are included.
+
+For ingestion, `dry_run=true` indicates **rolled-back would-be write counts**,
+not persisted changes. Notification `records_processed` counts **newly created
+in-app deliveries**, not evaluated preferences. Holiday
+`records_processed` counts fetched country/year scopes.
+
+Command outputs and return codes remain unchanged, and exceptions still
+propagate to the scheduler. These events can be used by an operator to
+monitor jobs **after real jobs are activated**. They do not prove cadence,
+last-success freshness across missed invocations or alerts; those require
+an external scheduled-run history/monitor. The guarded shell entrypoints
+may refuse a job *before the Django process runs*, in which case these
+application lifecycle events are correctly absent; inspect scheduler
+exit status and job logs as well.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:

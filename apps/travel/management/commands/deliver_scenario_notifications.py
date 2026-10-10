@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from apps.common.job_observability import ObservableJobCommand
 from apps.travel.notification_delivery import generate_due_notifications
 
 
-class Command(BaseCommand):
+class Command(ObservableJobCommand):
+    job_name = "scenario_notifications"
     help = (
         "Generate due owner-scoped in-app notifications for explicitly enabled saved-scenario "
         "preferences. Safe to run repeatedly; delivery dedupe is database-enforced."
@@ -26,4 +27,5 @@ class Command(BaseCommand):
             now=timezone.now(),
             scenario_ids=options.get("scenario_ids"),
         )
+        self.set_job_counts(records_processed=len(deliveries), records_created=len(deliveries))
         self.stdout.write(self.style.SUCCESS(f"Created {len(deliveries)} in-app notification(s)."))

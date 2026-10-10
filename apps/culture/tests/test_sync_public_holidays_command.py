@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
@@ -132,4 +133,26 @@ def test_scheduled_holiday_refresh_rejects_any_empty_year_atomically(monkeypatch
             require_nonempty_scopes=True,
         )
 
+    assert not PublicHolidayObservation.objects.exists()
+
+
+@pytest.mark.django_db
+def test_holiday_dry_run_reports_country_year_aggregates_without_persisting(monkeypatch, finland):
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
+        lambda self, country_iso2, year, today=None: (_holiday(year),),
+    )
+    with patch("apps.common.job_observability.logger.info") as emit:
+        call_command("sync_public_holidays", country=["FI"], years_ahead=0, dry_run=True)
+
+    emit.assert_called_once()
+    assert emit.call_args.args == ("background_job_result",)
+    observed = emit.call_args.kwargs["extra"]
+    assert observed["job"] == "public_holidays"
+    assert observed["outcome"] == "success"
+    assert observed["dry_run"] is True
+    assert observed["records_processed"] == 1
+    assert observed["records_created"] == 1
+    assert observed["records_updated"] == 0
+    assert observed["records_retired"] == 0
     assert not PublicHolidayObservation.objects.exists()
