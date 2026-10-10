@@ -32,6 +32,11 @@ class Command(BaseCommand):
             help="Number of future years to include in addition to the current year (0-5).",
         )
         parser.add_argument("--dry-run", action="store_true")
+        parser.add_argument(
+            "--require-nonempty-scopes",
+            action="store_true",
+            help="Reject empty provider responses for any requested country/year in scheduled runs.",
+        )
 
     def handle(self, *args, **options):
         years_ahead = options["years_ahead"]
@@ -62,6 +67,17 @@ class Command(BaseCommand):
         if errors:
             raise CommandError(
                 "Public holiday sync aborted before database writes: " + "; ".join(errors)
+            )
+
+        # A provider's empty response is not sufficient evidence that every
+        # previously published holiday disappeared. Protect scheduled refreshes;
+        # manual reconciliation keeps its existing explicit semantics.
+        if options["require_nonempty_scopes"] and any(
+            not observations for observations in fetched.values()
+        ):
+            raise CommandError(
+                "Public holiday sync returned an empty country/year scope; "
+                "no existing holiday observations were modified."
             )
 
         created_count = 0

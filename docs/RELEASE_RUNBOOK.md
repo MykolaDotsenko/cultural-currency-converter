@@ -286,6 +286,34 @@ creates **no Render Cron Job**, subscription, credentials or billing changes.
 Actual automated freshness is unverified until a real scheduled execution
 and audit trail exist.
 
+## Guarded public-holiday scheduled ingestion (PR-08)
+
+`sync_public_holidays` deliberately reconciles a country/year scope and
+can unpublish previously observed holidays that disappeared from a later
+provider response. A transient **empty** provider result must not silently
+retire the full holiday set during unattended operation.
+
+The opt-in `--require-nonempty-scopes` switch raises an error **before the
+transaction** when any requested country/year has zero observations.
+Unattended jobs must use this strict mode. Manual synchronization retains
+the existing explicit reconciliation behaviour for carefully reviewed cases,
+including legitimately empty scopes.
+
+The unactivated guarded entrypoint requires explicit approval, a specified
+country and a bounded horizon:
+
+```bash
+HOLIDAY_SYNC_SCHEDULER_APPROVED=true HOLIDAY_SYNC_COUNTRY=FI \
+  HOLIDAY_SYNC_YEARS_AHEAD=1 bash scripts/render-holiday-sync-job.sh
+```
+
+PostgreSQL and baseline reference data checks run before any provider call.
+No cron service, extra billing or Render environment was created/changed in
+this PR. After durable storage and operator approval, schedule a bounded set
+of supported country/year scopes and test retries, no-data failures,
+freshness, national-only presentation and actual scheduler execution.
+A strict rejection should be reviewed, not bypassed automatically.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:

@@ -87,3 +87,49 @@ def test_sync_public_holidays_aborts_before_writes_on_provider_failure(
         )
 
     assert not PublicHolidayObservation.objects.exists()
+
+
+@pytest.mark.django_db
+def test_scheduled_holiday_refresh_rejects_empty_scope_without_unpublishing(monkeypatch, finland):
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
+        lambda self, country_iso2, year, today=None: (_holiday(year),),
+    )
+    call_command("sync_public_holidays", country=["FI"], years_ahead=0)
+    before = tuple(PublicHolidayObservation.objects.values_list("id", "is_published"))
+    assert len(before) == 1
+
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
+        lambda self, country_iso2, year, today=None: (),
+    )
+    with pytest.raises(CommandError, match="empty country/year scope"):
+        call_command(
+            "sync_public_holidays",
+            country=["FI"],
+            years_ahead=0,
+            require_nonempty_scopes=True,
+        )
+    assert tuple(PublicHolidayObservation.objects.values_list("id", "is_published")) == before
+
+
+@pytest.mark.django_db
+def test_scheduled_holiday_refresh_rejects_any_empty_year_atomically(monkeypatch, finland):
+    from django.utils import timezone
+
+    current_year = timezone.localdate().year
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
+        lambda self, country_iso2, year, today=None: (
+            (_holiday(year),) if year == current_year else ()
+        ),
+    )
+    with pytest.raises(CommandError, match="empty country/year scope"):
+        call_command(
+            "sync_public_holidays",
+            country=["FI"],
+            years_ahead=1,
+            require_nonempty_scopes=True,
+        )
+
+    assert not PublicHolidayObservation.objects.exists()
