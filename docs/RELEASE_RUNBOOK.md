@@ -399,6 +399,16 @@ Before claiming operations/recovery certification for a deployment:
 2. record the policy/evidence outside application secrets;
 3. restore a known managed-media object/version into a safe recovery location;
 4. verify its checksum/content and application-facing object name;
+   For a specifically restored, published MediaAsset with a recorded
+   SHA-256 checksum, run the **read-only byte-level** verification:
+   ```bash
+   python manage.py verify_media_recovery --asset-id <APPROVED_PUBLISHED_ASSET_ID>
+   ```
+   This opens the configured Django storage backend, streams up to 64 MiB,
+   compares the bytes to the recorded checksum and fails without writing
+   anything. The tool prints neither object keys nor storage exceptions.
+   A passing test does **not** prove S3 bucket versioning, prior-version
+   retention, a successful real restore or unrelated media assets.
 5. run:
    ```bash
    python manage.py report_curated_media_coverage --strict
