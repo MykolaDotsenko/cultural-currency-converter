@@ -37,11 +37,14 @@ def test_test_environment_defaults_to_sqlite() -> None:
     assert config.engine == "django.db.backends.sqlite3"
 
 
-@pytest.mark.parametrize("environment", [
+@pytest.mark.parametrize(
+    "environment",
+    [
         RuntimeEnvironment.DEMO,
         RuntimeEnvironment.PREVIEW,
         RuntimeEnvironment.PRODUCTION,
-    ])
+    ],
+)
 def test_deployed_environments_require_database_url(environment: RuntimeEnvironment) -> None:
     with pytest.raises(ConfigurationError, match="DATABASE_URL is required"):
         load_database_config(
