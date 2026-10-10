@@ -280,6 +280,31 @@ Before claiming operations/recovery certification for a deployment:
 
 A missing optional image must degrade to the intentional no-image state; it must not invalidate conversion truth.
 
+## Exact live revision + health preflight (PR-05)
+
+In addition to the revision-only check, the operator can run a **read-only**
+three-endpoint preflight against the exact pinned release SHA:
+
+```bash
+python scripts/check_release_smoke.py \
+  --url https://cultural-currency-converter-mykola.onrender.com/health/revision/ \
+  --expected-sha <APPROVED_FULL_RELEASE_SHA>
+```
+
+For a strict production environment expected to provide shared Redis, append
+`--require-shared-cache`. The preflight checks full revision equality, process
+liveness and DB readiness in order. A degraded or unavailable readiness cannot
+be misreported as success. The tool rejects remote non-HTTPS endpoints,
+redirects, oversized/non-JSON responses and missing status fields; failure
+messages use fixed codes, not provider exception details.
+
+**Scope boundary:** green means revision/HTTP/DB-readiness only. It does not
+demonstrate persistent storage, backups, media recovery, real provider
+integrations, release governance or successful user journeys. Keep the
+disposable-record restart/deploy drill and independent RC smoke below.
+Do not automatically deploy, mutate a database or change Render settings
+from this preflight.
+
 ## RC deployment smoke
 
 After deploying an RC, record the deployment identifier and exact Git SHA, then verify:
