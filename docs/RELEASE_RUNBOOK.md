@@ -297,6 +297,14 @@ one enabled disposable pre-trip message, retry deduplication, failure
 visibility and timezone cadence. Do not claim "automated delivery" until
 a real scheduled run has completed successfully.
 
+### Responsive historical FX table QA
+
+The 320px / 200% text Chromium QA check previously reported horizontal
+overflow inside the historical rate observations. Narrow layouts now stack
+the semantic table rows, adding explicit Date/Rate/Source labels without
+discarding observations. Wide layouts keep their tabular presentation.
+This is independent of price seeding; verify it in the full browser matrix.
+
 ## Reviewed partial city anchor wave (PR-15)
 
 Following the reviewed GBP/CHF/AUD/PLN currency-reference wave, a third

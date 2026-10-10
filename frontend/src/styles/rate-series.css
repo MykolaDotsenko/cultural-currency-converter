@@ -248,6 +248,66 @@
   font-weight: 700;
 }
 
+/* Preserve accessible rate/source data at narrow widths and 200% text zoom. */
+@media (max-width: 42rem) {
+  .qa-table-scroll {
+    contain: none;
+    overflow-x: clip;
+  }
+
+  .qa-table-scroll table,
+  .qa-table-scroll tbody,
+  .qa-table-scroll tbody tr {
+    display: block;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
+
+  .qa-table-scroll caption {
+    display: block;
+    box-sizing: border-box;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .qa-table-scroll thead {
+    position: absolute;
+    overflow: hidden;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .qa-table-scroll tbody tr {
+    padding-block: var(--qa-space-2);
+    border-block-start: 1px solid var(--color-border-subtle);
+  }
+
+  .qa-table-scroll td {
+    display: block;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    border-block-start: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .qa-table-scroll td::before {
+    display: block;
+    margin-block-end: var(--qa-space-1);
+    color: var(--color-muted);
+    font-size: var(--text-meta);
+    font-weight: 700;
+    content: attr(data-label);
+  }
+}
+
 @media (max-width: 42rem) {
   .qa-historical-trend-entry {
     align-items: stretch;
