@@ -417,6 +417,62 @@ _WAVE_TWO_CITIES: tuple[_CitySpec, ...] = (
 )
 
 
+# Wave three intentionally includes **only** transport tariffs supported by
+# contemporaneous official operator/municipal evidence. No invented costs of
+# living or "average city" prices are included for unsupported categories.
+_WAVE_THREE_OBSERVED_AT = date(2026, 10, 10)
+_WAVE_THREE_VERIFIED_AT = datetime(2026, 10, 10, 12, 0, tzinfo=UTC)
+
+_WAVE_THREE_CITIES: tuple[_CitySpec, ...] = (
+    _CitySpec(
+        country_code="CH",
+        currency_code="CHF",
+        slug="zurich",
+        name="Zurich",
+        prices=(
+            _transit_price(
+                label="ZVV adult 2nd-class 1–2-zone single ticket",
+                low="4.70",
+                high=None,
+                source_name="Zürcher Verkehrsverbund (ZVV)",
+                source_url=(
+                    "https://www.zvv.ch/en/travelcards-and-tickets/"
+                    "tickets/single-tickets.html"
+                ),
+                notes=(
+                    "Official ZVV adult second-class 1–2-zone, one-hour single ticket; "
+                    "Zurich zone 110 counts as two zones. Reviewed 2026-10-10. "
+                    "Other zones, classes and discounts differ."
+                ),
+            ),
+        ),
+    ),
+    _CitySpec(
+        country_code="PL",
+        currency_code="PLN",
+        slug="warsaw",
+        name="Warsaw",
+        prices=(
+            _transit_price(
+                label="Warsaw adult 75-minute Zone 1 ticket",
+                low="4.40",
+                high=None,
+                source_name="City of Warsaw — Warszawa 19115",
+                source_url=(
+                    "https://warszawa19115.pl/-/"
+                    "bilety-kr%C3%B3tkookresowe-w-komunikacji-miejskiej"
+                ),
+                notes=(
+                    "Standard adult 75-minute ticket for Zone 1, not Zones 1+2; "
+                    "source tariff updated 2025-11-20 and checked 2026-10-10. "
+                    "Discounted and longer-distance tickets differ."
+                ),
+            ),
+        ),
+    ),
+)
+
+
 def _seed_curated_city_prices(
     *,
     cities: tuple[_CitySpec, ...],
@@ -493,4 +549,14 @@ def seed_curated_city_prices_wave2() -> tuple[int, int]:
         cities=_WAVE_TWO_CITIES,
         observed_at=_WAVE_TWO_OBSERVED_AT,
         verified_at=_WAVE_TWO_VERIFIED_AT,
+    )
+
+
+def seed_curated_city_prices_wave3() -> tuple[int, int]:
+    """Seed only reviewed official transit anchors for two additional cities."""
+
+    return _seed_curated_city_prices(
+        cities=_WAVE_THREE_CITIES,
+        observed_at=_WAVE_THREE_OBSERVED_AT,
+        verified_at=_WAVE_THREE_VERIFIED_AT,
     )

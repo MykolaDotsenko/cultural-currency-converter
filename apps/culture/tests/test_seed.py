@@ -386,3 +386,69 @@ def test_destination_context_seed_reports_city_wave_two_idempotency():
 
     assert "City price wave 2 is ready: created=15, existing=0." in first.getvalue()
     assert "City price wave 2 is ready: created=0, existing=15." in second.getvalue()
+
+
+@pytest.mark.django_db
+def test_wave_three_adds_only_official_city_transit_with_provenance():
+    call_command("seed_reference_data", stdout=StringIO())
+    call_command("seed_destination_context", stdout=StringIO())
+
+    expected = {
+        ("CH", "zurich"): ("Zurich", "CHF", Decimal("4.70")),
+        ("PL", "warsaw"): ("Warsaw", "PLN", Decimal("4.40")),
+    }
+    for (country_code, slug), (name, currency_code, amount) in expected.items():
+        city = City.objects.get(country__iso2=country_code, slug=slug)
+        assert city.name == name
+        prices = list(TypicalPrice.objects.filter(city_ref=city, is_published=True))
+        assert len(prices) == 1
+        price = prices[0]
+        assert price.category == TypicalPriceCategory.TRANSIT
+        assert price.currency.code == currency_code
+        assert price.amount_low == amount
+        assert price.amount_high is None
+        assert price.source_class == TypicalPriceSourceClass.AUTHORITATIVE
+        assert price.confidence == TypicalPriceConfidence.HIGH
+        assert price.source_url.startswith("https://")
+        assert price.observed_at == date(2026, 10, 10)
+
+        health = build_city_coverage_health(
+            as_of=date(2026, 10, 10),
+            country_code=country_code,
+            city_slug=slug,
+        )
+        assert len(health) == 1
+        assert health[0].fresh_categories == (TypicalPriceCategory.TRANSIT,)
+        assert health[0].coverage_score == 25
+        assert health[0].provenance_gap_categories == ()
+
+
+@pytest.mark.django_db
+def test_wave_three_is_idempotent_and_does_not_invent_other_prices():
+    call_command("seed_reference_data", stdout=StringIO())
+    first = StringIO()
+    second = StringIO()
+    call_command("seed_destination_context", stdout=first)
+    call_command("seed_destination_context", stdout=second)
+
+    assert "wave 3 (official transit only) is ready: created=2, existing=0." in first.getvalue()
+    assert "wave 3 (official transit only) is ready: created=0, existing=2." in second.getvalue()
+    assert TypicalPrice.objects.filter(
+        city_ref__country__iso2__in={"CH", "PL"},
+        city_ref__slug__in={"zurich", "warsaw"},
+        is_published=True,
+    ).count() == 2
+
+    for country, city in (("CH", "zurich"), ("PL", "warsaw")):
+        context = build_destination_context(
+            country_code=country,
+            city_slug=city,
+            converted_amount=Decimal("100"),
+            quote_currency="CHF" if country == "CH" else "PLN",
+            as_of=date(2026, 10, 10),
+            price_limit=4,
+        )
+        assert context is not None
+        assert [p.category for p in context.prices if p.city_slug == city] == [
+            TypicalPriceCategory.TRANSIT
+        ]

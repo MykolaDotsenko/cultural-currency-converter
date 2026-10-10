@@ -297,6 +297,25 @@ one enabled disposable pre-trip message, retry deduplication, failure
 visibility and timezone cadence. Do not claim "automated delivery" until
 a real scheduled run has completed successfully.
 
+## Reviewed partial city anchor wave (PR-15)
+
+Following the reviewed GBP/CHF/AUD/PLN currency-reference wave, a third
+**explicit initial data seed** adds Zurich (CH/CHF) and Warsaw (PL/PLN).
+Only one officially sourced adult transit ticket price is present for each:
+ZVV CHF 4.70, one-hour 1–2 zone second-class fare (Zurich zone 110 counts
+as two zones), and Warsaw PLN 4.40, Zone 1 75-minute fare. Both were
+reviewed 2026-10-10. The source URLs and tariff scope are stored on each
+price row. Seeding is idempotent and uses canonical TypicalPrice quality
+checks; no live provider dependency is added to page loads.
+
+**These are explicitly partial city profiles** (one of four core price
+categories; city maintenance coverage score 25/100). Do not infer coffee,
+restaurant, grocery prices or an overall cost-of-living ranking. No London
+bus fare was seeded because TfL has announced a change for 2026-11-01 and
+the present TypicalPrice model has no explicit validity-end date. Refresh
+these operator tariffs after publication of later prices, and do not
+auto-refresh the hosted demo until durable data topology is verified.
+
 ## Guarded economic-context scheduled ingestion (PR-07)
 
 The existing World Bank, Eurostat and OECD ingestion command already validates
