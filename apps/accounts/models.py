@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 from django.conf import settings
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class PreferredLanguage(models.TextChoices):
@@ -20,6 +23,54 @@ class TravelStyle(models.TextChoices):
     BALANCED = "balanced", "Balanced"
     BUDGET = "budget", "Budget-conscious"
     COMFORT = "comfort", "Comfort-first"
+
+
+class VerifiedRecoveryEmail(models.Model):
+    """User-owned recovery email whose ownership must be proven before use.
+
+    No live recovery route or email sender consumes this model yet.
+    A pending address never unlocks password reset or account takeover.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recovery_email_identity",
+    )
+    email = models.EmailField(max_length=254)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verification_nonce = models.UUIDField(default=uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("email"),
+                condition=models.Q(verified_at__isnull=False),
+                name="unique_verified_recovery_email_ci",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(verified_at__isnull=True) | ~models.Q(email=""),
+                name="verified_recovery_email_nonempty",
+            ),
+        ]
+
+    @property
+    def is_verified(self) -> bool:
+        return self.verified_at is not None
+
+    def save(self, *args, **kwargs) -> None:
+        # Normalize only an explicitly proposed contact address; never
+        # import auth.User.email, which was historically unverified.
+        self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        # Keep addresses out of admin/log reprs.
+        return (
+            f"User {self.user_id}: recovery email {'verified' if self.is_verified else 'pending'}"
+        )
 
 
 class AccountPreferences(models.Model):
