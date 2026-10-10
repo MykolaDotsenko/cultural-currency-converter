@@ -85,7 +85,9 @@ class Command(BaseCommand):
                     yen = Currency.objects.get(code="JPY", is_active=True)
                     japan = Country.objects.get(iso2="JP", is_active=True)
                 except (Country.DoesNotExist, Currency.DoesNotExist) as exc:
-                    raise CommandError("Initialize test reference data before the recovery probe.") from exc
+                    raise CommandError(
+                        "Initialize test reference data before the recovery probe."
+                    ) from exc
                 owner = user_model.objects.create_user(username=_USER, password=None)
                 trip = SavedScenario(
                     user=owner,
