@@ -137,9 +137,7 @@ def test_scheduled_holiday_refresh_rejects_any_empty_year_atomically(monkeypatch
 
 
 @pytest.mark.django_db
-def test_holiday_dry_run_reports_country_year_aggregates_without_persisting(
-    monkeypatch, finland
-):
+def test_holiday_dry_run_reports_country_year_aggregates_without_persisting(monkeypatch, finland):
     monkeypatch.setattr(
         "apps.culture.management.commands.sync_public_holidays.NagerDateHolidayClient.fetch_year",
         lambda self, country_iso2, year, today=None: (_holiday(year),),
