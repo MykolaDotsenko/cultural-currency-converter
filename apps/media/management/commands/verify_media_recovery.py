@@ -24,9 +24,11 @@ class Command(BaseCommand):
         parser.add_argument("--asset-id", type=int, required=True)
 
     def handle(self, *args, **options) -> None:
-        asset = MediaAsset.objects.filter(pk=options["asset_id"]).only(
-            "status", "content_hash", "storage_file"
-        ).first()
+        asset = (
+            MediaAsset.objects.filter(pk=options["asset_id"])
+            .only("status", "content_hash", "storage_file")
+            .first()
+        )
         if asset is None:
             raise CommandError("Managed media record does not exist.")
         if asset.status != MediaStatus.PUBLISHED:
