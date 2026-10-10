@@ -8,15 +8,16 @@ from __future__ import annotations
 
 import logging
 from time import monotonic
+from typing import Any
 
 from django.core.management.base import BaseCommand
 
 logger = logging.getLogger("cultural_currency.jobs")
 
-_ALLOWED_JOBS = frozenset(
-    {"scenario_notifications", "economic_context", "public_holidays"}
+_ALLOWED_JOBS = frozenset({"scenario_notifications", "economic_context", "public_holidays"})
+_COUNT_KEYS = frozenset(
+    {"records_processed", "records_created", "records_updated", "records_retired"}
 )
-_COUNT_KEYS = frozenset({"records_processed", "records_created", "records_updated", "records_retired"})
 
 
 class ObservableJobCommand(BaseCommand):
@@ -32,7 +33,7 @@ class ObservableJobCommand(BaseCommand):
             raise ValueError("Invalid background-job aggregate counters.")
         self._job_counts = counts
 
-    def execute(self, *args, **options):
+    def execute(self, *args: Any, **options: Any) -> Any:
         if self.job_name not in _ALLOWED_JOBS:
             raise ValueError("Unknown background job.")
         self._job_counts: dict[str, int] = {}
