@@ -15,6 +15,9 @@
     </p>
   </section>
   {% if returning_trip_home %}
+    {% if returning_trip_home.schedule.state == "active" or returning_trip_home.schedule.state == "started" %}
+      {% include "travel/mobile_trip_quick_actions.html" with scenario=returning_trip_home.scenario convert_url=returning_trip_home.converter_url scan_available=returning_trip_home.camera_url budget_available=returning_trip_home.trip_budget %}
+    {% endif %}
     {% include "travel/returning_trip_home.html" %}
   {% endif %}
   {% include "components/converter/current_panel.html" %}

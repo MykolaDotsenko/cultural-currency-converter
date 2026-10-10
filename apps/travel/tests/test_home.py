@@ -352,3 +352,67 @@ def test_returning_trip_home_keeps_money_context_visible_when_camera_is_enabled(
     assert b"Open money context" in response.content
     assert b"Scan a price" in response.content
     assert b"Offline pack" in response.content
+
+
+@pytest.mark.django_db
+def test_mobile_trip_actions_only_for_active_owned_trip_and_available_camera(
+    client, home_reference_data, settings
+):
+    settings.AI_CAMERA_EXTRACTION_ENABLED = True
+    user = User.objects.create_user(username="mobile-owner", password="StrongPass-482!")
+    scenario = _scenario(
+        user,
+        home_reference_data,
+        title="Tokyo mobile",
+        start=date(2026, 9, 30),
+        end=date(2026, 10, 5),
+    )
+    client.force_login(user)
+
+    with (
+        patch("apps.travel.home.timezone.localdate", return_value=date(2026, 10, 1)),
+        patch("apps.exchange.views.build_latest_quote_gateway") as factory,
+    ):
+        response = client.get("/")
+
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert html.count("data-mobile-trip-actions") == 1
+    assert html.count('aria-label="Primary navigation"') == 1
+    for action in ("convert", "scan", "budget", "trip"):
+        assert f'data-trip-quick-action="{action}"' in html
+    detail_url = reverse("saved_scenario_detail", args=(scenario.pk,))
+    assert f'href="{detail_url}#trip-money-pass-title"' in html
+    assert f'href="{detail_url}"' in html
+    assert reverse("camera_scan_saved_scenario", args=(scenario.pk,)) in html
+    assert scenario.spend_entries.count() == 0
+    assert scenario.observations.count() == 1
+    factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_mobile_trip_actions_do_not_claim_unavailable_camera_or_upcoming_trip(
+    client, home_reference_data, settings
+):
+    settings.AI_CAMERA_EXTRACTION_ENABLED = False
+    user = User.objects.create_user(username="mobile-owner-2", password="StrongPass-482!")
+    scenario = _scenario(
+        user,
+        home_reference_data,
+        title="Tokyo mobile",
+        start=date(2026, 9, 30),
+        end=date(2026, 10, 5),
+    )
+    client.force_login(user)
+
+    with patch("apps.travel.home.timezone.localdate", return_value=date(2026, 10, 1)):
+        active = client.get("/")
+    assert active.status_code == 200
+    assert b"data-mobile-trip-actions" in active.content
+    assert b'data-trip-quick-action="scan"' not in active.content
+
+    with patch("apps.travel.home.timezone.localdate", return_value=date(2026, 9, 25)):
+        upcoming = client.get("/")
+    assert upcoming.status_code == 200
+    assert b"data-mobile-trip-actions" not in upcoming.content
+    assert reverse("saved_scenario_detail", args=(scenario.pk,)).encode() in upcoming.content

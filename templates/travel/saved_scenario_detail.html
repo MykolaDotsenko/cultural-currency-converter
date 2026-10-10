@@ -6,6 +6,11 @@
         content="Review a saved Cultural Currency Converter budget scenario and its trusted reference observation.">
 {% endblock %}
 {% block content %}
+  {% if trip_schedule and trip_budget %}
+    {% if trip_schedule.state == "active" or trip_schedule.state == "started" %}
+      {% include "travel/mobile_trip_quick_actions.html" with on_trip_page=True convert_url=converter_url scan_available=camera_extraction_available budget_available=trip_budget %}
+    {% endif %}
+  {% endif %}
   <section class="qa-foundation-intro qa-saved-intro"
            aria-labelledby="saved-scenario-title">
     <p class="qa-foundation-kicker">

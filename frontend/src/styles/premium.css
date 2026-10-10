@@ -2049,6 +2049,11 @@ h3 {
 }
 
 @media (max-width: 44rem) {
+  /* Override the later desktop money-grid declaration for 320px / 200% text. */
+  .qa-destination-comparison__money {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .qa-destination-comparison__destinations,
   .qa-destination-comparison__basket-grid {
     grid-template-columns: 1fr;

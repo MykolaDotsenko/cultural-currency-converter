@@ -225,3 +225,19 @@ On compact screens the same links wrap into rows rather than a horizontally scro
 menu. The active top-level route has a text-and-border indicator with
 `aria-current="page"`; it is never indicated by colour alone. All links work
 without JavaScript.
+
+## Mobile navigation and active-trip shortcuts
+
+At narrow widths the same five primary destinations occupy one compact row,
+with keyboard order independent from layout. At 320px the links may wrap their
+text rather than overflow or hide destinations. For authenticated people,
+account actions may occupy a separate line when they cannot share the header
+safely. Each target remains at least 44px high.
+
+Only an authenticated owner with a saved **active** date window, or a
+**started-without-end** trip, sees the contextual mobile quick-action rail on
+the clean converter home and saved budget-trip detail. The rail reuses canonical
+Convert, Camera (only when enabled), saved Budget and Trip routes; it performs
+no automatic FX query, scan, spend write or notification. No rail appears for
+anonymous, upcoming, ended or unscheduled journeys. The desktop trip
+continuity UI remains unchanged.
