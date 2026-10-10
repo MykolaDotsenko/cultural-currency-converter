@@ -6,7 +6,6 @@ from django.core.management.base import CommandError
 from django.db import transaction
 
 from apps.common.job_observability import ObservableJobCommand
-
 from apps.countries.models import Country
 from apps.culture.economic import persist_economic_observation
 from integrations.economic_data import (
