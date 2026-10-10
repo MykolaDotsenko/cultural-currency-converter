@@ -7,12 +7,6 @@
         content="Reviewed city money context with current local currency, sourced everyday-price anchors, payment guidance, freshness and canonical planning handoffs.">
   {% include "components/media/social_preview_meta.html" %}
 {% endblock %}
-{% block header_actions %}
-  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
-  <a class="qa-header-link" href="{% url 'converter' %}">Converter</a>
-  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare destinations</a>
-  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
-{% endblock %}
 {% block content %}
   {% if city_profile_error %}
     <section class="qa-foundation-intro"

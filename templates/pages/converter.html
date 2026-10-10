@@ -4,12 +4,6 @@
   <meta name="description"
         content="Convert reference exchange rates while keeping source and destination country context distinct.">
 {% endblock %}
-{% block header_actions %}
-  <a class="qa-header-link" href="{% url 'destination_mode' %}">Plan by destination</a>
-  <a class="qa-header-link" href="{% url 'destination_comparison' %}">Compare destinations</a>
-  <a class="qa-header-link" href="{% url 'explore' %}">Explore</a>
-  <a class="qa-header-link" href="{% url 'saved_state' %}">Saved &amp; recent</a>
-{% endblock %}
 {% block content %}
   <section class="qa-foundation-intro qa-product-intro"
            aria-labelledby="converter-page-title">
