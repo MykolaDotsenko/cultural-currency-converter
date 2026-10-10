@@ -196,6 +196,23 @@ records. If the storage is ephemeral, pause user-data writes or restrict the
 demo while planning a reviewed backup, migration, rollback and data-preservation
 procedure. Never infer a safe cutover from the diagnostic alone.
 
+## Reviewed international reference wave (PR-13)
+
+The deterministic reference seed also contains a small reviewed extension:
+UK/GBP, Switzerland/CHF, Australia/AUD and Poland/PLN (with central-bank
+provenance links and ISO-style currency precision). This extends **country
+and currency metadata** only. It does not publish local-price observations,
+guarantee FX-provider availability or imply a fresh exchange rate.
+
+The live application deliberately does not run `seed_reference_data` on
+every start. Before applying the expanded reference seed to an existing
+persistent DB, obtain a verified backup, rehearse on an isolated copy and
+review effects on existing source-owned metadata. A new approved initial
+bootstrap will include these additional rows automatically; an existing
+database requires a separately reviewed operator import. The original
+minimum baseline pairs remain the startup readiness threshold so this
+catalog expansion does not force older retained DBs offline prematurely.
+
 ## Reference data initial bootstrap and startup gate (PR-03)
 
 The Render web start command runs migrations and a **read-only reference-catalog
