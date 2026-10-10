@@ -227,6 +227,38 @@ migration job. Move migrations to an approved single-writer release step when
 the hosting setup supports it; do not confuse the absence of repeated seeds
 with a proof of data durability.
 
+## Opt-in scheduled scenario notification delivery (PR-06)
+
+The generation service and management command already deduplicate owner-scoped
+in-app messages. The reviewed scheduler entrypoint is deliberately **not**
+activated by this PR; it must not run against the existing ephemeral demo.
+
+Once a durable PostgreSQL deployment, recoverability, seed readiness and
+notification preference ownership are verified, the operator may configure a
+separate scheduler job using the same reviewed code SHA and environment,
+with this command:
+
+```bash
+SCENARIO_NOTIFICATIONS_SCHEDULER_APPROVED=true \
+  bash scripts/render-notification-job.sh
+```
+
+The script requires the exact approval string `true`, then runs the
+credential-free PostgreSQL/migration audit and read-only reference catalog
+check **before** `deliver_scenario_notifications`. Missing approval,
+SQLite, unavailable PostgreSQL, pending migrations or missing baseline
+reference pairs aborts without generating notifications. Approval is an
+operational decision documented separately; it is **not** automatically
+granted by CI and must not be inferred merely from a configured DATABASE_URL.
+
+Deploying a Render Cron Job creates a separate billed infrastructure
+resource and requires shared, approved environment configuration. **No cron
+service, schedule, credentials or billing changes are created by this PR.**
+Once separately authorized, verify exact deployed SHA, scheduled execution,
+one enabled disposable pre-trip message, retry deduplication, failure
+visibility and timezone cadence. Do not claim "automated delivery" until
+a real scheduled run has completed successfully.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:
