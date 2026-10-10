@@ -32,11 +32,32 @@
     <a class="qa-skip-link" href="#main-content">Skip to content</a>
     <header class="qa-shell__header">
       <div class="qa-shell__frame qa-shell__header-inner">
-        <div class="qa-brand" aria-label="Cultural Currency Converter">
+        <a class="qa-brand"
+           href="{% url 'converter' %}"
+           aria-label="Cultural Currency — open converter">
           <span class="qa-brand__wordmark">Cultural Currency</span>
-        </div>
+        </a>
+        <nav class="qa-primary-nav" aria-label="Primary navigation">
+          {% with route=request.resolver_match.url_name %}
+            <a class="qa-primary-nav__link"
+               href="{% url 'converter' %}"
+               {% if route == 'converter' %}aria-current="page"{% endif %}>Convert</a>
+            <a class="qa-primary-nav__link"
+               href="{% url 'destination_mode' %}"
+               {% if route == 'destination_mode' %}aria-current="page"{% endif %}>Plan</a>
+            <a class="qa-primary-nav__link"
+               href="{% url 'destination_comparison' %}"
+               {% if route == 'destination_comparison' %}aria-current="page"{% endif %}>Compare</a>
+            <a class="qa-primary-nav__link"
+               href="{% url 'explore' %}"
+               {% if route == 'explore' %}aria-current="page"{% endif %}>Explore</a>
+            <a class="qa-primary-nav__link"
+               href="{% url 'saved_state' %}"
+               {% if route == 'saved_state' %}aria-current="page"{% endif %}>Saved</a>
+          {% endwith %}
+        </nav>
         <div class="qa-header-actions">
-          {% block header_actions %}{% endblock %}
+          {% block header_context_actions %}{% endblock %}
           {% if user.is_authenticated %}
             <a class="qa-header-link" href="{% url 'profile' %}">Account</a>
             <form method="post" action="{% url 'logout' %}">

@@ -212,3 +212,16 @@ The supported presentation states are:
 - **not applicable** — the surrounding workflow is complete without that subsystem.
 
 Every state must be named in text, not colour alone. The state panel must explain what remains valid and must not imply that missing financial/context data was inferred. Financial stale state can stay in the dedicated provenance/status-badge system when a conversion result exists; the product-state panel is for surrounding optional surfaces, not a second FX freshness contract.
+
+## Global navigation contract
+
+Every full-page Quiet Atlas surface uses the same server-rendered primary navigation:
+**Convert, Plan, Compare, Explore, Saved**. The Cultural Currency wordmark links to
+the canonical converter. Account sign-in/profile/sign-out actions remain independent
+of the primary navigation. A page may add a genuinely contextual action (for example,
+**Back to trip** from Camera), but it must not reproduce primary navigation links.
+
+On compact screens the same links wrap into rows rather than a horizontally scrolling
+menu. The active top-level route has a text-and-border indicator with
+`aria-current="page"`; it is never indicated by colour alone. All links work
+without JavaScript.

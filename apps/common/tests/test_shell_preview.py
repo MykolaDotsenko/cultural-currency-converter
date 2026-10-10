@@ -33,10 +33,22 @@ class QuietAtlasShellPreviewTests(SimpleTestCase):
         self.assertContains(response, "Japan")
         self.assertContains(response, "Japanese yen · JPY")
         self.assertNotContains(response, "<form")
-        self.assertNotContains(response, ">Convert<")
+        self.assertNotContains(response, 'id="converter-panel"')
 
     @override_settings(DEBUG=False)
     def test_shell_preview_is_not_public_outside_debug(self) -> None:
         response = self.client.get("/_design/shell/")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_global_navigation_is_reachable_on_foundation_preview(self) -> None:
+        response = self.client.get("/_design/shell/")
+        html = response.content.decode()
+
+        self.assertEqual(html.count('aria-label="Primary navigation"'), 1)
+        self.assertIn('aria-label="Cultural Currency — open converter"', html)
+        for path in ("/", "/destination/", "/compare/", "/explore/", "/saved/"):
+            self.assertIn(f'href="{path}"', html)
+        for label in ("Convert", "Plan", "Compare", "Explore", "Saved"):
+            self.assertIn(f">{label}</a>", html)
+        self.assertNotIn("header_actions", html)
