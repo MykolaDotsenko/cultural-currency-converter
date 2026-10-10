@@ -6,7 +6,7 @@ A Django travel-money application that combines currency conversion with practic
 
 **Live demo:** https://cultural-currency-converter-mykola.onrender.com
 
-The hosted portfolio demo uses ephemeral local persistence; the strict production configuration remains PostgreSQL + Redis.
+**Hosted demo caution:** earlier Render deploys repeatedly applied initial migrations, so durable user-data persistence has **not yet been certified**. The current demo may still be on an ephemeral database until its separately approved PostgreSQL cutover. New deployment-policy code requires PostgreSQL for `demo`, `preview` and `production`; do not treat that requirement alone as proof that the **currently running** service has migrated.
 
 <p align="center">
   <img src="docs/assets/cultural-currency-converter-overview.webp"

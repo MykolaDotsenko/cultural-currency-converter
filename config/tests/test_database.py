@@ -37,17 +37,14 @@ def test_test_environment_defaults_to_sqlite() -> None:
     assert config.engine == "django.db.backends.sqlite3"
 
 
-def test_demo_defaults_to_ephemeral_sqlite() -> None:
-    config = load_database_config(
-        environ={},
-        environment=RuntimeEnvironment.DEMO,
-        base_dir=BASE_DIR,
-    )
-
-    assert config.engine == "django.db.backends.sqlite3"
-
-
-@pytest.mark.parametrize("environment", [RuntimeEnvironment.PREVIEW, RuntimeEnvironment.PRODUCTION])
+@pytest.mark.parametrize(
+    "environment",
+    [
+        RuntimeEnvironment.DEMO,
+        RuntimeEnvironment.PREVIEW,
+        RuntimeEnvironment.PRODUCTION,
+    ],
+)
 def test_deployed_environments_require_database_url(environment: RuntimeEnvironment) -> None:
     with pytest.raises(ConfigurationError, match="DATABASE_URL is required"):
         load_database_config(
@@ -93,6 +90,25 @@ def test_postgresql_url_is_normalized(scheme: str) -> None:
         "sslmode": "require",
         "application_name": "currency-app",
     }
+
+
+def test_demo_accepts_explicit_postgresql() -> None:
+    config = load_database_config(
+        environ={"DATABASE_URL": "postgresql://user:pass@db.example.test/ccc"},
+        environment=RuntimeEnvironment.DEMO,
+        base_dir=BASE_DIR,
+    )
+    assert config.is_postgresql is True
+
+
+@pytest.mark.parametrize("environment", ["demo", "preview", "production"])
+def test_deployed_environment_rejects_blank_database_url(environment: str) -> None:
+    with pytest.raises(ConfigurationError, match="DATABASE_URL is required"):
+        load_database_config(
+            environ={"DATABASE_URL": "   "},
+            environment=RuntimeEnvironment(environment),
+            base_dir=BASE_DIR,
+        )
 
 
 def test_postgresql_default_port_is_5432() -> None:
