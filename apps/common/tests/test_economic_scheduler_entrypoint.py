@@ -72,8 +72,6 @@ def test_operator_approved_economic_sync_is_strict_and_ordered(tmp_path):
 
 @pytest.mark.parametrize("failure", ["audit_persistence", "check_reference_catalog"])
 def test_preflight_failure_blocks_external_ingestion(tmp_path, failure):
-    status, calls = _run(
-        tmp_path, approved="true", source="world_bank", fail=failure
-    )
+    status, calls = _run(tmp_path, approved="true", source="world_bank", fail=failure)
     assert status == 11
     assert "manage.py sync_economic_context --source world_bank --require-observations" not in calls
