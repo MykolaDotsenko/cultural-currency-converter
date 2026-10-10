@@ -36,9 +36,7 @@ class PersistenceAuditTests(SimpleTestCase):
             patch(f"{MODULE}.MigrationExecutor") as executor_class,
         ):
             connections.__getitem__.return_value = connection
-            executor_class.return_value.migration_plan.return_value = (
-                [object()] if pending else []
-            )
+            executor_class.return_value.migration_plan.return_value = [object()] if pending else []
             if migration_error:
                 executor_class.side_effect = migration_error
             try:

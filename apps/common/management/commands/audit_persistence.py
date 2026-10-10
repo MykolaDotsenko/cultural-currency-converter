@@ -68,9 +68,7 @@ class Command(BaseCommand):
         result = {
             "backend": backend,
             "connection": connection_status,
-            "deployed_sqlite_risk": (
-                environment in _DEPLOYED_ENVIRONMENTS and backend == "sqlite"
-            ),
+            "deployed_sqlite_risk": (environment in _DEPLOYED_ENVIRONMENTS and backend == "sqlite"),
             "durability": "unverified",
             "environment": environment,
             "migrations": migrations_status,
@@ -80,9 +78,7 @@ class Command(BaseCommand):
         # This opt-in gate checks configuration, connectivity and migration
         # readiness ONLY. A real restart/deploy/backup drill remains mandatory.
         if options["require_postgresql"] and not (
-            backend == "postgresql"
-            and connection_status == "ok"
-            and migrations_status == "current"
+            backend == "postgresql" and connection_status == "ok" and migrations_status == "current"
         ):
             raise CommandError(
                 "PostgreSQL persistence preflight failed; inspect the sanitized audit result."
