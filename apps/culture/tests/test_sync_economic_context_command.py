@@ -102,3 +102,39 @@ def test_sync_economic_context_aborts_before_writes_when_any_source_fails(
         call_command("sync_economic_context", source="all", country=["FI"])
 
     assert not EconomicObservation.objects.exists()
+
+
+@pytest.mark.django_db
+def test_scheduled_economic_sync_refuses_empty_provider_result(monkeypatch, finland):
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_economic_context."
+        "WorldBankEconomicClient.fetch_country",
+        lambda self, country_iso3: (),
+    )
+
+    with pytest.raises(CommandError, match="no observations"):
+        call_command(
+            "sync_economic_context",
+            source="world_bank",
+            country=["FI"],
+            require_observations=True,
+        )
+
+    assert not EconomicObservation.objects.exists()
+
+
+@pytest.mark.django_db
+def test_manual_economic_sync_can_explicitly_inspect_empty_coverage(monkeypatch, finland):
+    monkeypatch.setattr(
+        "apps.culture.management.commands.sync_economic_context."
+        "WorldBankEconomicClient.fetch_country",
+        lambda self, country_iso3: (),
+    )
+
+    call_command(
+        "sync_economic_context",
+        source="world_bank",
+        country=["FI"],
+        dry_run=True,
+    )
+    assert not EconomicObservation.objects.exists()
