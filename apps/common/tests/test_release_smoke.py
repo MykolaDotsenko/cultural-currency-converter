@@ -72,9 +72,7 @@ class LiveReleaseSmokeTests(SimpleTestCase):
         result = check_release_smoke(URL, SHA, opener=_opener(cache=None))
         self.assertEqual(result["cache"], "not_checked")
         with self.assertRaisesRegex(RevisionCheckError, "shared_cache_unverified"):
-            check_release_smoke(
-                URL, SHA, require_shared_cache=True, opener=_opener(cache=None)
-            )
+            check_release_smoke(URL, SHA, require_shared_cache=True, opener=_opener(cache=None))
 
     def test_sha_mismatch_stops_before_health_calls(self) -> None:
         opener = _opener()
@@ -118,7 +116,5 @@ class LiveReleaseSmokeTests(SimpleTestCase):
     def test_non_https_remote_url_rejected_before_network(self) -> None:
         opener = _opener()
         with self.assertRaisesRegex(RevisionCheckError, "invalid_endpoint_url"):
-            check_release_smoke(
-                "http://evil.example.test/health/revision/", SHA, opener=opener
-            )
+            check_release_smoke("http://evil.example.test/health/revision/", SHA, opener=opener)
         self.assertEqual(opener.paths, [])
