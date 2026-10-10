@@ -22,9 +22,9 @@ def test_report_flags_seed_only_currency_coverage_without_provider_calls():
     result = json.loads(out.getvalue())
     expected = {"GBP", "CHF", "AUD", "PLN"}
     assert expected <= {row["code"] for row in result["currencies"]}
-    assert {
-        row["state"] for row in result["currencies"] if row["code"] in expected
-    } == {"metadata_missing"}
+    assert {row["state"] for row in result["currencies"] if row["code"] in expected} == {
+        "metadata_missing"
+    }
     assert result["pair_availability"] == "not_evaluated"
 
 
