@@ -1,0 +1,24 @@
+{# Context-only, native-link shortcuts. Included only for an active/started owner-scoped trip. #}
+<nav class="qa-mobile-trip-actions"
+     aria-label="Active trip quick actions"
+     data-mobile-trip-actions>
+  <p class="qa-mobile-trip-actions__title">Your trip · quick actions</p>
+  <div class="qa-mobile-trip-actions__links">
+    <a class="qa-mobile-trip-actions__link"
+       data-trip-quick-action="convert"
+       href="{{ convert_url }}">Convert</a>
+    {% if scan_available %}
+      <a class="qa-mobile-trip-actions__link"
+         data-trip-quick-action="scan"
+         href="{% url 'camera_scan_saved_scenario' scenario.pk %}">Scan</a>
+    {% endif %}
+    {% if budget_available %}
+      <a class="qa-mobile-trip-actions__link qa-mobile-trip-actions__link--priority"
+         data-trip-quick-action="budget"
+         href="{% if on_trip_page %}#trip-money-pass-title{% else %}{% url 'saved_scenario_detail' scenario.pk %}#trip-money-pass-title{% endif %}">Budget</a>
+    {% endif %}
+    <a class="qa-mobile-trip-actions__link"
+       data-trip-quick-action="trip"
+       href="{% if on_trip_page %}#saved-scenario-title{% else %}{% url 'saved_scenario_detail' scenario.pk %}{% endif %}">Trip</a>
+  </div>
+</nav>
