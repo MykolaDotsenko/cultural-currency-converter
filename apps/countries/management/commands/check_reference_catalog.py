@@ -22,9 +22,7 @@ _REQUIRED_PRIMARY_PAIRS = frozenset(
         ("NZ", "NZD"),
     }
 )
-_PRODUCT_APP_LABELS = frozenset(
-    {"accounts", "countries", "culture", "exchange", "media", "travel"}
-)
+_PRODUCT_APP_LABELS = frozenset({"accounts", "countries", "culture", "exchange", "media", "travel"})
 
 
 def _product_tables_are_empty() -> bool:
@@ -78,6 +76,6 @@ class Command(BaseCommand):
                     "Reference catalog incomplete; initialize explicitly before serving requests."
                 )
             self.stdout.write("Reference catalog: required country/currency pairs present.")
-        except DatabaseError as exc:
+        except DatabaseError:
             # Database errors may embed DSNs, credentials, internal table names.
             raise CommandError("Reference catalog could not be verified.") from None
