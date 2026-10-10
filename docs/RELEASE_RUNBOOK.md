@@ -259,6 +259,33 @@ one enabled disposable pre-trip message, retry deduplication, failure
 visibility and timezone cadence. Do not claim "automated delivery" until
 a real scheduled run has completed successfully.
 
+## Guarded economic-context scheduled ingestion (PR-07)
+
+The existing World Bank, Eurostat and OECD ingestion command already validates
+all external responses **before** its database transaction. For scheduled
+runs only, use the new `--require-observations` flag so a successful-but-empty
+provider result does not silently count as a completed refresh. This flag
+raises a nonzero error before any writes if zero normalized observations are
+returned; manual exploratory `--dry-run` still permits empty coverage.
+
+After explicit operator approval of provider licensing, request volume,
+freshness expectations and verified PostgreSQL durability, a scheduler may
+invoke (example for World Bank, **not activated by this PR**):
+
+```bash
+ECONOMIC_CONTEXT_SCHEDULER_APPROVED=true ECONOMIC_SYNC_SOURCE=world_bank \
+  bash scripts/render-economic-sync-job.sh
+```
+
+The script refuses an absent approval, requires explicit allow-listed provider
+selection, verifies PostgreSQL and the reference catalog, then runs the
+existing ingestion through the strict nonempty gate. The supported provider
+choices are `world_bank`, `eurostat`, `oecd`, `all`; broad `all` sweeps
+require separate operational review because of source coverage/volume. It
+creates **no Render Cron Job**, subscription, credentials or billing changes.
+Actual automated freshness is unverified until a real scheduled execution
+and audit trail exist.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:

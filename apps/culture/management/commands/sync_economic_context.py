@@ -32,6 +32,11 @@ class Command(BaseCommand):
             help="Optional ISO alpha-2 or alpha-3 country filter; repeatable.",
         )
         parser.add_argument("--dry-run", action="store_true")
+        parser.add_argument(
+            "--require-observations",
+            action="store_true",
+            help="Fail if no observations were fetched; intended for scheduled runs.",
+        )
 
     def handle(self, *args, **options):
         countries = self._countries(options["country"])
@@ -56,6 +61,11 @@ class Command(BaseCommand):
             raise CommandError(
                 "Economic context sync aborted before database writes: " + "; ".join(errors)
             )
+
+        # A provider may successfully return an empty result. That is a valid
+        # exploratory/manual response, but must fail a scheduled freshness gate.
+        if options["require_observations"] and not observations:
+            raise CommandError("Economic context sync returned no observations; no rows updated.")
 
         created_count = 0
         updated_count = 0
