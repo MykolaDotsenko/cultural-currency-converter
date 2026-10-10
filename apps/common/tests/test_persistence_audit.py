@@ -8,7 +8,8 @@ from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import SimpleTestCase, override_settings
+from django.db import connection
+from django.test import SimpleTestCase, TestCase, override_settings
 
 MODULE = "apps.common.management.commands.audit_persistence"
 
@@ -137,3 +138,14 @@ class PersistenceAuditTests(SimpleTestCase):
         self.assertEqual(result["backend"], "other")
         self.assertNotIn("private-string", json.dumps(result))
         self.assertIsNotNone(error)
+
+
+class PersistenceAuditDatabaseTests(TestCase):
+    def test_real_test_database_reports_current_migrations_without_durability_claim(self) -> None:
+        output = StringIO()
+        call_command("audit_persistence", stdout=output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["backend"], connection.vendor)
+        self.assertEqual(result["connection"], "ok")
+        self.assertEqual(result["migrations"], "current")
+        self.assertEqual(result["durability"], "unverified")

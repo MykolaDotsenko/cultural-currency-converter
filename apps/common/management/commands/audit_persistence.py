@@ -55,7 +55,7 @@ class Command(BaseCommand):
             if reachable:
                 connection_status = "ok"
         except Exception:
-            pass
+            connection_status = "unavailable"
 
         if connection_status == "ok":
             try:
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 pending = executor.migration_plan(executor.loader.graph.leaf_nodes())
                 migrations_status = "pending" if pending else "current"
             except Exception:
-                pass
+                migrations_status = "unknown"
 
         result = {
             "backend": backend,
