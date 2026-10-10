@@ -68,6 +68,31 @@ Test-only fixtures are never production capabilities. Production configuration m
 - `AI_RUNTIME_TEST_FIXTURE_ENABLED=true`;
 - `AI_CAMERA_TEST_FIXTURE_ENABLED=true`.
 
+## Read-only Render deployment configuration contract (PR-04)
+
+Before promoting a release, compare the actual Render service's **nonsecret
+metadata** with `render.yaml`: service name, branch, build/start commands,
+health-check path, auto-deploy mode/trigger. The repository currently expects
+`checksPass` and `/health/ready/`; the observed Render service used
+`commit` and an empty health-check path on 2026-10-10.
+
+Export only the public/nonsecret service configuration as a local JSON object
+(`name`, `branch`, `autoDeploy`, `autoDeployTrigger`,
+`serviceDetails.{buildCommand,startCommand,healthCheckPath}`). Do **not**
+export tokens, deployment secrets or environment variable values.
+
+```bash
+python scripts/check_render_service_contract.py --service-json /secure/operator/render-service.json
+```
+
+The checker reads the single web-service scalar fields from `render.yaml`,
+compares them with that export, returns exit code 1 on drift/incomplete input,
+and prints **field names only**, never observed values. A matching contract
+does not prove Render health, data durability or an auto-deploy trigger fired;
+use the exact live SHA check and database recovery drill separately.
+Resolving actual Render settings is an explicitly reviewed operator action,
+not an automatic change made by this diagnostic.
+
 ## Deployed revision identity and drift gate
 
 The read-only, DB-free **GET/HEAD** `/health/revision/` endpoint is independent
