@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 OLD_PASSWORD = "SecureStart-482!"
 NEW_PASSWORD = "StrongChanged-735!"
 
 
+@override_settings(VITE_DEV_SERVER_ENABLED=True)
 class PasswordChangeWebTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
