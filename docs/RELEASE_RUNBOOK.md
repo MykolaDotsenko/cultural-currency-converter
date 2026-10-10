@@ -39,6 +39,12 @@ for the known 2026-10-08 branch-protection gap. Do not mark this gate passed
 until the actual GitHub setting and negative enforcement test have been
 observed and recorded alongside the pinned release candidate.
 
+## Strict deployed database configuration (PR-02)
+
+The database config now rejects missing `DATABASE_URL` for **every deployed environment** (`demo`, `preview`, `production`). `local` and `test` retain SQLite by default. Existing hosted demo settings may still be using ephemeral SQLite until an approved cutover, so **do not merge/deploy this rule into the active Render service without first validating and provisioning a durable PostgreSQL database and any existing user-data migration/backup requirements**. A startup failure is expected when `APP_ENV=demo` lacks `DATABASE_URL`; this is a safety guard, not evidence of a broken database.
+
+Pass the PR-01 read-only audit after migrations, then verify a disposable owner-scoped scenario survives a controlled restart **and** separate deploy. Preserve current user data, never assume an empty database is safe to replace, and retain the rollback/restore path. PostgreSQL credentials, connection names and hosts must not appear in shared reports.
+
 ## Strict production configuration
 
 The hosted portfolio demo is not evidence that strict production infrastructure is configured.

@@ -131,7 +131,7 @@ def load_database_config(
     environment: RuntimeEnvironment,
     base_dir: Path,
 ) -> DatabaseConfig:
-    """Load database configuration with PostgreSQL required when deployed."""
+    """Require PostgreSQL for every deployed, user-writable environment."""
 
     database_url = _optional(environ, "DATABASE_URL")
 
@@ -139,10 +139,11 @@ def load_database_config(
         return _parse_postgresql_url(database_url)
 
     if environment in {
+        RuntimeEnvironment.DEMO,
         RuntimeEnvironment.PREVIEW,
         RuntimeEnvironment.PRODUCTION,
     }:
-        raise ConfigurationError("DATABASE_URL is required for preview and production.")
+        raise ConfigurationError("DATABASE_URL is required for demo, preview and production.")
 
     return DatabaseConfig(
         engine="django.db.backends.sqlite3",

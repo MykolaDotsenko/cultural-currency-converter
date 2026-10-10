@@ -192,7 +192,7 @@ Receipt images, merchants and free-text purchase descriptions are deliberately o
 
 ## Persistence
 
-PostgreSQL is the production-oriented durable store. Local development can use SQLite.
+PostgreSQL is the configured database backend in all deployed environments (`demo`, `preview`, `production`). Only `local` and `test` may fall back to SQLite. This prevents a hosted service that accepts account data from silently using a fresh SQLite file after redeploy. PostgreSQL connectivity by itself does not establish physical retention, correct topology, backups or a successfully tested restart/deploy recovery. Do not deploy the new demo policy before provisioning verified durable storage.
 
 Use database constraints for durable invariants such as uniqueness/ownership where appropriate.
 

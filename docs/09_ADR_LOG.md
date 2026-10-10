@@ -58,9 +58,9 @@ Provider payloads are normalized before application/domain use.
 
 **Status:** active
 
-Production-oriented persistence targets PostgreSQL; SQLite remains useful locally.
+All deployed modes (`demo`, `preview`, `production`) require an explicit PostgreSQL `DATABASE_URL`; SQLite remains available for `local` and `test` only.
 
-**Why:** PostgreSQL supports the constraints/concurrency behaviour expected for user-owned state.
+**Why:** PostgreSQL supports the constraints/concurrency behaviour expected for user-owned state, and the hosted demo already exposes account-owned trips. Repeated first-time migration logs on deployments motivated removing the unsafe deployed-SQLite fallback. The backend choice is a necessary configuration gate, **not** proof of storage durability, retention or recovery. The rollout stays blocked on a verified database topology, backup, disposable-record restart/deploy drill and approved cutover.
 
 **Revisit when:** deployment constraints or scale justify another durable store.
 
