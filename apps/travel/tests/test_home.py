@@ -377,7 +377,7 @@ def test_mobile_trip_actions_only_for_active_owned_trip_and_available_camera(
 
     assert response.status_code == 200
     html = response.content.decode()
-    assert html.count('data-mobile-trip-actions') == 1
+    assert html.count("data-mobile-trip-actions") == 1
     assert html.count('aria-label="Primary navigation"') == 1
     for action in ("convert", "scan", "budget", "trip"):
         assert f'data-trip-quick-action="{action}"' in html
