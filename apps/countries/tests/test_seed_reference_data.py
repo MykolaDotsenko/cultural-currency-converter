@@ -81,3 +81,40 @@ def test_reference_seed_exposes_canonical_region_and_subregion_metadata():
         "JP": ("Asia", "Eastern Asia"),
         "NZ": ("Oceania", "Australia and New Zealand"),
     }
+
+
+@pytest.mark.django_db
+def test_reference_seed_adds_first_international_wave_with_official_provenance():
+    call_command("seed_reference_data")
+    expected = {"GB": "GBP", "CH": "CHF", "AU": "AUD", "PL": "PLN"}
+    linked = (
+        CountryCurrency.objects.current(date(2026, 10, 10))
+        .primary()
+        .filter(country__iso2__in=expected)
+        .select_related("country", "currency")
+    )
+    assert {row.country.iso2: row.currency.code for row in linked} == expected
+    assert all(row.source.startswith("https://") for row in linked)
+    assert all(row.currency.minor_units == 2 for row in linked)
+    assert all(row.currency.is_active for row in linked)
+
+
+@pytest.mark.django_db
+def test_international_reference_wave_is_idempotent():
+    call_command("seed_reference_data")
+    before = {
+        (row.country.iso2, row.currency.code, row.source)
+        for row in CountryCurrency.objects.filter(
+            country__iso2__in={"GB", "CH", "AU", "PL"}
+        ).select_related("country", "currency")
+    }
+    assert len(before) == 4
+    call_command("seed_reference_data")
+    after = {
+        (row.country.iso2, row.currency.code, row.source)
+        for row in CountryCurrency.objects.filter(
+            country__iso2__in={"GB", "CH", "AU", "PL"}
+        ).select_related("country", "currency")
+    }
+    assert after == before
+    assert Currency.objects.filter(code__in={"GBP", "CHF", "AUD", "PLN"}).count() == 4

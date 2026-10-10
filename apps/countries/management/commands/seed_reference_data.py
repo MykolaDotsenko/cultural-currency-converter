@@ -24,6 +24,10 @@ _NEW_ZEALAND_DOLLAR_SOURCE = (
     "https://www.rbnz.govt.nz/en/statistics/series/reserve-bank/"
     "bank-notes-in-the-hands-of-the-public"
 )
+_UK_POUND_SOURCE = "https://www.bankofengland.co.uk/banknotes/current-banknotes"
+_SWISS_FRANC_SOURCE = "https://www.snb.ch/en/the-snb/mandates-goals/cash"
+_AUSTRALIAN_DOLLAR_SOURCE = "https://banknotes.rba.gov.au/"
+_POLISH_ZLOTY_SOURCE = "https://nbp.pl/statystyka-i-sprawozdawczosc/kursy/tabela-c/"
 
 
 class Command(BaseCommand):
@@ -42,6 +46,10 @@ class Command(BaseCommand):
             "SG": ("SGP", "Singapore", "Asia", "South-Eastern Asia"),
             "CA": ("CAN", "Canada", "Americas", "North America"),
             "NZ": ("NZL", "New Zealand", "Oceania", "Australia and New Zealand"),
+            "GB": ("GBR", "United Kingdom", "Europe", "Northern Europe"),
+            "CH": ("CHE", "Switzerland", "Europe", "Western Europe"),
+            "AU": ("AUS", "Australia", "Oceania", "Australia and New Zealand"),
+            "PL": ("POL", "Poland", "Europe", "Eastern Europe"),
         }
         currencies = {
             "EUR": ("Euro", "€", 2, True, None, None),
@@ -53,6 +61,10 @@ class Command(BaseCommand):
             "SGD": ("Singapore dollar", "S$", 2, True, None, None),
             "CAD": ("Canadian dollar", "$", 2, True, None, None),
             "NZD": ("New Zealand dollar", "$", 2, True, None, None),
+            "GBP": ("Pound sterling", "£", 2, True, None, None),
+            "CHF": ("Swiss franc", "CHF", 2, True, None, None),
+            "AUD": ("Australian dollar", "A$", 2, True, None, None),
+            "PLN": ("Polish złoty", "zł", 2, True, None, None),
             "FIM": ("Finnish markka", "mk", 2, False, None, date(2001, 12, 31)),
         }
 
@@ -120,6 +132,10 @@ class Command(BaseCommand):
             ("SG", "SGD", True, None, None, "current_primary", _SINGAPORE_DOLLAR_SOURCE),
             ("CA", "CAD", True, None, None, "current_primary", _CANADIAN_DOLLAR_SOURCE),
             ("NZ", "NZD", True, None, None, "current_primary", _NEW_ZEALAND_DOLLAR_SOURCE),
+            ("GB", "GBP", True, None, None, "current_primary", _UK_POUND_SOURCE),
+            ("CH", "CHF", True, None, None, "current_primary", _SWISS_FRANC_SOURCE),
+            ("AU", "AUD", True, None, None, "current_primary", _AUSTRALIAN_DOLLAR_SOURCE),
+            ("PL", "PLN", True, None, None, "current_primary", _POLISH_ZLOTY_SOURCE),
         ]
         for iso2, code, primary, valid_from, valid_to, role, source in relationships:
             CountryCurrency.objects.update_or_create(
