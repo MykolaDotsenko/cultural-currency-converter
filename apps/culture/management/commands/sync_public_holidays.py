@@ -3,12 +3,11 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from django.core.management.base import CommandError
-
-from apps.common.job_observability import ObservableJobCommand
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.common.job_observability import ObservableJobCommand
 from apps.countries.models import Country
 from apps.culture.calendar import reconcile_public_holiday_year
 from integrations.holidays import HolidayDataSourceError, NagerDateHolidayClient

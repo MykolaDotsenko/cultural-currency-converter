@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from apps.common.job_observability import ObservableJobCommand
 from django.utils import timezone
+
+from apps.common.job_observability import ObservableJobCommand
 
 from apps.travel.notification_delivery import generate_due_notifications
 

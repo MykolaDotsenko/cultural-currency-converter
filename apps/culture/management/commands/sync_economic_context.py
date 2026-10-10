@@ -3,9 +3,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from django.core.management.base import CommandError
+from django.db import transaction
 
 from apps.common.job_observability import ObservableJobCommand
-from django.db import transaction
 
 from apps.countries.models import Country
 from apps.culture.economic import persist_economic_observation
