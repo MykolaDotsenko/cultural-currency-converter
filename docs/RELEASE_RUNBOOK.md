@@ -234,6 +234,23 @@ database requires a separately reviewed operator import. The original
 minimum baseline pairs remain the startup readiness threshold so this
 catalog expansion does not force older retained DBs offline prematurely.
 
+## Versioned budget re-planning (PR-21A)
+
+A saved owner-scoped **budget** may now be explicitly re-planned through
+`/saved/scenarios/<id>/replan/` for traveler count (1–20) and an optional
+duration (1–365). The first edit records the original plan as revision 0,
+then each changed plan as an append-only revision. Concurrent tabs are
+checked against the saved scenario's last updated timestamp under a
+database lock; stale submissions receive HTTP 409, rather than overwriting
+newer changes. Identical submissions create no revision.
+
+This affects planning/day-count interpretation **only**. The original
+trusted FX observation, payment-adjusted spending baseline, category
+assumptions, account owner, re-check history and confirmed spending
+cannot be modified by this route. A 20-edit cap bounds storage growth.
+The feature does not provide category-value editing or change a fixed
+saved-trip date; those require separately reviewed product semantics.
+
 ## Reference data initial bootstrap and startup gate (PR-03)
 
 The Render web start command runs migrations and a **read-only reference-catalog

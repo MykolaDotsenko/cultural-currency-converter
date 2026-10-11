@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Replan trip budget · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex, nofollow">
+{% endblock %}
+{% block content %}
+  <section class="qa-account-panel" aria-labelledby="replan-title">
+    <p class="qa-foundation-kicker">Saved trip · explicit planning revision</p>
+    <h1 id="replan-title">Replan your trip</h1>
+    <p class="qa-account-panel__lede">
+      Adjust your traveler count or planned duration. The original exchange-rate observation,
+      payment-adjusted reference budget and all confirmed spending remain unchanged.
+      When trip dates are saved, the remaining-per-day calculation follows those dates.
+    </p>
+    <form class="qa-account-form" method="post"
+          action="{% url 'replan_saved_budget' scenario.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="version" value="{{ version }}">
+      {% if error %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert"><p>{{ error }}</p></div>
+      {% endif %}
+      {% if form.non_field_errors %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ form.non_field_errors.0 }}</p>
+        </div>
+      {% endif %}
+      {% for field in form %}
+        <div class="qa-field{% if field.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <p class="qa-field__message qa-field__message--error" role="alert">{{ field.errors.0 }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="qa-primary-button">Save new planning revision</button>
+      <a class="qa-secondary-button" href="{% url 'saved_scenario_detail' scenario.pk %}">Cancel</a>
+    </form>
+  </section>
+  {% if revisions %}
+    <section class="qa-account-panel" aria-labelledby="planning-history-title">
+      <h2 id="planning-history-title">Planning history</h2>
+      <p>Earlier plans remain available for review. This history does not change your
+         saved FX observations or confirmed spend.</p>
+      <ol>
+        {% for item in revisions %}
+          <li>
+            Revision {{ item.revision }} · {{ item.travelers }} traveler{{ item.travelers|pluralize }}
+            · {% if item.duration_days %}{{ item.duration_days }} day{{ item.duration_days|pluralize }}
+              {% else %}duration not specified{% endif %}
+            · {{ item.recorded_at|date:"j M Y, H:i" }}
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+  {% endif %}
+{% endblock %}
