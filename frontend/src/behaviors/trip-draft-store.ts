@@ -21,7 +21,9 @@ interface DraftEnvelope {
   version: number;
   drafts: TripDraft[];
 }
-export type DraftRead = { status: "ok"; drafts: TripDraft[] } | { status: "unavailable" | "invalid"; drafts: [] };
+export type DraftRead =
+  | { status: "ok"; drafts: TripDraft[] }
+  | { status: "unavailable" | "invalid"; drafts: [] };
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 function record(raw: unknown): raw is Record<string, unknown> {
@@ -46,12 +48,16 @@ export function normalizeTripDraft(raw: unknown): TripDraft | null {
   const startDate = raw.startDate;
   const updatedAt = raw.updatedAt;
 
+  const containsControlCharacter = [...title].some((character) => {
+    const code = character.charCodeAt(0);
+    return code < 32 || code === 127;
+  });
   if (
     typeof id !== "string" ||
     !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(id) ||
     !title ||
     title.length > 80 ||
-    /[\x00-\x1f\x7f]/.test(title) ||
+    containsControlCharacter ||
     typeof destination !== "string" ||
     !/^[A-Z]{2}(?::[a-z0-9]+(?:-[a-z0-9]+)*)?$/.test(destination) ||
     typeof sourceCurrency !== "string" ||
@@ -72,7 +78,17 @@ export function normalizeTripDraft(raw: unknown): TripDraft | null {
     return null;
   }
 
-  return { id, title, destination, sourceCurrency, amount, travelers: travelers as number, durationDays: durationDays as number, startDate: startDate as string, updatedAt };
+  return {
+    id,
+    title,
+    destination,
+    sourceCurrency,
+    amount,
+    travelers: travelers as number,
+    durationDays: durationDays as number,
+    startDate: startDate as string,
+    updatedAt,
+  };
 }
 
 export function readTripDrafts(storage: DraftStorage | null): DraftRead {
@@ -87,13 +103,19 @@ export function readTripDrafts(storage: DraftStorage | null): DraftRead {
   if (source.length > MAX_SERIALIZED_BYTES) return { status: "invalid", drafts: [] };
   try {
     const value: unknown = JSON.parse(source);
-    if (!record(value) || value.version !== VERSION || !Array.isArray(value.drafts) || value.drafts.length > MAX_DRAFTS) {
+    if (
+      !record(value) ||
+      value.version !== VERSION ||
+      !Array.isArray(value.drafts) ||
+      value.drafts.length > MAX_DRAFTS
+    ) {
       return { status: "invalid", drafts: [] };
     }
     const items = value.drafts.map(normalizeTripDraft);
     if (items.some((item) => item === null)) return { status: "invalid", drafts: [] };
     const drafts = items as TripDraft[];
-    if (new Set(drafts.map((item) => item.id)).size !== drafts.length) return { status: "invalid", drafts: [] };
+    if (new Set(drafts.map((item) => item.id)).size !== drafts.length)
+      return { status: "invalid", drafts: [] };
     return { status: "ok", drafts };
   } catch {
     return { status: "invalid", drafts: [] };
@@ -101,7 +123,8 @@ export function readTripDrafts(storage: DraftStorage | null): DraftRead {
 }
 
 export function saveTripDrafts(storage: DraftStorage | null, drafts: TripDraft[]): boolean {
-  if (!storage || drafts.length > MAX_DRAFTS || drafts.some((item) => !normalizeTripDraft(item))) return false;
+  if (!storage || drafts.length > MAX_DRAFTS || drafts.some((item) => !normalizeTripDraft(item)))
+    return false;
   if (new Set(drafts.map((item) => item.id)).size !== drafts.length) return false;
   const envelope: DraftEnvelope = { version: VERSION, drafts };
   const payload = JSON.stringify(envelope);

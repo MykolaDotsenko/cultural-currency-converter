@@ -109,9 +109,15 @@ test("hard cap of eight drafts and IDs are enforced", () => {
 
 test("blocked storage never crashes or loses the previously stored value", () => {
   const blocked = {
-    getItem() { throw new Error("private mode"); },
-    setItem() { throw new Error("quota"); },
-    removeItem() { throw new Error("blocked"); },
+    getItem() {
+      throw new Error("private mode");
+    },
+    setItem() {
+      throw new Error("quota");
+    },
+    removeItem() {
+      throw new Error("blocked");
+    },
   };
   assert.deepEqual(readTripDrafts(blocked), { status: "unavailable", drafts: [] });
   assert.equal(saveTripDrafts(blocked, [draft]), false);

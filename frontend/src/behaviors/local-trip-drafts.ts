@@ -33,9 +33,9 @@ function draftFromForm(form: HTMLFormElement, existing?: TripDraft): TripDraft |
   const candidate = {
     id: existing?.id ?? crypto.randomUUID(),
     title: inputValue(form, "title"),
-    destination: inputValue(form, "destination").toUpperCase().replace(/:([A-Z-]+)/g, (group) =>
-      group.toLowerCase(),
-    ),
+    destination: inputValue(form, "destination")
+      .toUpperCase()
+      .replace(/:([A-Z-]+)/g, (group) => group.toLowerCase()),
     sourceCurrency: inputValue(form, "sourceCurrency").toUpperCase(),
     amount: inputValue(form, "amount"),
     travelers: Number(inputValue(form, "travelers")),
@@ -122,7 +122,10 @@ function renderDrafts(page: HTMLElement): void {
       form.dataset.editId = draft.id;
       save.textContent = "Update local draft";
       form.querySelector<HTMLInputElement>('input[name="title"]')?.focus();
-      feedback(page, "Editing this browser-only draft. Changes are not saved until you select Update.");
+      feedback(
+        page,
+        "Editing this browser-only draft. Changes are not saved until you select Update.",
+      );
     });
 
     const plan = document.createElement("button");
@@ -144,7 +147,11 @@ function renderDrafts(page: HTMLElement): void {
         );
         window.location.assign(`${plannerUrl}#local-trip-draft`);
       } catch {
-        feedback(page, "Could not prepare the draft. Browser storage is unavailable; no inputs were sent.", true);
+        feedback(
+          page,
+          "Could not prepare the draft. Browser storage is unavailable; no inputs were sent.",
+          true,
+        );
       }
     });
 
@@ -156,7 +163,13 @@ function renderDrafts(page: HTMLElement): void {
     remove.addEventListener("click", () => {
       if (!window.confirm(`Remove the local draft "${draft.title}" from this browser?`)) return;
       const latest = readTripDrafts(storage);
-      if (latest.status !== "ok" || !saveTripDrafts(storage, latest.drafts.filter((item) => item.id !== draft.id))) {
+      if (
+        latest.status !== "ok" ||
+        !saveTripDrafts(
+          storage,
+          latest.drafts.filter((item) => item.id !== draft.id),
+        )
+      ) {
         feedback(page, "The local draft could not be removed; it is unchanged.", true);
         return;
       }
@@ -199,12 +212,20 @@ function wireDraftEditor(page: HTMLElement): void {
     }
     const draft = draftFromForm(form, previous);
     if (!draft) {
-      feedback(page, "Check the title, ISO currency, destination, amount, travellers, days and date.", true);
+      feedback(
+        page,
+        "Check the title, ISO currency, destination, amount, travellers, days and date.",
+        true,
+      );
       return;
     }
     const next = upsertTripDraft(latest.drafts, draft);
     if (!next || !saveTripDrafts(storage, next)) {
-      feedback(page, "Unable to save. The maximum is eight drafts, or browser storage may be full.", true);
+      feedback(
+        page,
+        "Unable to save. The maximum is eight drafts, or browser storage may be full.",
+        true,
+      );
       return;
     }
     form.reset();
@@ -214,12 +235,14 @@ function wireDraftEditor(page: HTMLElement): void {
     feedback(page, "Saved on this device only. Nothing was sent to the server.");
   });
 
-  page.querySelector<HTMLButtonElement>("[data-trip-draft-reset]")?.addEventListener("click", () => {
-    form.reset();
-    delete form.dataset.editId;
-    save.textContent = "Save local draft";
-    feedback(page, "Unsaved edits discarded. Stored drafts remain unchanged.");
-  });
+  page
+    .querySelector<HTMLButtonElement>("[data-trip-draft-reset]")
+    ?.addEventListener("click", () => {
+      form.reset();
+      delete form.dataset.editId;
+      save.textContent = "Save local draft";
+      feedback(page, "Unsaved edits discarded. Stored drafts remain unchanged.");
+    });
 
   clear.addEventListener("click", () => {
     if (!window.confirm("Permanently clear all trip drafts stored in this browser?")) return;
@@ -275,7 +298,8 @@ function handoffToDestinationForm(): void {
   ) {
     if (status) {
       status.hidden = false;
-      status.textContent = "Draft inputs could not be prefilled. Select a currently supported currency and destination manually; the local draft is unchanged.";
+      status.textContent =
+        "Draft inputs could not be prefilled. Select a currently supported currency and destination manually; the local draft is unchanged.";
     }
     return;
   }
