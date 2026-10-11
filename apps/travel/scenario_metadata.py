@@ -6,6 +6,8 @@ part of this form. Optimistic version checks avoid silent multi-tab overwrites.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -21,7 +23,7 @@ class SavedScenarioMetadataForm(forms.ModelForm):
     class Meta:
         model = SavedScenario
         fields = ("title", "travel_start_date", "travel_end_date")
-        widgets = {
+        widgets: ClassVar[dict[str, forms.Widget]] = {
             "title": forms.TextInput(
                 attrs={"class": "qa-text-input", "autocomplete": "off", "maxlength": "120"}
             ),
