@@ -156,9 +156,7 @@ class RecoveryEmailWebTests(TestCase):
         self.assertTrue(captured.records)
         for record in captured.records:
             self.assertNotIn(signed_token, record.path)
-            self.assertEqual(
-                record.path, "/accounts/recovery-email/confirm/[redacted]/"
-            )
+            self.assertEqual(record.path, "/accounts/recovery-email/confirm/[redacted]/")
 
     def test_login_required_for_both_endpoints(self):
         self.client.logout()
