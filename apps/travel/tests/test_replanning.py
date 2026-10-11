@@ -386,14 +386,17 @@ def test_category_change_only_updates_timestamp_and_revision(budget):
         scenario=scenario, category="coffee", units_per_person_per_day=Decimal("1")
     )
     original_version = scenario.updated_at.isoformat()
-    assert replan_budget(
-        owner_id=owner.pk,
-        scenario_id=scenario.pk,
-        expected_version=original_version,
-        travelers=2,
-        duration_days=6,
-        budget_item_changes={coffee.pk: Decimal("2")},
-    ) is True
+    assert (
+        replan_budget(
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
+            expected_version=original_version,
+            travelers=2,
+            duration_days=6,
+            budget_item_changes={coffee.pk: Decimal("2")},
+        )
+        is True
+    )
     scenario.refresh_from_db()
     coffee.refresh_from_db()
     assert scenario.updated_at.isoformat() != original_version

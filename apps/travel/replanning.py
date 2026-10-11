@@ -70,9 +70,7 @@ def replan_budget(
         raise ReplanningError("Category units must be 0.01–100 with at most two decimals.")
 
     scenario = (
-        SavedScenario.objects.select_for_update()
-        .filter(pk=scenario_id, user_id=owner_id)
-        .first()
+        SavedScenario.objects.select_for_update().filter(pk=scenario_id, user_id=owner_id).first()
     )
     if scenario is None or scenario.kind != SavedScenarioKind.BUDGET:
         raise ReplanningError("This budget is unavailable.")
