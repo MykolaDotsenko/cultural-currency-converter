@@ -52,10 +52,13 @@
       <ol>
         {% for item in revisions %}
           <li>
-            Revision {{ item.revision }} · {{ item.travelers }} traveler{{ item.travelers|pluralize }}
-            · {% if item.duration_days %}{{ item.duration_days }} day{{ item.duration_days|pluralize }}
-            {% else %}duration not specified{% endif %}
-            · {{ item.recorded_at|date:"j M Y, H:i" }}
+            <span>Revision {{ item.revision }} · {{ item.travelers }} traveler{{ item.travelers|pluralize }}</span>
+            {% if item.duration_days %}
+              <span>· {{ item.duration_days }} day{{ item.duration_days|pluralize }}</span>
+            {% else %}
+              <span>· Duration not specified</span>
+            {% endif %}
+            <span>· {{ item.recorded_at|date:"j M Y, H:i" }}</span>
           </li>
         {% endfor %}
       </ol>
