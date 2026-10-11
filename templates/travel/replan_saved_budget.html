@@ -12,12 +12,15 @@
       payment-adjusted reference budget and all confirmed spending remain unchanged.
       When trip dates are saved, the remaining-per-day calculation follows those dates.
     </p>
-    <form class="qa-account-form" method="post"
+    <form class="qa-account-form"
+          method="post"
           action="{% url 'replan_saved_budget' scenario.pk %}">
       {% csrf_token %}
       <input type="hidden" name="version" value="{{ version }}">
       {% if error %}
-        <div class="qa-inline-alert qa-inline-alert--error" role="alert"><p>{{ error }}</p></div>
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ error }}</p>
+        </div>
       {% endif %}
       {% if form.non_field_errors %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
@@ -29,25 +32,29 @@
           <label class="qa-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}
           {% if field.errors %}
-            <p class="qa-field__message qa-field__message--error" role="alert">{{ field.errors.0 }}</p>
+            <p class="qa-field__message qa-field__message--error"
+               role="alert">{{ field.errors.0 }}</p>
           {% endif %}
         </div>
       {% endfor %}
       <button type="submit" class="qa-primary-button">Save new planning revision</button>
-      <a class="qa-secondary-button" href="{% url 'saved_scenario_detail' scenario.pk %}">Cancel</a>
+      <a class="qa-secondary-button"
+         href="{% url 'saved_scenario_detail' scenario.pk %}">Cancel</a>
     </form>
   </section>
   {% if revisions %}
     <section class="qa-account-panel" aria-labelledby="planning-history-title">
       <h2 id="planning-history-title">Planning history</h2>
-      <p>Earlier plans remain available for review. This history does not change your
-         saved FX observations or confirmed spend.</p>
+      <p>
+        Earlier plans remain available for review. This history does not change your
+        saved FX observations or confirmed spend.
+      </p>
       <ol>
         {% for item in revisions %}
           <li>
             Revision {{ item.revision }} · {{ item.travelers }} traveler{{ item.travelers|pluralize }}
             · {% if item.duration_days %}{{ item.duration_days }} day{{ item.duration_days|pluralize }}
-              {% else %}duration not specified{% endif %}
+            {% else %}duration not specified{% endif %}
             · {{ item.recorded_at|date:"j M Y, H:i" }}
           </li>
         {% endfor %}
