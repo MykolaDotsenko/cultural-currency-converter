@@ -35,7 +35,7 @@ def _launch(
         '    if [ "$CATALOG_SEEDED_FILE" != "" ] && [ -e "$CATALOG_SEEDED_FILE" ]; then :; else exit 1; fi\n'
         "  fi\n"
         "fi\n"
-        'if [ "$2" = "seed_reference_data" ]; then touch "$CATALOG_SEEDED_FILE"; fi\n',
+        'if [ "$2" = "bootstrap_empty_deployment" ]; then touch "$CATALOG_SEEDED_FILE"; fi\n',
         encoding="utf-8",
     )
     python.chmod(0o755)
@@ -82,7 +82,7 @@ def test_normal_deploy_does_not_write_reference_seeds(tmp_path: Path) -> None:
     assert commands[0] == "python manage.py migrate --noinput"
     assert commands[1] == "python manage.py check_reference_catalog"
     assert commands[-1].startswith("gunicorn config.wsgi:application")
-    assert not any("seed_" in call for call in commands)
+    assert not any("bootstrap_empty_deployment" in call for call in commands)
 
 
 @pytest.mark.parametrize("approved", ["", "yes", "True", "1", "off", "FALSE"])
@@ -115,10 +115,7 @@ def test_first_deployment_can_bootstrap_verified_empty_postgres(tmp_path: Path) 
         "python manage.py migrate --noinput",
         "python manage.py audit_persistence --require-postgresql",
         "python manage.py check_reference_catalog",
-        "python manage.py check_reference_catalog --require-empty",
-        "python manage.py seed_reference_data",
-        "python manage.py seed_story_data",
-        "python manage.py seed_destination_context",
+        "python manage.py bootstrap_empty_deployment --confirm-empty",
         "python manage.py check_reference_catalog",
         commands[-1],
     ]
@@ -135,12 +132,12 @@ def test_existing_catalog_never_seeds_even_with_bootstrap_opt_in(tmp_path: Path)
         "python manage.py audit_persistence --require-postgresql",
         "python manage.py check_reference_catalog",
     ]
-    assert not any("seed_" in call for call in commands)
+    assert not any("bootstrap_empty_deployment" in call for call in commands)
 
 
 @pytest.mark.parametrize("failure", ["audit", "not_empty"])
 def test_failed_preflight_blocks_seeding_and_gunicorn(tmp_path: Path, failure: str) -> None:
     result, commands = _launch(tmp_path, approved="true", expected_sha=_RELEASE_SHA, fail=failure)
     assert result.returncode != 0
-    assert not any("seed_" in call for call in commands)
+    assert not any("bootstrap_empty_deployment" in call for call in commands)
     assert not any("gunicorn" in call for call in commands)

@@ -40,10 +40,7 @@ if [[ "$bootstrap" == "true" ]]; then
   else
     # This checks *all product tables and auth users*, not just the catalog.
     # A partial catalog or any existing account causes a hard failure.
-    python manage.py check_reference_catalog --require-empty
-    python manage.py seed_reference_data
-    python manage.py seed_story_data
-    python manage.py seed_destination_context
+    python manage.py bootstrap_empty_deployment --confirm-empty
   fi
 fi
 

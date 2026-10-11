@@ -305,7 +305,9 @@ The web start script now supports **a reviewed one-time installation only**:
    never production.
 5. Deploy that exact approved commit. The startup migrates, verifies a
    reachable PostgreSQL with current migrations, checks the catalog, and
-   **seeds only if all product-managed tables and auth users are empty**.
+   **atomically seeds only if all product-managed tables and auth users are
+   empty**. A failed story/city seed rolls back the reference catalog as well,
+   and PostgreSQL advisory locking serializes concurrent bootstrap attempts.
    A partial database or existing users block seeding. Existing complete
    catalogs never get rewritten. Startup then runs the normal catalog gate
    and Gunicorn. Follow live logs, `/health/live/`,
