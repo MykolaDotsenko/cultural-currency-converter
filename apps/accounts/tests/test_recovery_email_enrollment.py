@@ -49,7 +49,7 @@ class RecoveryEmailWebTests(TestCase):
     def _link(self):
         self.assertEqual(len(mail.outbox), 1)
         match = re.search(
-            r"https://testserver(/accounts/recovery-email/confirm/[^\\s]+/)",
+            r"https://testserver(/accounts/recovery-email/confirm/[^\s]+/)",
             mail.outbox[0].body,
         )
         self.assertIsNotNone(match)
