@@ -1300,6 +1300,86 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   }
 }
 
+async function assertAnonymousTripDraftFlow(page) {
+  const form = page.locator("[data-trip-draft-form]");
+  await form.waitFor({ state: "visible" });
+  await form.locator('input[name="title"]').fill("Tokyo QA draft");
+  await form.locator('input[name="destination"]').fill("JP:tokyo");
+  await form.locator('input[name="sourceCurrency"]').fill("EUR");
+  await form.locator('input[name="amount"]').fill("300.50");
+  await form.locator('input[name="travelers"]').fill("2");
+  await form.locator('input[name="durationDays"]').fill("10");
+  await form.locator('input[name="startDate"]').fill("2026-12-01");
+
+  await form.getByRole("button", { name: "Save local draft" }).click();
+  const first = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
+  );
+  assert(first.drafts?.length === 1, "local-trip: explicit save did not persist exactly one draft");
+  assert(
+    first.drafts[0]?.amount === "300.50" && first.drafts[0]?.destination === "JP:tokyo",
+    "local-trip: canonical input snapshot incorrect",
+  );
+  assert(
+    !("rate" in first.drafts[0]) && !("userId" in first.drafts[0]),
+    "local-trip: private draft persisted derived FX or account state",
+  );
+
+  await page.getByRole("button", { name: "Edit local trip draft: Tokyo QA draft" }).click();
+  await form.locator('input[name="amount"]').fill("550.75");
+  await form.getByRole("button", { name: "Update local draft" }).click();
+  const edited = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
+  );
+  assert(
+    edited.drafts?.length === 1 && edited.drafts[0]?.amount === "550.75",
+    "local-trip: edit duplicated or failed to update the draft",
+  );
+
+  await page
+    .getByRole("button", { name: "Continue planning local trip draft: Tokyo QA draft" })
+    .click();
+  await page.waitForURL((url) => url.pathname === "/destination/");
+  const url = new URL(page.url());
+  assert(
+    !url.searchParams.has("amount") &&
+      !url.searchParams.has("destination") &&
+      !url.searchParams.has("sourceCurrency"),
+    "local-trip: browser-only inputs leaked into destination URL query",
+  );
+  await page.locator("[data-trip-draft-prefill-status]").getByText(
+    "Draft amount, currency and destination restored on this page only.",
+    { exact: false },
+  ).waitFor();
+  assert(
+    (await page.locator('input[name="amount"]').inputValue()) === "550.75",
+    "local-trip: session handoff lost the draft amount",
+  );
+  assert(
+    (await page.locator('select[name="destination"]').inputValue()) === "JP:tokyo",
+    "local-trip: destination was not revalidated against canonical options",
+  );
+  assert(
+    (await page.evaluate(
+      () => sessionStorage.getItem("cultural-currency:trip-draft-handoff:v1"),
+    )) === null,
+    "local-trip: one-time handoff was not consumed",
+  );
+
+  await page.goto(`${BASE_URL}/saved/`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("button", { name: "Remove local trip draft: Tokyo QA draft" })
+    .waitFor();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page
+    .getByRole("button", { name: "Remove local trip draft: Tokyo QA draft" })
+    .click();
+  const cleared = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
+  );
+  assert(cleared.drafts?.length === 0, "local-trip: explicit remove did not clear draft");
+}
+
 async function assertSavedStateFlow(page) {
   const neutralStatus = page.locator("[data-local-storage-status]");
   await page.waitForFunction(() => {
@@ -1630,6 +1710,7 @@ async function assertSavedStateFlow(page) {
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "EUR → JPY" }).waitFor();
   await assertAxe(page, "saved-state/populated");
+  await assertAnonymousTripDraftFlow(page);
 }
 
 async function assertAuthenticatedRecentHistoryFlow(page, consoleErrors) {
@@ -2802,6 +2883,10 @@ async function assertNoJavaScriptSavedStateFallback(browser) {
     assert(
       await page.locator("[data-recents-empty]").isHidden(),
       "no-js Saved page falsely claimed that recent history was empty",
+    );
+    assert(
+      await page.locator("[data-trip-draft-form]").isHidden(),
+      "no-js Saved page exposed an unhandled private draft form",
     );
     await assertNoHorizontalOverflow(page, "saved-state/no-js");
 
