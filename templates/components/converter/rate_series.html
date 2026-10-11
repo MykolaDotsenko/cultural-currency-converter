@@ -348,8 +348,14 @@
                       <span class="qa-status-badge qa-status-badge--historical">Selected</span>
                     {% endif %}
                   </td>
-                  <td data-label="Rate"><span class="qa-mobile-table-cell-label">Rate: </span>{{ point.rate }} {{ series_component.quote_currency }} per {{ series_component.base_currency }}</td>
-                  <td data-label="Source"><span class="qa-mobile-table-cell-label">Source: </span>{{ point.provider_keys|default:"—" }}</td>
+                  <td data-label="Rate">
+                    <span class="qa-mobile-table-cell-label">Rate: </span>
+                    {{ point.rate }} {{ series_component.quote_currency }} per {{ series_component.base_currency }}
+                  </td>
+                  <td data-label="Source">
+                    <span class="qa-mobile-table-cell-label">Source: </span>
+                    {{ point.provider_keys|default:"—" }}
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>
