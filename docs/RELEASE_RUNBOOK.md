@@ -427,6 +427,20 @@ may refuse a job *before the Django process runs*, in which case these
 application lifecycle events are correctly absent; inspect scheduler
 exit status and job logs as well.
 
+## Recovery-email outbound SMTP safety (PR-17 prerequisite)
+
+Email verification is disabled unless ACCOUNT_EMAIL_VERIFICATION_ENABLED=true.
+When enabled, an explicit HTTPS-only public origin, from-address, SMTP host and
+port are required; deployed environments additionally require authenticated
+SMTP over TLS. Invalid or partial configuration fails startup, and secret
+values are never included in configuration errors.
+
+The verification feature and password-reset flow remain **inactive** until
+the owner-scoped enrollment/confirmation flows and delivery tests are
+separately implemented and reviewed. No actual email is dispatched by merely
+loading this configuration. Never infer ownership from historical
+auth.User.email or pending VerifiedRecoveryEmail records.
+
 ## Recovery email identity foundation (PR-18, NOT activated)
 
 `VerifiedRecoveryEmail` is a separate owner-scoped data model to support
