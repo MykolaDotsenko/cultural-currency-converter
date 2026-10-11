@@ -632,7 +632,6 @@ class SavedScenario(models.Model):
         return f"{self.user_id}: {label} · {self.source_currency.code} → {self.destination_currency.code}"
 
 
-
 class SavedScenarioPlanRevision(models.Model):
     """Append-only record of explicit budget planning assumptions.
 

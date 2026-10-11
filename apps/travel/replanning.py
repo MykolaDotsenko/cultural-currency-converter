@@ -41,10 +41,14 @@ def replan_budget(
     ):
         raise ReplanningError("Duration must be 1–365 days or left unspecified.")
 
-    scenario = SavedScenario.objects.select_for_update().filter(
-        pk=scenario_id,
-        user_id=owner_id,
-    ).first()
+    scenario = (
+        SavedScenario.objects.select_for_update()
+        .filter(
+            pk=scenario_id,
+            user_id=owner_id,
+        )
+        .first()
+    )
     if scenario is None or scenario.kind != SavedScenarioKind.BUDGET:
         raise ReplanningError("This budget is unavailable.")
     if scenario.updated_at.isoformat() != expected_version:

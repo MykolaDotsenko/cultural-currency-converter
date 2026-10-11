@@ -89,7 +89,8 @@ def test_owner_changes_duration_and_travelers_with_append_only_history(client, b
     scenario.refresh_from_db()
     assert (scenario.travelers, scenario.duration_days) == (3, 9)
     assert list(scenario.plan_revisions.values_list("revision", "travelers", "duration_days")) == [
-        (0, 2, 6), (1, 3, 9)
+        (0, 2, 6),
+        (1, 3, 9),
     ]
     observation.refresh_from_db()
     spend.refresh_from_db()
@@ -102,10 +103,16 @@ def test_owner_changes_duration_and_travelers_with_append_only_history(client, b
 def test_replan_noop_creates_no_history_and_does_not_change_version(budget):
     owner, _other, scenario, _obs, _spend = budget
     original = scenario.updated_at
-    assert replan_budget(
-        owner_id=owner.pk, scenario_id=scenario.pk, expected_version=original.isoformat(),
-        travelers=2, duration_days=6
-    ) is False
+    assert (
+        replan_budget(
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
+            expected_version=original.isoformat(),
+            travelers=2,
+            duration_days=6,
+        )
+        is False
+    )
     scenario.refresh_from_db()
     assert scenario.updated_at == original
     assert not scenario.plan_revisions.exists()
@@ -118,12 +125,13 @@ def test_stale_editor_conflict_is_http_409_and_preserves_latest_values(client, b
     url = reverse("replan_saved_budget", args=(scenario.pk,))
     version = client.get(url).context["version"]
     replan_budget(
-        owner_id=owner.pk, scenario_id=scenario.pk, expected_version=version,
-        travelers=4, duration_days=8
+        owner_id=owner.pk,
+        scenario_id=scenario.pk,
+        expected_version=version,
+        travelers=4,
+        duration_days=8,
     )
-    stale = client.post(
-        url, {"version": version, "travelers": "5", "duration_days": "7"}
-    )
+    stale = client.post(url, {"version": version, "travelers": "5", "duration_days": "7"})
     assert stale.status_code == 409
     assert b"another tab" in stale.content
     scenario.refresh_from_db()
@@ -148,11 +156,16 @@ def test_invalid_planning_inputs_never_mutate(client, budget, travelers, days):
 @pytest.mark.django_db
 def test_owner_can_explicitly_clear_duration(budget):
     owner, _other, scenario, _obs, _spend = budget
-    assert replan_budget(
-        owner_id=owner.pk, scenario_id=scenario.pk,
-        expected_version=scenario.updated_at.isoformat(),
-        travelers=2, duration_days=None
-    ) is True
+    assert (
+        replan_budget(
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
+            expected_version=scenario.updated_at.isoformat(),
+            travelers=2,
+            duration_days=None,
+        )
+        is True
+    )
     scenario.refresh_from_db()
     assert scenario.duration_days is None
 
@@ -192,7 +205,9 @@ def test_replan_post_requires_csrf_token(budget):
 def test_shopping_scenario_cannot_be_replanned(client, budget):
     owner, _other, scenario, _obs, _spend = budget
     shopping = SavedScenario.objects.create(
-        user=owner, kind=SavedScenarioKind.SHOPPING, title="Shopping",
+        user=owner,
+        kind=SavedScenarioKind.SHOPPING,
+        title="Shopping",
         source_currency=scenario.source_currency,
         destination_currency=scenario.destination_currency,
         source_amount=Decimal("20"),
@@ -209,9 +224,11 @@ def test_revision_is_immutable_and_20_edit_limit_is_atomic(budget):
     for revision in range(1, 21):
         scenario.refresh_from_db()
         replan_budget(
-            owner_id=owner.pk, scenario_id=scenario.pk,
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
             expected_version=scenario.updated_at.isoformat(),
-            travelers=(revision % 20) + 1, duration_days=6 + revision,
+            travelers=(revision % 20) + 1,
+            duration_days=6 + revision,
         )
     revisions = scenario.plan_revisions.order_by("revision")
     assert revisions.count() == 21
@@ -223,9 +240,11 @@ def test_revision_is_immutable_and_20_edit_limit_is_atomic(budget):
     scenario.refresh_from_db()
     with pytest.raises(ReplanningError, match="maximum planning revisions"):
         replan_budget(
-            owner_id=owner.pk, scenario_id=scenario.pk,
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
             expected_version=scenario.updated_at.isoformat(),
-            travelers=7, duration_days=90,
+            travelers=7,
+            duration_days=90,
         )
     scenario.refresh_from_db()
     assert scenario.duration_days == 26
