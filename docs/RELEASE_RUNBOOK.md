@@ -268,6 +268,62 @@ cannot be modified by this route. A 20-edit cap bounds storage growth.
 The feature does not provide category-value editing or change a fixed
 saved-trip date; those require separately reviewed product semantics.
 
+## First Render PostgreSQL deployment without shell access
+
+**Why the current deployment is blocked:** the deployed app requires a PostgreSQL
+`DATABASE_URL` and a complete seed catalog, but a brand-new database has neither
+tables nor seed rows. On Render Free, web services have no interactive SSH/shell
+and their local SQLite data disappears on redeploy, restart or spin-down.
+Never redirect the existing app to another project's database and never treat
+a successful fresh seed as proof that previous user data was preserved.
+
+The web start script now supports **a reviewed one-time installation only**:
+
+1. Before changing the live service, inspect whether any old demo accounts,
+   budgets, confirmed spending or media need preservation. On Render Free
+   there is no supported live shell, so if such data matters, do **not**
+   redeploy or change `DATABASE_URL` until you have a separately reviewed
+   extraction/migration procedure. Avoid copying the other app's PostgreSQL.
+2. Provision a *separate, private PostgreSQL database* with appropriate backup
+   and retention. A free Render PostgreSQL database is **not suitable for
+   production**: it expires after 30 days, has no managed backups, and each
+   workspace permits only one active free database. The current workspace's
+   free database is allocated to another service. Choosing any paid resource
+   requires the owner's explicit cost approval.
+3. Configure the existing web service's `DATABASE_URL` through Render
+   Environment Variables / a managed connection reference **without placing
+   the URL or credentials in git or command output**. Preserve existing
+   `APP_ENV=demo`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`,
+   `DJANGO_HTTPS_MODE` and other settings. Never rotate the secret key during
+   migration without a session/account impact review.
+4. Only after verifying that the target PostgreSQL is **brand-new and
+   intentionally empty** and that any original user data has been dealt with,
+   set `RENDER_BOOTSTRAP_EMPTY_POSTGRES=true` and
+   `RENDER_BOOTSTRAP_APPROVED_SHA=<exact full 40-character commit to deploy>`
+   in the Render service. The running commit must equal this SHA as
+   `RENDER_GIT_COMMIT`. This bootstrap is **only allowed in demo/preview**,
+   never production.
+5. Deploy that exact approved commit. The startup migrates, verifies a
+   reachable PostgreSQL with current migrations, checks the catalog, and
+   **seeds only if all product-managed tables and auth users are empty**.
+   A partial database or existing users block seeding. Existing complete
+   catalogs never get rewritten. Startup then runs the normal catalog gate
+   and Gunicorn. Follow live logs, `/health/live/`,
+   `/health/ready/` and `/health/revision/`.
+6. **Immediately remove both bootstrap environment variables** after the
+   first successful deployment, and verify a subsequent normal restart
+   and separate deploy using a disposable owner-scoped test record. Never
+   leave an opt-in enabled indefinitely: an unexpectedly empty database on
+   the *same* pinned release might be repopulated and hide data loss.
+   Verify backup/restore, exact live SHA, data retention and rollback
+   separately before certifying production.
+
+Without the bootstrap variables, startup behavior is **unchanged**: it
+migrates and performs the read-only catalog check; missing or partial data
+fails closed. The one-time bootstrap is an installation mechanism, **not a
+database migration/retention guarantee**, and does not by itself justify a
+deployment of this specific Render service.
+
 ## Reference data initial bootstrap and startup gate (PR-03)
 
 The Render web start command runs migrations and a **read-only reference-catalog
