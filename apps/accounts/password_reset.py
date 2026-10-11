@@ -6,7 +6,6 @@ Legacy auth.User.email and pending identities never authorize a reset.
 from __future__ import annotations
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.cache import cache
 from django.core.mail import send_mail

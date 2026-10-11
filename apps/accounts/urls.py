@@ -7,13 +7,13 @@ from django.urls import path, reverse_lazy
 
 from apps.accounts.forms import QuietAuthenticationForm, QuietPasswordChangeForm
 from apps.accounts.login_view import AccountLoginView
-from apps.accounts.recovery_email_views import confirm_recovery_email, request_recovery_email
 from apps.accounts.password_reset_views import (
     password_reset_complete,
     password_reset_confirm,
     password_reset_request,
     password_reset_sent,
 )
+from apps.accounts.recovery_email_views import confirm_recovery_email, request_recovery_email
 from apps.accounts.views import (
     delete_account,
     delete_budget_preset_view,
