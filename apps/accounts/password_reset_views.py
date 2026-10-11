@@ -8,7 +8,6 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.views.decorators.debug import sensitive_post_parameters
