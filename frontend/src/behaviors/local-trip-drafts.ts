@@ -197,9 +197,8 @@ function wireDraftEditor(page: HTMLElement): void {
   const save = page.querySelector<HTMLButtonElement>("[data-trip-draft-save]");
   if (!form || !clear || !save) return;
 
-  // A hidden form prevents accidental GET submission of private inputs
-  // while JavaScript is blocked or still loading.
-  form.hidden = false;
+  // The server-rendered form is inert until this handler is installed.
+  // This avoids a no-JavaScript GET leak *and* removes layout shift on hydration.
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const storage = browserStorage("local");
@@ -261,6 +260,9 @@ function wireDraftEditor(page: HTMLElement): void {
     feedback(page, "All local trip drafts removed from this browser.");
   });
 
+  form.querySelectorAll<HTMLInputElement | HTMLButtonElement>("input, button").forEach((control) => {
+    control.disabled = false;
+  });
   renderDrafts(page);
 }
 

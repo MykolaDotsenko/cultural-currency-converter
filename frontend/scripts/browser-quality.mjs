@@ -1303,6 +1303,10 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
 async function assertAnonymousTripDraftFlow(page) {
   const form = page.locator("[data-trip-draft-form]");
   await form.waitFor({ state: "visible" });
+  await page.waitForFunction(() => {
+    const button = document.querySelector("[data-trip-draft-save]");
+    return button instanceof HTMLButtonElement && !button.disabled;
+  });
   await form.locator('input[name="title"]').fill("Tokyo QA draft");
   await form.locator('input[name="destination"]').fill("JP:tokyo");
   await form.locator('input[name="sourceCurrency"]').fill("EUR");
@@ -2883,8 +2887,8 @@ async function assertNoJavaScriptSavedStateFallback(browser) {
       "no-js Saved page falsely claimed that recent history was empty",
     );
     assert(
-      await page.locator("[data-trip-draft-form]").isHidden(),
-      "no-js Saved page exposed an unhandled private draft form",
+      await page.locator("[data-trip-draft-save]").isDisabled(),
+      "no-js Saved page exposed an enabled private draft submission",
     );
     await assertNoHorizontalOverflow(page, "saved-state/no-js");
 

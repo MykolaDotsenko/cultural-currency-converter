@@ -564,9 +564,6 @@
 }
 
 /* Browser-only trip draft editor: readable at 320px and 200% text zoom. */
-[data-trip-draft-form][hidden] {
-  display: none;
-}
 .qa-trip-drafts__form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

@@ -72,8 +72,7 @@
            aria-live="polite">Choose what to save locally.</p>
         <form class="qa-trip-drafts__form"
               data-trip-draft-form
-              aria-describedby="local-trip-drafts-privacy"
-              hidden>
+              aria-describedby="local-trip-drafts-privacy">
           <div class="qa-field">
             <label for="trip-draft-title">Draft name</label>
             <input id="trip-draft-title"
@@ -83,7 +82,8 @@
                    maxlength="80"
                    autocomplete="off"
                    required
-                   placeholder="My next trip">
+                   placeholder="My next trip"
+                   disabled>
           </div>
           <div class="qa-field">
             <label for="trip-draft-destination">Destination (country or city token)</label>
@@ -95,7 +95,8 @@
                    autocomplete="off"
                    required
                    placeholder="JP:tokyo"
-                   aria-describedby="trip-draft-destination-help">
+                   aria-describedby="trip-draft-destination-help"
+                   disabled>
             <p class="qa-field__message" id="trip-draft-destination-help">
               Use a two-letter country code (JP) or a supported city token (JP:tokyo).
               The planner will check whether it is still available.
@@ -110,7 +111,8 @@
                    maxlength="3"
                    autocomplete="off"
                    required
-                   placeholder="EUR">
+                   placeholder="EUR"
+                   disabled>
           </div>
           <div class="qa-field">
             <label for="trip-draft-amount">Planned amount</label>
@@ -122,7 +124,8 @@
                    maxlength="17"
                    autocomplete="off"
                    required
-                   placeholder="100.00">
+                   placeholder="100.00"
+                   disabled>
           </div>
           <div class="qa-field">
             <label for="trip-draft-travelers">Travellers</label>
@@ -133,7 +136,8 @@
                    min="1"
                    max="20"
                    value="1"
-                   required>
+                   required
+                   disabled>
           </div>
           <div class="qa-field">
             <label for="trip-draft-days">Duration (days)</label>
@@ -144,22 +148,26 @@
                    min="1"
                    max="365"
                    value="7"
-                   required>
+                   required
+                   disabled>
           </div>
           <div class="qa-field">
             <label for="trip-draft-date">Provisional start date (optional)</label>
             <input id="trip-draft-date"
                    class="qa-text-input"
                    name="startDate"
-                   type="date">
+                   type="date"
+                   disabled>
           </div>
           <div class="qa-trip-drafts__actions">
             <button class="qa-primary-button"
                     type="submit"
-                    data-trip-draft-save>Save local draft</button>
+                    data-trip-draft-save
+                    disabled>Save local draft</button>
             <button class="qa-secondary-button"
                     type="button"
-                    data-trip-draft-reset>Discard edits</button>
+                    data-trip-draft-reset
+                    disabled>Discard edits</button>
           </div>
         </form>
         <p class="qa-saved-empty" data-trip-drafts-empty>
