@@ -427,6 +427,24 @@ may refuse a job *before the Django process runs*, in which case these
 application lifecycle events are correctly absent; inspect scheduler
 exit status and job logs as well.
 
+## Recovery email identity foundation (PR-18, NOT activated)
+
+`VerifiedRecoveryEmail` is a separate owner-scoped data model to support
+future verified forgotten-password recovery without treating historical
+`auth.User.email` as trusted. A verified identity requires explicit
+`verified_at`, and case-insensitive uniqueness applies only after
+verification; multiple pending claims cannot reserve someone else's
+contact address permanently.
+
+This PR is **schema-only**, creates no email delivery backend, user-facing
+verification route, signup requirement or reset token. No existing
+`auth.User.email` values are migrated or declared verified. Admins must
+not set `verified_at` without separately validated ownership evidence.
+Never enable password reset on pending/unverified addresses. A subsequent
+PR must provide secure opt-in confirmation, bounded signed tokens, sender
+authentication, per-address anti-abuse controls, no user enumeration, and
+safe delivery/failure testing before recovery becomes available.
+
 ## Authenticated password change (PR-17 foundation)
 
 Users may now rotate their password from `/accounts/profile/` via
