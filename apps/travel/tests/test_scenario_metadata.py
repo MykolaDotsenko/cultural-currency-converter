@@ -132,7 +132,12 @@ def test_invalid_date_order_and_missing_start_cannot_be_saved(client, owned_scen
         version = client.get(url).context["version"]
         result = client.post(
             url,
-            {"version": version, "title": "Invalid", "travel_start_date": start, "travel_end_date": end},
+            {
+                "version": version,
+                "title": "Invalid",
+                "travel_start_date": start,
+                "travel_end_date": end,
+            },
         )
         assert result.status_code == 422
         scenario.refresh_from_db()

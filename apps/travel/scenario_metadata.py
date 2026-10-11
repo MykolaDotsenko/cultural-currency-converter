@@ -75,9 +75,7 @@ def edit_saved_scenario(request: HttpRequest, scenario_id: int) -> HttpResponse:
     owned = SavedScenario.objects.filter(user=request.user)
     if request.method == "GET":
         scenario = get_object_or_404(owned, pk=scenario_id)
-        return _render_edit(
-            request, scenario, SavedScenarioMetadataForm(instance=scenario)
-        )
+        return _render_edit(request, scenario, SavedScenarioMetadataForm(instance=scenario))
 
     with transaction.atomic():
         scenario = get_object_or_404(owned.select_for_update(), pk=scenario_id)
