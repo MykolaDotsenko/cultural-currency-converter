@@ -6,7 +6,7 @@ import re
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.core import mail, signing
+from django.core import mail
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -131,8 +131,8 @@ class RecoveryEmailWebTests(TestCase):
         self._propose()
         link = self._link()
         with patch(
-            "apps.accounts.recovery_email.signing.loads",
-            side_effect=signing.SignatureExpired("expired"),
+            "apps.accounts.recovery_email._load_token",
+            side_effect=RecoveryEmailError("Verification link invalid or expired."),
         ):
             self.assertRedirects(self.client.post(link), reverse("profile"))
         self.assertFalse(VerifiedRecoveryEmail.objects.get(user=self.owner).is_verified)
@@ -146,6 +146,19 @@ class RecoveryEmailWebTests(TestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertFalse(VerifiedRecoveryEmail.objects.exists())
+
+    def test_access_logs_redact_signed_confirmation_tokens(self):
+        self._propose()
+        link = self._link()
+        signed_token = link.split("/confirm/", 1)[1].rstrip("/")
+        with self.assertLogs("cultural_currency.access", level="INFO") as captured:
+            self.client.get(link)
+        self.assertTrue(captured.records)
+        for record in captured.records:
+            self.assertNotIn(signed_token, record.path)
+            self.assertEqual(
+                record.path, "/accounts/recovery-email/confirm/[redacted]/"
+            )
 
     def test_login_required_for_both_endpoints(self):
         self.client.logout()

@@ -11,6 +11,15 @@ from .observability import bind_request_id, normalize_request_id, reset_request_
 logger = logging.getLogger("cultural_currency.access")
 
 
+def safe_access_path(path: str) -> str:
+    """Never log signed verification tokens included in account-confirm URLs."""
+
+    prefix = "/accounts/recovery-email/confirm/"
+    if path.startswith(prefix):
+        return prefix + "[redacted]/"
+    return path
+
+
 class GetResponse(Protocol):
     def __call__(self, request: HttpRequest) -> HttpResponse: ...
 
@@ -38,7 +47,7 @@ class RequestContextMiddleware:
                 extra={
                     "request_id": request_id,
                     "method": request.method,
-                    "path": request.path,
+                    "path": safe_access_path(request.path),
                     "route": resolver_match.view_name if resolver_match else None,
                     "status_code": response.status_code,
                     "duration_ms": duration_ms,
@@ -52,7 +61,7 @@ class RequestContextMiddleware:
                 extra={
                     "request_id": request_id,
                     "method": request.method,
-                    "path": request.path,
+                    "path": safe_access_path(request.path),
                     "route": None,
                     "duration_ms": duration_ms,
                     "error_code": "unhandled_exception",
