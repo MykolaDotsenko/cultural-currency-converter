@@ -637,6 +637,24 @@ disposable-record restart/deploy drill and independent RC smoke below.
 Do not automatically deploy, mutate a database or change Render settings
 from this preflight.
 
+## Saved trip metadata editing (PR-20)
+
+An authenticated owner can explicitly edit only the **private title and
+travel start/end dates** of a saved budget through the account-owned
+`/saved/scenarios/<id>/edit/` page. Shopping snapshots can edit the
+private title only. The HTML form has CSRF protection and a hidden optimistic
+`updated_at` version; stale submissions return HTTP 409 with current values.
+Validation errors return 422. Database row locking and a transaction prevent
+two concurrent submissions from silently overwriting each other.
+
+Currency pairs, source amount, budget duration/traveller assumptions, fee
+profiles, payment-estimate baselines, initial immutable FX observations and
+confirmed spends remain untouched. Changing travel dates may alter the
+calendar presentation/reminder timing and offline copies must be refreshed
+explicitly; it must **never reprice the saved budget** or silently rewrite
+a historical observation. Verify ownership, 404 isolation, concurrent edit,
+invalid dates and offline out-of-date messaging before production certification.
+
 ## RC deployment smoke
 
 After deploying an RC, record the deployment identifier and exact Git SHA, then verify:

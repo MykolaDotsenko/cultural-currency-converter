@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Edit saved scenario · Cultural Currency Converter{% endblock %}
+{% block head_meta %}
+  <meta name="robots" content="noindex, nofollow">
+{% endblock %}
+{% block content %}
+  <section class="qa-account-panel" aria-labelledby="scenario-edit-title">
+    <p class="qa-foundation-kicker">Saved scenario · metadata only</p>
+    <h1 id="scenario-edit-title">Edit saved scenario</h1>
+    <p class="qa-account-panel__lede">
+      Change its private title{% if scenario.kind == "budget" %} and travel dates{% endif %}.
+      Your original exchange-rate observation, budget, confirmed spending and payment assumptions
+      remain unchanged.
+    </p>
+    <form class="qa-account-form"
+          method="post"
+          action="{% url 'edit_saved_scenario' scenario.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="version" value="{{ version }}">
+      {% if conflict_message %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ conflict_message }}</p>
+        </div>
+      {% endif %}
+      {% if form.non_field_errors %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ form.non_field_errors.0 }}</p>
+        </div>
+      {% endif %}
+      {% for field in form %}
+        <div class="qa-field{% if field.errors %} qa-field--error{% endif %}">
+          <label class="qa-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <p class="qa-field__message qa-field__message--error">{{ field.errors.0 }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="qa-primary-button">Save metadata</button>
+      <a class="qa-secondary-button"
+         href="{% url 'saved_scenario_detail' scenario.pk %}">Cancel</a>
+    </form>
+  </section>
+{% endblock %}

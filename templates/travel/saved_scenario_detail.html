@@ -176,6 +176,8 @@
           {% else %}
             <a class="qa-secondary-button" href="{{ converter_url }}">Re-run conversion</a>
           {% endif %}
+          <a class="qa-secondary-button"
+             href="{% url 'edit_saved_scenario' scenario.pk %}">Edit details</a>
           {% if share_url %}
             <a class="qa-secondary-button" href="{{ share_url }}">Share safe snapshot</a>
           {% endif %}

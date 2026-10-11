@@ -50,6 +50,7 @@ from apps.travel.notification_web import (
     notification_inbox,
 )
 from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
+from apps.travel.scenario_metadata import edit_saved_scenario
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
@@ -166,6 +167,11 @@ urlpatterns = [
         "saved/scenarios/<int:scenario_id>/",
         saved_scenario_detail,
         name="saved_scenario_detail",
+    ),
+    path(
+        "saved/scenarios/<int:scenario_id>/edit/",
+        edit_saved_scenario,
+        name="edit_saved_scenario",
     ),
     path(
         "saved/scenarios/<int:scenario_id>/recheck/",
