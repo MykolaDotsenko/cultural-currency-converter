@@ -427,6 +427,21 @@ may refuse a job *before the Django process runs*, in which case these
 application lifecycle events are correctly absent; inspect scheduler
 exit status and job logs as well.
 
+## Authenticated password change (PR-17 foundation)
+
+Users may now rotate their password from `/accounts/profile/` via
+Django's standard `PasswordChangeView`. This requires an authenticated
+session, current password and Django's normal password validators. Success
+updates the current session authentication hash and does not change saved
+financial data; the form uses normal CSRF protection. Confirm invalid old
+password, weak replacement, correct rotation, CSRF rejection and current
+session continuity in CI.
+
+**Important:** this is **not** email-based forgotten-password recovery.
+There is no verified account email or outbound mail delivery in the app yet.
+Do not add a reset-by-email endpoint until email ownership, uniqueness,
+non-enumeration, safe delivery and abuse prevention are verified.
+
 ## Database backup and restore
 
 Before a risky deployment or schema/data migration, produce a PostgreSQL custom-format backup with:

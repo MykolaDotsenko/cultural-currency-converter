@@ -1,7 +1,12 @@
-from django.contrib.auth.views import LoginView, LogoutView
-from django.urls import path
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+    PasswordChangeDoneView,
+    PasswordChangeView,
+)
+from django.urls import path, reverse_lazy
 
-from apps.accounts.forms import QuietAuthenticationForm
+from apps.accounts.forms import QuietAuthenticationForm, QuietPasswordChangeForm
 from apps.accounts.views import (
     delete_account,
     delete_budget_preset_view,
@@ -24,6 +29,20 @@ urlpatterns = [
         name="login",
     ),
     path("logout/", LogoutView.as_view(), name="logout"),
+    path(
+        "password/change/",
+        PasswordChangeView.as_view(
+            template_name="accounts/password_change.html",
+            form_class=QuietPasswordChangeForm,
+            success_url=reverse_lazy("password_change_done"),
+        ),
+        name="password_change",
+    ),
+    path(
+        "password/change/done/",
+        PasswordChangeDoneView.as_view(template_name="accounts/password_change_done.html"),
+        name="password_change_done",
+    ),
     path("signup/", signup, name="signup"),
     path("profile/", profile, name="profile"),
     path(
