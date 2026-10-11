@@ -8,6 +8,12 @@ from django.urls import path, reverse_lazy
 
 from apps.accounts.forms import QuietAuthenticationForm, QuietPasswordChangeForm
 from apps.accounts.recovery_email_views import confirm_recovery_email, request_recovery_email
+from apps.accounts.password_reset_views import (
+    password_reset_complete,
+    password_reset_confirm,
+    password_reset_request,
+    password_reset_sent,
+)
 from apps.accounts.views import (
     delete_account,
     delete_budget_preset_view,
@@ -45,6 +51,14 @@ urlpatterns = [
         name="password_change_done",
     ),
     path("signup/", signup, name="signup"),
+    path("password/reset/", password_reset_request, name="password_reset_request"),
+    path("password/reset/sent/", password_reset_sent, name="password_reset_sent"),
+    path(
+        "password/reset/<str:uidb64>/<str:token>/",
+        password_reset_confirm,
+        name="password_reset_confirm",
+    ),
+    path("password/reset/complete/", password_reset_complete, name="password_reset_complete"),
     path("recovery-email/request/", request_recovery_email, name="request_recovery_email"),
     path(
         "recovery-email/confirm/<str:token>/",

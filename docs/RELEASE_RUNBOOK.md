@@ -450,6 +450,34 @@ identity change. No actual email is sent by simply loading the settings.
 signup email collection, background email reminders, or live SMTP
 configuration. Historical auth.User.email is never automatically trusted.
 
+## Verified-email forgotten password reset (PR-18)
+
+Forgotten-password recovery is **disabled unless** the existing
+`ACCOUNT_EMAIL_VERIFICATION_ENABLED` configuration is explicitly enabled
+with authenticated SMTP/TLS and an HTTPS public origin. Only
+`VerifiedRecoveryEmail` rows with `verified_at` can receive a reset link.
+Neither the legacy `auth.User.email` value nor a pending unverified
+enrollment grants reset access.
+
+Reset tokens use Django's password-rotation token semantics, now additionally
+bound to the verified email identity and nonce. They expire after **30
+minutes**; changing the password or the verified recovery address
+invalidates existing links. POST completion uses standard Django password
+validators, a row lock, and normal CSRF protection. User/account existence
+and mail-provider failures produce the same generic request-page outcome;
+address-specific 5-minute and client-specific brief cache cooldowns limit
+abusive mail requests. Cache outages fail closed.
+
+Both the confirmation path and signed verification path are redacted in
+application access logs. Recovery pages use `Cache-Control: no-store` and
+`Referrer-Policy: no-referrer`. This does **not** certify reverse proxy/CDN
+logs; configure their access path redaction independently before enabling
+outbound mail. Confirm a disposable verified email end-to-end with real SMTP
+and delivery logs without publishing full reset links.
+
+This PR does **not** automatically enroll email at signup, import old
+addresses, activate SMTP in Render, or modify deployed account records.
+
 ## Recovery email identity foundation (PR-18, NOT activated)
 
 `VerifiedRecoveryEmail` is a separate owner-scoped data model to support

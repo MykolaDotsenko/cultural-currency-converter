@@ -55,6 +55,19 @@ class SignUpForm(UserCreationForm):
         )
 
 
+class ForgottenPasswordRequestForm(forms.Form):
+    email = forms.EmailField(
+        max_length=254,
+        label="Verified recovery email",
+        widget=forms.EmailInput(
+            attrs={"class": "qa-text-input", "autocomplete": "email"}
+        ),
+    )
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
+
 class RecoveryEmailEnrollmentForm(forms.Form):
     email = forms.EmailField(
         max_length=254,
