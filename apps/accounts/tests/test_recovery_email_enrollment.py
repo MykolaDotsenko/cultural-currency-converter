@@ -171,9 +171,7 @@ class RecoveryEmailWebTests(TestCase):
 @override_settings(ACCOUNT_EMAIL_VERIFICATION_ENABLED=False, VITE_DEV_SERVER_ENABLED=True)
 class DisabledRecoveryEmailTests(TestCase):
     def test_disabled_email_has_no_form_or_send(self):
-        owner = get_user_model().objects.create_user(
-            username="mail-disabled", password=_PASSWORD
-        )
+        owner = get_user_model().objects.create_user(username="mail-disabled", password=_PASSWORD)
         self.client.force_login(owner)
         page = self.client.get(reverse("profile"))
         self.assertNotContains(page, 'name="current_password"')

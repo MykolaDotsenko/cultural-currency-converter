@@ -76,11 +76,7 @@ def propose_recovery_email(*, user, email: str) -> None:
                 .exists()
             ):
                 raise RecoveryEmailError("This address cannot be used.")
-            identity = (
-                VerifiedRecoveryEmail.objects.select_for_update()
-                .filter(user=user)
-                .first()
-            )
+            identity = VerifiedRecoveryEmail.objects.select_for_update().filter(user=user).first()
             if identity is not None and identity.is_verified and identity.email == normalized:
                 raise RecoveryEmailError("This address is already verified.")
             if identity is None:
