@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Bootstrap is an explicit, short-lived operator action for a NEW PostgreSQL
 # installation only. An existing user database must never be silently reseeded.
-bootstrap="${RENDER_BOOTSTRAP_EMPTY_POSTGRES:-false}"
+bootstrap="${RENDER_BOOTSTRAP_EMPTY_POSTGRES-false}"
 if [[ "$bootstrap" != "false" && "$bootstrap" != "true" ]]; then
   echo "Invalid RENDER_BOOTSTRAP_EMPTY_POSTGRES (expected true or false)." >&2
   exit 64

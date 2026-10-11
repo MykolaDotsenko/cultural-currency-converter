@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import connection
 from django.test import override_settings
 
 from apps.countries.models import Country, Currency
@@ -76,6 +77,8 @@ def test_atomic_bootstrap_cannot_seed_production_even_with_approval() -> None:
 @pytest.mark.django_db
 @override_settings(APP_ENV="demo")
 def test_deployed_sqlite_bootstrap_is_rejected() -> None:
+    if connection.vendor != "sqlite":
+        pytest.skip("SQLite refusal must run against an SQLite test database.")
     with pytest.raises(CommandError, match="requires PostgreSQL"):
         call_command("bootstrap_empty_deployment", confirm_empty=True)
     assert not Country.objects.exists()

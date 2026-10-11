@@ -138,9 +138,19 @@ def test_existing_catalog_never_seeds_even_with_bootstrap_opt_in(tmp_path: Path)
     assert not any("bootstrap_empty_deployment" in call for call in commands)
 
 
-@pytest.mark.parametrize("failure", ["audit", "not_empty"])
-def test_failed_preflight_blocks_seeding_and_gunicorn(tmp_path: Path, failure: str) -> None:
-    result, commands = _launch(tmp_path, approved="true", expected_sha=_RELEASE_SHA, fail=failure)
+def test_failed_database_audit_prevents_bootstrap(tmp_path: Path) -> None:
+    result, commands = _launch(tmp_path, approved="true", expected_sha=_RELEASE_SHA, fail="audit")
     assert result.returncode != 0
     assert not any("bootstrap_empty_deployment" in call for call in commands)
+    assert not any("gunicorn" in call for call in commands)
+
+
+def test_existing_records_are_refused_by_atomic_bootstrap(tmp_path: Path) -> None:
+    result, commands = _launch(
+        tmp_path, approved="true", expected_sha=_RELEASE_SHA, fail="not_empty"
+    )
+    assert result.returncode != 0
+    # The Django command itself checks existing records while holding the
+    # atomic transaction. Its failed invocation must prevent Gunicorn.
+    assert any("bootstrap_empty_deployment" in call for call in commands)
     assert not any("gunicorn" in call for call in commands)
