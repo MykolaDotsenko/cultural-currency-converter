@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.cache import cache
 from django.core.mail import send_mail
+from django.db import transaction
 from django.urls import reverse
 from django.utils.crypto import salted_hmac
 from django.utils.encoding import force_bytes
@@ -71,21 +72,31 @@ def request_verified_password_reset(*, email: str, remote_address: str = "") -> 
     except Exception:
         return
 
-    identity = (
-        VerifiedRecoveryEmail.objects.select_related("user")
-        .filter(
-            email__iexact=normalized,
-            verified_at__isnull=False,
-            user__is_active=True,
-        )
-        .first()
-    )
-    if identity is None or not identity.user.has_usable_password():
+    try:
+        # Hold the verified-contact row lock while generating a token.
+        # Otherwise a concurrent address replacement could cause a token
+        # for the *new* contact to be sent to the previous address.
+        with transaction.atomic():
+            identity = (
+                VerifiedRecoveryEmail.objects.select_for_update()
+                .select_related("user")
+                .filter(
+                    email__iexact=normalized,
+                    verified_at__isnull=False,
+                    user__is_active=True,
+                )
+                .first()
+            )
+            if identity is None or not identity.user.has_usable_password():
+                return
+
+            user = identity.user
+            recipient = identity.email
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = verified_password_token_generator.make_token(user)
+    except Exception:
         return
 
-    user = identity.user
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    token = verified_password_token_generator.make_token(user)
     relative_url = reverse(
         "password_reset_confirm",
         kwargs={"uidb64": uid, "token": token},
@@ -101,7 +112,7 @@ def request_verified_password_reset(*, email: str, remote_address: str = "") -> 
                 "If you did not request this, ignore the message.\n"
             ),
             settings.DEFAULT_FROM_EMAIL,
-            [identity.email],
+            [recipient],
             fail_silently=False,
         )
     except Exception:

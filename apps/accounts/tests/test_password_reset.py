@@ -10,6 +10,7 @@ from uuid import uuid4
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.cache import cache
+from django.db import transaction
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -112,6 +113,21 @@ class VerifiedPasswordResetTests(TestCase):
         self.assertContains(self.client.get(link), "invalid or expired")
         self.owner.refresh_from_db()
         self.assertTrue(self.owner.check_password(_OLD))
+
+    def test_token_generation_holds_verified_email_lock_until_recipient_captured(self):
+        original = verified_password_token_generator.make_token
+
+        def inspect_lock(user):
+            self.assertTrue(transaction.get_connection().in_atomic_block)
+            return original(user)
+
+        with patch.object(
+            verified_password_token_generator,
+            "make_token",
+            side_effect=inspect_lock,
+        ):
+            self._request()
+        self._link()
 
     def test_token_expires_after_thirty_minutes(self):
         self._request()
