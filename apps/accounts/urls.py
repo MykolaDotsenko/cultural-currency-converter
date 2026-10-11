@@ -7,6 +7,7 @@ from django.contrib.auth.views import (
 from django.urls import path, reverse_lazy
 
 from apps.accounts.forms import QuietAuthenticationForm, QuietPasswordChangeForm
+from apps.accounts.login_view import AccountLoginView
 from apps.accounts.recovery_email_views import confirm_recovery_email, request_recovery_email
 from apps.accounts.password_reset_views import (
     password_reset_complete,
@@ -28,7 +29,7 @@ from apps.accounts.views import (
 urlpatterns = [
     path(
         "login/",
-        LoginView.as_view(
+        AccountLoginView.as_view(
             template_name="accounts/login.html",
             authentication_form=QuietAuthenticationForm,
             redirect_authenticated_user=True,

@@ -27,6 +27,11 @@
       {% endfor %}
       <button class="qa-primary-button" type="submit">Sign in</button>
     </form>
+    {% if email_recovery_enabled %}
+      <p class="qa-account-panel__alternate">
+        <a href="{% url 'password_reset_request' %}">Forgot password?</a>
+      </p>
+    {% endif %}
     <p class="qa-account-panel__alternate">
       New here? <a href="{% url 'signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Create an account</a>.
     </p>
