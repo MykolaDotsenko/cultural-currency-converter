@@ -5,6 +5,7 @@ let converterEnhancementsModule: Promise<
 > | null = null;
 let localSavedStateModule: Promise<typeof import("./behaviors/local-saved-state")> | null = null;
 let offlineTripModule: Promise<typeof import("./behaviors/offline-trip")> | null = null;
+let localTripDraftsModule: Promise<typeof import("./behaviors/local-trip-drafts")> | null = null;
 let rateChartModule: Promise<typeof import("./behaviors/rate-chart")> | null = null;
 let barcodeScannerModule: Promise<typeof import("./behaviors/shopping-barcode-scanner")> | null =
   null;
@@ -41,6 +42,14 @@ function loadLocalSavedState(root: EnhancementRoot): void {
   void localSavedStateModule
     .then((module) => module.enhanceLocalSavedState())
     .catch((error: unknown) => reportEnhancementFailure("Saved state", error));
+}
+
+function loadLocalTripDrafts(root: EnhancementRoot): void {
+  if (!contains(root, "[data-trip-draft-form], [data-trip-draft-prefill]")) return;
+  localTripDraftsModule ??= import("./behaviors/local-trip-drafts");
+  void localTripDraftsModule
+    .then((module) => module.enhanceLocalTripDrafts())
+    .catch((error: unknown) => reportEnhancementFailure("Local trip drafts", error));
 }
 
 function loadOfflineTrip(root: EnhancementRoot): void {
@@ -82,6 +91,7 @@ function loadRateCharts(root: EnhancementRoot): void {
 export function loadEnhancements(root: EnhancementRoot = document): void {
   loadCurrentConverter(root);
   loadLocalSavedState(root);
+  loadLocalTripDrafts(root);
   loadOfflineTrip(root);
   loadShareCards(root);
   loadRateCharts(root);
