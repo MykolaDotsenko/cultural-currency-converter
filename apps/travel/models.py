@@ -632,6 +632,47 @@ class SavedScenario(models.Model):
         return f"{self.user_id}: {label} · {self.source_currency.code} → {self.destination_currency.code}"
 
 
+class SavedScenarioPlanRevision(models.Model):
+    """Append-only record of explicit budget planning assumptions.
+
+    The original FX observation, payment baseline, budget categories and
+    confirmed spend entries are deliberately excluded from re-planning.
+    """
+
+    scenario = models.ForeignKey(
+        SavedScenario,
+        on_delete=models.CASCADE,
+        related_name="plan_revisions",
+    )
+    revision = models.PositiveSmallIntegerField()
+    travelers = models.PositiveSmallIntegerField()
+    duration_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("revision",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=("scenario", "revision"),
+                name="scenario_plan_revision_unique",
+            ),
+            models.CheckConstraint(
+                condition=Q(travelers__gte=1, travelers__lte=20),
+                name="scenario_plan_revision_travelers_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(duration_days__isnull=True)
+                | Q(duration_days__gte=1, duration_days__lte=365),
+                name="scenario_plan_revision_days_valid",
+            ),
+        ]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.pk is not None:
+            raise ValidationError("Planning history is append-only.")
+        super().save(*args, **kwargs)
+
+
 class ScenarioNotificationType(models.TextChoices):
     PRE_TRIP = "pre_trip", "Pre-trip reminder"
     CONTEXT_FRESHNESS = "context_freshness", "Context/offline freshness"

@@ -178,6 +178,10 @@
           {% endif %}
           <a class="qa-secondary-button"
              href="{% url 'edit_saved_scenario' scenario.pk %}">Edit details</a>
+          {% if scenario.kind == "budget" %}
+            <a class="qa-secondary-button"
+               href="{% url 'replan_saved_budget' scenario.pk %}">Replan trip</a>
+          {% endif %}
           {% if share_url %}
             <a class="qa-secondary-button" href="{{ share_url }}">Share safe snapshot</a>
           {% endif %}
