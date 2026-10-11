@@ -1312,8 +1312,8 @@ async function assertAnonymousTripDraftFlow(page) {
   await form.locator('input[name="startDate"]').fill("2026-12-01");
 
   await form.getByRole("button", { name: "Save local draft" }).click();
-  const first = await page.evaluate(
-    () => JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
+  const first = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
   );
   assert(first.drafts?.length === 1, "local-trip: explicit save did not persist exactly one draft");
   assert(
@@ -1328,8 +1328,8 @@ async function assertAnonymousTripDraftFlow(page) {
   await page.getByRole("button", { name: "Edit local trip draft: Tokyo QA draft" }).click();
   await form.locator('input[name="amount"]').fill("550.75");
   await form.getByRole("button", { name: "Update local draft" }).click();
-  const edited = await page.evaluate(
-    () => JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
+  const edited = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
   );
   assert(
     edited.drafts?.length === 1 && edited.drafts[0]?.amount === "550.75",
@@ -1347,10 +1347,12 @@ async function assertAnonymousTripDraftFlow(page) {
       !url.searchParams.has("sourceCurrency"),
     "local-trip: browser-only inputs leaked into destination URL query",
   );
-  await page.locator("[data-trip-draft-prefill-status]").getByText(
-    "Draft amount, currency and destination restored on this page only.",
-    { exact: false },
-  ).waitFor();
+  await page
+    .locator("[data-trip-draft-prefill-status]")
+    .getByText("Draft amount, currency and destination restored on this page only.", {
+      exact: false,
+    })
+    .waitFor();
   assert(
     (await page.locator('input[name="amount"]').inputValue()) === "550.75",
     "local-trip: session handoff lost the draft amount",
@@ -1360,22 +1362,18 @@ async function assertAnonymousTripDraftFlow(page) {
     "local-trip: destination was not revalidated against canonical options",
   );
   assert(
-    (await page.evaluate(
-      () => sessionStorage.getItem("cultural-currency:trip-draft-handoff:v1"),
+    (await page.evaluate(() =>
+      sessionStorage.getItem("cultural-currency:trip-draft-handoff:v1"),
     )) === null,
     "local-trip: one-time handoff was not consumed",
   );
 
   await page.goto(`${BASE_URL}/saved/`, { waitUntil: "networkidle" });
-  await page
-    .getByRole("button", { name: "Remove local trip draft: Tokyo QA draft" })
-    .waitFor();
+  await page.getByRole("button", { name: "Remove local trip draft: Tokyo QA draft" }).waitFor();
   page.once("dialog", (dialog) => dialog.accept());
-  await page
-    .getByRole("button", { name: "Remove local trip draft: Tokyo QA draft" })
-    .click();
-  const cleared = await page.evaluate(
-    () => JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
+  await page.getByRole("button", { name: "Remove local trip draft: Tokyo QA draft" }).click();
+  const cleared = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("cultural-currency:trip-drafts:v1") ?? "{}"),
   );
   assert(cleared.drafts?.length === 0, "local-trip: explicit remove did not clear draft");
 }
