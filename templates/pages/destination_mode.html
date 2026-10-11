@@ -48,8 +48,10 @@
         </div>
       {% endif %}
       {% if reference_data_ready %}
+        <p data-trip-draft-prefill-status role="status" aria-live="polite" hidden></p>
         <form method="post"
               action="{% url 'destination_mode' %}"
+              data-trip-draft-prefill
               class="qa-destination-mode__form">
           {% csrf_token %}
           <div class="qa-destination-mode__money">

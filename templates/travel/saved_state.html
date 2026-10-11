@@ -47,6 +47,86 @@
         {% endif %}
       </p>
     </noscript>
+    {% if not user.is_authenticated %}
+      <section class="qa-saved-section qa-trip-drafts" aria-labelledby="local-trip-drafts-title">
+        <div class="qa-saved-section__heading">
+          <div>
+            <p class="qa-foundation-kicker">Private planning</p>
+            <h2 id="local-trip-drafts-title">Trip drafts on this device</h2>
+            <p id="local-trip-drafts-privacy">
+              Save up to eight planning input drafts locally, without creating an account.
+              No rate, spending record or AI result is stored. Nothing is uploaded automatically.
+              Shared devices and browser extensions may access local data. Clearing site data
+              removes these drafts permanently.
+            </p>
+          </div>
+          <button type="button"
+                  class="qa-secondary-button qa-destructive-button"
+                  data-trip-drafts-clear
+                  hidden>Clear all drafts</button>
+        </div>
+        <p class="qa-saved-state__storage-note"
+           data-trip-draft-status
+           role="status"
+           aria-live="polite">Choose what to save locally.</p>
+        <form class="qa-trip-drafts__form" data-trip-draft-form aria-describedby="local-trip-drafts-privacy">
+          <div class="qa-field">
+            <label for="trip-draft-title">Draft name</label>
+            <input id="trip-draft-title" class="qa-text-input" name="title"
+                   type="text" maxlength="80" autocomplete="off" required
+                   placeholder="My next trip">
+          </div>
+          <div class="qa-field">
+            <label for="trip-draft-destination">Destination (country or city token)</label>
+            <input id="trip-draft-destination" class="qa-text-input" name="destination"
+                   type="text" maxlength="120" autocomplete="off" required
+                   placeholder="JP:tokyo" aria-describedby="trip-draft-destination-help">
+            <p class="qa-field__message" id="trip-draft-destination-help">
+              Use a two-letter country code (JP) or a supported city token (JP:tokyo).
+              The planner will check whether it is still available.
+            </p>
+          </div>
+          <div class="qa-field">
+            <label for="trip-draft-currency">Your currency</label>
+            <input id="trip-draft-currency" class="qa-text-input" name="sourceCurrency"
+                   type="text" maxlength="3" autocomplete="off" required placeholder="EUR">
+          </div>
+          <div class="qa-field">
+            <label for="trip-draft-amount">Planned amount</label>
+            <input id="trip-draft-amount" class="qa-text-input" name="amount"
+                   type="text" inputmode="decimal" maxlength="17" autocomplete="off"
+                   required placeholder="100.00">
+          </div>
+          <div class="qa-field">
+            <label for="trip-draft-travelers">Travellers</label>
+            <input id="trip-draft-travelers" class="qa-text-input" name="travelers"
+                   type="number" min="1" max="20" value="1" required>
+          </div>
+          <div class="qa-field">
+            <label for="trip-draft-days">Duration (days)</label>
+            <input id="trip-draft-days" class="qa-text-input" name="durationDays"
+                   type="number" min="1" max="365" value="7" required>
+          </div>
+          <div class="qa-field">
+            <label for="trip-draft-date">Provisional start date (optional)</label>
+            <input id="trip-draft-date" class="qa-text-input" name="startDate" type="date">
+          </div>
+          <div class="qa-trip-drafts__actions">
+            <button class="qa-primary-button" type="submit" data-trip-draft-save>Save local draft</button>
+            <button class="qa-secondary-button" type="button" data-trip-draft-reset>Discard edits</button>
+          </div>
+        </form>
+        <p class="qa-saved-empty" data-trip-drafts-empty>
+          JavaScript and available browser storage are required to read local drafts.
+        </p>
+        <div class="qa-saved-list" data-trip-drafts-list></div>
+        <p class="qa-saved-row__meta">
+          “Continue planning” passes only your amount, currency and destination through
+          one-time same-tab browser storage. Nothing is posted until you submit the
+          planner form. Travellers, duration and date remain in the local draft.
+        </p>
+      </section>
+    {% endif %}
     {% if user.is_authenticated %}
       <section class="qa-saved-section" aria-labelledby="saved-scenarios-title">
         <div class="qa-saved-section__heading">
@@ -708,7 +788,7 @@
         does not request a rate; “Re-check now” does. Deleting your account removes account-owned
         scenarios, comparisons, places, favourites and recent history.
       {% else %}
-        Clearing browser site data also removes these items. Signing in does not silently upload
+        Clearing browser site data also removes these items, including local trip drafts. Signing in does not silently upload
         browser-only currencies or places; you can explicitly import them from Saved & recent after sign-in.
       {% endif %}
     </p>
