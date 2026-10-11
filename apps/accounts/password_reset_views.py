@@ -90,7 +90,7 @@ def password_reset_confirm(request: HttpRequest, uidb64: str, token: str) -> Htt
                 form = SetPasswordForm(locked_user, request.POST)
                 if form.is_valid():
                     form.save()
-                    return redirect("password_reset_complete")
+                    return _private_response(redirect("password_reset_complete"))
     if form is not None:
         for field in form.fields.values():
             field.widget.attrs["class"] = "qa-text-input"

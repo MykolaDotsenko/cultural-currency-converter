@@ -76,6 +76,8 @@ class VerifiedPasswordResetTests(TestCase):
         self.assertTrue(self.owner.check_password(_OLD))
         changed = self.client.post(link, {"new_password1": _NEW, "new_password2": _NEW})
         self.assertRedirects(changed, reverse("password_reset_complete"))
+        self.assertEqual(changed["Cache-Control"], "no-store")
+        self.assertEqual(changed["Referrer-Policy"], "no-referrer")
         self.owner.refresh_from_db()
         self.assertTrue(self.owner.check_password(_NEW))
         self.assertFalse(self.owner.check_password(_OLD))
