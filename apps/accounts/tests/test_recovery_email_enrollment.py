@@ -6,9 +6,8 @@ import re
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.core import mail
+from django.core import mail, signing
 from django.core.cache import cache
-from django.core import signing
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
