@@ -86,20 +86,19 @@ def password_reset_confirm(
     request: HttpRequest, uidb64: str, token: str
 ) -> HttpResponse:
     user = _recoverable_user(uidb64, token)
-    if request.method == "POST" and user is not None:
-        # Two concurrent reset submissions must never both succeed.
+    form = None
+    if user is not None and request.method == "GET":
+        form = SetPasswordForm(user)
+    elif user is not None:
+        # Recheck the token while holding the owner's DB row lock; a
+        # simultaneous password reset must not redeem the old token twice.
         with transaction.atomic():
-            user = get_user_model().objects.select_for_update().get(pk=user.pk)
-            valid = _recoverable_user(uidb64, token)
-            if valid is not None:
-                form = SetPasswordForm(user, request.POST)
+            locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
+            if _recoverable_user(uidb64, token) is not None:
+                form = SetPasswordForm(locked_user, request.POST)
                 if form.is_valid():
                     form.save()
                     return redirect("password_reset_complete")
-    elif user is not None:
-        form = SetPasswordForm(user)
-    if user is None or (request.method == "POST" and _recoverable_user(uidb64, token) is None):
-        form = None
     if form is not None:
         for field in form.fields.values():
             field.widget.attrs["class"] = "qa-text-input"
