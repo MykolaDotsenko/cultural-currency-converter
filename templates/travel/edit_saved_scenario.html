@@ -17,6 +17,11 @@
           action="{% url 'edit_saved_scenario' scenario.pk %}">
       {% csrf_token %}
       <input type="hidden" name="version" value="{{ version }}">
+      {% if conflict_message %}
+        <div class="qa-inline-alert qa-inline-alert--error" role="alert">
+          <p>{{ conflict_message }}</p>
+        </div>
+      {% endif %}
       {% if form.non_field_errors %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
           <p>{{ form.non_field_errors.0 }}</p>

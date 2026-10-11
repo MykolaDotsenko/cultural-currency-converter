@@ -54,7 +54,12 @@ class SavedScenarioMetadataForm(forms.ModelForm):
 
 
 def _render_edit(
-    request: HttpRequest, scenario: SavedScenario, form: SavedScenarioMetadataForm, *, status=200
+    request: HttpRequest,
+    scenario: SavedScenario,
+    form: SavedScenarioMetadataForm,
+    *,
+    status: int = 200,
+    conflict_message: str = "",
 ) -> HttpResponse:
     response = render(
         request,
@@ -63,6 +68,7 @@ def _render_edit(
             "scenario": scenario,
             "form": form,
             "version": scenario.updated_at.isoformat(),
+            "conflict_message": conflict_message,
         },
         status=status,
     )
@@ -83,11 +89,16 @@ def edit_saved_scenario(request: HttpRequest, scenario_id: int) -> HttpResponse:
         scenario = get_object_or_404(owned.select_for_update(), pk=scenario_id)
         if request.POST.get("version", "") != scenario.updated_at.isoformat():
             form = SavedScenarioMetadataForm(instance=scenario)
-            form.add_error(
-                None,
-                "This scenario changed since you opened the editor. Review the latest values.",
+            return _render_edit(
+                request,
+                scenario,
+                form,
+                status=409,
+                conflict_message=(
+                    "This scenario changed since you opened the editor. "
+                    "Review the latest values."
+                ),
             )
-            return _render_edit(request, scenario, form, status=409)
 
         form = SavedScenarioMetadataForm(request.POST, instance=scenario)
         if not form.is_valid():
