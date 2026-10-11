@@ -635,8 +635,9 @@ class SavedScenario(models.Model):
 class SavedScenarioPlanRevision(models.Model):
     """Append-only record of explicit budget planning assumptions.
 
-    The original FX observation, payment baseline, budget categories and
-    confirmed spend entries are deliberately excluded from re-planning.
+    The original FX observation, payment baseline and confirmed spending
+    remain excluded. Category quantity snapshots record only explicit
+    consumption assumptions, never prices or immutable exchange rates.
     """
 
     scenario = models.ForeignKey(
@@ -647,6 +648,7 @@ class SavedScenarioPlanRevision(models.Model):
     revision = models.PositiveSmallIntegerField()
     travelers = models.PositiveSmallIntegerField()
     duration_days = models.PositiveSmallIntegerField(null=True, blank=True)
+    category_snapshot = models.JSONField(null=True, blank=True)
     recorded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

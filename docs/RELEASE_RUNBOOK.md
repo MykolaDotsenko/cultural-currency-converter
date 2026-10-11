@@ -234,6 +234,23 @@ database requires a separately reviewed operator import. The original
 minimum baseline pairs remain the startup readiness threshold so this
 catalog expansion does not force older retained DBs offline prematurely.
 
+## Existing-category quantity adjustments (PR-21B)
+
+Re-planning now accepts **optional** changes to the quantities for already
+selected saved budget categories; no category can be added or removed in
+this workflow. Each value must be 0.01–100 units per traveler per day with
+at most two decimal places. Blank fields keep their existing amounts.
+
+Changes are owner-only and serialized under the same locked scenario/version
+guard as travelers and duration. Each new revision captures the category
+quantities with no FX rate, fees, merchant data, receipt media or customer
+identity. An unchanged post generates no new revision. Earlier PR-21A
+revision rows are not retroactively reconstructed: absent JSON category
+history denotes **not captured**, not zero usage. The immutable initial FX
+observation, original budget reference, provider details and confirmed spend
+remain unaffected. The quantity inputs represent consumption assumptions;
+they must not be interpreted as fresh retail price observations.
+
 ## Versioned budget re-planning (PR-21A)
 
 A saved owner-scoped **budget** may now be explicitly re-planned through
