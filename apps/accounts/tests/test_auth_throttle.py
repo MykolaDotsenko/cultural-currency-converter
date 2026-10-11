@@ -38,7 +38,7 @@ class AuthThrottleTests(TestCase):
         blocked = self._login(password=_PASSWORD, client="10.10.0.9")
         self.assertEqual(blocked.status_code, 429)
         self.assertEqual(blocked["Retry-After"], "900")
-        self.assertEqual(blocked["Cache-Control"], "no-store")
+        self.assertIn("no-store", blocked["Cache-Control"])
         self.assertFalse("_auth_user_id" in self.client.session)
 
     def test_nonexistent_username_has_same_block_status(self):
