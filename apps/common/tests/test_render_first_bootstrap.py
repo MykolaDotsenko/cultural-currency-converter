@@ -38,7 +38,7 @@ def _launch(
         'if [ "$2" = "bootstrap_empty_deployment" ]; then\n'
         '  if [ "$FAIL_STAGE" = "not_empty" ]; then exit 11; fi\n'
         '  touch "$CATALOG_SEEDED_FILE"\n'
-        'fi\n',
+        "fi\n",
         encoding="utf-8",
     )
     python.chmod(0o755)
