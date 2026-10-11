@@ -234,9 +234,7 @@ def test_token_generation_has_explicit_atomic_identity_lock():
     """A transactional test, not TestCase's implicit outer transaction."""
 
     cache.clear()
-    owner = get_user_model().objects.create_user(
-        username="recovery-row-lock-probe", password=_OLD
-    )
+    owner = get_user_model().objects.create_user(username="recovery-row-lock-probe", password=_OLD)
     VerifiedRecoveryEmail.objects.create(
         user=owner,
         email="row-lock@example.test",
@@ -249,11 +247,7 @@ def test_token_generation_has_explicit_atomic_identity_lock():
         observed.append(transaction.get_connection().in_atomic_block)
         return original(user)
 
-    with patch.object(
-        verified_password_token_generator, "make_token", side_effect=inspect
-    ):
-        request_verified_password_reset(
-            email="row-lock@example.test", remote_address="10.20.30.40"
-        )
+    with patch.object(verified_password_token_generator, "make_token", side_effect=inspect):
+        request_verified_password_reset(email="row-lock@example.test", remote_address="10.20.30.40")
     assert observed == [True]
     cache.clear()
