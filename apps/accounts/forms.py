@@ -55,6 +55,34 @@ class SignUpForm(UserCreationForm):
         )
 
 
+class RecoveryEmailEnrollmentForm(forms.Form):
+    email = forms.EmailField(
+        max_length=254,
+        label="Recovery email",
+        widget=forms.EmailInput(attrs={"class": "qa-text-input", "autocomplete": "email"}),
+    )
+    current_password = forms.CharField(
+        strip=False,
+        label="Current password",
+        widget=forms.PasswordInput(
+            attrs={"class": "qa-text-input", "autocomplete": "current-password"}
+        ),
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
+    def clean_current_password(self):
+        value = self.cleaned_data["current_password"]
+        if not self.user.check_password(value):
+            raise forms.ValidationError("Current password is incorrect.")
+        return value
+
+
 class HomeCurrencyPreferenceForm(forms.Form):
     home_currency = forms.ChoiceField(
         required=False,
