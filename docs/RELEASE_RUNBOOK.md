@@ -435,11 +435,20 @@ port are required; deployed environments additionally require authenticated
 SMTP over TLS. Invalid or partial configuration fails startup, and secret
 values are never included in configuration errors.
 
-The verification feature and password-reset flow remain **inactive** until
-the owner-scoped enrollment/confirmation flows and delivery tests are
-separately implemented and reviewed. No actual email is dispatched by merely
-loading this configuration. Never infer ownership from historical
-auth.User.email or pending VerifiedRecoveryEmail records.
+Verification enrollment is available only after explicitly enabling and
+reviewing authenticated SMTP/TLS and an HTTPS public origin. A logged-in user
+must re-enter their current password to propose an address. The system
+sends a signed 30-minute confirmation URL without storing raw token text.
+GET displays an owner-scoped confirmation screen **without modifying** the
+email identity; POST with CSRF verifies it atomically. The nonce rotates
+on each request and on confirmation; replay/expired/foreign tokens fail.
+A per-account cooldown limits resend abuse. SMTP/database failures do not
+return provider error details. A failed delivery rolls back the pending
+identity change. No actual email is sent by simply loading the settings.
+
+**Still not enabled by this PR:** forgotten-password reset, automatic
+signup email collection, background email reminders, or live SMTP
+configuration. Historical auth.User.email is never automatically trusted.
 
 ## Recovery email identity foundation (PR-18, NOT activated)
 
