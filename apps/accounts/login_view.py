@@ -22,15 +22,13 @@ class AccountLoginView(LoginView):
 
     def _guarded_response(self, *, status: int):
         form = QuietAuthenticationForm(request=self.request)
-        form.add_error(
-            None,
-            (
-                "Too many sign-in attempts. Please try again later."
-                if status == 429
-                else "Sign-in is temporarily unavailable. Please try again later."
-            ),
+        context = self.get_context_data(form=form)
+        context["auth_guard_error"] = (
+            "Too many sign-in attempts. Please try again later."
+            if status == 429
+            else "Sign-in is temporarily unavailable. Please try again later."
         )
-        response = self.render_to_response(self.get_context_data(form=form), status=status)
+        response = self.render_to_response(context, status=status)
         response["Cache-Control"] = "no-store"
         if status == 429:
             response["Retry-After"] = "900"
