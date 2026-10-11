@@ -16,8 +16,8 @@ from django.utils import timezone
 from apps.countries.models import Country, Currency
 from apps.travel.models import (
     SavedScenario,
-    SavedScenarioKind,
     SavedScenarioBudgetItem,
+    SavedScenarioKind,
     SavedScenarioObservation,
     SavedScenarioObservationKind,
     SavedScenarioSpendEntry,
