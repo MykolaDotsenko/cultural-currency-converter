@@ -260,9 +260,11 @@ function wireDraftEditor(page: HTMLElement): void {
     feedback(page, "All local trip drafts removed from this browser.");
   });
 
-  form.querySelectorAll<HTMLInputElement | HTMLButtonElement>("input, button").forEach((control) => {
-    control.disabled = false;
-  });
+  form
+    .querySelectorAll<HTMLInputElement | HTMLButtonElement>("input, button")
+    .forEach((control) => {
+      control.disabled = false;
+    });
   renderDrafts(page);
 }
 
