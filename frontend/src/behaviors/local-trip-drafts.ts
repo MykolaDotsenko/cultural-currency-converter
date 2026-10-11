@@ -34,8 +34,9 @@ function draftFromForm(form: HTMLFormElement, existing?: TripDraft): TripDraft |
     id: existing?.id ?? crypto.randomUUID(),
     title: inputValue(form, "title"),
     destination: inputValue(form, "destination")
-      .toUpperCase()
-      .replace(/:([A-Z-]+)/g, (group) => group.toLowerCase()),
+      .split(":")
+      .map((part, index) => (index === 0 ? part.toUpperCase() : part.toLowerCase()))
+      .join(":"),
     sourceCurrency: inputValue(form, "sourceCurrency").toUpperCase(),
     amount: inputValue(form, "amount"),
     travelers: Number(inputValue(form, "travelers")),
@@ -196,6 +197,9 @@ function wireDraftEditor(page: HTMLElement): void {
   const save = page.querySelector<HTMLButtonElement>("[data-trip-draft-save]");
   if (!form || !clear || !save) return;
 
+  // A hidden form prevents accidental GET submission of private inputs
+  // while JavaScript is blocked or still loading.
+  form.hidden = false;
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const storage = browserStorage("local");
