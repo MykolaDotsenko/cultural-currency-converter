@@ -11,6 +11,11 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
 from apps.accounts.ai_preferences import explanation_preferences
+from apps.accounts.auth_throttle import (
+    AuthThrottleUnavailable,
+    note_signup_attempt,
+    signup_allowed,
+)
 from apps.accounts.forms import (
     DeleteAccountForm,
     ExplanationPreferencesForm,
@@ -57,6 +62,38 @@ def signup(request: HttpRequest) -> HttpResponse:
     next_url = _safe_next(request)
     if request.user.is_authenticated:
         return redirect(next_url or reverse("profile"))
+
+    if request.method == "POST":
+        remote_address = request.META.get("REMOTE_ADDR", "")
+        try:
+            if not signup_allowed(remote_addr=remote_address):
+                response = render(
+                    request,
+                    "accounts/signup.html",
+                    {
+                        "form": SignUpForm(),
+                        "next": next_url,
+                        "auth_guard_error": "Too many sign-up attempts. Please try again later.",
+                    },
+                    status=429,
+                )
+                response["Cache-Control"] = "no-store"
+                response["Retry-After"] = "900"
+                return response
+            note_signup_attempt(remote_addr=remote_address)
+        except AuthThrottleUnavailable:
+            response = render(
+                request,
+                "accounts/signup.html",
+                {
+                    "form": SignUpForm(),
+                    "next": next_url,
+                    "auth_guard_error": "Sign-up is temporarily unavailable. Please try again later.",
+                },
+                status=503,
+            )
+            response["Cache-Control"] = "no-store"
+            return response
 
     form = SignUpForm(request.POST or None)
     if request.method == "POST" and form.is_valid():

@@ -11,7 +11,10 @@
     <form class="qa-account-form" method="post">
       {% csrf_token %}
       {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-      {% if form.non_field_errors %}
+      {% if auth_guard_error %}
+          <p role="alert" class="qa-form-error">{{ auth_guard_error }}</p>
+          {% endif %}
+          {% if form.non_field_errors %}
         <div class="qa-inline-alert qa-inline-alert--error" role="alert">
           <p>{{ form.non_field_errors.0 }}</p>
         </div>

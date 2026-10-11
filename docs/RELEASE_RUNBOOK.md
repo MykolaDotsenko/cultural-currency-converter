@@ -450,6 +450,29 @@ identity change. No actual email is sent by simply loading the settings.
 signup email collection, background email reminders, or live SMTP
 configuration. Historical auth.User.email is never automatically trusted.
 
+## Authentication attempt throttling (PR-19)
+
+Login uses two bounded cache-backed buckets: at most **8 failed attempts
+per username** and **40 failed attempts per server-visible client address**
+over a fixed 15-minute window. A valid sign-in clears the username counter
+but preserves the client-level spraying budget. Signup counts **12 POST
+attempts per client** in the same window before returning HTTP 429.
+These counters store only salted-HMAC key digests, never raw identities,
+passwords or source addresses. All counters and reads fail closed with
+HTTP 503 if the cache cannot be verified.
+
+The application uses trusted `REMOTE_ADDR`, **not user-controlled
+`X-Forwarded-For`**. Operators must verify their proxy correctly sets
+the server-visible client address, or the client-level budget can be
+shared across many users behind a reverse proxy. A distributed deployment
+must use one shared Redis cache rather than per-process local memory.
+Thresholds are defensive controls, not proof of protection against
+distributed attempts; monitor recurring HTTP 429/503 without logging
+credentials. CSRF, password policy, session security and email-verified
+reset semantics remain independent controls. Do not activate on the
+old hosted Render demo without certified durable PostgreSQL and cache
+topology.
+
 ## Verified-email forgotten password reset (PR-18)
 
 Forgotten-password recovery is **disabled unless** the existing
