@@ -33,16 +33,15 @@ def _launch(
         '    if [ "$FAIL_STAGE" = "not_empty" ]; then exit 11; fi\n'
         '  elif [ "$CATALOG_PRESENT" = "no" ] && [ "$FAIL_STAGE" != "seeded" ]; then\n'
         '    if [ "$CATALOG_SEEDED_FILE" != "" ] && [ -e "$CATALOG_SEEDED_FILE" ]; then :; else exit 1; fi\n'
-        '  fi\n'
-        'fi\n'
+        "  fi\n"
+        "fi\n"
         'if [ "$2" = "seed_reference_data" ]; then touch "$CATALOG_SEEDED_FILE"; fi\n',
         encoding="utf-8",
     )
     python.chmod(0o755)
     gunicorn = tmp_path / "gunicorn"
     gunicorn.write_text(
-        "#!/bin/sh\n"
-        'printf "gunicorn %s\\n" "$*" >> "$TRACE_FILE"\n',
+        '#!/bin/sh\nprintf "gunicorn %s\\n" "$*" >> "$TRACE_FILE"\n',
         encoding="utf-8",
     )
     gunicorn.chmod(0o755)
@@ -87,18 +86,14 @@ def test_normal_deploy_does_not_write_reference_seeds(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("approved", ["", "yes", "True", "1", "off", "FALSE"])
-def test_invalid_flag_exits_without_touching_database(
-    tmp_path: Path, approved: str
-) -> None:
+def test_invalid_flag_exits_without_touching_database(tmp_path: Path, approved: str) -> None:
     result, commands = _launch(tmp_path, approved=approved)
     assert result.returncode == 64
     assert commands == []
 
 
 @pytest.mark.parametrize("environment", ["production", "local", "test", ""])
-def test_bootstrap_prohibited_outside_demo_preview(
-    tmp_path: Path, environment: str
-) -> None:
+def test_bootstrap_prohibited_outside_demo_preview(tmp_path: Path, environment: str) -> None:
     result, commands = _launch(
         tmp_path, approved="true", environment=environment, expected_sha=_RELEASE_SHA
     )
@@ -107,20 +102,14 @@ def test_bootstrap_prohibited_outside_demo_preview(
 
 
 @pytest.mark.parametrize("expected_sha", [None, "", "b" * 40, "short"])
-def test_bootstrap_requires_exact_running_release(
-    tmp_path: Path, expected_sha: str | None
-) -> None:
-    result, commands = _launch(
-        tmp_path, approved="true", expected_sha=expected_sha
-    )
+def test_bootstrap_requires_exact_running_release(tmp_path: Path, expected_sha: str | None) -> None:
+    result, commands = _launch(tmp_path, approved="true", expected_sha=expected_sha)
     assert result.returncode == 78
     assert commands == []
 
 
 def test_first_deployment_can_bootstrap_verified_empty_postgres(tmp_path: Path) -> None:
-    result, commands = _launch(
-        tmp_path, approved="true", expected_sha=_RELEASE_SHA
-    )
+    result, commands = _launch(tmp_path, approved="true", expected_sha=_RELEASE_SHA)
     assert result.returncode == 0, result.stderr
     assert commands == [
         "python manage.py migrate --noinput",
@@ -150,12 +139,8 @@ def test_existing_catalog_never_seeds_even_with_bootstrap_opt_in(tmp_path: Path)
 
 
 @pytest.mark.parametrize("failure", ["audit", "not_empty"])
-def test_failed_preflight_blocks_seeding_and_gunicorn(
-    tmp_path: Path, failure: str
-) -> None:
-    result, commands = _launch(
-        tmp_path, approved="true", expected_sha=_RELEASE_SHA, fail=failure
-    )
+def test_failed_preflight_blocks_seeding_and_gunicorn(tmp_path: Path, failure: str) -> None:
+    result, commands = _launch(tmp_path, approved="true", expected_sha=_RELEASE_SHA, fail=failure)
     assert result.returncode != 0
     assert not any("seed_" in call for call in commands)
     assert not any("gunicorn" in call for call in commands)
