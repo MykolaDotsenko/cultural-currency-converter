@@ -95,8 +95,7 @@ def edit_saved_scenario(request: HttpRequest, scenario_id: int) -> HttpResponse:
                 form,
                 status=409,
                 conflict_message=(
-                    "This scenario changed since you opened the editor. "
-                    "Review the latest values."
+                    "This scenario changed since you opened the editor. Review the latest values."
                 ),
             )
 
