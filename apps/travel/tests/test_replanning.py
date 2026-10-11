@@ -19,11 +19,10 @@ from apps.travel.models import (
     SavedScenarioKind,
     SavedScenarioObservation,
     SavedScenarioObservationKind,
-    SavedScenarioPlanRevision,
     SavedScenarioSpendEntry,
     SavedScenarioSpendSource,
 )
-from apps.travel.replanning import ReplanningConflict, ReplanningError, replan_budget
+from apps.travel.replanning import ReplanningError, replan_budget
 
 
 @pytest.fixture(autouse=True)

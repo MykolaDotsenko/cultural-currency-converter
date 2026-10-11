@@ -50,8 +50,8 @@ from apps.travel.notification_web import (
     notification_inbox,
 )
 from apps.travel.offline_pack_web import download_offline_destination_pack, offline_trip_snapshot
-from apps.travel.scenario_metadata import edit_saved_scenario
 from apps.travel.replanning_web import replan_saved_budget
+from apps.travel.scenario_metadata import edit_saved_scenario
 from apps.travel.scenario_web import (
     add_saved_scenario_spend,
     delete_saved_scenario,
