@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+from typing import Any
+
 from django import forms
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpRequest, HttpResponse
@@ -25,6 +28,24 @@ class BudgetReplanningForm(forms.Form):
         required=False,
         widget=forms.NumberInput(attrs={"min": "1", "max": "365", "class": "qa-text-input"}),
     )
+
+    def __init__(self, *args: Any, budget_items: tuple, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.budget_items = budget_items
+        for item in budget_items:
+            field_name = f"budget_item_{item.pk}"
+            self.fields[field_name] = forms.DecimalField(
+                label=f"{item.category.replace('_', ' ').title()} units per traveler per day",
+                min_value=Decimal("0.01"),
+                max_value=Decimal("100"),
+                decimal_places=2,
+                max_digits=5,
+                required=False,
+                initial=item.units_per_person_per_day,
+                widget=forms.NumberInput(
+                    attrs={"class": "qa-text-input", "step": "0.01", "min": "0.01", "max": "100"}
+                ),
+            )
 
 
 def _render(
@@ -62,16 +83,18 @@ def replan_saved_budget(request: HttpRequest, scenario_id: int) -> HttpResponse:
     if scenario.kind != SavedScenarioKind.BUDGET:
         raise Http404("Re-planning is available for saved budgets only.")
 
+    budget_items = tuple(scenario.budget_items.order_by("category", "pk"))
     if request.method == "GET":
         return _render(
             request,
             scenario,
             BudgetReplanningForm(
-                initial={"travelers": scenario.travelers, "duration_days": scenario.duration_days}
+                budget_items=budget_items,
+                initial={"travelers": scenario.travelers, "duration_days": scenario.duration_days},
             ),
         )
 
-    form = BudgetReplanningForm(request.POST)
+    form = BudgetReplanningForm(request.POST, budget_items=budget_items)
     if not form.is_valid():
         return _render(request, scenario, form, status=422)
 
@@ -82,11 +105,17 @@ def replan_saved_budget(request: HttpRequest, scenario_id: int) -> HttpResponse:
             expected_version=request.POST.get("version", ""),
             travelers=form.cleaned_data["travelers"],
             duration_days=form.cleaned_data["duration_days"],
+            budget_item_changes={
+                item.pk: form.cleaned_data[f"budget_item_{item.pk}"]
+                for item in budget_items
+                if form.cleaned_data[f"budget_item_{item.pk}"] is not None
+            },
         )
     except ReplanningConflict as exc:
         scenario.refresh_from_db()
         current = BudgetReplanningForm(
-            initial={"travelers": scenario.travelers, "duration_days": scenario.duration_days}
+            budget_items=tuple(scenario.budget_items.order_by("category", "pk")),
+            initial={"travelers": scenario.travelers, "duration_days": scenario.duration_days},
         )
         return _render(request, scenario, current, status=409, error=str(exc))
     except ReplanningError as exc:

@@ -16,6 +16,7 @@ from django.utils import timezone
 from apps.countries.models import Country, Currency
 from apps.travel.models import (
     SavedScenario,
+    SavedScenarioBudgetItem,
     SavedScenarioKind,
     SavedScenarioObservation,
     SavedScenarioObservationKind,
@@ -250,3 +251,180 @@ def test_revision_is_immutable_and_20_edit_limit_is_atomic(budget):
     assert scenario.plan_revisions.count() == 21
     assert SavedScenarioObservation.objects.get(pk=observation.pk).output_amount == Decimal("75000")
     assert SavedScenarioSpendEntry.objects.get(pk=spend.pk).amount == Decimal("350")
+
+
+@pytest.mark.django_db
+def test_category_replan_saves_snapshot_and_preserves_immutable_money(client, budget):
+    owner, _other, scenario, observation, spend = budget
+    coffee = SavedScenarioBudgetItem.objects.create(
+        scenario=scenario, category="coffee", units_per_person_per_day=Decimal("1.00")
+    )
+    meal = SavedScenarioBudgetItem.objects.create(
+        scenario=scenario, category="casual_meal", units_per_person_per_day=Decimal("2.00")
+    )
+    client.force_login(owner)
+    url = reverse("replan_saved_budget", args=(scenario.pk,))
+    page = client.get(url)
+    assert page.status_code == 200
+    assert f"budget_item_{coffee.pk}" in page.context["form"].fields
+    res = client.post(
+        url,
+        {
+            "version": page.context["version"],
+            "travelers": 3,
+            "duration_days": 7,
+            f"budget_item_{coffee.pk}": "1.75",
+            f"budget_item_{meal.pk}": "2.00",
+        },
+    )
+    assert res.status_code == 302
+    scenario.refresh_from_db()
+    coffee.refresh_from_db()
+    meal.refresh_from_db()
+    assert (scenario.travelers, scenario.duration_days) == (3, 7)
+    assert coffee.units_per_person_per_day == Decimal("1.75")
+    assert meal.units_per_person_per_day == Decimal("2.00")
+    revisions = list(scenario.plan_revisions.order_by("revision"))
+    assert len(revisions) == 2
+    assert revisions[0].category_snapshot == [
+        {"category": "casual_meal", "units_per_person_per_day": "2.00"},
+        {"category": "coffee", "units_per_person_per_day": "1.00"},
+    ]
+    assert revisions[1].category_snapshot == [
+        {"category": "casual_meal", "units_per_person_per_day": "2.00"},
+        {"category": "coffee", "units_per_person_per_day": "1.75"},
+    ]
+    observation.refresh_from_db()
+    spend.refresh_from_db()
+    assert observation.output_amount == Decimal("75000")
+    assert observation.rate == Decimal("150")
+    assert spend.amount == Decimal("350")
+    assert scenario.source_amount == Decimal("500")
+
+
+@pytest.mark.django_db
+def test_blank_category_input_keeps_existing_quantities(client, budget):
+    owner, _other, scenario, _obs, _spend = budget
+    coffee = SavedScenarioBudgetItem.objects.create(
+        scenario=scenario, category="coffee", units_per_person_per_day=Decimal("1.00")
+    )
+    client.force_login(owner)
+    url = reverse("replan_saved_budget", args=(scenario.pk,))
+    res = client.post(
+        url,
+        {
+            "version": scenario.updated_at.isoformat(),
+            "travelers": "3",
+            "duration_days": "7",
+            f"budget_item_{coffee.pk}": "",
+        },
+    )
+    assert res.status_code == 302
+    coffee.refresh_from_db()
+    assert coffee.units_per_person_per_day == Decimal("1.00")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("invalid", ["0", "100.01", "-1", "1.001", "NaN"])
+def test_category_replan_invalid_quantities_never_write(client, budget, invalid):
+    owner, _other, scenario, _obs, _spend = budget
+    coffee = SavedScenarioBudgetItem.objects.create(
+        scenario=scenario, category="coffee", units_per_person_per_day=Decimal("1.00")
+    )
+    client.force_login(owner)
+    url = reverse("replan_saved_budget", args=(scenario.pk,))
+    res = client.post(
+        url,
+        {
+            "version": scenario.updated_at.isoformat(),
+            "travelers": "3",
+            "duration_days": "7",
+            f"budget_item_{coffee.pk}": invalid,
+        },
+    )
+    assert res.status_code == 422
+    coffee.refresh_from_db()
+    scenario.refresh_from_db()
+    assert coffee.units_per_person_per_day == Decimal("1.00")
+    assert scenario.travelers == 2
+    assert not scenario.plan_revisions.exists()
+
+
+@pytest.mark.django_db
+def test_foreign_budget_item_is_rejected_without_mutation(budget):
+    owner, stranger, scenario, _obs, _spend = budget
+    foreign = SavedScenarioBudgetItem.objects.create(
+        scenario=SavedScenario.objects.create(
+            user=stranger,
+            kind=SavedScenarioKind.BUDGET,
+            source_currency=scenario.source_currency,
+            destination_currency=scenario.destination_currency,
+            destination_country=scenario.destination_country,
+            source_amount=Decimal("200"),
+        ),
+        category="coffee",
+        units_per_person_per_day=Decimal("1"),
+    )
+    with pytest.raises(ReplanningError, match="no longer part"):
+        replan_budget(
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
+            expected_version=scenario.updated_at.isoformat(),
+            travelers=3,
+            duration_days=7,
+            budget_item_changes={foreign.pk: Decimal("2")},
+        )
+    scenario.refresh_from_db()
+    assert scenario.travelers == 2
+    assert not scenario.plan_revisions.exists()
+
+
+@pytest.mark.django_db
+def test_category_change_only_updates_timestamp_and_revision(budget):
+    owner, _other, scenario, _obs, _spend = budget
+    coffee = SavedScenarioBudgetItem.objects.create(
+        scenario=scenario, category="coffee", units_per_person_per_day=Decimal("1")
+    )
+    original_version = scenario.updated_at.isoformat()
+    assert (
+        replan_budget(
+            owner_id=owner.pk,
+            scenario_id=scenario.pk,
+            expected_version=original_version,
+            travelers=2,
+            duration_days=6,
+            budget_item_changes={coffee.pk: Decimal("2")},
+        )
+        is True
+    )
+    scenario.refresh_from_db()
+    coffee.refresh_from_db()
+    assert scenario.updated_at.isoformat() != original_version
+    assert coffee.units_per_person_per_day == Decimal("2")
+    assert scenario.plan_revisions.count() == 2
+
+
+@pytest.mark.django_db
+def test_existing_pre_category_revision_is_not_reconstructed(budget):
+    owner, _other, scenario, _obs, _spend = budget
+    from apps.travel.models import SavedScenarioPlanRevision
+
+    SavedScenarioPlanRevision.objects.create(
+        scenario=scenario, revision=0, travelers=2, duration_days=6
+    )
+    coffee = SavedScenarioBudgetItem.objects.create(
+        scenario=scenario, category="coffee", units_per_person_per_day=Decimal("1")
+    )
+    assert replan_budget(
+        owner_id=owner.pk,
+        scenario_id=scenario.pk,
+        expected_version=scenario.updated_at.isoformat(),
+        travelers=2,
+        duration_days=6,
+        budget_item_changes={coffee.pk: Decimal("2")},
+    )
+    revisions = list(scenario.plan_revisions.order_by("revision"))
+    assert revisions[0].category_snapshot is None
+    assert revisions[1].category_snapshot == [
+        {"category": "coffee", "units_per_person_per_day": "2.00"}
+    ]

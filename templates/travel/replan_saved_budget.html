@@ -8,9 +8,14 @@
     <p class="qa-foundation-kicker">Saved trip · explicit planning revision</p>
     <h1 id="replan-title">Replan your trip</h1>
     <p class="qa-account-panel__lede">
-      Adjust your traveler count or planned duration. The original exchange-rate observation,
-      payment-adjusted reference budget and all confirmed spending remain unchanged.
-      When trip dates are saved, the remaining-per-day calculation follows those dates.
+      Adjust your traveler count, planned duration and the quantities in your existing
+      daily budget categories. Blank category fields keep their current values.
+      The original exchange-rate observation, payment reference budget and confirmed spending remain unchanged.
+      Travel dates still determine the remaining-per-day period when present.
+    </p>
+    <p class="qa-foundation-lede">
+      Category quantities are consumption assumptions only, not observed city prices.
+      This editor cannot add or remove categories.
     </p>
     <form class="qa-account-form"
           method="post"
@@ -59,6 +64,15 @@
               <span>· Duration not specified</span>
             {% endif %}
             <span>· {{ item.recorded_at|date:"j M Y, H:i" }}</span>
+            {% if item.category_snapshot %}
+              <ul>
+                {% for category in item.category_snapshot %}
+                  <li>{{ category.category|title }} · {{ category.units_per_person_per_day }} units per person per day</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p>Category quantities were not recorded for this earlier revision.</p>
+            {% endif %}
           </li>
         {% endfor %}
       </ol>
