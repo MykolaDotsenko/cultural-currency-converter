@@ -342,18 +342,18 @@
               {% for point in series_component.points %}
                 <tr{% if point.selected %} class="is-selected"{% endif %}>
                   <td data-label="Observation date">
-                    <span class="qa-mobile-table-cell-label">Observation date: </span>
+                    <span class="qa-mobile-table-cell-label">Observation date:</span>
                     {{ point.date_label }}
                     {% if point.selected %}
                       <span class="qa-status-badge qa-status-badge--historical">Selected</span>
                     {% endif %}
                   </td>
                   <td data-label="Rate">
-                    <span class="qa-mobile-table-cell-label">Rate: </span>
+                    <span class="qa-mobile-table-cell-label">Rate:</span>
                     {{ point.rate }} {{ series_component.quote_currency }} per {{ series_component.base_currency }}
                   </td>
                   <td data-label="Source">
-                    <span class="qa-mobile-table-cell-label">Source: </span>
+                    <span class="qa-mobile-table-cell-label">Source:</span>
                     {{ point.provider_keys|default:"—" }}
                   </td>
                 </tr>
