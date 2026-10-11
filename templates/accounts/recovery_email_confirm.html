@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Verify recovery email · Cultural Currency Converter{% endblock %}
+{% block content %}
+  <section class="qa-account-panel" aria-labelledby="recovery-email-title">
+    <p class="qa-foundation-kicker">Account security</p>
+    <h1 id="recovery-email-title">Verify recovery email</h1>
+    <p>Confirm an address for your signed-in account. This does not change your password or disclose saved trips.</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="qa-primary-button" type="submit">Confirm email address</button>
+    </form>
+    <p><a href="{% url 'profile' %}">Back to account</a></p>
+  </section>
+{% endblock %}

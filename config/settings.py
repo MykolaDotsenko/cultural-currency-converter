@@ -8,6 +8,7 @@ runtime boundary in config.environment.
 import os
 from pathlib import Path
 
+from config.account_mail import load_account_mail_config
 from config.ai import load_ai_config
 from config.api_security import load_trusted_proxy_networks
 from config.cache import load_cache_config
@@ -110,6 +111,17 @@ AI_FALLBACK_MODE = AI_CONFIG.fallback_mode
 AI_TIMEOUT_SECONDS = AI_CONFIG.timeout_seconds
 AI_MAX_ATTEMPTS = AI_CONFIG.max_attempts
 GEMINI_API_KEY = AI_CONFIG.gemini_api_key
+
+ACCOUNT_MAIL_CONFIG = load_account_mail_config(os.environ, RUNTIME_CONFIG.environment)
+ACCOUNT_EMAIL_VERIFICATION_ENABLED = ACCOUNT_MAIL_CONFIG.enabled
+ACCOUNT_EMAIL_PUBLIC_ORIGIN = ACCOUNT_MAIL_CONFIG.origin
+DEFAULT_FROM_EMAIL = ACCOUNT_MAIL_CONFIG.sender
+EMAIL_HOST = ACCOUNT_MAIL_CONFIG.host
+EMAIL_PORT = ACCOUNT_MAIL_CONFIG.port
+EMAIL_HOST_USER = ACCOUNT_MAIL_CONFIG.username
+EMAIL_HOST_PASSWORD = ACCOUNT_MAIL_CONFIG.password
+EMAIL_USE_TLS = ACCOUNT_MAIL_CONFIG.tls
+EMAIL_TIMEOUT = 5
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "profile"

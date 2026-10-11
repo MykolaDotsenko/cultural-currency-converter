@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -14,8 +15,10 @@ from apps.accounts.forms import (
     DeleteAccountForm,
     ExplanationPreferencesForm,
     HomeCurrencyPreferenceForm,
+    RecoveryEmailEnrollmentForm,
     SignUpForm,
 )
+from apps.accounts.models import VerifiedRecoveryEmail
 from apps.accounts.preferences import (
     home_currency_code,
     recent_history_enabled,
@@ -78,6 +81,7 @@ def _profile_context(
     home_currency_form: HomeCurrencyPreferenceForm | None = None,
     home_currency: str | None = None,
     explanation_form: ExplanationPreferencesForm | None = None,
+    recovery_email_form: RecoveryEmailEnrollmentForm | None = None,
 ) -> dict[str, object]:
     current_home_currency = home_currency if home_currency is not None else home_currency_code(user)
     ai_preferences = explanation_preferences(user)
@@ -96,6 +100,9 @@ def _profile_context(
         ),
         "payment_fee_profiles": payment_fee_profiles_for_user(user),
         "budget_presets": budget_presets_for_user(user),
+        "recovery_email_enabled": settings.ACCOUNT_EMAIL_VERIFICATION_ENABLED,
+        "recovery_email_identity": VerifiedRecoveryEmail.objects.filter(user=user).first(),
+        "recovery_email_form": recovery_email_form or RecoveryEmailEnrollmentForm(user=user),
     }
 
 

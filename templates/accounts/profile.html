@@ -190,6 +190,41 @@
         </form>
       {% endif %}
     </section>
+    <section class="qa-account-section" aria-labelledby="recovery-email-heading">
+      <p class="qa-foundation-kicker">Optional account security</p>
+      <h2 id="recovery-email-heading">Recovery email</h2>
+      {% if recovery_email_identity %}
+        <p>
+          {{ recovery_email_identity.email }} —
+          {% if recovery_email_identity.is_verified %}Verified{% else %}Pending confirmation{% endif %}
+        </p>
+      {% else %}
+        <p>No verified email is associated with this account.</p>
+      {% endif %}
+      {% if recovery_email_enabled %}
+        <p>
+          Verify your address by confirming your current password. A one-time email link
+          expires in 30 minutes and requires signing in to this account.
+        </p>
+        <form method="post" action="{% url 'request_recovery_email' %}">
+          {% csrf_token %}
+          {% for field in recovery_email_form %}
+            <div class="qa-field{% if field.errors %} qa-field--error{% endif %}">
+              <label class="qa-field__label"
+                     for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for error in field.errors %}
+                <p class="qa-field__message qa-field__message--error">{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endfor %}
+          <button class="qa-secondary-button" type="submit">Send verification email</button>
+        </form>
+      {% else %}
+        <p class="qa-field__message">Recovery email verification is not yet enabled.</p>
+      {% endif %}
+      <p class="qa-field__message">A verified email does not yet activate forgotten-password reset.</p>
+    </section>
     <section class="qa-account-section" aria-labelledby="account-security-title">
       <p class="qa-foundation-kicker">Account security</p>
       <h2 id="account-security-title">Change password</h2>

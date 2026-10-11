@@ -7,6 +7,7 @@ from django.contrib.auth.views import (
 from django.urls import path, reverse_lazy
 
 from apps.accounts.forms import QuietAuthenticationForm, QuietPasswordChangeForm
+from apps.accounts.recovery_email_views import confirm_recovery_email, request_recovery_email
 from apps.accounts.views import (
     delete_account,
     delete_budget_preset_view,
@@ -44,6 +45,12 @@ urlpatterns = [
         name="password_change_done",
     ),
     path("signup/", signup, name="signup"),
+    path("recovery-email/request/", request_recovery_email, name="request_recovery_email"),
+    path(
+        "recovery-email/confirm/<str:token>/",
+        confirm_recovery_email,
+        name="recovery_email_confirm",
+    ),
     path("profile/", profile, name="profile"),
     path(
         "home-currency/",
