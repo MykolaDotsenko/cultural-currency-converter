@@ -53,7 +53,7 @@ class VerifiedPasswordResetTests(TestCase):
     def _link(self):
         self.assertEqual(len(mail.outbox), 1)
         match = re.search(
-            r"https://testserver(/accounts/password/reset/[^/\\s]+/[^/\\s]+/)",
+            r"https://testserver(/accounts/password/reset/[^/\s]+/[^/\s]+/)",
             mail.outbox[0].body,
         )
         self.assertIsNotNone(match)
