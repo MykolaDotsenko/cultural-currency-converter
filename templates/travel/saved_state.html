@@ -48,7 +48,8 @@
       </p>
     </noscript>
     {% if not user.is_authenticated %}
-      <section class="qa-saved-section qa-trip-drafts" aria-labelledby="local-trip-drafts-title">
+      <section class="qa-saved-section qa-trip-drafts"
+               aria-labelledby="local-trip-drafts-title">
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Private planning</p>
@@ -75,15 +76,26 @@
               hidden>
           <div class="qa-field">
             <label for="trip-draft-title">Draft name</label>
-            <input id="trip-draft-title" class="qa-text-input" name="title"
-                   type="text" maxlength="80" autocomplete="off" required
+            <input id="trip-draft-title"
+                   class="qa-text-input"
+                   name="title"
+                   type="text"
+                   maxlength="80"
+                   autocomplete="off"
+                   required
                    placeholder="My next trip">
           </div>
           <div class="qa-field">
             <label for="trip-draft-destination">Destination (country or city token)</label>
-            <input id="trip-draft-destination" class="qa-text-input" name="destination"
-                   type="text" maxlength="120" autocomplete="off" required
-                   placeholder="JP:tokyo" aria-describedby="trip-draft-destination-help">
+            <input id="trip-draft-destination"
+                   class="qa-text-input"
+                   name="destination"
+                   type="text"
+                   maxlength="120"
+                   autocomplete="off"
+                   required
+                   placeholder="JP:tokyo"
+                   aria-describedby="trip-draft-destination-help">
             <p class="qa-field__message" id="trip-draft-destination-help">
               Use a two-letter country code (JP) or a supported city token (JP:tokyo).
               The planner will check whether it is still available.
@@ -91,32 +103,63 @@
           </div>
           <div class="qa-field">
             <label for="trip-draft-currency">Your currency</label>
-            <input id="trip-draft-currency" class="qa-text-input" name="sourceCurrency"
-                   type="text" maxlength="3" autocomplete="off" required placeholder="EUR">
+            <input id="trip-draft-currency"
+                   class="qa-text-input"
+                   name="sourceCurrency"
+                   type="text"
+                   maxlength="3"
+                   autocomplete="off"
+                   required
+                   placeholder="EUR">
           </div>
           <div class="qa-field">
             <label for="trip-draft-amount">Planned amount</label>
-            <input id="trip-draft-amount" class="qa-text-input" name="amount"
-                   type="text" inputmode="decimal" maxlength="17" autocomplete="off"
-                   required placeholder="100.00">
+            <input id="trip-draft-amount"
+                   class="qa-text-input"
+                   name="amount"
+                   type="text"
+                   inputmode="decimal"
+                   maxlength="17"
+                   autocomplete="off"
+                   required
+                   placeholder="100.00">
           </div>
           <div class="qa-field">
             <label for="trip-draft-travelers">Travellers</label>
-            <input id="trip-draft-travelers" class="qa-text-input" name="travelers"
-                   type="number" min="1" max="20" value="1" required>
+            <input id="trip-draft-travelers"
+                   class="qa-text-input"
+                   name="travelers"
+                   type="number"
+                   min="1"
+                   max="20"
+                   value="1"
+                   required>
           </div>
           <div class="qa-field">
             <label for="trip-draft-days">Duration (days)</label>
-            <input id="trip-draft-days" class="qa-text-input" name="durationDays"
-                   type="number" min="1" max="365" value="7" required>
+            <input id="trip-draft-days"
+                   class="qa-text-input"
+                   name="durationDays"
+                   type="number"
+                   min="1"
+                   max="365"
+                   value="7"
+                   required>
           </div>
           <div class="qa-field">
             <label for="trip-draft-date">Provisional start date (optional)</label>
-            <input id="trip-draft-date" class="qa-text-input" name="startDate" type="date">
+            <input id="trip-draft-date"
+                   class="qa-text-input"
+                   name="startDate"
+                   type="date">
           </div>
           <div class="qa-trip-drafts__actions">
-            <button class="qa-primary-button" type="submit" data-trip-draft-save>Save local draft</button>
-            <button class="qa-secondary-button" type="button" data-trip-draft-reset>Discard edits</button>
+            <button class="qa-primary-button"
+                    type="submit"
+                    data-trip-draft-save>Save local draft</button>
+            <button class="qa-secondary-button"
+                    type="button"
+                    data-trip-draft-reset>Discard edits</button>
           </div>
         </form>
         <p class="qa-saved-empty" data-trip-drafts-empty>
