@@ -248,6 +248,10 @@
   font-weight: 700;
 }
 
+.qa-mobile-table-cell-label {
+  display: none;
+}
+
 /* Preserve accessible rate/source data at narrow widths and 200% text zoom. */
 @media (max-width: 42rem) {
   .qa-table-scroll {
@@ -272,14 +276,20 @@
     overflow-wrap: anywhere;
   }
 
+  /* At 320px / 200% text zoom, visually clipping a 1px thead leaves its
+     intrinsic 3-column tr wider than the viewport. Mobile cells are cards;
+     their explicit visually-hidden labels preserve the meaning for AT. */
   .qa-table-scroll thead {
+    display: none;
+  }
+
+  .qa-mobile-table-cell-label {
     position: absolute;
-    overflow: hidden;
     inline-size: 1px;
     block-size: 1px;
-    padding: 0;
     margin: -1px;
-    border: 0;
+    padding: 0;
+    overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
   }
@@ -717,6 +727,16 @@
 
   .qa-rate-timeline__item {
     min-block-size: 4.5rem;
+  }
+
+  /* Timeline landmark roles and dates must wrap inside the second grid track
+     rather than extending the page at 200% text zoom. */
+  .qa-rate-timeline__item > div,
+  .qa-rate-timeline__role,
+  .qa-rate-timeline time {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
   }
 }
 
