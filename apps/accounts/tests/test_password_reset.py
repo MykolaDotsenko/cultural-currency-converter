@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
+import pytest
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.core.cache import cache
@@ -16,7 +17,10 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import VerifiedRecoveryEmail
-from apps.accounts.password_reset import verified_password_token_generator
+from apps.accounts.password_reset import (
+    request_verified_password_reset,
+    verified_password_token_generator,
+)
 
 _OLD = "Secure-Old-451!"
 _NEW = "New-Valid-Password-684!"
@@ -113,21 +117,6 @@ class VerifiedPasswordResetTests(TestCase):
         self.assertContains(self.client.get(link), "invalid or expired")
         self.owner.refresh_from_db()
         self.assertTrue(self.owner.check_password(_OLD))
-
-    def test_token_generation_holds_verified_email_lock_until_recipient_captured(self):
-        original = verified_password_token_generator.make_token
-
-        def inspect_lock(user):
-            self.assertTrue(transaction.get_connection().in_atomic_block)
-            return original(user)
-
-        with patch.object(
-            verified_password_token_generator,
-            "make_token",
-            side_effect=inspect_lock,
-        ):
-            self._request()
-        self._link()
 
     def test_token_expires_after_thirty_minutes(self):
         self._request()
@@ -237,3 +226,34 @@ class ResetDisabledTests(TestCase):
             self.client.post(reverse("password_reset_request"), {"email": "x@example.test"}),
             reverse("password_reset_sent"),
         )
+
+
+@pytest.mark.django_db(transaction=True)
+@override_settings(**_CONFIG)
+def test_token_generation_has_explicit_atomic_identity_lock():
+    """A transactional test, not TestCase's implicit outer transaction."""
+
+    cache.clear()
+    owner = get_user_model().objects.create_user(
+        username="recovery-row-lock-probe", password=_OLD
+    )
+    VerifiedRecoveryEmail.objects.create(
+        user=owner,
+        email="row-lock@example.test",
+        verified_at=timezone.now(),
+    )
+    observed = []
+    original = verified_password_token_generator.make_token
+
+    def inspect(user):
+        observed.append(transaction.get_connection().in_atomic_block)
+        return original(user)
+
+    with patch.object(
+        verified_password_token_generator, "make_token", side_effect=inspect
+    ):
+        request_verified_password_reset(
+            email="row-lock@example.test", remote_address="10.20.30.40"
+        )
+    assert observed == [True]
+    cache.clear()
