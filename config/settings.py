@@ -122,6 +122,8 @@ EMAIL_HOST_USER = ACCOUNT_MAIL_CONFIG.username
 EMAIL_HOST_PASSWORD = ACCOUNT_MAIL_CONFIG.password
 EMAIL_USE_TLS = ACCOUNT_MAIL_CONFIG.tls
 EMAIL_TIMEOUT = 5
+# A verified, owner-controlled address is the only reset channel.
+PASSWORD_RESET_TIMEOUT = 1800
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "profile"

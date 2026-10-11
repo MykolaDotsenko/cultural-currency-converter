@@ -17,6 +17,11 @@ def safe_access_path(path: str) -> str:
     prefix = "/accounts/recovery-email/confirm/"
     if path.startswith(prefix):
         return prefix + "[redacted]/"
+    reset_prefix = "/accounts/password/reset/"
+    if path.startswith(reset_prefix):
+        suffix = path[len(reset_prefix) :]
+        if suffix and suffix not in {"sent/", "complete/"}:
+            return reset_prefix + "[redacted]/"
     return path
 
 
