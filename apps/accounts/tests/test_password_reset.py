@@ -63,7 +63,10 @@ class VerifiedPasswordResetTests(TestCase):
         page = self.client.get(reverse("login"))
         self.assertContains(page, reverse("password_reset_request"))
         self.assertRedirects(self._request("VERIFIED@EXAMPLE.TEST"), reverse("password_reset_sent"))
-        self.assertNotIn("verified@example.test", self.client.get(reverse("password_reset_sent")).content.decode())
+        self.assertNotIn(
+            "verified@example.test",
+            self.client.get(reverse("password_reset_sent")).content.decode(),
+        )
         link = self._link()
         viewed = self.client.get(link)
         self.assertEqual(viewed.status_code, 200)
@@ -71,9 +74,7 @@ class VerifiedPasswordResetTests(TestCase):
         self.assertEqual(viewed["Cache-Control"], "no-store")
         self.assertEqual(viewed["Referrer-Policy"], "no-referrer")
         self.assertTrue(self.owner.check_password(_OLD))
-        changed = self.client.post(
-            link, {"new_password1": _NEW, "new_password2": _NEW}
-        )
+        changed = self.client.post(link, {"new_password1": _NEW, "new_password2": _NEW})
         self.assertRedirects(changed, reverse("password_reset_complete"))
         self.owner.refresh_from_db()
         self.assertTrue(self.owner.check_password(_NEW))
@@ -81,7 +82,9 @@ class VerifiedPasswordResetTests(TestCase):
         self.assertEqual(self.identity.user_id, self.owner.pk)
         self.assertContains(self.client.get(link), "invalid or expired")
         self.assertEqual(
-            self.client.post(link, {"new_password1": "Again-Secure-543!", "new_password2": "Again-Secure-543!"}).status_code,
+            self.client.post(
+                link, {"new_password1": "Again-Secure-543!", "new_password2": "Again-Secure-543!"}
+            ).status_code,
             200,
         )
         self.owner.refresh_from_db()
@@ -167,7 +170,9 @@ class VerifiedPasswordResetTests(TestCase):
     def test_reset_request_and_confirm_require_csrf(self):
         strict = Client(enforce_csrf_checks=True)
         self.assertEqual(
-            strict.post(reverse("password_reset_request"), {"email": "verified@example.test"}).status_code,
+            strict.post(
+                reverse("password_reset_request"), {"email": "verified@example.test"}
+            ).status_code,
             403,
         )
         self._request()

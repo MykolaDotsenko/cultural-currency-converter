@@ -59,9 +59,7 @@ class ForgottenPasswordRequestForm(forms.Form):
     email = forms.EmailField(
         max_length=254,
         label="Verified recovery email",
-        widget=forms.EmailInput(
-            attrs={"class": "qa-text-input", "autocomplete": "email"}
-        ),
+        widget=forms.EmailInput(attrs={"class": "qa-text-input", "autocomplete": "email"}),
     )
 
     def clean_email(self):

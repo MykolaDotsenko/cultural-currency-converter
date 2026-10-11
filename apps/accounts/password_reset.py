@@ -42,9 +42,12 @@ verified_password_token_generator = VerifiedEmailPasswordTokenGenerator()
 
 
 def _throttle_key(namespace: str, value: str) -> str:
-    return "ccc:password-reset:" + namespace + ":" + salted_hmac(
-        "ccc.password-reset.throttle.v1", value
-    ).hexdigest()
+    return (
+        "ccc:password-reset:"
+        + namespace
+        + ":"
+        + salted_hmac("ccc.password-reset.throttle.v1", value).hexdigest()
+    )
 
 
 def request_verified_password_reset(*, email: str, remote_address: str = "") -> None:
@@ -60,9 +63,7 @@ def request_verified_password_reset(*, email: str, remote_address: str = "") -> 
     if not normalized:
         return
     try:
-        if not cache.add(
-            _throttle_key("address", normalized), "1", timeout=_COOLDOWN_SECONDS
-        ):
+        if not cache.add(_throttle_key("address", normalized), "1", timeout=_COOLDOWN_SECONDS):
             return
         if remote_address and not cache.add(
             _throttle_key("client", remote_address), "1", timeout=_IP_COOLDOWN_SECONDS
@@ -71,11 +72,15 @@ def request_verified_password_reset(*, email: str, remote_address: str = "") -> 
     except Exception:
         return
 
-    identity = VerifiedRecoveryEmail.objects.select_related("user").filter(
-        email__iexact=normalized,
-        verified_at__isnull=False,
-        user__is_active=True,
-    ).first()
+    identity = (
+        VerifiedRecoveryEmail.objects.select_related("user")
+        .filter(
+            email__iexact=normalized,
+            verified_at__isnull=False,
+            user__is_active=True,
+        )
+        .first()
+    )
     if identity is None or not identity.user.has_usable_password():
         return
 

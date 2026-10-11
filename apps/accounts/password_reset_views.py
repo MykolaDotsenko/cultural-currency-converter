@@ -28,11 +28,7 @@ def _private_response(response: HttpResponse) -> HttpResponse:
 
 
 def _recoverable_user(uidb64: str, token: str):
-    if (
-        not settings.ACCOUNT_EMAIL_VERIFICATION_ENABLED
-        or len(uidb64) > 64
-        or len(token) > 160
-    ):
+    if not settings.ACCOUNT_EMAIL_VERIFICATION_ENABLED or len(uidb64) > 64 or len(token) > 160:
         return None
     try:
         pk = int(force_str(urlsafe_base64_decode(uidb64)))
@@ -43,9 +39,7 @@ def _recoverable_user(uidb64: str, token: str):
     user = get_user_model().objects.filter(pk=pk, is_active=True).first()
     if user is None or not user.has_usable_password():
         return None
-    if not VerifiedRecoveryEmail.objects.filter(
-        user=user, verified_at__isnull=False
-    ).exists():
+    if not VerifiedRecoveryEmail.objects.filter(user=user, verified_at__isnull=False).exists():
         return None
     if not verified_password_token_generator.check_token(user, token):
         return None
@@ -82,9 +76,7 @@ def password_reset_sent(request: HttpRequest) -> HttpResponse:
 
 @require_http_methods(["GET", "POST"])
 @sensitive_post_parameters("new_password1", "new_password2")
-def password_reset_confirm(
-    request: HttpRequest, uidb64: str, token: str
-) -> HttpResponse:
+def password_reset_confirm(request: HttpRequest, uidb64: str, token: str) -> HttpResponse:
     user = _recoverable_user(uidb64, token)
     form = None
     if user is not None and request.method == "GET":
