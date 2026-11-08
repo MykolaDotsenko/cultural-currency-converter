@@ -877,7 +877,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   );
   await page.getByText("reference-basket comparison", { exact: false }).waitFor();
   await page.getByText("not a full trip-cost forecast", { exact: false }).waitFor();
-  await page.getByRole("link", { name: "Sign in to save" }).waitFor();
+  await page.getByRole("link", { name: "Sign in to save", exact: true }).waitFor();
   assert(
     (await page.locator('form[action="/saved/scenarios/budget/create/"]').count()) === 0,
     "current-converter: anonymous budget interpretation exposed an account-save form",
