@@ -47,6 +47,22 @@
         {% endif %}
       </p>
     </noscript>
+    {% if user.is_authenticated and saved_trip_focus %}
+      <section class="qa-saved-trip-focus"
+               data-saved-trip-focus
+               aria-labelledby="saved-trip-focus-title">
+        <div class="qa-saved-trip-focus__heading">
+          <p class="qa-foundation-kicker">Continue your trip</p>
+          <h2 id="saved-trip-focus-title">Pick up where your travel-money plan left off.</h2>
+          <p>
+            Start with the active or nearest upcoming trip. Opening Saved never refreshes the FX
+            rate; re-checking stays an explicit action and the original saved observation remains
+            the baseline.
+          </p>
+        </div>
+        {% include "travel/returning_trip_home.html" with returning_trip_home=saved_trip_focus %}
+      </section>
+    {% endif %}
     {% if not user.is_authenticated %}
       <section class="qa-saved-section qa-trip-drafts"
                aria-labelledby="local-trip-drafts-title">
