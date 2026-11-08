@@ -208,7 +208,7 @@ def test_nearest_upcoming_trip_is_selected(home_reference_data):
     assert home.scenario != far
     assert home.schedule.state is TripScheduleState.UPCOMING
     assert home.schedule.days_until_start == 7
-    assert home.primary_action_label == "Re-check trip"
+    assert home.primary_action_label == "Open trip"
     assert home.budget_day_label == "per trip day"
 
 
@@ -292,6 +292,53 @@ def test_clean_converter_home_surfaces_upcoming_saved_trip_without_live_fx(
     assert b"Tokyo spring" in response.content
     assert b"Upcoming trip" in response.content
     assert reverse("saved_scenario_detail", args=(scenario.pk,)).encode() in response.content
+    gateway_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_saved_page_prioritizes_nearest_trip_without_live_fx(
+    client,
+    home_reference_data,
+):
+    user = User.objects.create_user(username="saved-focus-owner", password="StrongPass-482!")
+    _scenario(
+        user,
+        home_reference_data,
+        title="Later Tokyo",
+        start=date(2099, 6, 1),
+        end=date(2099, 6, 5),
+    )
+    near = _scenario(
+        user,
+        home_reference_data,
+        title="Tokyo soon",
+        start=date(2099, 4, 12),
+        end=date(2099, 4, 18),
+    )
+    client.force_login(user)
+
+    with (
+        patch("apps.travel.home.build_destination_context", return_value=None),
+        patch("apps.exchange.views.build_latest_quote_gateway") as gateway_factory,
+    ):
+        response = client.get(reverse("saved_state"))
+
+    assert response.status_code == 200
+    focus = response.context["saved_trip_focus"]
+    assert focus is not None
+    assert focus.scenario == near
+    assert all(row["scenario"].pk != near.pk for row in response.context["account_scenario_rows"])
+    assert any(
+        row["scenario"].title == "Later Tokyo" for row in response.context["account_scenario_rows"]
+    )
+    html = response.content.decode()
+    assert "data-saved-trip-focus" in html
+    assert "Continue your trip" in html
+    assert "Pick up where your travel-money plan left off." in html
+    assert "Tokyo soon" in html
+    assert "Re-check reference rate" in html
+    assert reverse("recheck_saved_scenario", args=(near.pk,)) in html
+    assert "Open trip" in html
     gateway_factory.assert_not_called()
 
 

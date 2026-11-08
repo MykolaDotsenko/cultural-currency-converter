@@ -47,6 +47,22 @@
         {% endif %}
       </p>
     </noscript>
+    {% if user.is_authenticated and saved_trip_focus %}
+      <section class="qa-saved-trip-focus"
+               data-saved-trip-focus
+               aria-labelledby="saved-trip-focus-title">
+        <div class="qa-saved-trip-focus__heading">
+          <p class="qa-foundation-kicker">Continue your trip</p>
+          <h2 id="saved-trip-focus-title">Pick up where your travel-money plan left off.</h2>
+          <p>
+            Start with the active or nearest upcoming trip. Opening Saved never refreshes the FX
+            rate; re-checking stays an explicit action and the original saved observation remains
+            the baseline.
+          </p>
+        </div>
+        {% include "travel/returning_trip_home.html" with returning_trip_home=saved_trip_focus %}
+      </section>
+    {% endif %}
     {% if not user.is_authenticated %}
       <section class="qa-saved-section qa-trip-drafts"
                aria-labelledby="local-trip-drafts-title">
@@ -186,7 +202,9 @@
         <div class="qa-saved-section__heading">
           <div>
             <p class="qa-foundation-kicker">Plans</p>
-            <h2 id="saved-scenarios-title">Saved scenarios</h2>
+            <h2 id="saved-scenarios-title">
+              {% if saved_trip_focus %}Other saved scenarios{% else %}Saved scenarios{% endif %}
+            </h2>
             <p>
               Budget scenarios keep the trusted conversion snapshot, destination scope and only
               the assumptions you explicitly chose. They do not import browser-only history.
@@ -255,8 +273,13 @@
         {% else %}
           <p class="qa-saved-empty">
             <span>
-              No account-saved scenarios yet. Interpret a destination budget, then save the result
-              when you want to reopen the same assumptions later.
+              {% if saved_trip_focus %}
+                Your active or nearest upcoming trip is already highlighted above. Other saved
+                scenarios will appear here.
+              {% else %}
+                No account-saved scenarios yet. Interpret a destination budget, then save the result
+                when you want to reopen the same assumptions later.
+              {% endif %}
             </span>
             <a class="qa-saved-row__text-action"
                href="{% url 'destination_mode' %}">Plan a destination</a>
