@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from decimal import DecimalException
+from decimal import Decimal, DecimalException
 
 from django.conf import settings
 from django.db import DatabaseError
@@ -14,6 +14,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.accounts.ai_preferences import explanation_preferences
 from apps.common.presentation.media_view_models import ImageViewModel
 from apps.countries.models import Country, Currency
+from apps.countries.theme_profiles import country_theme_profile
 from apps.culture.city_profile import build_city_money_profile, build_city_money_profile_component
 from apps.culture.country_profile import (
     build_country_money_profile,
@@ -406,6 +407,8 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
     story_media = None
     story_social_preview = None
     story_chapter_items = ()
+    story_destination_snapshot = None
+    story_money_context = None
     response_status = 200
 
     if not form.is_valid():
@@ -435,6 +438,60 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
             story_chapter_items = tuple(
                 {"chapter": chapter, "media": None} for chapter in story.historical_moment_chapters
             )
+            if not story_request.historical and story_request.destination_country:
+                theme_profile = country_theme_profile(story_request.destination_country)
+                if theme_profile is not None:
+                    story_destination_snapshot = {
+                        "atmosphere": theme_profile.atmosphere,
+                        "editorial_cue": (
+                            theme_profile.editorial_cues[0]
+                            if theme_profile.editorial_cues
+                            else ""
+                        ),
+                    }
+
+                if story_request.destination_currency:
+                    try:
+                        destination_context = build_destination_context(
+                            country_code=story_request.destination_country,
+                            converted_amount=Decimal("0"),
+                            quote_currency=story_request.destination_currency,
+                            price_limit=1,
+                        )
+                    except (DatabaseError, ValueError) as exc:
+                        logger.warning(
+                            "Money and culture current payment context unavailable",
+                            extra={
+                                "error_code": exc.__class__.__name__,
+                                "culture.status": "payment_context_unavailable",
+                                "culture.destination_country": story_request.destination_country,
+                            },
+                        )
+                    else:
+                        payment = destination_context.payment if destination_context else None
+                        if payment is not None:
+                            etiquette = tuple(
+                                item.strip()
+                                for item in (
+                                    payment.payment_customs,
+                                    payment.cash_usage,
+                                    payment.tipping,
+                                )
+                                if item.strip()
+                            )
+                            travel_tip = (
+                                payment.dcc_warning.strip()
+                                or payment.atm_notes.strip()
+                                or payment.cash_usage.strip()
+                            )
+                            story_money_context = {
+                                "etiquette": etiquette[:3],
+                                "travel_tip": travel_tip,
+                                "source_name": payment.source_name,
+                                "source_url": payment.source_url,
+                                "verified_at": payment.verified_at,
+                            }
+
             try:
                 country = _country_for_story(story_request.destination_country)
                 currency = _currency_for_story(story_request.destination_currency)
@@ -516,6 +573,8 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
         "story_error": story_error,
         "story_media": story_media,
         "story_chapter_items": story_chapter_items,
+        "story_destination_snapshot": story_destination_snapshot,
+        "story_money_context": story_money_context,
         "social_preview": (
             {
                 "url": request.build_absolute_uri(story_social_preview.image.src),
