@@ -57,6 +57,12 @@ class StoryComposition:
         return tuple(chapter for chapter in self.chapters if chapter.kind.endswith("_currency_era"))
 
     @property
+    def previous_currency_chapters(self) -> tuple[StoryChapter, ...]:
+        return tuple(
+            chapter for chapter in self.chapters if chapter.kind.endswith("_previous_currency")
+        )
+
+    @property
     def historical_moment_chapters(self) -> tuple[StoryChapter, ...]:
         return tuple(chapter for chapter in self.chapters if chapter.kind == "historical_moment")
 
@@ -95,12 +101,28 @@ def compose_story(request: StoryRequest) -> StoryComposition:
                 for candidate in era_links
                 if candidate.country.iso2 == country_code
                 and candidate.currency.code == currency_code
+                and _link_applies_on(candidate, request.selected_date)
             ),
             None,
         )
         if link is None:
             continue
         chapters.append(_currency_era_chapter(link, side=side))
+
+        if not request.historical:
+            previous_link = _previous_primary_currency_link(
+                era_links,
+                country_code=country_code,
+                current_link=link,
+            )
+            if previous_link is not None:
+                chapters.append(
+                    _previous_currency_chapter(
+                        previous_link,
+                        side=side,
+                        current_currency_code=currency_code,
+                    )
+                )
 
     for moment in moments:
         chapters.append(_moment_chapter(moment))
@@ -117,6 +139,72 @@ def compose_story(request: StoryRequest) -> StoryComposition:
         status=status,
         selected_date=request.selected_date,
         historical=request.historical,
+    )
+
+
+def _link_applies_on(link, selected_date: date) -> bool:
+    return (
+        (link.valid_from is None or link.valid_from <= selected_date)
+        and (link.valid_to is None or link.valid_to >= selected_date)
+    )
+
+
+def _previous_primary_currency_link(
+    links: tuple,
+    *,
+    country_code: str,
+    current_link,
+):
+    if not current_link.is_primary or current_link.valid_from is None:
+        return None
+
+    candidates = tuple(
+        link
+        for link in links
+        if link.country.iso2 == country_code
+        and link.is_primary
+        and link.currency.code != current_link.currency.code
+        and link.valid_to is not None
+        and link.valid_to < current_link.valid_from
+    )
+    if not candidates:
+        return None
+    return max(
+        candidates,
+        key=lambda link: (
+            link.valid_to or date.min,
+            link.valid_from or date.min,
+        ),
+    )
+
+
+def _previous_currency_chapter(
+    link,
+    *,
+    side: str,
+    current_currency_code: str,
+) -> StoryChapter:
+    date_text = _range_text(link.valid_from, link.valid_to)
+    body = (
+        f"Before the recorded {current_currency_code} primary-currency period, "
+        f"{link.country.name} records {link.currency.name} ({link.currency.code}) "
+        f"as its previous primary currency{date_text}."
+    )
+    source_refs: tuple[StorySourceRef, ...] = ()
+    if is_valid_provenance_url(link.source):
+        source_refs = (StorySourceRef(label="Previous currency source", url=link.source),)
+
+    return StoryChapter(
+        kind=f"{side}_previous_currency",
+        label="Previous currency",
+        title=f"Before {current_currency_code}: {link.currency.name} ({link.currency.code})",
+        body=body,
+        source_refs=source_refs,
+        temporal_scope=_temporal_scope(link.valid_from, link.valid_to),
+        temporal_precision="Canonical currency period",
+        causal_support=False,
+        target_date=link.valid_to or link.valid_from,
+        relevance=95,
     )
 
 
