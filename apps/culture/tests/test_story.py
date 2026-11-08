@@ -207,6 +207,29 @@ def test_no_relationships_and_no_story_moments_returns_unavailable(db):
 
 
 @pytest.mark.django_db
+@pytest.mark.django_db
+def test_current_story_exposes_previous_primary_currency_without_extra_history_query(context_data):
+    fi, _jp, _eur, _jpy = context_data
+    fim = Currency.objects.create(code="FIM", name="Finnish markka", symbol="mk")
+    CountryCurrency.objects.create(
+        country=fi,
+        currency=fim,
+        is_primary=True,
+        valid_from=date(1860, 4, 4),
+        valid_to=date(2001, 12, 31),
+        source="https://example.org/finland-markka",
+    )
+
+    story = compose_story(_request())
+
+    previous = story.previous_currency_chapters
+    assert len(previous) == 1
+    assert previous[0].kind == "source_previous_currency"
+    assert previous[0].title == "Before EUR: Finnish markka (FIM)"
+    assert "previous primary currency" in previous[0].body
+    assert previous[0].source_refs[0].url == "https://example.org/finland-markka"
+
+
 def test_story_composer_has_bounded_query_count_with_reviewed_fact(context_data):
     fi, _jp, eur, _jpy = context_data
     moment = StoryMoment.objects.create(
