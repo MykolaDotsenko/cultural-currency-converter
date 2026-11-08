@@ -1080,9 +1080,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     "current-converter: large progressive fragments must not be live regions",
   );
   await localContextDisclosure.getByText("Cup of coffee", { exact: true }).waitFor();
-  await localContextDisclosure
-    .getByText("Tokyo Metro regular ticket", { exact: true })
-    .waitFor();
+  await localContextDisclosure.getByText("Tokyo Metro regular ticket", { exact: true }).waitFor();
   await localContextDisclosure.getByRole("heading", { name: "Paying in Japan" }).waitFor();
 
   const destinationMedia = page.locator(".qa-destination-context [data-media-role]");
