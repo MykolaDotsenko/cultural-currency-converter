@@ -29,6 +29,63 @@
       </p>
     </div>
     {% if story.status != "unavailable" %}
+      <section class="qa-story-snapshot" aria-labelledby="culture-currency-snapshot-title">
+        <div class="qa-story-snapshot__heading">
+          <p class="qa-foundation-kicker">15-second snapshot</p>
+          <h3 id="culture-currency-snapshot-title">Culture &amp; currency, without the encyclopedia.</h3>
+          <p>
+            Start with the money story that matters to this conversion. Deeper reviewed history stays
+            below if you want it.
+          </p>
+        </div>
+        <div class="qa-story-snapshot__grid">
+          <article class="qa-story-snapshot__card">
+            <p class="qa-foundation-kicker">Currency context</p>
+            {% for chapter in story.currency_era_chapters %}
+              <div class="qa-story-snapshot__fact">
+                <strong>{{ chapter.title }}</strong>
+                <span>{{ chapter.body }}</span>
+              </div>
+            {% empty %}
+              <p>No reviewed current currency-era context is available.</p>
+            {% endfor %}
+          </article>
+          <article class="qa-story-snapshot__card">
+            <p class="qa-foundation-kicker">Previous currency</p>
+            {% for chapter in story.previous_currency_chapters %}
+              <div class="qa-story-snapshot__fact">
+                <strong>{{ chapter.title }}</strong>
+                <span>{{ chapter.body }}</span>
+              </div>
+            {% empty %}
+              <p>No distinct previous primary-currency period is recorded for this context.</p>
+            {% endfor %}
+          </article>
+          <article class="qa-story-snapshot__card">
+            <p class="qa-foundation-kicker">One memorable fact</p>
+            {% for chapter in story.historical_moment_chapters %}
+              {% if forloop.first %}
+                <div class="qa-story-snapshot__fact">
+                  <strong>{{ chapter.title }}</strong>
+                  <span>{{ chapter.body }}</span>
+                </div>
+              {% endif %}
+            {% empty %}
+              <p>No additional reviewed money-history fact is available yet.</p>
+            {% endfor %}
+          </article>
+          <article class="qa-story-snapshot__card">
+            <p class="qa-foundation-kicker">Local etiquette</p>
+            <div class="qa-story-snapshot__fact">
+              <strong>Keep present-day money habits separate from history.</strong>
+              <span>
+                Use the converter's reviewed Money tips and Payment context for cash, cards, ATMs,
+                tipping and DCC. This portal never invents those behaviours from historical stories.
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
       {% if story_media %}
         {% include "components/media/image_frame.html" with image=story_media.image loading="lazy" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
       {% endif %}
@@ -57,6 +114,42 @@
                   <details class="qa-source-details qa-story-source-details">
                     <summary>Era source &amp; scope</summary>
                     <div class="qa-story-source-list" aria-label="Currency era sources">
+                      {% for source in chapter.source_refs %}
+                        <a href="{{ source.url }}">{{ source.label }}</a>
+                      {% endfor %}
+                    </div>
+                  </details>
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+      {% if story.previous_currency_chapters %}
+        <section class="qa-story-section" aria-labelledby="previous-currency-story-title">
+          <div class="qa-story-section__heading">
+            <p class="qa-foundation-kicker">Previous currency context</p>
+            <h3 id="previous-currency-story-title">What came before the current primary currency</h3>
+            <p>
+              This comes from the canonical country–currency timeline. It does not reconstruct
+              historical prices or imply a cause for exchange-rate changes.
+            </p>
+          </div>
+          <div class="qa-story-era-grid">
+            {% for chapter in story.previous_currency_chapters %}
+              <article class="qa-story-chapter qa-story-era-card">
+                <div>
+                  <p class="qa-foundation-kicker">{{ chapter.label }}</p>
+                  <h4>{{ chapter.title }}</h4>
+                </div>
+                <p>{{ chapter.body }}</p>
+                <p class="qa-story-chapter__meta">
+                  Temporal scope: {{ chapter.temporal_scope }} · {{ chapter.temporal_precision }}
+                </p>
+                {% if chapter.source_refs %}
+                  <details class="qa-source-details qa-story-source-details">
+                    <summary>Previous-currency source &amp; scope</summary>
+                    <div class="qa-story-source-list" aria-label="Previous currency sources">
                       {% for source in chapter.source_refs %}
                         <a href="{{ source.url }}">{{ source.label }}</a>
                       {% endfor %}
