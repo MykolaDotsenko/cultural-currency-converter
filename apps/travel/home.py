@@ -105,8 +105,6 @@ class ReturningTripHome:
     def primary_action_label(self) -> str:
         if self.schedule.state in {TripScheduleState.ACTIVE, TripScheduleState.STARTED}:
             return "Check trip budget"
-        if (self.schedule.days_until_start or 9999) <= 7:
-            return "Re-check trip"
         return "Open trip"
 
     @property
