@@ -92,9 +92,10 @@ def _build_decision_cards(
     create a new rate, price, fee, affordability judgement or recommendation.
     """
 
-    if result.quote.historical or result.quote.base_currency == result.quote.quote_currency:
+    if result.quote.historical:
         return ()
 
+    same_currency = result.quote.base_currency == result.quote.quote_currency
     destination_context = (
         money_context.destination_context
         if money_context is not None and money_context.conversion == result
@@ -130,8 +131,13 @@ def _build_decision_cards(
         "eyebrow": "Real-world payment",
         "title": "Payment reality",
         "text": (
-            "The result above is a reference rate. Your card, ATM or merchant may use a different "
-            "rate or add explicit fees."
+            "No FX conversion is needed for this same-currency amount. Card, ATM or merchant fees "
+            "can still exist independently of the 1:1 currency relationship."
+            if same_currency
+            else (
+                "The result above is a reference rate. Your card, ATM or merchant may use a different "
+                "rate or add explicit fees."
+            )
         ),
         "items": (),
         "available": payment_available,
