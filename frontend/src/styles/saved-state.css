@@ -652,3 +652,49 @@
     background: Canvas;
   }
 }
+
+
+/* Lifecycle metadata for non-focused saved scenarios. */
+
+.qa-scenario-lifecycle {
+  width: fit-content;
+  max-inline-size: 100%;
+  margin: 0 0 var(--qa-space-2);
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 720;
+  letter-spacing: 0.035em;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.qa-scenario-lifecycle[data-scenario-lifecycle="active"],
+.qa-scenario-lifecycle[data-scenario-lifecycle="started"] {
+  border-color: color-mix(in srgb, var(--color-brand) 34%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--color-brand-soft) 54%, var(--color-surface));
+  color: var(--color-ink);
+}
+
+.qa-scenario-lifecycle[data-scenario-lifecycle="upcoming"] {
+  border-color: color-mix(in srgb, var(--qa-accent-metal) 34%, var(--color-border-subtle));
+  background: color-mix(in srgb, var(--qa-accent-metal) 9%, var(--color-surface));
+  color: var(--color-ink);
+}
+
+.qa-scenario-lifecycle[data-scenario-lifecycle="ended"] {
+  opacity: 0.78;
+}
+
+@media (forced-colors: active) {
+  .qa-scenario-lifecycle,
+  .qa-scenario-lifecycle[data-scenario-lifecycle] {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    opacity: 1;
+  }
+}
