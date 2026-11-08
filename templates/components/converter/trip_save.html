@@ -1,0 +1,73 @@
+{% with trip_save=result_component.trip_save %}
+  <section class="qa-trip-save-entry"
+           aria-labelledby="trip-save-title"
+           data-trip-save-entry>
+    <div class="qa-trip-save-entry__copy">
+      <p class="qa-foundation-kicker">Save &amp; return</p>
+      <h2 id="trip-save-title">Keep this trip, not just the currency pair.</h2>
+      <p>
+        Save the current reference conversion and {{ trip_save.destination_name }} destination as
+        a re-checkable trip. Nothing refreshes automatically; later rate and local-context checks
+        stay explicit.
+      </p>
+      <p class="qa-trip-save-entry__trust">
+        The saved initial FX observation remains immutable. Optional travel dates are planning
+        anchors only, not exchange recommendations or automatic reminders.
+      </p>
+    </div>
+    {% if user.is_authenticated %}
+      <form class="qa-trip-save-form"
+            method="post"
+            action="{% url 'save_trip_scenario' %}">
+        {% csrf_token %}
+        <input type="hidden"
+               name="trip_context_token"
+               value="{{ trip_save.token }}">
+        <label class="qa-field" for="trip-save-name">
+          <span class="qa-field__label">
+            Trip name <span class="qa-field__optional">Optional</span>
+          </span>
+          <input class="qa-text-input"
+                 id="trip-save-name"
+                 type="text"
+                 name="title"
+                 maxlength="120"
+                 autocomplete="off"
+                 placeholder="{{ trip_save.destination_name }} trip">
+        </label>
+        <div class="qa-trip-save-form__dates">
+          <label class="qa-field" for="trip-save-start">
+            <span class="qa-field__label">
+              Starts <span class="qa-field__optional">Optional</span>
+            </span>
+            <input class="qa-text-input"
+                   id="trip-save-start"
+                   type="date"
+                   name="travel_start_date"
+                   autocomplete="off">
+          </label>
+          <label class="qa-field" for="trip-save-end">
+            <span class="qa-field__label">
+              Ends <span class="qa-field__optional">Optional</span>
+            </span>
+            <input class="qa-text-input"
+                   id="trip-save-end"
+                   type="date"
+                   name="travel_end_date"
+                   autocomplete="off">
+          </label>
+        </div>
+        <button class="qa-primary-button" type="submit">Save trip</button>
+      </form>
+    {% else %}
+      <div class="qa-trip-save-entry__signin">
+        <p>
+          Pair bookmarks can stay on this browser. A saved trip uses your account so its original
+          reference and later re-checks remain available across devices.
+        </p>
+        <a class="qa-primary-button"
+           href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Sign in to save trip</a>
+      </div>
+    {% endif %}
+  </section>
+{% endwith %}
