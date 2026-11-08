@@ -1025,6 +1025,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     "current-converter: swapped result markup contains a duplicate hidden result announcer",
   );
 
+  const localContextDisclosure = page.locator("#local-context-details");
+  await localContextDisclosure.waitFor();
+  await localContextDisclosure.locator("summary").click();
   await page.getByRole("link", { name: "Everyday value" }).waitFor();
   await page.getByRole("link", { name: "Payment context" }).waitFor();
   await page.getByText("Money Context Lens", { exact: true }).waitFor();
@@ -1042,7 +1045,7 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   const postResultHierarchy = await page.evaluate(() => {
     const result = document.querySelector("#current-conversion-result");
     const destinationContext = document.querySelector(".qa-destination-context");
-    const story = document.querySelector(".qa-story-entry");
+    const story = document.querySelector(".qa-cultural-portal");
     const historical = document.querySelector(".qa-historical-trend-entry");
     const save = document.querySelector(".qa-local-save-control");
     const precedes = (first, second) =>
@@ -1134,13 +1137,18 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
     (response) =>
       response.request().method() === "GET" && new URL(response.url()).pathname === "/story/",
   );
-  await page.getByRole("link", { name: "Explore money & culture" }).click();
+  await page.getByRole("link", { name: "Open culture & currency" }).click();
   await waitForStory;
   await page.locator(".qa-story-surface").waitFor();
   const storyText = await page.locator(".qa-story-surface").innerText();
   assert(
-    storyText.includes("The sourced story behind this currency context"),
-    "current-converter: progressive money-and-culture story did not render",
+    storyText.includes("The sourced story behind this currency context") &&
+      storyText.includes("Culture & currency, without the encyclopedia.") &&
+      storyText.includes("Currency fact") &&
+      storyText.includes("Previous currency") &&
+      storyText.includes("Local money etiquette") &&
+      storyText.includes("Mini travel-money tip"),
+    "current-converter: compact culture-and-currency portal did not render its required snapshot",
   );
   assert(
     storyText.includes("Temporal scope:"),
