@@ -34,7 +34,7 @@ def test_current_conversion_surfaces_canon_decision_layer_and_cultural_portal(
     assert "What does this money mean there?" in body
     assert "Keep this trip, not just the currency pair." in body
     assert "Sign in to save trip" in body
-    assert 'data-trip-save-entry' in body
+    assert "data-trip-save-entry" in body
     assert "Culture &amp; currency portal" in body
     assert "Discover the place behind the money." in body
     assert body.count("qa-country-preview") >= 2
