@@ -1,0 +1,51 @@
+<section class="qa-decision-summary"
+         data-conversion-decision-summary
+         aria-labelledby="decision-summary-title">
+  <div class="qa-decision-summary__heading">
+    <div>
+      <p class="qa-foundation-kicker">Understand before you spend</p>
+      <h3 id="decision-summary-title">What does this money mean there?</h3>
+    </div>
+    <p>
+      Fast orientation first. Reviewed evidence, explicit fee modelling and deeper planning stay one
+      step away.
+    </p>
+  </div>
+  <div class="qa-decision-summary__grid">
+    {% for card in result_component.decision_cards %}
+      <article class="qa-decision-card{% if not card.available %} qa-decision-card--muted{% endif %}"
+               data-decision-card="{{ card.kind }}">
+        <div class="qa-decision-card__topline">
+          <span class="qa-decision-card__ordinal" aria-hidden="true">0{{ forloop.counter }}</span>
+          <p class="qa-decision-card__eyebrow">{{ card.eyebrow }}</p>
+        </div>
+        <h4>{{ card.title }}</h4>
+        {% if card.items %}
+          <dl class="qa-decision-card__items">
+            {% for item in card.items %}
+              <div>
+                <dt>{{ item.label }}</dt>
+                <dd>
+                  {{ item.value }}
+                </dd>
+              </div>
+            {% endfor %}
+          </dl>
+        {% endif %}
+        <p class="qa-decision-card__text">{{ card.text }}</p>
+        {% if card.meta %}
+          <p class="qa-decision-card__meta">{{ card.meta }}</p>
+        {% endif %}
+        {% if card.href %}
+          <a class="qa-decision-card__link" href="{{ card.href }}">
+            {{ card.cta }} <span aria-hidden="true">↗</span>
+          </a>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+  <p class="qa-decision-summary__trust">
+    Local prices are orientation, not guarantees. The reference FX result above remains separate
+    from card, ATM, merchant and budget assumptions.
+  </p>
+</section>

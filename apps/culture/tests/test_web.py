@@ -80,6 +80,9 @@ def _seed_current_destination_context(reference_data):
         summary="Current reviewed payment context.",
         payment_customs="Cards are commonly accepted.",
         cash_usage="Cash remains useful.",
+        tipping="Tipping is not generally expected.",
+        atm_notes="Use a supported ATM if you need cash.",
+        dcc_warning="Choose JPY when a terminal offers dynamic currency conversion.",
         source_name="JNTO",
         source_url="https://example.org/payment",
         verified_at=timezone.now(),
@@ -134,7 +137,7 @@ def test_converter_exposes_progressive_story_entry_without_calling_story_service
         response = client.post(reverse("converter"), payload, HTTP_HX_REQUEST="true")
 
     assert response.status_code == 200
-    assert b"Explore money &amp; culture" in response.content
+    assert b"Open culture &amp; currency" in response.content
     assert b"/story/?" in response.content
     composer.assert_not_called()
 
@@ -156,6 +159,28 @@ def test_htmx_story_returns_fragment_with_deterministic_currency_eras(client, re
     assert b"Temporal scope:" in response.content
     assert b"historical purchasing power" in response.content
     assert b"Missing facts are not filled in" not in response.content
+
+
+@pytest.mark.django_db
+def test_current_story_snapshot_uses_reviewed_payment_context(client, reference_data):
+    _seed_current_destination_context(reference_data)
+
+    response = client.get(
+        reverse("money_culture_story"),
+        _story_query(),
+        HTTP_HX_REQUEST="true",
+    )
+
+    assert response.status_code == 200
+    body = response.content
+    assert b"Cultural snapshot" in body
+    assert b"Local money etiquette" in body
+    assert b"Cards are commonly accepted." in body
+    assert b"Cash remains useful." in body
+    assert b"Tipping is not generally expected." in body
+    assert b"Mini travel-money tip" in body
+    assert b"Choose JPY when a terminal offers dynamic currency conversion." in body
+    assert b"JNTO" in body
 
 
 @pytest.mark.django_db

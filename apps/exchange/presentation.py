@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 
-from apps.countries.theme_profiles import country_theme_key
+from apps.countries.theme_profiles import country_theme_key, country_theme_profile
 from apps.exchange.ai.intents import available_explanation_intents
 from apps.exchange.budget_presentation import build_budget_component
 from apps.exchange.domain import ConversionResult, ObservationGranularity
@@ -48,6 +48,7 @@ def _selection_context(form: CurrentConversionForm, side: str) -> dict[str, str]
     currency_code = _selected_value(form, f"{side}_currency")
     country = form.country_for_code(country_code)
     currency = form.currency_for_code(currency_code)
+    theme_profile = country_theme_profile(country.iso2) if country else None
 
     return {
         "country_code": country.iso2 if country else "",
@@ -55,7 +56,138 @@ def _selection_context(form: CurrentConversionForm, side: str) -> dict[str, str]
         "currency_code": currency.code if currency else currency_code,
         "currency_name": currency.name if currency else "Choose currency",
         "theme": country_theme_key(country.iso2) if country else "",
+        "atmosphere": theme_profile.atmosphere if theme_profile else "",
+        "editorial_cue": (
+            theme_profile.editorial_cues[0]
+            if theme_profile is not None and theme_profile.editorial_cues
+            else ""
+        ),
     }
+
+
+def _purchase_value_label(equivalent) -> str:
+    if equivalent.status == "zero":
+        return "0"
+    if equivalent.status == "below_one":
+        return "Less than 1"
+    if equivalent.status == "up_to":
+        return f"Up to {int(equivalent.maximum_count)}"
+    if equivalent.status == "single":
+        return f"About {int(equivalent.maximum_count)}"
+    if equivalent.status == "range":
+        return f"About {int(equivalent.minimum_count)}–{int(equivalent.maximum_count)}"
+    return "Approximate"
+
+
+def _build_decision_cards(
+    result: ConversionResult,
+    *,
+    money_context: MoneyContext | None,
+    payment_available: bool,
+    budget_available: bool,
+) -> tuple[dict[str, object], ...]:
+    """Build the four fast decision cards shown immediately after a current conversion.
+
+    The cards summarize already-reviewed or explicitly unknown state. They never
+    create a new rate, price, fee, affordability judgement or recommendation.
+    """
+
+    if result.quote.historical:
+        return ()
+
+    same_currency = result.quote.base_currency == result.quote.quote_currency
+    destination_context = (
+        money_context.destination_context
+        if money_context is not None and money_context.conversion == result
+        else None
+    )
+    prices = money_context.local_value if money_context is not None else ()
+    payment = money_context.payment_guidance if money_context is not None else None
+
+    local_items = tuple(
+        {
+            "label": price.label,
+            "value": _purchase_value_label(price.equivalent),
+        }
+        for price in prices[:2]
+    )
+    local_value_card = {
+        "kind": "local-value",
+        "eyebrow": "Local buying power",
+        "title": "What this buys",
+        "text": (
+            "Reviewed local price anchors turn the converted amount into everyday reference points."
+            if local_items
+            else "Reviewed everyday-price anchors are not available for this destination yet."
+        ),
+        "items": local_items,
+        "available": bool(local_items),
+        "href": "#local-context-details" if local_items else "",
+        "cta": "See price evidence" if local_items else "",
+    }
+
+    payment_card = {
+        "kind": "payment-reality",
+        "eyebrow": "Real-world payment",
+        "title": "Payment reality",
+        "text": (
+            "No FX conversion is needed for this same-currency amount. Card, ATM or merchant fees "
+            "can still exist independently of the 1:1 currency relationship."
+            if same_currency
+            else (
+                "The result above is a reference rate. Your card, ATM or merchant may use a different "
+                "rate or add explicit fees."
+            )
+        ),
+        "items": (),
+        "available": payment_available,
+        "href": "#payment-estimate-region" if payment_available else "",
+        "cta": "Calculate with my fees" if payment_available else "",
+    }
+
+    payment_summary = ""
+    payment_meta = ""
+    if payment is not None:
+        payment_summary = payment.summary.strip() or payment.payment_customs.strip()
+        payment_meta = (
+            f"Reviewed {date_format(payment.verified_at, 'j M Y')} · {payment.source_name}"
+        )
+    money_tips_card = {
+        "kind": "money-tips",
+        "eyebrow": "Local money behaviour",
+        "title": "Money tips",
+        "text": (
+            payment_summary
+            if payment_summary
+            else "Reviewed cash, card, ATM and tipping guidance is not available for this destination yet."
+        ),
+        "items": (),
+        "meta": payment_meta,
+        "available": bool(payment_summary),
+        "href": "#local-context-details" if payment_summary else "",
+        "cta": "See payment guidance" if payment_summary else "",
+    }
+
+    budget_card = {
+        "kind": "budget",
+        "eyebrow": "Trip planning",
+        "title": "Budget meaning",
+        "text": (
+            "Add trip length and travellers to compare this amount with a small, sourced local reference basket."
+            if budget_available
+            else (
+                "Budget interpretation appears when the destination has enough reviewed everyday-price evidence."
+                if destination_context is not None
+                else "Choose a destination with reviewed local context to interpret this amount as a trip budget."
+            )
+        ),
+        "items": (),
+        "available": budget_available,
+        "href": "#budget-interpretation-region" if budget_available else "",
+        "cta": "Interpret this budget" if budget_available else "",
+    }
+
+    return (local_value_card, payment_card, money_tips_card, budget_card)
 
 
 def _current_result_next_steps(
@@ -257,6 +389,12 @@ def build_result_component(
         payment_available=payment_estimate_form is not None,
         budget_available=budget_interpretation is not None,
     )
+    decision_cards = _build_decision_cards(
+        result,
+        money_context=money_context,
+        payment_available=payment_estimate_form is not None,
+        budget_available=budget_interpretation is not None,
+    )
     smart_summary = build_smart_result_summary(result, money_context=money_context)
     supporting_insights = build_supporting_money_insights(
         result,
@@ -275,6 +413,7 @@ def build_result_component(
         "historical": historical,
         "smart_summary": smart_summary,
         "supporting_insights": supporting_insights,
+        "decision_cards": decision_cards,
         "next_steps": next_steps,
         "local_state": {
             "input_amount": format(result.input_amount, "f"),

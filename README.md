@@ -40,6 +40,8 @@ Those boundaries are more important to this project than adding another conversi
 - cached national public-holiday context from Nager.Date Community v4, with atomic country/year reconciliation and neutral “opening hours may differ” guidance rather than unsupported business-hours claims;
 - barcode-driven Open Food Facts product identity in Shopping, with cache/throttle/ODbL attribution and a signed carry-forward token while shelf price remains explicit user-confirmed input;
 - deterministic at-a-glance result summaries that prioritize historical/stale/exact trust semantics and only use reviewed Money Context anchors when available;
+- a fast four-card post-conversion decision layer for local buying power, payment reality, reviewed money tips and budget meaning, with deeper evidence kept behind progressive disclosure;
+- bilateral source/destination atmosphere previews driven by curated country-theme profiles, plus an accessible Culture & Currency portal that starts with a compact sourced snapshot and can expose canonical previous-currency context;
 - destination-first planning that resolves a country or canonical city into its current primary local currency and reuses the canonical converter/Money Context path;
 - deterministic budget interpretation against explicit sourced reference-basket assumptions, with account-owned reusable assumption presets that never store destination, FX or price evidence;
 - side-by-side destination comparison for one source budget across two explicit country/canonical-city scopes, preserving each side's rate source/date, local-price provenance and payment context without ranking destinations;

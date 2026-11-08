@@ -7,12 +7,13 @@
 {% block content %}
   <section class="qa-foundation-intro qa-product-intro"
            aria-labelledby="converter-page-title">
-    <p class="qa-foundation-kicker">Travel money · local context</p>
-    <h1 id="converter-page-title">Money, understood anywhere.</h1>
+    <p class="qa-foundation-kicker">Cultural travel money</p>
+    <h1 id="converter-page-title">See what your money means there.</h1>
     <p class="qa-foundation-lede">
-      A trusted reference conversion, paired with the local context that makes the number useful.
-      Rates stay precise; culture, prices and payment guidance stay clearly sourced.
+      Convert currencies, understand local spending power and know how money works before you travel.
+      Then explore the culture and history behind the currencies.
     </p>
+    <p class="qa-product-intro__signature">Two countries. Two worlds. One conversion experience.</p>
   </section>
   {% if returning_trip_home %}
     {% if returning_trip_home.schedule.state == "active" or returning_trip_home.schedule.state == "started" %}
@@ -21,6 +22,24 @@
     {% include "travel/returning_trip_home.html" %}
   {% endif %}
   {% include "components/converter/current_panel.html" %}
+  <nav class="qa-product-paths qa-product-paths--after-core"
+       aria-label="More ways to use Cultural Currency">
+    <a class="qa-product-paths__item qa-product-paths__item--active"
+       href="{% url 'converter' %}"
+       aria-current="page">
+      <strong>Quick convert</strong>
+      <span>Rate + local meaning</span>
+    </a>
+    <a class="qa-product-paths__item" href="{% url 'destination_mode' %}">
+      <strong>Travel &amp; budget</strong>
+      <span>Plan a destination</span>
+    </a>
+    <a class="qa-product-paths__item"
+       href="{% url 'shopping_calculation' %}">
+      <strong>Shopping</strong>
+      <span>Estimate a foreign purchase</span>
+    </a>
+  </nav>
   <p id="conversion-announcer"
      class="qa-visually-hidden"
      role="status"

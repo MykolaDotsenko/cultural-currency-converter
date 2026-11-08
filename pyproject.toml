@@ -13,7 +13,7 @@ dependencies = [
     "django-template-partials==25.3",
     "django-htmx==1.29.0",
     "psycopg[binary]==3.3.6",
-    "Pillow==12.3.0",
+    "Pillow==13.0.0",
     "google-genai==2.24.0",
     "httpx==0.28.1",
     "redis==8.1.0",

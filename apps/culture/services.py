@@ -184,14 +184,16 @@ def currency_era_links(
 ) -> tuple[CountryCurrency, ...]:
     if not country_codes or not currency_codes:
         return ()
+
+    # Keep the explicitly selected currencies plus each country's primary-currency
+    # timeline up to the selected date. The story composer can therefore expose a
+    # reviewed previous-currency chapter without a second query or invented history.
     return tuple(
-        CountryCurrency.objects.on_date(selected_date)
-        .filter(
-            country__iso2__in=country_codes,
-            currency__code__in=currency_codes,
-        )
+        CountryCurrency.objects.filter(country__iso2__in=country_codes)
+        .filter(Q(valid_from__isnull=True) | Q(valid_from__lte=selected_date))
+        .filter(Q(currency__code__in=currency_codes) | Q(is_primary=True))
         .select_related("country", "currency")
-        .order_by("country__name", "-is_primary", "-valid_from")
+        .order_by("country__name", "-is_primary", "-valid_from", "-valid_to")
     )
 
 
