@@ -14,7 +14,12 @@ from apps.culture.calendar import CalendarContext, PublicHolidayContextItem
 from apps.culture.models import PublicHolidayObservation
 from apps.culture.services import DestinationContext, PaymentContext
 from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
-from apps.exchange.domain import DEFAULT_SOURCE_POLICY, ConversionResult, RateQuote
+from apps.exchange.domain import (
+    DEFAULT_SOURCE_POLICY,
+    ConversionResult,
+    RateQuote,
+    same_currency_quote,
+)
 from apps.exchange.money_context import MoneyContext, MoneyContextState
 from apps.exchange.payment_budget_snapshot import build_payment_budget_handoff_token
 from apps.exchange.payment_estimate import estimate_payment_value
@@ -109,6 +114,34 @@ class UnavailableLatestGateway:
         raise FxProviderUnavailable("provider unavailable")
 
 
+def _same_currency_trip_token() -> str:
+    conversion = ConversionResult(
+        input_amount=Decimal("75.00"),
+        output_amount=Decimal("75.00"),
+        quote=same_currency_quote(
+            "EUR",
+            fetched_at=datetime(2026, 9, 30, 18, tzinfo=UTC),
+        ),
+        stale=False,
+    )
+    destination = DestinationContext(
+        country_code="FI",
+        country_name="Finland",
+        as_of=date(2026, 9, 30),
+        payment=None,
+        prices=(),
+    )
+    return build_budget_context_snapshot_token(
+        MoneyContext(
+            conversion=conversion,
+            destination_country_code="FI",
+            as_of=date(2026, 9, 30),
+            destination_context=destination,
+            destination_state=MoneyContextState.EMPTY,
+        )
+    )
+
+
 def _payment_budget_token(*, budget_context_token: str) -> str:
     conversion = _conversion()
     estimate = estimate_payment_value(
@@ -146,6 +179,142 @@ def _budget_token() -> str:
             destination_state=MoneyContextState.EMPTY,
         )
     )
+
+
+@pytest.mark.django_db
+def test_signed_in_user_can_save_lightweight_trip_without_second_provider_or_price_lookup(
+    client,
+    scenario_reference_data,
+):
+    _eur, _jpy, _fi, _jp, tokyo = scenario_reference_data
+    user = User.objects.create_user(username="trip-owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    with (
+        patch("apps.travel.scenario_web.build_latest_quote_gateway") as gateway,
+        patch("apps.travel.scenario_web.build_destination_context") as context_builder,
+    ):
+        response = client.post(
+            reverse("save_trip_scenario"),
+            {
+                "trip_context_token": _budget_token(),
+                "title": "   ",
+                "travel_start_date": "2027-04-12",
+                "travel_end_date": "2027-04-18",
+            },
+        )
+
+    scenario = SavedScenario.objects.get(user=user)
+    assert response.status_code == 302
+    assert response.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+    assert scenario.kind == SavedScenarioKind.TRIP
+    assert scenario.title == "Tokyo trip"
+    assert scenario.destination_city == tokyo
+    assert scenario.destination_country.iso2 == "JP"
+    assert scenario.source_country is None
+    assert scenario.source_amount == Decimal("600.000000000000")
+    assert scenario.duration_days is None
+    assert scenario.travelers == 1
+    assert scenario.travel_start_date == date(2027, 4, 12)
+    assert scenario.travel_end_date == date(2027, 4, 18)
+    assert scenario.budget_items.count() == 0
+    observation = scenario.observations.get()
+    assert observation.output_amount == Decimal("104700.000000000000")
+    assert observation.effective_date == date(2026, 9, 30)
+    assert observation.provider_keys == ["ecb"]
+    gateway.assert_not_called()
+    context_builder.assert_not_called()
+
+    detail = client.get(reverse("saved_scenario_detail", args=(scenario.pk,)))
+    assert detail.status_code == 200
+    assert b"Saved trip" in detail.content
+    assert b"Lightweight trip" in detail.content
+    assert b"Starts in" in detail.content
+
+
+@pytest.mark.django_db
+def test_trip_save_requires_authentication(client, scenario_reference_data):
+    response = client.post(
+        reverse("save_trip_scenario"),
+        {"trip_context_token": _budget_token()},
+    )
+
+    assert response.status_code == 302
+    assert reverse("login") in response.url
+    assert SavedScenario.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_tampered_trip_snapshot_and_invalid_dates_fail_closed(client, scenario_reference_data):
+    user = User.objects.create_user(username="trip-guard-owner", password="StrongPass-482!")
+    client.force_login(user)
+    token = _budget_token()
+
+    tampered = client.post(
+        reverse("save_trip_scenario"),
+        {"trip_context_token": f"{token}tampered"},
+    )
+    assert tampered.status_code == 302
+    assert tampered.url == reverse("converter")
+    assert SavedScenario.objects.count() == 0
+
+    invalid_dates = client.post(
+        reverse("save_trip_scenario"),
+        {
+            "trip_context_token": token,
+            "travel_start_date": "2027-04-18",
+            "travel_end_date": "2027-04-12",
+        },
+        follow=True,
+    )
+    assert invalid_dates.status_code == 200
+    assert SavedScenario.objects.count() == 0
+    assert b"Trip end date cannot be before the start date." in invalid_dates.content
+
+
+@pytest.mark.django_db
+def test_same_currency_trip_can_be_saved_and_explicitly_refresh_local_context(
+    client,
+    scenario_reference_data,
+):
+    _eur, _jpy, _fi, _jp, _tokyo = scenario_reference_data
+    user = User.objects.create_user(username="exact-trip-owner", password="StrongPass-482!")
+    client.force_login(user)
+
+    response = client.post(
+        reverse("save_trip_scenario"),
+        {
+            "trip_context_token": _same_currency_trip_token(),
+            "title": "Helsinki weekend",
+        },
+    )
+    scenario = SavedScenario.objects.get(user=user)
+    assert response.status_code == 302
+    assert scenario.kind == SavedScenarioKind.TRIP
+    assert scenario.source_currency.code == "EUR"
+    assert scenario.destination_currency.code == "EUR"
+    assert scenario.observations.get().rate == Decimal("1.000000000000")
+    assert scenario.observations.get().provider_keys == []
+
+    destination = DestinationContext(
+        country_code="FI",
+        country_name="Finland",
+        as_of=date.today(),
+        payment=None,
+        prices=(),
+    )
+    with patch(
+        "apps.travel.scenario_web.build_destination_context",
+        return_value=destination,
+    ) as builder:
+        detail = client.get(
+            reverse("saved_scenario_detail", args=(scenario.pk,)),
+            {"local_context": "1"},
+        )
+
+    assert detail.status_code == 200
+    builder.assert_called_once()
+    assert b"saved trip destination and trusted FX observation" not in detail.content
 
 
 @pytest.mark.django_db
