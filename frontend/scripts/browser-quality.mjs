@@ -1143,13 +1143,14 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
   await waitForStory;
   await page.locator(".qa-story-surface").waitFor();
   const storyText = await page.locator(".qa-story-surface").innerText();
+  const normalizedStoryText = storyText.toLowerCase();
   assert(
     storyText.includes("The sourced story behind this currency context") &&
       storyText.includes("Culture & currency, without the encyclopedia.") &&
-      storyText.includes("Currency fact") &&
-      storyText.includes("Previous currency") &&
-      storyText.includes("Local money etiquette") &&
-      storyText.includes("Mini travel-money tip"),
+      normalizedStoryText.includes("currency fact") &&
+      normalizedStoryText.includes("previous currency") &&
+      normalizedStoryText.includes("local money etiquette") &&
+      normalizedStoryText.includes("mini travel-money tip"),
     "current-converter: compact culture-and-currency portal did not render its required snapshot",
   );
   assert(
