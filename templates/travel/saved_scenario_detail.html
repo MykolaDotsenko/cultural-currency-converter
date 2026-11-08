@@ -202,7 +202,8 @@
         </div>
       </div>
       {% if trip_schedule %}
-        <div class="qa-inline-alert" data-trip-schedule-state="{{ trip_schedule.state }}">
+        <div class="qa-inline-alert"
+             data-trip-schedule-state="{{ trip_schedule.state }}">
           <p class="qa-foundation-kicker">Travel window</p>
           <h3>{{ trip_schedule.headline }}</h3>
           <p>{{ trip_schedule.detail }}</p>
