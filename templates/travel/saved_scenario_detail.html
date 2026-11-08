@@ -600,7 +600,7 @@
         </p>
       </section>
     {% endif %}
-    {% if scenario.kind == "budget" and scenario.destination_country %}
+    {% if scenario.destination_country and scenario.kind != "shopping" %}
       <section class="qa-saved-section"
                aria-labelledby="scenario-local-context-title"
                data-saved-local-context-state="{% if local_context %}{{ local_context.state }}{% else %}idle{% endif %}">
