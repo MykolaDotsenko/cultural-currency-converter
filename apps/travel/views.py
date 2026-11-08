@@ -224,6 +224,7 @@ def _scenario_rows(user) -> list[dict[str, object]]:
                 "scenario": scenario,
                 "schedule": schedule,
                 "lifecycle_label": lifecycle_label,
+                "lifecycle_state": schedule.state if schedule is not None else "shopping",
                 "lifecycle_rank": lifecycle_rank,
                 "latest_effective_date": scenario.latest_effective_date,
                 "latest_recorded_at": scenario.latest_recorded_at,
