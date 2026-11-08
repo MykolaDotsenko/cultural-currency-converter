@@ -323,7 +323,8 @@ def test_same_currency_trip_can_be_saved_and_explicitly_refresh_local_context(
 
     assert detail.status_code == 200
     builder.assert_called_once()
-    assert b"saved trip destination and trusted FX observation" not in detail.content
+    assert b'data-saved-local-context-state="empty"' in detail.content
+    assert b"Refresh again" in detail.content
 
 
 @pytest.mark.django_db
