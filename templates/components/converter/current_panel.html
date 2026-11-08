@@ -377,7 +377,8 @@
         {% endif %}
         {% if not result_component.historical %}
           {% if destination_context_component %}
-            <details class="qa-progressive-disclosure qa-progressive-disclosure--context" id="local-context-details">
+            <details class="qa-progressive-disclosure qa-progressive-disclosure--context"
+                     id="local-context-details">
               <summary>Explore detailed local money context</summary>
               {% include "components/culture/destination_context.html" with component=destination_context_component %}
             </details>
@@ -456,7 +457,8 @@
           </div>
         {% endif %}
         {% if result_component.money_culture_story %}
-          <section class="qa-cultural-portal" aria-labelledby="money-culture-entry-title">
+          <section class="qa-cultural-portal"
+                   aria-labelledby="money-culture-entry-title">
             <div class="qa-cultural-portal__mark" aria-hidden="true">?</div>
             <div class="qa-cultural-portal__copy">
               <p class="qa-foundation-kicker">Culture &amp; currency portal</p>
@@ -574,7 +576,8 @@
     </div>
   </form>
   {% if result_component.payment_estimate or result_component.budget_interpretation %}
-    <section class="qa-advanced-planning" aria-labelledby="advanced-planning-title">
+    <section class="qa-advanced-planning"
+             aria-labelledby="advanced-planning-title">
       <div class="qa-advanced-planning__heading">
         <p class="qa-foundation-kicker">Go deeper when needed</p>
         <h2 id="advanced-planning-title">Advanced planning tools</h2>
