@@ -20,9 +20,7 @@
             method="post"
             action="{% url 'save_trip_scenario' %}">
         {% csrf_token %}
-        <input type="hidden"
-               name="trip_context_token"
-               value="{{ trip_save.token }}">
+        <input type="hidden" name="trip_context_token" value="{{ trip_save.token }}">
         <label class="qa-field" for="trip-save-name">
           <span class="qa-field__label">
             Trip name <span class="qa-field__optional">Optional</span>
