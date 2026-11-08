@@ -404,7 +404,9 @@ def saved_state(request: HttpRequest) -> HttpResponse:
         {
             "saved_trip_focus": saved_trip_focus,
             "account_scenario_rows": scenario_rows,
-            "account_saved_currency_rows": _saved_currency_rows(request.user) if authenticated else [],
+            "account_saved_currency_rows": _saved_currency_rows(request.user)
+            if authenticated
+            else [],
             "currency_choices": (
                 Currency.objects.filter(is_active=True).order_by("code") if authenticated else ()
             ),
