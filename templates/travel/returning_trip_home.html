@@ -12,6 +12,11 @@
     <div class="qa-saved-row__actions">
       <a class="qa-primary-button"
          href="{{ returning_trip_home.detail_url }}">{{ returning_trip_home.primary_action_label }}</a>
+      <form method="post"
+            action="{% url 'recheck_saved_scenario' returning_trip_home.scenario.pk %}">
+        {% csrf_token %}
+        <button class="qa-secondary-button" type="submit">Re-check reference rate</button>
+      </form>
       <a class="qa-secondary-button"
          href="{{ returning_trip_home.converter_url }}">Open money context</a>
       {% if returning_trip_home.camera_url %}
