@@ -121,7 +121,7 @@ def _build_decision_cards(
         ),
         "items": local_items,
         "available": bool(local_items),
-        "href": "#everyday-value" if local_items else "",
+        "href": "#local-context-details" if local_items else "",
         "cta": "See price evidence" if local_items else "",
     }
 
@@ -158,7 +158,7 @@ def _build_decision_cards(
         "items": (),
         "meta": payment_meta,
         "available": bool(payment_summary),
-        "href": "#payment-context" if payment_summary else "",
+        "href": "#local-context-details" if payment_summary else "",
         "cta": "See payment guidance" if payment_summary else "",
     }
 
