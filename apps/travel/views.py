@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import cast
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -30,7 +31,9 @@ from apps.travel.models import (
     SavedCurrency,
     SavedPlace,
     SavedScenario,
+    SavedScenarioKind,
     SavedScenarioObservation,
+    SavedScenarioObservationKind,
 )
 from apps.travel.personalization import (
     SavedComparisonPersistenceError,
@@ -41,6 +44,7 @@ from apps.travel.personalization import (
     sync_user_saved_currencies,
     sync_user_saved_places,
 )
+from apps.travel.scenario_schedule import TripSchedule, TripScheduleState, evaluate_trip_schedule
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
 
 MAX_SYNC_BODY_BYTES = 16_384
@@ -166,13 +170,35 @@ def _recent_rows(user) -> list[dict[str, object]]:
     ]
 
 
-def _scenario_rows(user) -> list[dict[str, object]]:
-    latest_observation = (
-        SavedScenarioObservation.objects.filter(scenario_id=OuterRef("pk"))
-        .order_by("-recorded_at", "-id")
-        .values("effective_date")[:1]
+def _scenario_lifecycle(scenario: SavedScenario, *, as_of) -> tuple[TripSchedule | None, str, int]:
+    if scenario.kind == SavedScenarioKind.SHOPPING:
+        return None, "Shopping scenario", 3
+
+    schedule = evaluate_trip_schedule(
+        start_date=scenario.travel_start_date,
+        end_date=scenario.travel_end_date,
+        as_of=as_of,
     )
-    scenarios = (
+    if schedule.state is TripScheduleState.ACTIVE:
+        return schedule, "Travel window active", 0
+    if schedule.state is TripScheduleState.STARTED:
+        return schedule, "Trip started", 1
+    if schedule.state is TripScheduleState.UPCOMING:
+        days = schedule.days_until_start or 0
+        label = "Starts tomorrow" if days == 1 else f"Starts in {days} days"
+        return schedule, label, 2
+    if schedule.state is TripScheduleState.ENDED:
+        days = schedule.days_since_end or 0
+        label = "Ended yesterday" if days == 1 else f"Ended {days} days ago"
+        return schedule, label, 4
+    return schedule, "Trip dates not set", 3
+
+
+def _scenario_rows(user) -> list[dict[str, object]]:
+    latest_observation = SavedScenarioObservation.objects.filter(
+        scenario_id=OuterRef("pk")
+    ).order_by("-recorded_at", "-id")
+    scenarios = tuple(
         SavedScenario.objects.filter(user=user)
         .select_related(
             "source_currency",
@@ -180,21 +206,49 @@ def _scenario_rows(user) -> list[dict[str, object]]:
             "destination_country",
             "destination_city",
         )
-        .annotate(latest_effective_date=Subquery(latest_observation))
+        .annotate(
+            latest_effective_date=Subquery(latest_observation.values("effective_date")[:1]),
+            latest_recorded_at=Subquery(latest_observation.values("recorded_at")[:1]),
+            latest_observation_kind=Subquery(latest_observation.values("kind")[:1]),
+        )
         .order_by("-updated_at", "-id")
     )
-    return [
-        {
-            "scenario": scenario,
-            "latest_effective_date": scenario.latest_effective_date,
-            "detail_url": reverse("saved_scenario_detail", args=(scenario.pk,)),
-            "compare_url": _comparison_url(
-                scenario.destination_country,
-                scenario.destination_city,
-            ),
-        }
-        for scenario in scenarios
-    ]
+    as_of = timezone.localdate()
+    rows: list[dict[str, object]] = []
+    for scenario in scenarios:
+        schedule, lifecycle_label, lifecycle_rank = _scenario_lifecycle(
+            scenario,
+            as_of=as_of,
+        )
+        rows.append(
+            {
+                "scenario": scenario,
+                "schedule": schedule,
+                "lifecycle_label": lifecycle_label,
+                "lifecycle_state": schedule.state if schedule is not None else "shopping",
+                "lifecycle_rank": lifecycle_rank,
+                "latest_effective_date": scenario.latest_effective_date,
+                "latest_recorded_at": scenario.latest_recorded_at,
+                "latest_observation_kind": scenario.latest_observation_kind,
+                "latest_was_recheck": (
+                    scenario.latest_observation_kind == SavedScenarioObservationKind.RECHECK
+                ),
+                "recheck_available": (
+                    scenario.source_currency.is_active
+                    and scenario.destination_currency.is_active
+                    and scenario.source_currency_id != scenario.destination_currency_id
+                ),
+                "detail_url": reverse("saved_scenario_detail", args=(scenario.pk,)),
+                "compare_url": _comparison_url(
+                    scenario.destination_country,
+                    scenario.destination_city,
+                ),
+            }
+        )
+
+    # Stable sorting preserves the existing newest-updated ordering within the same
+    # lifecycle class while moving active/upcoming travel above unscheduled/ended plans.
+    return sorted(rows, key=lambda row: cast(int, row["lifecycle_rank"]))
 
 
 def _saved_currency_rows(user) -> list[dict[str, object]]:

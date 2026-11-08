@@ -217,6 +217,8 @@
               {% with scenario=row.scenario %}
                 <article class="qa-saved-row" data-saved-scenario-id="{{ scenario.pk }}">
                   <div class="qa-saved-row__copy">
+                    <p class="qa-scenario-lifecycle"
+                       data-scenario-lifecycle="{{ row.lifecycle_state }}">{{ row.lifecycle_label }}</p>
                     <h3>{{ scenario.title|default:scenario.get_kind_display }}</h3>
                     <p>
                       {{ scenario.source_amount|floatformat:"-12" }} {{ scenario.source_currency.code }}
@@ -237,8 +239,10 @@
                         · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
                         ·
                       {% endif %}
-                      {% if row.latest_effective_date %}
-                        Last saved reference effective {{ row.latest_effective_date|date:"j M Y" }}
+                      {% if row.latest_recorded_at and row.latest_effective_date %}
+                        {% if row.latest_was_recheck %}Re-checked{% else %}Saved{% endif %}
+                        {{ row.latest_recorded_at|date:"j M Y" }}
+                        · reference effective {{ row.latest_effective_date|date:"j M Y" }}
                       {% else %}
                         No stored reference observation
                       {% endif %}
@@ -250,6 +254,16 @@
                        aria-label="Open saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">
                       Open
                     </a>
+                    {% if row.recheck_available %}
+                      <form method="post" action="{% url 'recheck_saved_scenario' scenario.pk %}">
+                        {% csrf_token %}
+                        <button class="qa-secondary-button"
+                                type="submit"
+                                aria-label="Re-check reference rate for saved scenario: {{ scenario.title|default:scenario.get_kind_display }}">
+                          Re-check rate
+                        </button>
+                      </form>
+                    {% endif %}
                     {% if row.compare_url %}
                       <a class="qa-secondary-button"
                          href="{{ row.compare_url }}"
