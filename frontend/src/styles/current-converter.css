@@ -461,6 +461,19 @@
   background: var(--color-surface-soft);
 }
 
+.qa-story-surface {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.qa-story-surface > *,
+.qa-story-section,
+.qa-story-era-grid {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
 .qa-story-entry {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
