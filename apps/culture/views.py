@@ -444,9 +444,7 @@ def money_culture_story(request: HttpRequest) -> HttpResponse:
                     story_destination_snapshot = {
                         "atmosphere": theme_profile.atmosphere,
                         "editorial_cue": (
-                            theme_profile.editorial_cues[0]
-                            if theme_profile.editorial_cues
-                            else ""
+                            theme_profile.editorial_cues[0] if theme_profile.editorial_cues else ""
                         ),
                     }
 
