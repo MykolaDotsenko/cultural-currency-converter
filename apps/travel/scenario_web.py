@@ -23,6 +23,7 @@ from apps.culture.services import DestinationContext, build_destination_context
 from apps.exchange.budget import BudgetAssumptions
 from apps.exchange.budget_snapshot import (
     BudgetContextTokenError,
+    TrustedBudgetContextSnapshot,
     load_budget_context_snapshot_token,
 )
 from apps.exchange.config import FxConfigurationError
@@ -404,7 +405,7 @@ def _scenario_local_context(
     """Build current reviewed destination context only after explicit user request."""
 
     if (
-        scenario.kind != SavedScenarioKind.BUDGET
+        scenario.kind not in (SavedScenarioKind.TRIP, SavedScenarioKind.BUDGET)
         or scenario.destination_country is None
         or observation is None
     ):
@@ -412,7 +413,7 @@ def _scenario_local_context(
             "state": "empty",
             "component": None,
             "message": (
-                "Current local context needs a saved budget destination and trusted FX observation."
+                "Current local context needs a saved trip destination and trusted FX observation."
             ),
         }
 
@@ -598,7 +599,8 @@ def _scenario_detail_context(
             "Context & offline freshness",
             "Remind me before travel when the stored trip reference is old enough to re-check.",
             ScenarioNotificationCadence.WEEKLY,
-            scenario.kind == SavedScenarioKind.BUDGET and scenario.destination_country is not None,
+            scenario.kind in (SavedScenarioKind.TRIP, SavedScenarioKind.BUDGET)
+            and scenario.destination_country is not None,
         ),
         (
             ScenarioNotificationType.RATE_ALERT,
@@ -692,11 +694,148 @@ def _scenario_default_title(
     *,
     destination_country: Country,
     destination_city: City | None,
+    suffix: str,
 ) -> str:
     destination_name = (
         destination_city.name if destination_city is not None else destination_country.name
     )
-    return f"{destination_name} budget"
+    return f"{destination_name} {suffix}"
+
+
+def _scenario_metadata_from_snapshot(
+    snapshot: TrustedBudgetContextSnapshot,
+) -> tuple[Currency, Currency, Country, City | None]:
+    source_currency = Currency.objects.get(code=snapshot.conversion.quote.base_currency)
+    destination_currency = Currency.objects.get(code=snapshot.conversion.quote.quote_currency)
+    destination_country = Country.objects.get(
+        iso2=snapshot.destination_country_code,
+        is_active=True,
+    )
+    destination_city = None
+    if snapshot.destination_city_slug:
+        destination_city = City.objects.get(
+            country=destination_country,
+            slug=snapshot.destination_city_slug,
+            is_active=True,
+        )
+    return source_currency, destination_currency, destination_country, destination_city
+
+
+@login_required
+@require_POST
+def save_trip_scenario(request: HttpRequest) -> HttpResponse:
+    token = str(request.POST.get("trip_context_token") or "")
+    try:
+        snapshot = load_budget_context_snapshot_token(token)
+    except BudgetContextTokenError as exc:
+        logger.warning(
+            "saved_trip_scenario_rejected",
+            extra={"error_code": "invalid_trip_context", "detail_code": str(exc)},
+        )
+        messages.error(
+            request,
+            "This trip context is no longer valid. Run the conversion again before saving.",
+        )
+        return redirect("converter")
+
+    try:
+        (
+            source_currency,
+            destination_currency,
+            destination_country,
+            destination_city,
+        ) = _scenario_metadata_from_snapshot(snapshot)
+    except (Currency.DoesNotExist, Country.DoesNotExist, City.DoesNotExist) as exc:
+        logger.warning(
+            "saved_trip_scenario_rejected",
+            extra={
+                "error_code": "destination_metadata_missing",
+                "detail_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "The saved destination metadata is no longer available. Run the conversion again.",
+        )
+        return redirect("converter")
+    except DatabaseError as exc:
+        logger.warning(
+            "saved_trip_scenario_rejected",
+            extra={
+                "error_code": "metadata_database_unavailable",
+                "detail_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "Saved trips are temporarily unavailable. Your conversion was not changed.",
+        )
+        return redirect("converter")
+
+    planning_form = SavedScenarioPlanningForm(request.POST)
+    if not planning_form.is_valid():
+        logger.warning(
+            "saved_trip_scenario_rejected",
+            extra={
+                "error_code": "invalid_trip_planning",
+                "form_fields": sorted(planning_form.errors.keys()),
+            },
+        )
+        first_error = next(
+            (str(message) for errors in planning_form.errors.values() for message in errors),
+            "The saved trip details are invalid.",
+        )
+        messages.error(request, f"Could not save trip: {first_error}")
+        return redirect("converter")
+
+    raw_title = str(planning_form.cleaned_data.get("title") or "")
+    title = raw_title or _scenario_default_title(
+        destination_country=destination_country,
+        destination_city=destination_city,
+        suffix="trip",
+    )
+    spec = SavedScenarioSpec(
+        kind=SavedScenarioKind.TRIP,
+        title=title,
+        source_currency=source_currency,
+        destination_currency=destination_currency,
+        source_country=None,
+        destination_country=destination_country,
+        destination_city=destination_city,
+        source_amount=snapshot.conversion.input_amount,
+        travel_start_date=planning_form.cleaned_data.get("travel_start_date"),
+        travel_end_date=planning_form.cleaned_data.get("travel_end_date"),
+    )
+
+    try:
+        scenario = create_saved_scenario(
+            request.user,
+            spec=spec,
+            conversion=snapshot.conversion,
+        )
+    except SavedScenarioError as exc:
+        logger.warning(
+            "saved_trip_scenario_rejected",
+            extra={"error_code": "scenario_domain_rejected", "detail_code": str(exc)},
+        )
+        messages.error(request, f"Could not save this trip: {exc}")
+        return redirect("converter")
+    except DatabaseError as exc:
+        logger.warning(
+            "saved_trip_scenario_rejected",
+            extra={
+                "error_code": "scenario_database_unavailable",
+                "detail_code": exc.__class__.__name__,
+            },
+        )
+        messages.error(
+            request,
+            "Saved trips are temporarily unavailable. Your conversion was not changed.",
+        )
+        return redirect("converter")
+
+    messages.success(request, "Trip saved to your account.")
+    return redirect("saved_scenario_detail", scenario_id=scenario.pk)
 
 
 @login_required
@@ -749,19 +888,12 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
         return redirect("converter")
 
     try:
-        source_currency = Currency.objects.get(code=snapshot.conversion.quote.base_currency)
-        destination_currency = Currency.objects.get(code=snapshot.conversion.quote.quote_currency)
-        destination_country = Country.objects.get(
-            iso2=snapshot.destination_country_code,
-            is_active=True,
-        )
-        destination_city = None
-        if snapshot.destination_city_slug:
-            destination_city = City.objects.get(
-                country=destination_country,
-                slug=snapshot.destination_city_slug,
-                is_active=True,
-            )
+        (
+            source_currency,
+            destination_currency,
+            destination_country,
+            destination_city,
+        ) = _scenario_metadata_from_snapshot(snapshot)
     except (Currency.DoesNotExist, Country.DoesNotExist, City.DoesNotExist) as exc:
         logger.warning(
             "saved_budget_scenario_rejected",
@@ -831,6 +963,7 @@ def save_budget_scenario(request: HttpRequest) -> HttpResponse:
     title = raw_title or _scenario_default_title(
         destination_country=destination_country,
         destination_city=destination_city,
+        suffix="budget",
     )
 
     saved_budget_basis = SavedScenarioBudgetBasis.REFERENCE_CONVERSION
