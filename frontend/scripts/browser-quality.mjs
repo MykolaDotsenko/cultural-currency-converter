@@ -1027,7 +1027,9 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
 
   const localContextDisclosure = page.locator("#local-context-details");
   await localContextDisclosure.waitFor();
-  await localContextDisclosure.locator("summary").click();
+  await localContextDisclosure
+    .getByText("Explore detailed local money context", { exact: true })
+    .click();
   await page.getByRole("link", { name: "Everyday value" }).waitFor();
   await page.getByRole("link", { name: "Payment context" }).waitFor();
   await page.getByText("Money Context Lens", { exact: true }).waitFor();
