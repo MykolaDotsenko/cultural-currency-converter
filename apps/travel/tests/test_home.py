@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -8,6 +8,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db import DatabaseError
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.countries.models import City, Country, CountryCurrency, Currency
 from apps.culture.services import DestinationContext
@@ -339,6 +340,79 @@ def test_saved_page_prioritizes_nearest_trip_without_live_fx(
     assert "Re-check reference rate" in html
     assert reverse("recheck_saved_scenario", args=(near.pk,)) in html
     assert "Open trip" in html
+    gateway_factory.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_saved_scenario_catalogue_is_lifecycle_aware_and_provider_free(
+    client,
+    home_reference_data,
+):
+    today = timezone.localdate()
+    user = User.objects.create_user(username="lifecycle-owner", password="StrongPass-482!")
+    _scenario(
+        user,
+        home_reference_data,
+        title="Focus trip",
+        start=today + timedelta(days=2),
+        end=today + timedelta(days=6),
+    )
+    upcoming = _scenario(
+        user,
+        home_reference_data,
+        title="Later trip",
+        start=today + timedelta(days=20),
+        end=today + timedelta(days=25),
+    )
+    _scenario(
+        user,
+        home_reference_data,
+        title="Dates later",
+        start=None,
+        end=None,
+    )
+    _scenario(
+        user,
+        home_reference_data,
+        title="Finished trip",
+        start=today - timedelta(days=10),
+        end=today - timedelta(days=5),
+    )
+    record_scenario_recheck(
+        upcoming,
+        conversion=_conversion(rate=Decimal("180"), effective_date=today),
+    )
+    client.force_login(user)
+
+    with (
+        patch("apps.travel.home.build_destination_context", return_value=None),
+        patch("apps.exchange.views.build_latest_quote_gateway") as gateway_factory,
+    ):
+        response = client.get(reverse("saved_state"))
+
+    assert response.status_code == 200
+    rows = response.context["account_scenario_rows"]
+    assert [row["scenario"].title for row in rows] == [
+        "Later trip",
+        "Dates later",
+        "Finished trip",
+    ]
+    assert [row["lifecycle_label"] for row in rows] == [
+        "Starts in 20 days",
+        "Trip dates not set",
+        "Ended 5 days ago",
+    ]
+    assert rows[0]["latest_was_recheck"] is True
+    assert rows[0]["latest_recorded_at"] is not None
+    assert rows[0]["latest_effective_date"] == today
+    assert rows[0]["recheck_available"] is True
+
+    html = response.content.decode()
+    assert 'data-scenario-lifecycle="upcoming"' in html
+    assert 'data-scenario-lifecycle="unscheduled"' in html
+    assert 'data-scenario-lifecycle="ended"' in html
+    assert "Re-checked" in html
+    assert "Re-check rate" in html
     gateway_factory.assert_not_called()
 
 
