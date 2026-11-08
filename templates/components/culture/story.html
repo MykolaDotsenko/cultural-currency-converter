@@ -40,8 +40,19 @@
           </p>
         </div>
         <div class="qa-story-snapshot__grid">
+          {% if story_destination_snapshot %}
+            <article class="qa-story-snapshot__card">
+              <p class="qa-foundation-kicker">Cultural snapshot</p>
+              <div class="qa-story-snapshot__fact">
+                <strong>{{ story_destination_snapshot.atmosphere|capfirst }}</strong>
+                {% if story_destination_snapshot.editorial_cue %}
+                  <span>{{ story_destination_snapshot.editorial_cue|capfirst }}.</span>
+                {% endif %}
+              </div>
+            </article>
+          {% endif %}
           <article class="qa-story-snapshot__card">
-            <p class="qa-foundation-kicker">Currency context</p>
+            <p class="qa-foundation-kicker">Currency fact</p>
             {% for chapter in story.currency_era_chapters %}
               <div class="qa-story-snapshot__fact">
                 <strong>{{ chapter.title }}</strong>
@@ -63,6 +74,31 @@
             {% endfor %}
           </article>
           <article class="qa-story-snapshot__card">
+            <p class="qa-foundation-kicker">Local money etiquette</p>
+            {% if story_money_context and story_money_context.etiquette %}
+              {% for item in story_money_context.etiquette %}
+                <div class="qa-story-snapshot__fact">
+                  <span>{{ item }}</span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p>
+                Reviewed present-day cash, card and tipping guidance is not available for this context.
+              </p>
+            {% endif %}
+          </article>
+          <article class="qa-story-snapshot__card">
+            <p class="qa-foundation-kicker">Mini travel-money tip</p>
+            {% if story_money_context and story_money_context.travel_tip %}
+              <div class="qa-story-snapshot__fact">
+                <strong>Useful before you pay</strong>
+                <span>{{ story_money_context.travel_tip }}</span>
+              </div>
+            {% else %}
+              <p>No reviewed travel-money warning is available for this context.</p>
+            {% endif %}
+          </article>
+          <article class="qa-story-snapshot__card">
             <p class="qa-foundation-kicker">One memorable fact</p>
             {% for chapter in story.historical_moment_chapters %}
               {% if forloop.first %}
@@ -75,17 +111,13 @@
               <p>No additional reviewed money-history fact is available yet.</p>
             {% endfor %}
           </article>
-          <article class="qa-story-snapshot__card">
-            <p class="qa-foundation-kicker">Local etiquette</p>
-            <div class="qa-story-snapshot__fact">
-              <strong>Keep present-day money habits separate from history.</strong>
-              <span>
-                Use the converter's reviewed Money tips and Payment context for cash, cards, ATMs,
-                tipping and DCC. This portal never invents those behaviours from historical stories.
-              </span>
-            </div>
-          </article>
         </div>
+        {% if story_money_context %}
+          <p class="qa-story-snapshot__source">
+            Present-day money guidance reviewed {{ story_money_context.verified_at|date:"j M Y" }} ·
+            <a href="{{ story_money_context.source_url }}">{{ story_money_context.source_name }}</a>
+          </p>
+        {% endif %}
       </section>
       {% if story_media %}
         {% include "components/media/image_frame.html" with image=story_media.image loading="lazy" sizes="(max-width: 72rem) calc(100vw - 2rem), 72rem" %}
