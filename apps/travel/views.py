@@ -390,40 +390,32 @@ def _saved_comparison_rows(user) -> list[dict[str, object]]:
 @never_cache
 @require_GET
 def saved_state(request: HttpRequest) -> HttpResponse:
+    authenticated = request.user.is_authenticated
+    saved_trip_focus = build_returning_trip_home(request.user) if authenticated else None
+    scenario_rows = _scenario_rows(request.user) if authenticated else []
+    if saved_trip_focus is not None:
+        scenario_rows = [
+            row for row in scenario_rows if row["scenario"].pk != saved_trip_focus.scenario.pk
+        ]
+
     return render(
         request,
         "travel/saved_state.html",
         {
-            "saved_trip_focus": (
-                build_returning_trip_home(request.user)
-                if request.user.is_authenticated
-                else None
-            ),
-            "account_scenario_rows": (
-                _scenario_rows(request.user) if request.user.is_authenticated else []
-            ),
-            "account_saved_currency_rows": (
-                _saved_currency_rows(request.user) if request.user.is_authenticated else []
-            ),
+            "saved_trip_focus": saved_trip_focus,
+            "account_scenario_rows": scenario_rows,
+            "account_saved_currency_rows": _saved_currency_rows(request.user) if authenticated else [],
             "currency_choices": (
-                Currency.objects.filter(is_active=True).order_by("code")
-                if request.user.is_authenticated
-                else ()
+                Currency.objects.filter(is_active=True).order_by("code") if authenticated else ()
             ),
-            "account_saved_place_rows": (
-                _saved_place_rows(request.user) if request.user.is_authenticated else []
-            ),
+            "account_saved_place_rows": _saved_place_rows(request.user) if authenticated else [],
             "account_saved_comparison_rows": (
-                _saved_comparison_rows(request.user) if request.user.is_authenticated else []
+                _saved_comparison_rows(request.user) if authenticated else []
             ),
-            "account_favourite_rows": (
-                _favourite_rows(request.user) if request.user.is_authenticated else []
-            ),
-            "account_recent_rows": (
-                _recent_rows(request.user) if request.user.is_authenticated else []
-            ),
+            "account_favourite_rows": _favourite_rows(request.user) if authenticated else [],
+            "account_recent_rows": _recent_rows(request.user) if authenticated else [],
             "account_recent_history_enabled": (
-                recent_history_enabled(request.user) if request.user.is_authenticated else False
+                recent_history_enabled(request.user) if authenticated else False
             ),
         },
     )
