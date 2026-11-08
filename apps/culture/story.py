@@ -143,9 +143,8 @@ def compose_story(request: StoryRequest) -> StoryComposition:
 
 
 def _link_applies_on(link, selected_date: date) -> bool:
-    return (
-        (link.valid_from is None or link.valid_from <= selected_date)
-        and (link.valid_to is None or link.valid_to >= selected_date)
+    return (link.valid_from is None or link.valid_from <= selected_date) and (
+        link.valid_to is None or link.valid_to >= selected_date
     )
 
 
