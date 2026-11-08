@@ -60,6 +60,7 @@ from apps.travel.scenario_web import (
     review_shopping_spend,
     save_budget_scenario,
     save_shopping_scenario,
+    save_trip_scenario,
     saved_scenario_detail,
 )
 from apps.travel.share_web import scenario_share_card, scenario_share_card_svg
@@ -153,6 +154,11 @@ urlpatterns = [
         "saved/notifications/<int:delivery_id>/read/",
         mark_notification_read,
         name="mark_notification_read",
+    ),
+    path(
+        "saved/scenarios/trip/create/",
+        save_trip_scenario,
+        name="save_trip_scenario",
     ),
     path(
         "saved/scenarios/budget/create/",
