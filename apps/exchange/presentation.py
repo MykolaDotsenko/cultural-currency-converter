@@ -12,6 +12,7 @@ from django.utils.formats import date_format
 from apps.countries.theme_profiles import country_theme_key, country_theme_profile
 from apps.exchange.ai.intents import available_explanation_intents
 from apps.exchange.budget_presentation import build_budget_component
+from apps.exchange.budget_snapshot import build_budget_context_snapshot_token
 from apps.exchange.domain import ConversionResult, ObservationGranularity
 from apps.exchange.forms import (
     CurrentConversionForm,
@@ -361,6 +362,18 @@ def build_result_component(
         if not historical and not same_currency
         else None
     )
+    trip_save = (
+        {
+            "token": build_budget_context_snapshot_token(money_context),
+            "destination_name": (
+                destination_country.name if destination_country else destination_country_code
+            ),
+        }
+        if money_context is not None
+        and not historical
+        and bool(money_context.destination_country_code)
+        else None
+    )
     budget_interpretation = (
         build_budget_component(
             money_context,
@@ -414,6 +427,7 @@ def build_result_component(
         "smart_summary": smart_summary,
         "supporting_insights": supporting_insights,
         "decision_cards": decision_cards,
+        "trip_save": trip_save,
         "next_steps": next_steps,
         "local_state": {
             "input_amount": format(result.input_amount, "f"),

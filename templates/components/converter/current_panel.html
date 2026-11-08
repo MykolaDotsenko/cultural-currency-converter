@@ -575,6 +575,9 @@
       {% endif %}
     </div>
   </form>
+  {% if result_component.trip_save %}
+    {% include "components/converter/trip_save.html" %}
+  {% endif %}
   {% if result_component.payment_estimate or result_component.budget_interpretation %}
     <section class="qa-advanced-planning"
              aria-labelledby="advanced-planning-title">
