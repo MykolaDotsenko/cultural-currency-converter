@@ -1079,9 +1079,11 @@ async function assertCurrentConverterFlow(page, consoleErrors) {
       (await page.locator("#historical-trend-slot[aria-live]").count()) === 0,
     "current-converter: large progressive fragments must not be live regions",
   );
-  await page.getByText("Cup of coffee", { exact: true }).waitFor();
-  await page.getByText("Tokyo Metro regular ticket", { exact: true }).waitFor();
-  await page.getByRole("heading", { name: "Paying in Japan" }).waitFor();
+  await localContextDisclosure.getByText("Cup of coffee", { exact: true }).waitFor();
+  await localContextDisclosure
+    .getByText("Tokyo Metro regular ticket", { exact: true })
+    .waitFor();
+  await localContextDisclosure.getByRole("heading", { name: "Paying in Japan" }).waitFor();
 
   const destinationMedia = page.locator(".qa-destination-context [data-media-role]");
   if ((await destinationMedia.count()) > 0) {
