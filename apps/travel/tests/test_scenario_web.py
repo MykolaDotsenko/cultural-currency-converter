@@ -229,7 +229,16 @@ def test_signed_in_user_can_save_lightweight_trip_without_second_provider_or_pri
     assert detail.status_code == 200
     assert b"Saved trip" in detail.content
     assert b"Lightweight trip" in detail.content
-    assert b"Starts in" in detail.content
+    assert b"Travel window" in detail.content
+
+    gateway = FakeLatestGateway()
+    with patch("apps.travel.scenario_web.build_latest_quote_gateway", return_value=gateway):
+        recheck = client.post(reverse("recheck_saved_scenario", args=(scenario.pk,)))
+
+    assert recheck.status_code == 302
+    assert recheck.url == reverse("saved_scenario_detail", args=(scenario.pk,))
+    assert scenario.observations.count() == 2
+    assert gateway.calls == 1
 
 
 @pytest.mark.django_db
