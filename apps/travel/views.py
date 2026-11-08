@@ -22,6 +22,7 @@ from apps.exchange.comparison_snapshot import (
     SavedComparisonTokenError,
     load_saved_comparison_token,
 )
+from apps.travel.home import build_returning_trip_home
 from apps.travel.models import (
     FavouritePair,
     RecentConversion,
@@ -393,6 +394,11 @@ def saved_state(request: HttpRequest) -> HttpResponse:
         request,
         "travel/saved_state.html",
         {
+            "saved_trip_focus": (
+                build_returning_trip_home(request.user)
+                if request.user.is_authenticated
+                else None
+            ),
             "account_scenario_rows": (
                 _scenario_rows(request.user) if request.user.is_authenticated else []
             ),
