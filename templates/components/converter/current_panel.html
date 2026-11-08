@@ -130,6 +130,29 @@
             {% include "components/icons/chevron_down.html" %}
           </span>
         </button>
+        {% if source.atmosphere %}
+          <div class="qa-country-preview">
+            <div class="qa-country-preview__copy">
+              <span class="qa-country-preview__label">Place atmosphere</span>
+              <p>{{ source.atmosphere|capfirst }}</p>
+              {% if source.editorial_cue %}
+                <span>{{ source.editorial_cue|capfirst }}</span>
+              {% endif %}
+            </div>
+            {% if result_component.money_culture_story %}
+              <a class="qa-cultural-portal-trigger"
+                 href="{{ result_component.money_culture_story.href }}"
+                 hx-get="{{ result_component.money_culture_story.href }}"
+                 hx-target="#money-culture-story-slot"
+                 hx-swap="innerHTML"
+                 hx-sync="#money-culture-story-slot:replace"
+                 aria-label="Open culture and currency insight">
+                <span aria-hidden="true">?</span>
+                <span>Culture</span>
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
       </section>
       <div class="qa-workspace__swap">
         <button class="qa-swap-button"
@@ -185,6 +208,29 @@
             {% include "components/icons/chevron_down.html" %}
           </span>
         </button>
+        {% if destination.atmosphere %}
+          <div class="qa-country-preview">
+            <div class="qa-country-preview__copy">
+              <span class="qa-country-preview__label">Place atmosphere</span>
+              <p>{{ destination.atmosphere|capfirst }}</p>
+              {% if destination.editorial_cue %}
+                <span>{{ destination.editorial_cue|capfirst }}</span>
+              {% endif %}
+            </div>
+            {% if result_component.money_culture_story %}
+              <a class="qa-cultural-portal-trigger"
+                 href="{{ result_component.money_culture_story.href }}"
+                 hx-get="{{ result_component.money_culture_story.href }}"
+                 hx-target="#money-culture-story-slot"
+                 hx-swap="innerHTML"
+                 hx-sync="#money-culture-story-slot:replace"
+                 aria-label="Open culture and currency insight">
+                <span aria-hidden="true">?</span>
+                <span>Culture</span>
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
       </section>
     </div>
     <fieldset class="qa-rate-date">
@@ -294,6 +340,9 @@
         {% with component=result_component %}
           {% include "components/converter/primitives.html#conversion-result" %}
         {% endwith %}
+        {% if result_component.decision_cards %}
+          {% include "components/converter/decision_summary.html" %}
+        {% endif %}
         {% if result_component.next_steps %}
           {% include "components/converter/decision_journey.html" %}
         {% endif %}
@@ -301,31 +350,37 @@
           {% include "components/converter/bilateral_value_lens.html" %}
         {% endif %}
         {% if result_component.supporting_insights %}
-          <section class="qa-context-section"
-                   aria-labelledby="conversion-supporting-insights-title">
-            <div>
-              <p class="qa-foundation-kicker">More than a rate</p>
-              <h3 id="conversion-supporting-insights-title">Useful right now</h3>
-              <p>Extra reviewed context, not a live price, guaranteed bank quote or recommendation.</p>
-            </div>
-            <div class="qa-price-grid">
-              {% for insight in result_component.supporting_insights %}
-                <article class="qa-price-card" data-insight-kind="{{ insight.kind }}">
-                  <p class="qa-price-card__label">{{ insight.title }}</p>
-                  <p>{{ insight.text }}</p>
-                  <p class="qa-price-card__meta">{{ insight.evidence_label }}</p>
-                  <p class="qa-context-source">
-                    <a href="{{ insight.detail_href }}">{{ insight.detail_label }}</a>
-                    · <a href="{{ insight.evidence_url }}">Evidence source</a>
-                  </p>
-                </article>
-              {% endfor %}
-            </div>
-          </section>
+          <details class="qa-progressive-disclosure">
+            <summary>More reviewed context</summary>
+            <section class="qa-context-section"
+                     aria-labelledby="conversion-supporting-insights-title">
+              <div>
+                <p class="qa-foundation-kicker">More than a rate</p>
+                <h3 id="conversion-supporting-insights-title">Useful right now</h3>
+                <p>Extra reviewed context, not a live price, guaranteed bank quote or recommendation.</p>
+              </div>
+              <div class="qa-price-grid">
+                {% for insight in result_component.supporting_insights %}
+                  <article class="qa-price-card" data-insight-kind="{{ insight.kind }}">
+                    <p class="qa-price-card__label">{{ insight.title }}</p>
+                    <p>{{ insight.text }}</p>
+                    <p class="qa-price-card__meta">{{ insight.evidence_label }}</p>
+                    <p class="qa-context-source">
+                      <a href="{{ insight.detail_href }}">{{ insight.detail_label }}</a>
+                      · <a href="{{ insight.evidence_url }}">Evidence source</a>
+                    </p>
+                  </article>
+                {% endfor %}
+              </div>
+            </section>
+          </details>
         {% endif %}
         {% if not result_component.historical %}
           {% if destination_context_component %}
-            {% include "components/culture/destination_context.html" with component=destination_context_component %}
+            <details class="qa-progressive-disclosure qa-progressive-disclosure--context">
+              <summary>Explore detailed local money context</summary>
+              {% include "components/culture/destination_context.html" with component=destination_context_component %}
+            </details>
           {% elif result_component.destination_context_state == "degraded" %}
             {% include "components/product_state.html" with state="unavailable" label="Local context unavailable" title="Local money context is temporarily unavailable." detail="The trusted FX conversion above remains valid. Reviewed local prices and payment guidance could not be loaded, so no missing context has been inferred." %}
           {% elif result_component.destination_context_state == "not_applicable" %}
@@ -401,20 +456,24 @@
           </div>
         {% endif %}
         {% if result_component.money_culture_story %}
-          <section class="qa-story-entry" aria-labelledby="money-culture-entry-title">
-            <div>
-              <p class="qa-foundation-kicker">Money &amp; culture</p>
-              <h3 id="money-culture-entry-title">Explore the story behind these currencies</h3>
-              <p>Open sourced currency-era and historical context without changing the conversion.</p>
+          <section class="qa-cultural-portal" aria-labelledby="money-culture-entry-title">
+            <div class="qa-cultural-portal__mark" aria-hidden="true">?</div>
+            <div class="qa-cultural-portal__copy">
+              <p class="qa-foundation-kicker">Culture &amp; currency portal</p>
+              <h3 id="money-culture-entry-title">Discover the place behind the money.</h3>
+              <p>
+                Open a short sourced snapshot first, then go deeper into currency eras and reviewed
+                money history only if you want to.
+              </p>
             </div>
             <a class="qa-secondary-button"
                href="{{ result_component.money_culture_story.href }}"
                hx-get="{{ result_component.money_culture_story.href }}"
                hx-target="#money-culture-story-slot"
                hx-swap="innerHTML"
-               hx-sync="#money-culture-story-slot:replace">Explore money &amp; culture</a>
+               hx-sync="#money-culture-story-slot:replace">Open culture &amp; currency</a>
           </section>
-          <div id="money-culture-story-slot"></div>
+          <div id="money-culture-story-slot" aria-live="polite"></div>
         {% endif %}
         {% if result_component.historical_trend %}
           {% with trend=result_component.historical_trend %}
@@ -514,15 +573,27 @@
       {% endif %}
     </div>
   </form>
-  {% if result_component.payment_estimate %}
-    <div id="payment-estimate-region">
-      {% include "components/converter/payment_estimate.html" with payment_estimate=result_component.payment_estimate %}
-    </div>
-  {% endif %}
-  {% if result_component.budget_interpretation %}
-    <div id="budget-interpretation-region">
-      {% include "components/converter/budget_interpretation.html" with budget_interpretation=result_component.budget_interpretation %}
-    </div>
+  {% if result_component.payment_estimate or result_component.budget_interpretation %}
+    <section class="qa-advanced-planning" aria-labelledby="advanced-planning-title">
+      <div class="qa-advanced-planning__heading">
+        <p class="qa-foundation-kicker">Go deeper when needed</p>
+        <h2 id="advanced-planning-title">Advanced planning tools</h2>
+        <p>
+          The quick decision layer above stays simple. Use these tools only when you want to model
+          explicit fees or build a more detailed trip budget.
+        </p>
+      </div>
+      {% if result_component.payment_estimate %}
+        <div id="payment-estimate-region">
+          {% include "components/converter/payment_estimate.html" with payment_estimate=result_component.payment_estimate %}
+        </div>
+      {% endif %}
+      {% if result_component.budget_interpretation %}
+        <div id="budget-interpretation-region">
+          {% include "components/converter/budget_interpretation.html" with budget_interpretation=result_component.budget_interpretation %}
+        </div>
+      {% endif %}
+    </section>
   {% endif %}
   {% include "components/converter/picker_dialog.html" with side="source" role_label="source" %}
   {% include "components/converter/picker_dialog.html" with side="destination" role_label="destination" %}
