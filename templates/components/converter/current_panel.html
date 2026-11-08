@@ -377,7 +377,7 @@
         {% endif %}
         {% if not result_component.historical %}
           {% if destination_context_component %}
-            <details class="qa-progressive-disclosure qa-progressive-disclosure--context">
+            <details class="qa-progressive-disclosure qa-progressive-disclosure--context" id="local-context-details">
               <summary>Explore detailed local money context</summary>
               {% include "components/culture/destination_context.html" with component=destination_context_component %}
             </details>
