@@ -327,6 +327,11 @@ def test_saved_page_prioritizes_nearest_trip_without_live_fx(
     focus = response.context["saved_trip_focus"]
     assert focus is not None
     assert focus.scenario == near
+    assert all(row["scenario"].pk != near.pk for row in response.context["account_scenario_rows"])
+    assert any(
+        row["scenario"].title == "Later Tokyo"
+        for row in response.context["account_scenario_rows"]
+    )
     html = response.content.decode()
     assert 'data-saved-trip-focus' in html
     assert "Continue your trip" in html
