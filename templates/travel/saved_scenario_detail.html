@@ -3,7 +3,7 @@
 {% block head_meta %}
   <meta name="robots" content="noindex">
   <meta name="description"
-        content="Review a saved Cultural Currency Converter budget scenario and its trusted reference observation.">
+        content="Review a saved Cultural Currency Converter trip, budget or shopping scenario and its trusted reference observation.">
 {% endblock %}
 {% block content %}
   {% if trip_schedule and trip_budget %}
@@ -14,13 +14,22 @@
   <section class="qa-foundation-intro qa-saved-intro"
            aria-labelledby="saved-scenario-title">
     <p class="qa-foundation-kicker">
-      {% if scenario.kind == "shopping" %}Saved Shopping estimate{% else %}Saved budget scenario{% endif %}
+      {% if scenario.kind == "shopping" %}
+        Saved Shopping estimate
+      {% elif scenario.kind == "trip" %}
+        Saved trip
+      {% else %}
+        Saved budget scenario
+      {% endif %}
     </p>
     <h1 id="saved-scenario-title">{{ scenario.title|default:scenario.get_kind_display }}</h1>
     <p class="qa-foundation-lede">
       {% if scenario.kind == "shopping" %}
         This page preserves the explicit purchase assumptions and trusted FX observation that were
         saved with your account. Re-checks never rewrite that original purchase estimate.
+      {% elif scenario.kind == "trip" %}
+        This page preserves the destination and trusted FX observation you chose to keep.
+        Rate and local-context re-checks are explicit and never overwrite the original observation.
       {% else %}
         This page preserves the planning assumptions and trusted FX observation that were saved
         with your account. It does not silently refresh rates or local prices.
@@ -192,6 +201,13 @@
           </form>
         </div>
       </div>
+      {% if trip_schedule %}
+        <div class="qa-inline-alert" data-trip-schedule-state="{{ trip_schedule.state }}">
+          <p class="qa-foundation-kicker">Travel window</p>
+          <h3>{{ trip_schedule.headline }}</h3>
+          <p>{{ trip_schedule.detail }}</p>
+        </div>
+      {% endif %}
       {% if share_url %}
         <p class="qa-saved-state__privacy">
           The share link contains only the stored money snapshot and destination label.
@@ -224,6 +240,8 @@
               {% if scenario.duration_days %}
                 {{ scenario.duration_days }} day{{ scenario.duration_days|pluralize }}
                 · {{ scenario.travelers }} traveler{{ scenario.travelers|pluralize }}
+              {% elif scenario.kind == "trip" %}
+                Lightweight trip · no budget assumptions saved
               {% else %}
                 No duration saved
               {% endif %}
