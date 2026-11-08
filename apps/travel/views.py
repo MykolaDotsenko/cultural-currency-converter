@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import cast
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -43,7 +44,7 @@ from apps.travel.personalization import (
     sync_user_saved_currencies,
     sync_user_saved_places,
 )
-from apps.travel.scenario_schedule import TripScheduleState, evaluate_trip_schedule
+from apps.travel.scenario_schedule import TripSchedule, TripScheduleState, evaluate_trip_schedule
 from apps.travel.services import FavouriteSyncError, serialize_favourite, sync_user_favourites
 
 MAX_SYNC_BODY_BYTES = 16_384
@@ -169,7 +170,7 @@ def _recent_rows(user) -> list[dict[str, object]]:
     ]
 
 
-def _scenario_lifecycle(scenario: SavedScenario, *, as_of) -> tuple[object | None, str, int]:
+def _scenario_lifecycle(scenario: SavedScenario, *, as_of) -> tuple[TripSchedule | None, str, int]:
     if scenario.kind == SavedScenarioKind.SHOPPING:
         return None, "Shopping scenario", 3
 
@@ -247,7 +248,7 @@ def _scenario_rows(user) -> list[dict[str, object]]:
 
     # Stable sorting preserves the existing newest-updated ordering within the same
     # lifecycle class while moving active/upcoming travel above unscheduled/ended plans.
-    return sorted(rows, key=lambda row: row["lifecycle_rank"])
+    return sorted(rows, key=lambda row: cast(int, row["lifecycle_rank"]))
 
 
 def _saved_currency_rows(user) -> list[dict[str, object]]:
