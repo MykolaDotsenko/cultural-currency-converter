@@ -513,7 +513,8 @@
   gap: var(--qa-space-4);
 }
 
-.qa-story-era-card {
+.qa-story-era-card,
+.qa-story-previous-currency-card {
   padding: var(--qa-space-4);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
@@ -615,6 +616,7 @@
   .qa-story-chapter,
   .qa-story-section,
   .qa-story-era-card,
+  .qa-story-previous-currency-card,
   .qa-story-surface__scope,
   .qa-story-trust-note {
     border-color: CanvasText;
