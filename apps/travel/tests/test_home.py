@@ -329,11 +329,10 @@ def test_saved_page_prioritizes_nearest_trip_without_live_fx(
     assert focus.scenario == near
     assert all(row["scenario"].pk != near.pk for row in response.context["account_scenario_rows"])
     assert any(
-        row["scenario"].title == "Later Tokyo"
-        for row in response.context["account_scenario_rows"]
+        row["scenario"].title == "Later Tokyo" for row in response.context["account_scenario_rows"]
     )
     html = response.content.decode()
-    assert 'data-saved-trip-focus' in html
+    assert "data-saved-trip-focus" in html
     assert "Continue your trip" in html
     assert "Pick up where your travel-money plan left off." in html
     assert "Tokyo soon" in html
