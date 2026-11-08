@@ -207,7 +207,6 @@ def test_no_relationships_and_no_story_moments_returns_unavailable(db):
 
 
 @pytest.mark.django_db
-@pytest.mark.django_db
 def test_current_story_exposes_previous_primary_currency_without_extra_history_query(context_data):
     fi, _jp, _eur, _jpy = context_data
     fim = Currency.objects.create(code="FIM", name="Finnish markka", symbol="mk")
